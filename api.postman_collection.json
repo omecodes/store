@@ -1,0 +1,924 @@
+{
+  "info": {
+    "_postman_id": "fdf26379-1a73-4e43-a274-e569ca46fd2c",
+    "name": "FireX",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get settings",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "d080892f-3809-45a2-9c61-fae71a6bdfd1",
+            "exec": [
+              "pm.test(\"Getting default settings\", function() {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "{{adminpwd}}",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "admin",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/.settings",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            ".settings"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create user",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "8c67fc4f-4882-4497-b7dc-57922722e7bb",
+            "exec": [
+              "pm.test(\"Create a user\", function() {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "97b6630e-6233-4935-90e4-09912cbb6dae",
+            "exec": [
+              "pm.environment.set(\"user\", \"omecodes\");\r",
+              "pm.environment.set(\"userpwd\", \"omecodes\");"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "XzAmXC85XSM4JGAzOls1Kg",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "admin",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"id\": \"{{user}}\",\r\n    \"email\": \"{{user}}@omestoreio.com\",\r\n    \"password\": \"{{userpwd}}\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{url}}/.users",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            ".users"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Duplicate user",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "db94aad7-2abe-46f0-a672-5db0de3333d6",
+            "exec": [
+              "pm.test(\"Duplicate user fails\", function() {\r",
+              "    pm.response.to.have.status(400);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "XzAmXC85XSM4JGAzOls1Kg",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "admin",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"id\": \"{{user}}\",\r\n    \"email\": \"{{user}}@omestoreio.com\",\r\n    \"password\": \"{{userpwd}}\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{url}}/.users",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            ".users"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List users",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "a4a4475c-ffbb-4fc4-a825-2b77e41bc897",
+            "exec": [
+              "pm.test(\"Users list must contains previously created user\", function() {\r",
+              "    pm.response.to.have.status(200);\r",
+              "    let userid = pm.environment.get(\"user\");\r",
+              "    let rspJSON = pm.response.json();\r",
+              "    console.log(rspJSON);\r",
+              "    pm.expect(rspJSON).to.have.key(userid);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "XzAmXC85XSM4JGAzOls1Kg",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "admin",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/.users",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            ".users"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Put data",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "7be54904-150a-4b2f-8309-afd61a5a3191",
+            "exec": [
+              "pm.test(\"Put data\", function() {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "01304a4a-c478-44aa-a008-bbb0765480b9",
+            "exec": [
+              "pm.environment.set(\"dataid\", \"myfirsttravel\");"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "{{userpwd}}",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "{{user}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"from\": {\r\n    \"city\": \"Abidjan\",\r\n    \"country\": \"Côte d'ivoire\"\r\n  },\r\n  \"to\": {\r\n    \"city\": \"Paris\",\r\n    \"country\": \"France\"\r\n  }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{url}}/travels/{{dataid}}",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "travels",
+            "{{dataid}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get models",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "99ed3b14-5dfa-4df7-8c32-804db2b7a234",
+            "exec": [
+              "pm.test(\"Grafts list must contain \" + pm.environment.get(\"graftid\"), function() {\r",
+              "    pm.response.to.have.status(200);\r",
+              "    let data = pm.response.text();\r",
+              "    pm.expect(data).to.include(\"travels\");\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "{{userpwd}}",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "{{user}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/.collections",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            ".collections"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "1d294b63-cf64-407c-97f0-1e180ecbdafc",
+            "exec": [
+              "pm.test(\"Documents must contain \" + pm.environment.get(\"dataid\"), function() {\r",
+              "    pm.response.to.have.status(200);\r",
+              "    let dataid = pm.environment.get(\"dataid\");\r",
+              "    let data = pm.response.json();\r",
+              "    pm.expect(data).to.have.property(dataid);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "{{userpwd}}",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "{{user}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "session=MTU5ODg5ODkzMXxibi1CU1U5T1c4TWsyOTY1Y0M4eUFtQlpnZWU3dHp4ZDJTWVFBSUQ4OFZ0SUZwdkZmVm5SbVl1dU45YVUwQW45TFlQTHM4dkd6TWVLN2V3aENLbDFWWkNQVURheE1kbFg3WnBMVDdBVkt6ZU1NRUZZOGFWemo5NmZSOXdmeVZZR2dORU9RWEpaMUcta2QtUHJmMEF5Vzg0WDI3YkIzcVFycTZYSXlhOVphX3pMOER4VWVfMUtuUTkxMDdiYTVfb0llaW1lalBPNWhTdjlOTzVod0tCQ3VoTzJ5U0V6NFdpeHRWZVR5akt5S0V3UnJ0R2JpTjFfNG1Sb0tSOHlNYUd4aVY4dTdnUm41aHhnYmg5V0pySG13YzFrUUV3TGc3eml6M0RRdjl5eWNZc2JXTTllSUpfcWE3cnhGejBKRnpQd05GdEtpZk1vX3ZkTm1zNVhiRHl4SVNaczI2akdPRXZraS1ZWWlZTkZEQ0g5Y3FFVjhtY1FUaTRuMERDV29ZSURKZWhzU19QVDRFMHZmc3dLWWp2R0hDNnJkSmNweUJiYTQxRUJER3I3NElkZjVGMzlXQktYR1JTSFdfbUNNYzFnVlc1NzAyeWFUTjRVcmRRMVlPVHhfYUZ5WWt6NVA1Vko0YW5icFFaVWNZcUVmU1YwNm5FMXd6dlUxRVFvM0JPN1hDdEozcjJnZm83Y24yU3VSYkVEQ1hROF9ibVBIalFOcE5rZXNWU1Nud2dyZEROR3ZVaU8yUXNKRTk0b2lpRUU4Zzg0dmhCa1d0N01CbGdQclVZbDVNOEFMdFRuZ0JZWVNydXRRZHBNWDl2WVpGZlpBeHU4cHJwSFZPVERKT2szVzd3NVF1UGVZTDI5WGRLOWtzQ01lN21VWUZNSEhMY0JXdnRDZEVLMk0tX205aTBZX0tBd1Z1cHFJa3hScjBZMHNZMTVUelZwNldqS1dJLWRIdk5sRG5WcnJnejZBeDdXN1VmVTNLSHZ2OHpZV3djOXJHelh3SnNSdVE0andoRlBwWXZYdmhTaTNERmczeU1SdWM2UEEwd3dndEFESTUtUWhROXFRYVJTUS10TnRTYVJvU3dtRUdNM05qNEJMQWg5SVBrVjA3RHNqWXFIUTlkS1lzWl9aUmlXUG9LaUVma2JoOURYX1NfRktHYldFTExaTlVCUTc4c250TzhyRkxwcUFCcHhNSUQxc1N0eTRTSXBqS1I0S0hnSG0zZGsyVzdQMXJPMlRtbHNRQjY5X3kxR1hfejNUVHBJTUd4WFNWQXN6M01udTJUM2g2M3VKWl9MN2E3LXhYWjJXbFZOMmVtUHNBQ0MtT3Nwb0FCUUkxZzV6d0p3b0tIcXhGUjFtREV5YUFNeWtFRkwyTkhqbWlLSTRQU0hPc0FrMXRZcnZBNDBoRmlXYkRHdk5YWkxteXhlSm5aRG5zZ1dhd09LbGdzSV9Nb2JZOFRCTk9UM1RScS1JcU5DbDU5TFZPRmJuanJ3eHNtUnVyOC05Y1ExckkzSDBDSGNTNUVGQnAxS29CMkdKbzlaeml1LUlxSlZ0SkhYcnl2ZVM3eGtqOUszUmw2Um1SMGNKUmVjZ1hZRFF2dDZCSXNIRVdwNUI0UmJZa2JjOWhIWHZHUmtfVVBlRmFOWkpzdjZZU1FJQzY2SWhYeE5hWklaWlhuaTZjS2QxR1NIUFNMRnNOQ1JhVFNjV0c1cThWbW8tNVpSdHZzWFpNQ1VOdTlxVjcwMWktTUFVUDM4SUlmTUpRODZLbXgtaDZEdFdvbVBOTnhDWE9OMFlhVFc1THlLV3ZLZ2I4QzNzd1NHOW81aWxaVG9pT2pRZUNwdWNoNkd0VzdDbVFYa2FhbjkyVTBTTUhkejhCajNFR2RVdjhpZ01ZVktMQ3R0UGtUOUxfNFloeVpYVnlhNUxDUnBRMXM4dFJYTnNFUnlocERCWXRvcmlXQ1QzQ0Z4aFhLNURqcWlpeEhvOHBxZTRmX2N0cmRILUE2ODBwREYzVzRHMkVzcGlya2tFa3RySFltZWllNXQ1NmpXdkg2ZHV0b3U3SDlFX0JwSFBLM0F0VUF2THE3V0xNdjRUZFgzMXdVOVVJOXFRcmVXaTloNlM4Nk1qam1KODBETC1wRHA2eDMyWDFZem9sR05Nc2NUcE5YRWNXVGpFWDMwSTBEWlA1LW5Ta3N0SmVGQWZxWkJVMkZwV3dyMzgzSnVhM0REc1FCVTVLbllJb3BWT25aTlhZb2R5NU0xRy1EZm5CS2tKVUlBNDE3dFRpd09uTlNSYVAxLUFfcWRrWDdxcDU4Mk44eV9DV3h1ZVE3aHY3aGQ1a3dXZExoQ2QyRDZTR1NnNS1KWFJvUV9YaGREbXZRbjZhdVRZUTMyMlQzSlRkeS1pVHh6alF0Y0JZOXZzMkZZS1hOQzk1eW1tS2ZOazQzdzgtVTdSZTU4Z19MbFQxZ2FCSk5oNjZpVk1BTXE2eDVoaUI4aklUUlh6MlF2ZzlCUV9QaW0yUEN0Y3hKalhQZXBJbnlxXzFnaWlMVlZra00yQ2pERExhSGdUVW5idjZFUV9kXzFoUjlvQmdzZzVUTk8xcThBTUFjOFVrTllxWEtiNjluY2kyQTRwOU9kaEprOEN6RTFoVHZQSG1RdjBPWDBBZWJiOUJreC01SlJVMVJSdXhaSDRoOEpiQkRHZW1ZWExYa09kR3BtQ241Ny1oc0Qtc1ZOVTlMVnY5VFZMZWVvVm5kaFV4OHB4cFFPVDRTdDl6MzJkLXBwS01vT0N6TXRpbDFBNWpOYk9NUVhMMFRZbW1ySGo3X25PRHp0R3c9PXwJaXNacnZayZCntrxJYL_YTNfUsRHgdUUV52iuWCpvvA==; Expires=Mon, 31 Aug 2020 23:35:31 GMT",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{url}}/travels",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "travels"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get data",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "0e5a13bb-1a20-4f30-a37d-eb271ab62c25",
+            "exec": [
+              "pm.test(\"Get domcuent \" + pm.environment.get(\"dataid\"), function() {\r",
+              "    pm.response.to.have.status(200);\r",
+              "    pm.expect(pm.response.json()).to.have.property(\"content\");\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "{{userpwd}}",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "{{user}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/travels/{{dataid}}",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "travels",
+            "{{dataid}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get data info",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "df8832bf-8236-4d35-9d7f-4cecf6f6a655",
+            "exec": [
+              "pm.test(\"Documents info must contain only header\" , function() {\r",
+              "    pm.response.to.have.status(200);\r",
+              "    let data = pm.response.json();\r",
+              "    pm.expect(data).to.have.not.property(\"content\");\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "{{userpwd}}",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "{{user}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/travels/{{dataid}}?info=true",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "travels",
+            "{{dataid}}"
+          ],
+          "query": [
+            {
+              "key": "info",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Add graft",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "ffaafbda-2986-4565-abda-91e1e5445587",
+            "exec": [
+              "pm.test(\"Create a graft for document \" + pm.environment.get(\"dataid\"), function() {\r",
+              "    pm.response.to.have.status(200);\r",
+              "    pm.environment.set(\"graftid\", pm.response.json().id);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "{{userpwd}}",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "{{user}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"type\": \"comment\",\r\n    \"value\": \"Fais un très bon voyage\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{url}}/.grafts/travels/{{dataid}}",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            ".grafts",
+            "travels",
+            "{{dataid}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Add another graft",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "12eeaf16-6526-4820-876d-7ec630bfbad0",
+            "exec": [
+              "pm.test(\"Create a another graft\", function() {\r",
+              "    pm.response.to.have.status(200);\r",
+              "    pm.environment.set(\"graftid\", pm.response.json().id);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "{{userpwd}}",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "{{user}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"type\": \"comment\",\r\n    \"value\": \"Fais un très bon voyage\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{url}}/.grafts/travels/{{dataid}}",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            ".grafts",
+            "travels",
+            "{{dataid}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List grafts",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "8866030b-ecb4-4fa3-82b8-1592af16e789",
+            "exec": [
+              "pm.test(\"Grafts list must contain \" + pm.environment.get(\"graftid\"), function() {\r",
+              "    pm.response.to.have.status(200);\r",
+              "    let graftid = pm.environment.get(\"graftid\");\r",
+              "    if (pm.response.size > 10) {\r",
+              "        let data = pm.response.json();\r",
+              "        pm.expect(data).to.have.property(graftid);\r",
+              "    }\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "{{userpwd}}",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "{{user}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/.grafts/travels/{{dataid}}",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            ".grafts",
+            "travels",
+            "{{dataid}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get graft",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "8f256b9b-4d5a-41e3-844b-6ae304c61993",
+            "exec": [
+              "pm.test(\"Retrieve graft \" + pm.environment.get(\"graftid\"), function() {\r",
+              "    pm.response.to.have.status(200);\r",
+              "    let graftid = pm.environment.get(\"graftid\");\r",
+              "    let data = pm.response.json();\r",
+              "    pm.expect(data).to.have.property(graftid);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "{{userpwd}}",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "{{user}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/.grafts/travels/{{dataid}}/{{graftid}}",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            ".grafts",
+            "travels",
+            "{{dataid}}",
+            "{{graftid}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete graft",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "55a6c8a3-e1a2-4768-b1c8-02534167a18e",
+            "exec": [
+              "pm.test(\"Retrieve graft \" + pm.environment.get(\"graftid\"), function() {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "{{userpwd}}",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "{{user}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/.grafts/travels/{{dataid}}/{{graftid}}",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            ".grafts",
+            "travels",
+            "{{dataid}}",
+            "{{graftid}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get deleted graft",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "cf003d64-b711-4a71-b30c-6b3f03a0a210",
+            "exec": [
+              "pm.test(\"Retrieve graft \" + pm.environment.get(\"graftid\"), function() {\r",
+              "    pm.response.to.have.status(404);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "{{userpwd}}",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "{{user}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/.grafts/travels/{{dataid}}/{{graftid}}",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            ".grafts",
+            "travels",
+            "{{dataid}}",
+            "{{graftid}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List grafts Copy",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "42cd8cbb-4130-47b2-8122-65a214ceac82",
+            "exec": [
+              "\r",
+              "\r",
+              "pm.test(\"Grafts list must contain \" + pm.environment.get(\"graftid\"), function() {\r",
+              "    pm.response.to.have.status(200);\r",
+              "    let graftid = pm.environment.get(\"graftid\");\r",
+              "    let data = pm.response.json();\r",
+              "    pm.expect(data).to.have.not.property(graftid);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "{{userpwd}}",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "{{user}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/.grafts/travels/{{dataid}}",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            ".grafts",
+            "travels",
+            "{{dataid}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "fxenv",
+            "exec": [
+              "pm.test(\"Delete document \" + pm.environment.get(\"graftid\"), function() {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "password",
+              "value": "{{userpwd}}",
+              "type": "string"
+            },
+            {
+              "key": "username",
+              "value": "{{user}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "session=MTU5ODg5ODkzMXxibi1CU1U5T1c4TWsyOTY1Y0M4eUFtQlpnZWU3dHp4ZDJTWVFBSUQ4OFZ0SUZwdkZmVm5SbVl1dU45YVUwQW45TFlQTHM4dkd6TWVLN2V3aENLbDFWWkNQVURheE1kbFg3WnBMVDdBVkt6ZU1NRUZZOGFWemo5NmZSOXdmeVZZR2dORU9RWEpaMUcta2QtUHJmMEF5Vzg0WDI3YkIzcVFycTZYSXlhOVphX3pMOER4VWVfMUtuUTkxMDdiYTVfb0llaW1lalBPNWhTdjlOTzVod0tCQ3VoTzJ5U0V6NFdpeHRWZVR5akt5S0V3UnJ0R2JpTjFfNG1Sb0tSOHlNYUd4aVY4dTdnUm41aHhnYmg5V0pySG13YzFrUUV3TGc3eml6M0RRdjl5eWNZc2JXTTllSUpfcWE3cnhGejBKRnpQd05GdEtpZk1vX3ZkTm1zNVhiRHl4SVNaczI2akdPRXZraS1ZWWlZTkZEQ0g5Y3FFVjhtY1FUaTRuMERDV29ZSURKZWhzU19QVDRFMHZmc3dLWWp2R0hDNnJkSmNweUJiYTQxRUJER3I3NElkZjVGMzlXQktYR1JTSFdfbUNNYzFnVlc1NzAyeWFUTjRVcmRRMVlPVHhfYUZ5WWt6NVA1Vko0YW5icFFaVWNZcUVmU1YwNm5FMXd6dlUxRVFvM0JPN1hDdEozcjJnZm83Y24yU3VSYkVEQ1hROF9ibVBIalFOcE5rZXNWU1Nud2dyZEROR3ZVaU8yUXNKRTk0b2lpRUU4Zzg0dmhCa1d0N01CbGdQclVZbDVNOEFMdFRuZ0JZWVNydXRRZHBNWDl2WVpGZlpBeHU4cHJwSFZPVERKT2szVzd3NVF1UGVZTDI5WGRLOWtzQ01lN21VWUZNSEhMY0JXdnRDZEVLMk0tX205aTBZX0tBd1Z1cHFJa3hScjBZMHNZMTVUelZwNldqS1dJLWRIdk5sRG5WcnJnejZBeDdXN1VmVTNLSHZ2OHpZV3djOXJHelh3SnNSdVE0andoRlBwWXZYdmhTaTNERmczeU1SdWM2UEEwd3dndEFESTUtUWhROXFRYVJTUS10TnRTYVJvU3dtRUdNM05qNEJMQWg5SVBrVjA3RHNqWXFIUTlkS1lzWl9aUmlXUG9LaUVma2JoOURYX1NfRktHYldFTExaTlVCUTc4c250TzhyRkxwcUFCcHhNSUQxc1N0eTRTSXBqS1I0S0hnSG0zZGsyVzdQMXJPMlRtbHNRQjY5X3kxR1hfejNUVHBJTUd4WFNWQXN6M01udTJUM2g2M3VKWl9MN2E3LXhYWjJXbFZOMmVtUHNBQ0MtT3Nwb0FCUUkxZzV6d0p3b0tIcXhGUjFtREV5YUFNeWtFRkwyTkhqbWlLSTRQU0hPc0FrMXRZcnZBNDBoRmlXYkRHdk5YWkxteXhlSm5aRG5zZ1dhd09LbGdzSV9Nb2JZOFRCTk9UM1RScS1JcU5DbDU5TFZPRmJuanJ3eHNtUnVyOC05Y1ExckkzSDBDSGNTNUVGQnAxS29CMkdKbzlaeml1LUlxSlZ0SkhYcnl2ZVM3eGtqOUszUmw2Um1SMGNKUmVjZ1hZRFF2dDZCSXNIRVdwNUI0UmJZa2JjOWhIWHZHUmtfVVBlRmFOWkpzdjZZU1FJQzY2SWhYeE5hWklaWlhuaTZjS2QxR1NIUFNMRnNOQ1JhVFNjV0c1cThWbW8tNVpSdHZzWFpNQ1VOdTlxVjcwMWktTUFVUDM4SUlmTUpRODZLbXgtaDZEdFdvbVBOTnhDWE9OMFlhVFc1THlLV3ZLZ2I4QzNzd1NHOW81aWxaVG9pT2pRZUNwdWNoNkd0VzdDbVFYa2FhbjkyVTBTTUhkejhCajNFR2RVdjhpZ01ZVktMQ3R0UGtUOUxfNFloeVpYVnlhNUxDUnBRMXM4dFJYTnNFUnlocERCWXRvcmlXQ1QzQ0Z4aFhLNURqcWlpeEhvOHBxZTRmX2N0cmRILUE2ODBwREYzVzRHMkVzcGlya2tFa3RySFltZWllNXQ1NmpXdkg2ZHV0b3U3SDlFX0JwSFBLM0F0VUF2THE3V0xNdjRUZFgzMXdVOVVJOXFRcmVXaTloNlM4Nk1qam1KODBETC1wRHA2eDMyWDFZem9sR05Nc2NUcE5YRWNXVGpFWDMwSTBEWlA1LW5Ta3N0SmVGQWZxWkJVMkZwV3dyMzgzSnVhM0REc1FCVTVLbllJb3BWT25aTlhZb2R5NU0xRy1EZm5CS2tKVUlBNDE3dFRpd09uTlNSYVAxLUFfcWRrWDdxcDU4Mk44eV9DV3h1ZVE3aHY3aGQ1a3dXZExoQ2QyRDZTR1NnNS1KWFJvUV9YaGREbXZRbjZhdVRZUTMyMlQzSlRkeS1pVHh6alF0Y0JZOXZzMkZZS1hOQzk1eW1tS2ZOazQzdzgtVTdSZTU4Z19MbFQxZ2FCSk5oNjZpVk1BTXE2eDVoaUI4aklUUlh6MlF2ZzlCUV9QaW0yUEN0Y3hKalhQZXBJbnlxXzFnaWlMVlZra00yQ2pERExhSGdUVW5idjZFUV9kXzFoUjlvQmdzZzVUTk8xcThBTUFjOFVrTllxWEtiNjluY2kyQTRwOU9kaEprOEN6RTFoVHZQSG1RdjBPWDBBZWJiOUJreC01SlJVMVJSdXhaSDRoOEpiQkRHZW1ZWExYa09kR3BtQ241Ny1oc0Qtc1ZOVTlMVnY5VFZMZWVvVm5kaFV4OHB4cFFPVDRTdDl6MzJkLXBwS01vT0N6TXRpbDFBNWpOYk9NUVhMMFRZbW1ySGo3X25PRHp0R3c9PXwJaXNacnZayZCntrxJYL_YTNfUsRHgdUUV52iuWCpvvA==; Expires=Mon, 31 Aug 2020 23:35:31 GMT",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{url}}/travels/{{dataid}}",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "travels",
+            "{{dataid}}"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "protocolProfileBehavior": {}
+}

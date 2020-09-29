@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/any.proto";
+
+enum Action {
+  none = 0;
+  create = 1;
+  read = 2;
+  write = 3;
+  delete = 4;
+  rules = 5;
+  graft = 6;
+}
+
+message DataCEL {
+  string col = 1;
+  string id = 2;
+  string creator = 3;
+}
+
+message GraftCEL {
+  string col = 1;
+  string did = 2;
+  string id = 3;
+  string creator = 4;
+  int64 created_at = 5;
+}
+
+message AuthCEL {
+  string uid = 1;
+  string email = 2;
+  bool validated = 3;
+  repeated string scope = 4;
+  string group = 5;
+}
+
+message PermCEL {
+  bool read = 1;
+  bool write = 2;
+  bool delete = 3;
+  bool rules = 4;
+  bool graft = 5;
+}
+
+// Conditions
+message OperationParams {
+  string func = 1;
+  string path = 2;
+  string value = 3;
+}
+
+message Conditions {
+  repeated google.protobuf.Any items = 1;
+}
+
+message SearchQuery {
+  string collection = 1;
+  google.protobuf.Any condition = 2;
+}

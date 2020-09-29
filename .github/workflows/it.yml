@@ -1,0 +1,86 @@
+name: API
+
+on:
+  create:
+    tags:
+      - 'v*'
+
+  workflow_dispatch:
+    inputs:
+      fx_debug:
+        description: 'Enables debug mode'
+        required: false
+        default: true
+
+jobs:
+
+  tests:
+    name: Test Firex server API with postman
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Get dependencies
+        run: |
+          go get -v -t -d ./...
+          if [ -f Gopkg.toml ]; then
+              curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+              dep ensure
+          fi
+
+      - name: Build
+        run: go build -o fire -v .
+
+      - name: Test
+        run: go test -v .
+
+      - name: Set up MySQL
+        uses: samin/mysql-action@v1
+        with:
+          host port: 3306
+          container port: 3306
+          character set server: 'utf8'
+          collation server: 'utf8_general_ci'
+          mysql version: '8.0'
+          mysql database: 'omestore'
+          mysql root password: 'omestore'
+          mysql user: 'omestore'
+          mysql password: 'omestore'
+
+      - name: Run Firex server
+        run: ./fire --p=8080 --d=./working-dir --m="root:omestore@(127.0.0.1:3306)/omestore?charset=utf8"
+
+      - name: Set up Newman enviroment
+        run: |
+          ADMINPSSWD=`cat ./wroking-dir/admin-pwd`
+          cat > api.postman_environment.json <<EOC
+            "id": "fxenv",
+            "name": "omestore",
+            "values": [
+              {
+                "key": "url",
+                "value": "http://127.0.0.1:8080",
+                "enabled": true
+              },
+              {
+                "key": "adminpwd",
+                "value": "$ADMINPSSWD",
+                "enabled": true
+              }
+            ],
+            "_postman_variable_scope": "environment"
+          EOC
+      - name: Run Newman api tests
+        uses: matt-ball/newman-action@master
+        with:
+          collection: api.postman_collection.json
+          environment: api.postman_environment.json
