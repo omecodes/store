@@ -3,5 +3,6 @@ rvm:
   - 1.15
 
 script:
+  - go get
   - go build omestore.go
   - go test ./...

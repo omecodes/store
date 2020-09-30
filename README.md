@@ -1,6 +1,6 @@
-# Firex
+# Omestore
 
-Firex is a real time database backend service designed for fast mobile and web apps development. 
+Omestore is a real time database backend service designed for fast mobile and web apps development. 
 
 On top of an API to C.R.U.D json documents from a MySQL database omestore uses a CEL based security rules layer to manage access to documents.
 
@@ -12,7 +12,7 @@ go get github.com/omecodes/omestore
 
 ### requirements
 
-Firex only a need a MySQL database installed to run.
+Omestore only a need a MySQL database installed to run.
 
 ### Run
 
@@ -97,4 +97,4 @@ curl --location --request POST 'http://127.0.0.1/.settings/security/rules/access
 
 ## API with swagger
 
-Go to [Swagger online editor](https://editor.swagger.io/) and paste the content of the [omestore API specification](https://github.com/omecodes/omestore/blob/master/api.swagger.yml) to learn more about the Firex or generate a client code of the language you are working with.
+Go to [Swagger online editor](https://editor.swagger.io/) and paste the content of the [omestore API specification](https://github.com/omecodes/omestore/blob/master/api.swagger.yml) to learn more about the Omestore or generate a client code of the language you are working with.
