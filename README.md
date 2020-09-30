@@ -1,4 +1,5 @@
-# Omestore
+[![Build Status](https://travis-ci.com/omecodes/omestore.svg?token=QUyy7EoZqdBaaAXPQDKS&branch=master)](https://travis-ci.com/omecodes/omestore.svg?token=QUyy7EoZqdBaaAXPQDKS&branch=master)
+# Omestore 
 
 Omestore is a real time database backend service designed for fast mobile and web apps development. 
 
