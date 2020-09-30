@@ -1,9 +1,9 @@
 swagger: "2.0"
 info:
-  description: "This is the Fire x server API specification"
+  description: "This is the Omestore server API specification"
   version: "0.0.1"
-  title: "Sagger Fire x"
-  termsOfService: "https://omestoreio.com/terms/"
+  title: "Omestore"
+  termsOfService: "https://omestore.com/terms/"
   contact:
     email: "omecodes@gmail.com"
   license:

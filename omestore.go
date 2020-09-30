@@ -20,7 +20,7 @@ func init() {
 	flags := com.PersistentFlags()
 	flags.StringVar(&host, "h", "127.0.0.1", "Domain or IP")
 	flags.StringVar(&dir, "d", "", "Data directory")
-	flags.StringVar(&dsn, "m", "omestore:omestore@(127.0.0.1:3306)/omestore?charset=utf8", "MySQL database source name")
+	flags.StringVar(&dsn, "m", "root:toor@(127.0.0.1:3306)/omestore?charset=utf8", "MySQL database source name")
 	flags.IntVar(&port, "p", 80, "HTTP server port")
 }
 

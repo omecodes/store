@@ -32,7 +32,7 @@ import (
 	"strings"
 )
 
-var debug = os.Getenv("fx_debug")
+var debug = os.Getenv("OMESTORE_DEBUG")
 
 type Config struct {
 	Dir    string
@@ -308,6 +308,17 @@ func (s *Server) detectAuthentication(next http.Handler) http.Handler {
 				})
 				r = r.WithContext(ctx)
 			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) detectOAuth2Authorization(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := r.Header
+		authorization := h.Get("Authorization")
+
+		if authorization != "" {
 		}
 		next.ServeHTTP(w, r)
 	})

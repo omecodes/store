@@ -1,0 +1,7 @@
+language: golang
+rvm:
+  - 1.15
+
+script:
+  - go build omestore.go
+  - go test ./...
