@@ -270,7 +270,7 @@ func (aq *AccessQuery) WithOwner(opts ...func(*UserQuery)) *AccessQuery {
 // Example:
 //
 //	var v []struct {
-//		CreatedBy string `json:"creator,omitempty"`
+//		Creator string `json:"creator,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -296,7 +296,7 @@ func (aq *AccessQuery) GroupBy(field string, fields ...string) *AccessGroupBy {
 // Example:
 //
 //	var v []struct {
-//		CreatedBy string `json:"creator,omitempty"`
+//		Creator string `json:"creator,omitempty"`
 //	}
 //
 //	client.Access.Query().
