@@ -2,15 +2,16 @@ package store
 
 import (
 	"context"
+	"time"
+
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	ome "github.com/omecodes/libome"
 	"github.com/omecodes/omestore/ent"
 	"github.com/omecodes/omestore/pb"
-	"time"
 )
 
-type CELParams struct {
+type celParams struct {
 	auth  *pb.AuthCEL
 	data  *pb.DataCEL
 	graft *pb.GraftCEL
@@ -21,7 +22,7 @@ type policyHandler struct {
 	base
 }
 
-func (p *policyHandler) evaluate(ctx *context.Context, state *CELParams, rule string) (bool, error) {
+func (p *policyHandler) evaluate(ctx *context.Context, state *celParams, rule string) (bool, error) {
 	if rule == "" || rule == "false" {
 		return false, nil
 	}
@@ -92,10 +93,12 @@ func (p *policyHandler) actionRuleForGraft(ctx *context.Context, action pb.Actio
 }
 
 func (p *policyHandler) assertIsAllowedOnData(ctx *context.Context, action pb.Action, collection string, id string) error {
-	s := &CELParams{
+	authCEL := getAuthCEL(*ctx)
+
+	s := &celParams{
 		at:    time.Now().Unix(),
 		data:  &pb.DataCEL{},
-		auth:  &pb.AuthCEL{},
+		auth:  &authCEL,
 		graft: &pb.GraftCEL{},
 	}
 
@@ -117,24 +120,6 @@ func (p *policyHandler) assertIsAllowedOnData(ctx *context.Context, action pb.Ac
 		s.data.Id = id
 	}
 
-	// loading jwt
-	cred := ome.CredentialsFromContext(*ctx)
-
-	if cred != nil {
-		route := getRoute(SkipPoliciesCheck())
-		info, err := route.UserInfo(*ctx, cred.Username, pb.UserOptions{WithGroups: true})
-		if err != nil {
-			return err
-		}
-
-		s.auth.Uid = info.ID
-		s.auth.Email = info.Email
-		s.auth.Validated = info.Validated
-		if info.Edges.Group != nil {
-			s.auth.Group = info.Edges.Group.ID
-		}
-	}
-
 	allowed, err := p.evaluate(ctx, s, rule)
 	if err != nil {
 		log.Error("failed to evaluate access rule", log.Err(err))
@@ -149,10 +134,12 @@ func (p *policyHandler) assertIsAllowedOnData(ctx *context.Context, action pb.Ac
 }
 
 func (p *policyHandler) assertIsAllowedOnGraft(ctx *context.Context, action pb.Action, collection string, dataID string, id string) error {
-	s := &CELParams{
+	authCEL := getAuthCEL(*ctx)
+
+	s := &celParams{
 		at:    time.Now().Unix(),
 		data:  &pb.DataCEL{},
-		auth:  &pb.AuthCEL{},
+		auth:  &authCEL,
 		graft: &pb.GraftCEL{},
 	}
 
@@ -181,24 +168,6 @@ func (p *policyHandler) assertIsAllowedOnGraft(ctx *context.Context, action pb.A
 	s.graft.Id = id
 	s.graft.Creator = graftInfo.CreatedBy
 	s.graft.CreatedAt = graftInfo.CreatedAt
-
-	// loading jwt
-	cred := ome.CredentialsFromContext(*ctx)
-
-	if cred != nil {
-		route := getRoute(SkipPoliciesCheck())
-		info, err := route.UserInfo(*ctx, cred.Username, pb.UserOptions{WithGroups: true})
-		if err != nil {
-			return err
-		}
-
-		s.auth.Uid = info.ID
-		s.auth.Email = info.Email
-		s.auth.Validated = info.Validated
-		if info.Edges.Group != nil {
-			s.auth.Group = info.Edges.Group.ID
-		}
-	}
 
 	allowed, err := p.evaluate(ctx, s, rule)
 	if err != nil {

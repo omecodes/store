@@ -2,27 +2,28 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/omecodes/common/utils/prompt"
 	"github.com/omecodes/omestore/info"
 	"github.com/omecodes/omestore/store"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var (
-	port int
-	dsn  string
-	host string
-	dir  string
-	cid string
-	secret string
+	port            int
+	omeServer       string
+	omeCertFilename string
+	dsn             string
+	host            string
+	dir             string
 )
 
 func init() {
 	flags := com.PersistentFlags()
-	flags.StringVar(&cid, "cid", "", "Ome client ID")
-	flags.StringVar(&secret, "secret", "", "Ome client secret")
+	flags.StringVar(&omeServer, "ome", "https://ome.ci", "Ome server address")
+	flags.StringVar(&omeCertFilename, "ome-crt", "", "Ome server certificate file path in case of self-signed")
 	flags.StringVar(&host, "host", "127.0.0.1", "Domain or IP")
 	flags.StringVar(&dir, "d", "", "Data directory")
 	flags.StringVar(&dsn, "m", "root:toor@(127.0.0.1:3306)/omestore?charset=utf8", "MySQL database source name")
@@ -30,9 +31,11 @@ func init() {
 
 	_ = cobra.MarkFlagRequired(flags, "cid")
 	_ = cobra.MarkFlagRequired(flags, "secret")
+	_ = cobra.MarkFlagRequired(flags, "ome")
+	_ = cobra.MarkFlagRequired(flags, "ome-crt")
 
 	com.AddCommand(&cobra.Command{
-		Use: "version",
+		Use:   "version",
 		Short: "Version info",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println()
@@ -50,10 +53,12 @@ var com = &cobra.Command{
 	Short: "Runs omestore server",
 	Run: func(cmd *cobra.Command, args []string) {
 		server := store.NewServer(store.Config{
-			Dir:    dir,
-			DSN:    dsn,
-			Domain: host,
-			Port:   port,
+			OmeHost:         omeServer,
+			OmeCertFilename: omeCertFilename,
+			Dir:             dir,
+			DSN:             dsn,
+			Domain:          host,
+			Port:            port,
 		})
 		err := server.Start()
 		if err != nil {
@@ -67,7 +72,6 @@ var com = &cobra.Command{
 }
 
 func main() {
-	fmt.Printf("running store at %s:%d\n", host, port)
 	err := com.Execute()
 	if err != nil {
 		fmt.Println(err)

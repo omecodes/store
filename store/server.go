@@ -8,6 +8,13 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
+	"net"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/omecodes/common/dao/mapping"
@@ -15,7 +22,8 @@ import (
 	"github.com/omecodes/common/httpx"
 	"github.com/omecodes/common/netx"
 	"github.com/omecodes/common/utils/log"
-	ome2 "github.com/omecodes/libome"
+	ome "github.com/omecodes/libome"
+	authpb "github.com/omecodes/libome/proto/auth"
 	"github.com/omecodes/omestore/ent"
 	"github.com/omecodes/omestore/ent/user"
 	"github.com/omecodes/omestore/pb"
@@ -24,23 +32,22 @@ import (
 	"github.com/sethvargo/go-password/password"
 	"github.com/shibukawa/configdir"
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
-	"io/ioutil"
-	"net"
-	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 var debug = os.Getenv("OMESTORE_DEBUG")
 
+// Config contains info to run configure an instance of Server
 type Config struct {
-	Dir    string
-	DSN    string
-	Domain string
-	Port   int
+	OmeHost         string
+	OmeCertFilename string
+	Dir             string
+	DSN             string
+	Domain          string
+	Port            int
+	Ome             *ome.Info
 }
 
+// NewServer is a server constructor
 func NewServer(config Config, opts ...netx.ListenOption) *Server {
 	s := new(Server)
 	s.options = opts
@@ -48,12 +55,13 @@ func NewServer(config Config, opts ...netx.ListenOption) *Server {
 	return s
 }
 
+// Server is a omestore API server
 type Server struct {
 	initialized bool
 
-	options   []netx.ListenOption
-	config    *Config
-	omeClient *ome2.Client
+	options []netx.ListenOption
+	config  *Config
+	OmeInfo *ome.Info
 
 	adminPassword   string
 	dataStore       pb.Store
@@ -72,19 +80,24 @@ func (s *Server) init() error {
 	}
 	s.initialized = true
 
+	var err error
+	s.OmeInfo, err = ome.GetInfo(s.config.OmeHost, s.config.OmeCertFilename)
+	if err != nil {
+		return err
+	}
+
 	if s.config.Dir == "" {
 		dirs := configdir.New("Ome", "omestore")
 		globalFolder := dirs.QueryFolders(configdir.Global)[0]
 		s.config.Dir = globalFolder.Path
 	} else {
-		var err error
 		s.config.Dir, err = filepath.Abs(s.config.Dir)
 		if err != nil {
 			return err
 		}
 	}
 
-	err := os.MkdirAll(s.config.Dir, os.ModePerm)
+	err = os.MkdirAll(s.config.Dir, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -194,6 +207,7 @@ func (s *Server) getStoredKey(name string, size int) ([]byte, error) {
 	return key, nil
 }
 
+// Start starts omestore API server
 func (s *Server) Start() error {
 	err := s.init()
 	if err != nil {
@@ -210,6 +224,7 @@ func (s *Server) startDataServer() error {
 		return err
 	}
 
+	fmt.Println("Running server at", address)
 	var handler http.Handler
 
 	router := dataRouter()
@@ -302,7 +317,7 @@ func (s *Server) detectAuthentication(next http.Handler) http.Handler {
 					}
 				}
 
-				ctx = ome2.ContextWithCredentials(ctx, &ome2.Credentials{
+				ctx = ome.ContextWithCredentials(ctx, &ome.Credentials{
 					Username: authUser,
 					Password: pass,
 				})
@@ -317,13 +332,38 @@ func (s *Server) detectOAuth2Authorization(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := r.Header
 		authorization := h.Get("Authorization")
-
 		if authorization != "" {
+			token := strings.TrimPrefix(authorization, "Bearer ")
+			jwt, err := authpb.ParseJWT(token)
+			if err != nil {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+
+			state, err := jwt.Verify(s.OmeInfo.Oauth2.SignatureKey)
+			if err != nil {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+
+			if state != authpb.JWTState_VALID {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+
+			ctx := contextWithAuthCEL(r.Context(), pb.AuthCEL{
+				Uid:       jwt.Claims.Sub,
+				Email:     jwt.Claims.Email,
+				Validated: jwt.Claims.EmailVerified,
+				Scope:     strings.Split(jwt.Claims.Scope, ""),
+			})
+			r = r.WithContext(ctx)
 		}
 		next.ServeHTTP(w, r)
 	})
 }
 
+// Stop stops omestore API server
 func (s *Server) Stop() {
 	_ = s.dListener.Close()
 }

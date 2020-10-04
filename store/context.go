@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
@@ -28,6 +29,7 @@ type ctxAccesses struct{}
 type ctxInfo struct{}
 type ctxGraftInfo struct{}
 type ctxCELPrograms struct{}
+type ctxAuthCEL struct{}
 
 type contextUpdaterFunc func(ctx context.Context) context.Context
 
@@ -329,4 +331,16 @@ func getProgram(ctx *context.Context, rule string) (cel.Program, error) {
 	m[rule] = prg
 	*ctx = context.WithValue(*ctx, ctxCELPrograms{}, m)
 	return prg, nil
+}
+
+func getAuthCEL(ctx context.Context) pb.AuthCEL {
+	o := ctx.Value(ctxAuthCEL{})
+	if o == nil {
+		return pb.AuthCEL{}
+	}
+	return o.(pb.AuthCEL)
+}
+
+func contextWithAuthCEL(ctx context.Context, a pb.AuthCEL) context.Context {
+	return context.WithValue(ctx, ctxAuthCEL{}, a)
 }
