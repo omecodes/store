@@ -99,12 +99,6 @@ func (s *Server) contextWithAdminPassword() contextUpdaterFunc {
 	}
 }
 
-func (s *Server) contextWithDataDir() contextUpdaterFunc {
-	return func(parent context.Context) context.Context {
-		return context.WithValue(parent, ctxDataDir{}, s.config.Dir)
-	}
-}
-
 func (s *Server) contextWithDataDB() contextUpdaterFunc {
 	return func(parent context.Context) context.Context {
 		return context.WithValue(parent, ctxStore{}, s.dataStore)

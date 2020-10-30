@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
+	"github.com/omecodes/service"
+
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/omecodes/common/env/app"
 	"github.com/omecodes/common/utils/prompt"
 	"github.com/omecodes/omestore/info"
 	"github.com/omecodes/omestore/store"
@@ -12,29 +16,25 @@ import (
 )
 
 var (
-	port            int
-	omeServer       string
-	omeCertFilename string
-	dsn             string
-	host            string
-	dir             string
+	dsn            string
+	cmdParams      service.Params
+	application    *app.App
+	options        []app.Option
+	command        *cobra.Command
+	defaultOptions = []app.Option{
+		app.WithRunCommandFunc(start),
+		app.WithVersion("1.0.1"),
+	}
 )
 
 func init() {
-	flags := com.PersistentFlags()
-	flags.StringVar(&omeServer, "ome", "https://ome.ci", "Ome server address")
-	flags.StringVar(&omeCertFilename, "ome-crt", "", "Ome server certificate file path in case of self-signed")
-	flags.StringVar(&host, "host", "127.0.0.1", "Domain or IP")
-	flags.StringVar(&dir, "d", "", "Data directory")
-	flags.StringVar(&dsn, "m", "root:toor@(127.0.0.1:3306)/omestore?charset=utf8", "MySQL database source name")
-	flags.IntVar(&port, "p", 80, "HTTP server port")
+	if options == nil {
+		options = defaultOptions
+	}
 
-	_ = cobra.MarkFlagRequired(flags, "cid")
-	_ = cobra.MarkFlagRequired(flags, "secret")
-	_ = cobra.MarkFlagRequired(flags, "ome")
-	_ = cobra.MarkFlagRequired(flags, "ome-crt")
-
-	com.AddCommand(&cobra.Command{
+	application = app.New("Ome", "firedata", options...)
+	command = application.GetCommand()
+	command.AddCommand(&cobra.Command{
 		Use:   "version",
 		Short: "Version info",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -46,33 +46,41 @@ func init() {
 			fmt.Println()
 		},
 	})
+
+	startCommand := application.StartCommand()
+	service.SetCMDFlags(startCommand, &cmdParams, true)
+	flags := startCommand.PersistentFlags()
+	flags.StringVar(&dsn, "dsn", "root:toor@(127.0.0.1:3306)/firedata?charset=utf8", "MySQL database source name")
 }
 
-var com = &cobra.Command{
-	Use:   "omestore",
-	Short: "Runs omestore server",
-	Run: func(cmd *cobra.Command, args []string) {
-		server := store.NewServer(store.Config{
-			OmeHost:         omeServer,
-			OmeCertFilename: omeCertFilename,
-			Dir:             dir,
-			DSN:             dsn,
-			Domain:          host,
-			Port:            port,
-		})
-		err := server.Start()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(-1)
-		}
+func start() {
+	ctx := context.Background()
+	cmdParams.Name = "firedata"
+	cmdParams.NoRegistry = true
 
-		defer server.Stop()
-		<-prompt.QuitSignal()
-	},
+	box, err := service.CreateBox(ctx, &cmdParams)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+
+	server := store.NewServer(store.Config{
+		DSN: dsn,
+		Box: box,
+	})
+
+	err = server.Start()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+
+	defer server.Stop()
+	<-prompt.QuitSignal()
 }
 
 func main() {
-	err := com.Execute()
+	err := command.Execute()
 	if err != nil {
 		fmt.Println(err)
 	}

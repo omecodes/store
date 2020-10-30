@@ -7,13 +7,16 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/gorilla/mux"
+
+	"github.com/omecodes/service"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
@@ -24,13 +27,13 @@ import (
 	"github.com/omecodes/common/utils/log"
 	ome "github.com/omecodes/libome"
 	authpb "github.com/omecodes/libome/proto/auth"
+	pb2 "github.com/omecodes/libome/proto/service"
 	"github.com/omecodes/omestore/ent"
 	"github.com/omecodes/omestore/ent/user"
 	"github.com/omecodes/omestore/pb"
 	"github.com/omecodes/omestore/store/internals"
 	"github.com/omecodes/omestore/store/store"
 	"github.com/sethvargo/go-password/password"
-	"github.com/shibukawa/configdir"
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
@@ -38,19 +41,13 @@ var debug = os.Getenv("OMESTORE_DEBUG")
 
 // Config contains info to run configure an instance of Server
 type Config struct {
-	OmeHost         string
-	OmeCertFilename string
-	Dir             string
-	DSN             string
-	Domain          string
-	Port            int
-	Ome             *ome.Info
+	Box *service.Box
+	DSN string
 }
 
 // NewServer is a server constructor
-func NewServer(config Config, opts ...netx.ListenOption) *Server {
+func NewServer(config Config) *Server {
 	s := new(Server)
-	s.options = opts
 	s.config = &config
 	return s
 }
@@ -61,7 +58,6 @@ type Server struct {
 
 	options []netx.ListenOption
 	config  *Config
-	OmeInfo *ome.Info
 
 	adminPassword   string
 	dataStore       pb.Store
@@ -79,30 +75,6 @@ func (s *Server) init() error {
 		return nil
 	}
 	s.initialized = true
-
-	var err error
-	s.OmeInfo, err = ome.GetInfo(s.config.OmeHost, s.config.OmeCertFilename)
-	if err != nil {
-		return err
-	}
-
-	if s.config.Dir == "" {
-		dirs := configdir.New("Ome", "omestore")
-		globalFolder := dirs.QueryFolders(configdir.Global)[0]
-		s.config.Dir = globalFolder.Path
-	} else {
-		s.config.Dir, err = filepath.Abs(s.config.Dir)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = os.MkdirAll(s.config.Dir, os.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	log.File = filepath.Join(s.config.Dir, "omestore.log")
 
 	db, err := sql.Open("mysql", s.config.DSN)
 	if err != nil {
@@ -126,11 +98,6 @@ func (s *Server) init() error {
 
 	s.appData, err = internals.NewStore(db)
 
-	err = os.MkdirAll(s.config.Dir, os.ModePerm)
-	if err != nil {
-		return err
-	}
-
 	s.celEnv, err = cel.NewEnv(
 		cel.Types(&pb.AuthCEL{}),
 		cel.Types(&pb.DataCEL{}),
@@ -153,7 +120,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	adminPwdFilename := filepath.Join(s.config.Dir, "admin-pwd")
+	adminPwdFilename := filepath.Join(s.config.Box.Dir(), "admin-pwd")
 	passwordBytes, err := ioutil.ReadFile(adminPwdFilename)
 	if err != nil {
 		genPassword, err := password.Generate(16, 5, 11, false, false)
@@ -189,7 +156,7 @@ func (s *Server) init() error {
 }
 
 func (s *Server) getStoredKey(name string, size int) ([]byte, error) {
-	cookiesKeyFilename := filepath.Join(s.config.Dir, name+".key")
+	cookiesKeyFilename := filepath.Join(s.config.Box.Dir(), name+".key")
 	key, err := ioutil.ReadFile(cookiesKeyFilename)
 	if err != nil {
 		key = make([]byte, size)
@@ -217,31 +184,22 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) startDataServer() error {
-	var err error
-	address := fmt.Sprintf("%s:%d", s.config.Domain, s.config.Port)
-	s.dListener, err = netx.Listen(address, s.options...)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Running server at", address)
-	var handler http.Handler
-
-	router := dataRouter()
-	handler = s.updateContext(router)
-	handler = s.detectAuthentication(handler)
-	handler = httpx.Logger("omestore").Handle(handler)
-
-	srv := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", s.config.Domain, s.config.Port),
-		Handler: handler,
-	}
-	go srv.Serve(s.dListener)
-	return nil
-}
-
-func (s *Server) startControlServer() error {
-	return nil
+	return s.config.Box.StartGateway(&service.GatewayParams{
+		ForceRegister: false,
+		MiddlewareList: []mux.MiddlewareFunc{
+			s.updateContext,
+			s.detectAuthentication,
+			httpx.Logger("omestore").Handle,
+		},
+		Port: 80,
+		ProvideRouter: func() *mux.Router {
+			return dataRouter()
+		},
+		Node: &pb2.Node{
+			Protocol: pb2.Protocol_Http,
+			Security: pb2.Security_None,
+		},
+	})
 }
 
 func (s *Server) updateContext(next http.Handler) http.Handler {
@@ -249,7 +207,6 @@ func (s *Server) updateContext(next http.Handler) http.Handler {
 		ctx := r.Context()
 		ctx = s.contextWithDataDB()(ctx)
 		ctx = s.contextWithDB()(ctx)
-		ctx = s.contextWithDataDir()(ctx)
 		ctx = s.contextWithAdminPassword()(ctx)
 		ctx = s.contextWithAppData()(ctx)
 		ctx = s.contextWithCelEnv()(ctx)
@@ -330,17 +287,16 @@ func (s *Server) detectAuthentication(next http.Handler) http.Handler {
 
 func (s *Server) detectOAuth2Authorization(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h := r.Header
-		authorization := h.Get("Authorization")
-		if authorization != "" {
-			token := strings.TrimPrefix(authorization, "Bearer ")
-			jwt, err := authpb.ParseJWT(token)
+		authorization := r.Header.Get("authorization")
+		if authorization != "" && strings.HasPrefix(authorization, "Bearer ") {
+			authorization = strings.TrimPrefix(authorization, "Bearer ")
+			jwt, err := authpb.ParseJWT(authorization)
 			if err != nil {
-				w.WriteHeader(http.StatusForbidden)
+				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
 
-			state, err := jwt.Verify(s.OmeInfo.Oauth2.SignatureKey)
+			state, err := jwt.Verify("")
 			if err != nil {
 				w.WriteHeader(http.StatusForbidden)
 				return
@@ -357,6 +313,7 @@ func (s *Server) detectOAuth2Authorization(next http.Handler) http.Handler {
 				Validated: jwt.Claims.EmailVerified,
 				Scope:     strings.Split(jwt.Claims.Scope, ""),
 			})
+
 			r = r.WithContext(ctx)
 		}
 		next.ServeHTTP(w, r)
