@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+option go_package = "github.com/omecodes/omestore/pb/api.proto;oms";
+
+enum AllowedTo {
+  doNothing = 0;
+  create = 1;
+  read = 2;
+  write = 4;
+  delete = 8;
+  rules = 16;
+  graft = 32;
+  doAnything = 63;
+}
+
+message RelationDef {
+  string name = 1;
+  bool equivalence = 2;
+}
+
+message Permission {
+  string by = 1;
+  string for = 2;
+  string collection = 3;
+  string data_id = 4;
+  AllowedTo actions = 5;
+}
+
+/* message Group {
+  string id = 1;
+  string created_by = 2;
+  string created_at = 3;
+} */
+
+message Object {
+  string collection = 1;
+  string id = 2;
+  string created_by = 3;
+  int64 created_at = 4;
+  int64 size = 5;
+  string json_encoded = 6;
+}
+
+message Graft {
+  string collection = 1;
+  string data_id = 2;
+  string id = 3;
+  string created_by = 4;
+  int64 created_at = 5;
+  int64 size = 6;
+  string content = 7;
+}
+
+message Auth {
+  string uid = 1;
+  string email = 2;
+  bool worker = 3;
+  bool validated = 4;
+  repeated string scope = 5;
+  string group = 6;
+}
+
+message Perm {
+  bool read = 1;
+  bool write = 2;
+  bool delete = 3;
+  bool rules = 4;
+  bool graft = 5;
+}
+
+message OperationParams {
+  string func = 1;
+  string path = 2;
+  string value = 3;
+}
+
+message Conditions {
+  repeated google.protobuf.Any items = 1;
+}
+
+message SearchQuery {
+  string collection = 1;
+  google.protobuf.Any condition = 2;
+}
