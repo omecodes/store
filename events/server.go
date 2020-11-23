@@ -3,10 +3,13 @@ package events
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
+	"github.com/xo/dburl"
 	"net"
+	"strings"
 	"sync"
+	"time"
 
-	"github.com/omecodes/omestore/common"
 	"github.com/omecodes/zebou/v2"
 	"github.com/siddontang/go-mysql/canal"
 )
@@ -14,18 +17,19 @@ import (
 type Server struct {
 	canal.DummyEventHandler
 	sync.Mutex
-	dsn       string
-	address   string
-	validator common.CredentialsValidator
-	tc        *tls.Config
-	dbCanal   *canal.Canal
-	hub       *zebou.Hub
-	peers     []*zebou.PeerInfo
-	listener  net.Listener
-	err       error
+
+	config *Config
+
+	errors        chan error
+	stopRequested bool
+	dbCanal       *canal.Canal
+	hub           *zebou.Hub
+	peers         []*zebou.PeerInfo
+	listener      net.Listener
 }
 
 func (s *Server) OnRow(e *canal.RowsEvent) error {
+	fmt.Println(e.String())
 	return nil
 }
 
@@ -58,47 +62,77 @@ func (s *Server) OnMessage(ctx context.Context, msg *zebou.ZeMsg) {
 }
 
 func (s *Server) Address() string {
-	return s.address
+	return s.config.Address
 }
 
-func (s *Server) start() error {
-
-	s.hub, s.err = zebou.Serve(s.listener, s)
-	if s.err != nil {
-		return s.err
+func (s *Server) start() {
+	if !strings.HasPrefix(s.config.DBUri, "mysql://") {
+		s.config.DBUri = "mysql://" + s.config.DBUri
 	}
-	return s.err
+
+	u, err := dburl.Parse(s.config.DBUri)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for {
+		c := canal.NewDefaultConfig()
+		c.Addr = fmt.Sprintf("%s:%s", u.Host, u.Port())
+		c.User = u.User.Username()
+		c.Password, _ = u.User.Password()
+		c.Dump.TableDB = u.DSN
+		c.Dump.Tables = []string{"objects"}
+
+		s.dbCanal, err = canal.NewCanal(c)
+		if err != nil {
+			fmt.Println(err)
+			time.Sleep(time.Second)
+			continue
+		}
+
+		s.dbCanal.SetEventHandler(s)
+
+		err = s.dbCanal.Run()
+		if err != nil {
+			fmt.Println(err)
+			<-time.After(time.Second)
+		}
+	}
 }
 
 func (s *Server) Stop() error {
-	return nil
+	s.stopRequested = true
+	return s.listener.Close()
 }
 
-func Serve(dsn string, address string, validator common.CredentialsValidator) (*Server, error) {
-	s := &Server{
-		dsn:       dsn,
-		address:   address,
-		validator: validator,
+func (s *Server) Errors() chan error {
+	if s.errors != nil {
+		s.errors = make(chan error)
 	}
+	return s.errors
+}
+
+func Serve(cfg *Config) (*Server, error) {
+	s := &Server{
+		config: cfg,
+	}
+
 	var err error
-	s.listener, err = net.Listen("tcp", address)
+	if cfg.TlsConfig != nil {
+		s.listener, err = tls.Listen("tcp", cfg.Address, cfg.TlsConfig)
+	} else {
+		s.listener, err = net.Listen("tcp", cfg.Address)
+	}
 	if err != nil {
 		return nil, err
 	}
-	return s, s.start()
-}
 
-func ServeOverTLS(dsn string, address string, tc *tls.Config, validator common.CredentialsValidator) (*Server, error) {
-	s := &Server{
-		dsn:       dsn,
-		address:   address,
-		tc:        tc,
-		validator: validator,
-	}
-	var err error
-	s.listener, err = tls.Listen("tcp", address, tc)
+	s.hub, err = zebou.Serve(s.listener, s)
 	if err != nil {
 		return nil, err
 	}
-	return s, s.start()
+
+	go s.start()
+	return s, nil
 }
