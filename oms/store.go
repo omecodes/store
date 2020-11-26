@@ -2,32 +2,16 @@ package oms
 
 import (
 	"context"
-	"github.com/golang/protobuf/ptypes/any"
 )
 
 type Store interface {
-	Save(ctx context.Context, data *Object) error
-	Update(ctx context.Context, data *Object) error
-	Delete(ctx context.Context, data *Object) error
-	List(ctx context.Context, model string, opts ListOptions) (*DataList, error)
-	Collections(ctx context.Context) ([]string, error)
-	Get(ctx context.Context, collection string, id string, opts DataOptions) (*Object, error)
-	Info(ctx context.Context, collection string, id string) (*Info, error)
-	Search(ctx context.Context, collection string, condition *any.Any, opts ListOptions) (*DataList, error)
-
-	SaveGraft(ctx context.Context, graft *Graft) (string, error)
-	GetGraft(ctx context.Context, collection string, dataID string, id string) (*Graft, error)
-	GraftInfo(ctx context.Context, collection string, dataID string, id string) (*GraftInfo, error)
-	DeleteGraft(ctx context.Context, collection string, dataID string, id string) error
-	GetAllGraft(ctx context.Context, collection string, dataID string, opts ListOptions) (*GraftList, error)
-}
-
-type Info struct {
-	ID         string `json:"id"`
-	CreatedBy  string `json:"created_by"`
-	CreatedAt  int64  `json:"created_at"`
-	Collection string `json:"collection"`
-	Size       int64  `json:"size"`
+	Save(ctx context.Context, object *Object) error
+	Update(ctx context.Context, patch *Patch) error
+	Delete(ctx context.Context, objectID string) error
+	List(ctx context.Context, opts ListOptions) (*ListResult, error)
+	Get(ctx context.Context, objectID string, opts DataOptions) (*Object, error)
+	Info(ctx context.Context, objectID string) (*Info, error)
+	Search(ctx context.Context, opts SearchOptions) (*SearchResult, error)
 }
 
 type GraftInfo struct {
@@ -41,9 +25,7 @@ type GraftInfo struct {
 
 type PutDataOptions struct{}
 
-type PatchOptions struct {
-	Path string `json:"path"`
-}
+type PatchOptions struct{}
 
 type DeleteOptions struct {
 	Path string `json:"path"`
@@ -55,14 +37,19 @@ type DataOptions struct {
 }
 
 type ListOptions struct {
-	IDFilter IDFilter
-	Path     string `json:"path"`
-	Before   int64  `json:"before"`
-	Count    int64  `json:"count"`
+	Filter ObjectFilter
+	Path   string `json:"path"`
+	Before int64  `json:"before"`
+	Offset int    `json:"offset"`
+	Count  int    `json:"count"`
 }
 
-type BulkOptions struct {
-	Provider IDFilter
+type SearchOptions struct {
+	Filter     ObjectFilter
+	Before     int64  `json:"before"`
+	Offset     int    `json:"offset"`
+	Count      int    `json:"count"`
+	Expression string `json:"expr"`
 }
 
 type SettingsOptions struct {
@@ -78,17 +65,21 @@ type UserOptions struct {
 
 type GetDataOptions struct {
 	Path string `json:"path"`
+	Info bool   `json:"info"`
 }
 
-type DataList struct {
-	Collection string `json:"collection"`
-	Cursor     DataCursor
+type ListResult struct {
+	Before  int64 `json:"before"`
+	Offset  int   `json:"offset"`
+	Count   int   `json:"count"`
+	Objects []*Object
 }
 
-type GraftList struct {
-	Collection string `json:"collection"`
-	DataID     string `json:"data_id"`
-	Cursor     GraftCursor
+type SearchResult struct {
+	Before  int64 `json:"before"`
+	Offset  int   `json:"offset"`
+	Count   int   `json:"count"`
+	Objects []*Object
 }
 
 type IDFilter interface {
@@ -99,4 +90,14 @@ type IDFilterFunc func(id string) (bool, error)
 
 func (f IDFilterFunc) Filter(id string) (bool, error) {
 	return f(id)
+}
+
+type ObjectFilter interface {
+	Filter(o *Object) (bool, error)
+}
+
+type FilterObjectFunc func(o *Object) (bool, error)
+
+func (f FilterObjectFunc) Filter(o *Object) (bool, error) {
+	return f(o)
 }

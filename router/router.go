@@ -1,4 +1,4 @@
-package oms
+package router
 
 type routes struct {
 	skipPolicies  bool
@@ -26,7 +26,7 @@ func SkipExec() RouteOption {
 	}
 }
 
-func getRoute(opts ...RouteOption) (handler Handler) {
+func Route(opts ...RouteOption) (handler Handler) {
 	routes := routes{}
 
 	for _, o := range opts {
@@ -36,7 +36,7 @@ func getRoute(opts ...RouteOption) (handler Handler) {
 	if !routes.skipExecution {
 		handler = &execHandler{}
 	} else {
-		handler = &doNothing{}
+		handler = &dummyHandler{}
 	}
 
 	if !routes.skipPolicies {

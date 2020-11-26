@@ -9,7 +9,7 @@ enum AllowedTo {
   read = 2;
   write = 4;
   delete = 8;
-  rules = 16;
+  editAcl = 16;
   graft = 32;
   doAnything = 63;
 }
@@ -27,29 +27,11 @@ message Permission {
   AllowedTo actions = 5;
 }
 
-/* message Group {
+message Info {
   string id = 1;
   string created_by = 2;
-  string created_at = 3;
-} */
-
-message Object {
-  string collection = 1;
-  string id = 2;
-  string created_by = 3;
-  int64 created_at = 4;
-  int64 size = 5;
-  string json_encoded = 6;
-}
-
-message Graft {
-  string collection = 1;
-  string data_id = 2;
-  string id = 3;
-  string created_by = 4;
-  int64 created_at = 5;
-  int64 size = 6;
-  string content = 7;
+  int64 created_at = 3;
+  int64 size = 4;
 }
 
 message Auth {
@@ -65,7 +47,7 @@ message Perm {
   bool read = 1;
   bool write = 2;
   bool delete = 3;
-  bool rules = 4;
+  bool edit_rules = 4;
   bool graft = 5;
 }
 
@@ -77,9 +59,4 @@ message OperationParams {
 
 message Conditions {
   repeated google.protobuf.Any items = 1;
-}
-
-message SearchQuery {
-  string collection = 1;
-  google.protobuf.Any condition = 2;
 }

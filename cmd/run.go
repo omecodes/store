@@ -3,9 +3,10 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/common/utils/prompt"
 	"github.com/omecodes/omestore/events"
-	"github.com/omecodes/omestore/oms"
+	"github.com/omecodes/omestore/server"
 	"github.com/omecodes/service/v2"
 	"os"
 )
@@ -21,18 +22,18 @@ func runStore() {
 		os.Exit(-1)
 	}
 
-	server := oms.NewServer(oms.Config{
+	s := server.New(server.Config{
 		DSN: dsn,
 		Box: box,
 	})
 
-	err = server.Start()
+	err = s.Start()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
 
-	defer server.Stop()
+	defer s.Stop()
 	<-prompt.QuitSignal()
 }
 
@@ -44,12 +45,16 @@ func runEventsServer() {
 		TlsConfig: nil,
 	}
 
-	server, err := events.Serve(cfg)
+	s, err := events.Serve(cfg)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
-	defer server.Stop()
+	defer func() {
+		if err := s.Stop(); err != nil {
+			log.Error("server stop caused error", log.Err(err))
+		}
+	}()
 
 	<-prompt.QuitSignal()
 }

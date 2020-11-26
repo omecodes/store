@@ -1,6 +1,7 @@
 package oms
 
 import (
+	"bytes"
 	"database/sql"
 )
 
@@ -23,13 +24,17 @@ func (c *dataCursor) Walk() (bool, error) {
 			return false, nil
 		}
 
-		c.next = new(Object)
-		err := c.rows.Scan(&c.next.Id, &c.next.CreatedBy, &c.next.CreatedAt, &c.next.Size, &c.next.JsonEncoded)
+		var value string
+		err := c.rows.Scan(&value)
 		if err != nil {
 			return false, err
 		}
+
+		c.next = NewObject()
+		c.next.SetContent(bytes.NewBuffer([]byte(value)), int64(len(value)))
+
 		if c.filter != nil {
-			ok, err := c.filter.Filter(c.next.Id)
+			ok, err := c.filter.Filter(c.next.ID())
 			if err != nil {
 				return false, err
 			}
@@ -50,63 +55,8 @@ func (c *dataCursor) Close() error {
 	return c.rows.Close()
 }
 
-func newDataCursor(rows *sql.Rows, filter IDFilter, count int64) DataCursor {
+func NewDataCursor(rows *sql.Rows, filter IDFilter, count int64) DataCursor {
 	return &dataCursor{
-		rows:   rows,
-		filter: filter,
-		count:  count,
-	}
-}
-
-type graftCursor struct {
-	rows   *sql.Rows
-	filter IDFilter
-	count  int64
-	index  int
-	err    error
-	next   *Graft
-}
-
-func (c *graftCursor) Walk() (bool, error) {
-	for {
-		if !c.rows.Next() {
-			return false, nil
-		}
-
-		if c.index > 0 && int64(c.index) == c.count {
-			return false, nil
-		}
-
-		c.next = new(Graft)
-		err := c.rows.Scan(&c.next.Id, &c.next.DataId, &c.next.CreatedBy, &c.next.CreatedAt, &c.next.Size, &c.next.Content)
-		if err != nil {
-			return false, err
-		}
-
-		if c.filter != nil {
-			ok, err := c.filter.Filter(c.next.Id)
-			if err != nil {
-				return false, err
-			}
-			if !ok {
-				continue
-			}
-		}
-		c.index++
-		return true, err
-	}
-}
-
-func (c *graftCursor) Get() *Graft {
-	return c.next
-}
-
-func (c *graftCursor) Close() error {
-	return c.rows.Close()
-}
-
-func newGraftCursor(rows *sql.Rows, filter IDFilter, count int64) GraftCursor {
-	return &graftCursor{
 		rows:   rows,
 		filter: filter,
 		count:  count,
@@ -116,11 +66,5 @@ func newGraftCursor(rows *sql.Rows, filter IDFilter, count int64) GraftCursor {
 type DataCursor interface {
 	Walk() (bool, error)
 	Get() *Object
-	Close() error
-}
-
-type GraftCursor interface {
-	Walk() (bool, error)
-	Get() *Graft
 	Close() error
 }

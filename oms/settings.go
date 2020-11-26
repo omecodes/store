@@ -1,25 +1,25 @@
 package oms
 
 const (
-	settingsDataPath                     = "/data"
-	settingsDataMaxSizePath              = "/data/max_size"
-	settingsSecurityPath                 = "/security"
-	settingsSecurityRulesPath            = "/security/rules"
-	settingsAccessSecurityRulesPath      = "/security/rules/access"
-	settingsDataAccessSecurityRulesPath  = "/security/rules/access/data"
-	settingsGraftAccessSecurityRulesPath = "/security/rules/access/grafts"
-	settingsExtendableSecurityRulesPath  = "/security/rules/extendable"
+	SettingsDataPath                     = "/data"
+	SettingsDataMaxSizePath              = "/data/max_size"
+	SettingsSecurityPath                 = "/security"
+	SettingsSecurityRulesPath            = "/security/rules"
+	SettingsAccessSecurityRulesPath      = "/security/rules/access"
+	SettingsDataAccessSecurityRulesPath  = "/security/rules/access/data"
+	SettingsGraftAccessSecurityRulesPath = "/security/rules/access/grafts"
+	SettingsExtendableSecurityRulesPath  = "/security/rules/extendable"
 )
 
-var settingsPathFormats = map[string]string{
-	settingsDataMaxSizePath: "%d",
+var SettingsPathFormats = map[string]string{
+	SettingsDataMaxSizePath: "%d",
 }
 
-var settingsPathValueMimes = map[string]string{
-	settingsDataMaxSizePath: "text/plain",
+var SettingsPathValueMimes = map[string]string{
+	SettingsDataMaxSizePath: "text/plain",
 }
 
-const defaultSettings = `{
+const DefaultSettings = `{
     "data": {
         "max_size": 5242880
     },

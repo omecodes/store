@@ -1,4 +1,4 @@
-package oms
+package server
 
 import (
 	"crypto/rand"
@@ -6,6 +6,8 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
+	"github.com/omecodes/omestore/oms"
+	"github.com/omecodes/omestore/router"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -37,8 +39,8 @@ type Config struct {
 	DSN string
 }
 
-// NewServer is a server constructor
-func NewServer(config Config) *Server {
+// New is a server constructor
+func New(config Config) *Server {
 	s := new(Server)
 	s.config = &config
 	return s
@@ -47,23 +49,19 @@ func NewServer(config Config) *Server {
 // Server embeds an Ome data store
 // it also exposes an API server
 type Server struct {
-	initialized bool
-
-	options []netx.ListenOption
-	config  *Config
-
-	adminPassword string
-
+	initialized     bool
+	options         []netx.ListenOption
+	config          *Config
+	adminPassword   string
 	dataAccessRules mapping.DoubleMap
 	key             []byte
-	celEnv          *cel.Env
-	dataStore       Store
-
-	settings    bome.JSONMap
-	workers     bome.JSONMap
-	permissions bome.JSONDoubleMap
-
-	dListener net.Listener
+	celPolicyEnv    *cel.Env
+	celSearchEnv    *cel.Env
+	dataStore       oms.Store
+	settings        *bome.JSONMap
+	workers         *bome.JSONMap
+	permissions     *bome.JSONDoubleMap
+	dListener       net.Listener
 }
 
 func (s *Server) init() error {
@@ -92,21 +90,19 @@ func (s *Server) init() error {
 		return err
 	}
 
-	s.dataStore, err = NewStore(db)
+	s.dataStore, err = oms.NewStore(db)
 	if err != nil {
 		return err
 	}
 
-	s.celEnv, err = cel.NewEnv(
-		cel.Types(&Auth{}),
-		cel.Types(&Object{}),
-		cel.Types(&Perm{}),
-		cel.Types(&Graft{}),
+	s.celPolicyEnv, err = cel.NewEnv(
+		cel.Types(&oms.Auth{}),
+		cel.Types(&oms.Info{}),
+		cel.Types(&oms.Perm{}),
 		cel.Declarations(
 			decls.NewVar("at", decls.Int),
 			decls.NewVar("auth", decls.NewObjectType("Auth")),
-			decls.NewVar("data", decls.NewObjectType("Object")),
-			decls.NewVar("graft", decls.NewObjectType("Graft")),
+			decls.NewVar("data", decls.NewObjectType("Info")),
 			decls.NewFunction("acl",
 				decls.NewOverload(
 					"acl",
@@ -117,6 +113,11 @@ func (s *Server) init() error {
 	)
 	if err != nil {
 		return err
+	}
+
+	s.celSearchEnv, err = cel.NewEnv()
+	if err != nil {
+		return nil
 	}
 
 	adminPwdFilename := filepath.Join(s.config.Box.Dir(), "admin-pwd")
@@ -141,7 +142,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	settings, err := s.settings.Get(Settings)
+	settings, err := s.settings.Get(oms.Settings)
 	if err != nil && !errors.IsNotFound(err) {
 		log.Error("could not get db settings")
 		return err
@@ -149,12 +150,11 @@ func (s *Server) init() error {
 
 	if settings == "" {
 		defaultSettings := &bome.MapEntry{
-			Key:   Settings,
-			Value: defaultSettings,
+			Key:   oms.Settings,
+			Value: oms.DefaultSettings,
 		}
 		return s.settings.Save(defaultSettings)
 	}
-
 	return nil
 }
 
@@ -268,7 +268,7 @@ func (s *Server) detectAuthentication(next http.Handler) http.Handler {
 					}
 				}
 
-				ctx := ContextWithUserInfo(r.Context(), &Auth{
+				ctx := router.ContextWithUserInfo(r.Context(), &oms.Auth{
 					Uid:       authUser,
 					Validated: true,
 					Worker:    "admin" != authUser,
@@ -302,7 +302,7 @@ func (s *Server) detectOAuth2Authorization(next http.Handler) http.Handler {
 				return
 			}
 
-			ctx := ContextWithUserInfo(r.Context(), &Auth{
+			ctx := router.ContextWithUserInfo(r.Context(), &oms.Auth{
 				Uid:       jwt.Claims.Sub,
 				Email:     jwt.Claims.Profile.Email,
 				Worker:    false,

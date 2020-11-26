@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"github.com/omecodes/common/env/app"
-	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/service/v2"
 	"github.com/spf13/cobra"
 )
@@ -37,10 +36,10 @@ func init() {
 		Short: "Version info",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println()
-			fmt.Println("   Version: ", oms.Version)
-			fmt.Println("  Revision: ", oms.Revision)
-			fmt.Println("Build date: ", oms.BuildDate)
-			fmt.Println("   License: ", oms.License)
+			fmt.Println("   Version: ", Version)
+			fmt.Println("  Revision: ", Revision)
+			fmt.Println("Build date: ", BuildDate)
+			fmt.Println("   License: ", License)
 			fmt.Println()
 		},
 	}

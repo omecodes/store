@@ -7,6 +7,7 @@ require (
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/antlr/antlr4 v0.0.0-20201029161626-9a95f0cc3d7c // indirect
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.4.3
 	github.com/google/cel-go v0.6.0
 	github.com/google/uuid v1.1.2
@@ -15,7 +16,7 @@ require (
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
-	github.com/omecodes/bome v1.2.0
+	github.com/omecodes/bome v1.3.1
 	github.com/omecodes/common v0.0.0-20201107101523-fe88c58889ab
 	github.com/omecodes/libome/v2 v2.0.0-jwt-proto-refactor
 	github.com/omecodes/service/v2 v2.0.0-alpha.1-newproto

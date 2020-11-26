@@ -11,9 +11,13 @@ type JSON struct {
 	object interface{}
 }
 
-func NewJSON(content string) (*JSON, error) {
+func JSONParse(content string) (*JSON, error) {
 	j := &JSON{}
 	return j, json.Unmarshal([]byte(content), &j.object)
+}
+
+func NewJSON(o interface{}) *JSON {
+	return &JSON{object: o}
 }
 
 func at(jp string) string {
@@ -132,7 +136,15 @@ func (s *JSON) Get(name string) (*JSON, error) {
 	return &JSON{object: o}, nil
 }
 
+func (s *JSON) GetObject() interface{} {
+	return s.object
+}
+
 func (s *JSON) String() string {
 	data, _ := json.Marshal(s.object)
 	return string(data)
+}
+
+func (s *JSON) Marshal() ([]byte, error) {
+	return json.Marshal(s.object)
 }
