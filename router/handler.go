@@ -17,6 +17,6 @@ type Handler interface {
 	GetData(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error)
 	Info(ctx context.Context, id string) (*oms.Info, error)
 	Delete(ctx context.Context, id string) error
-	List(ctx context.Context, opts oms.ListOptions) (*oms.ListResult, error)
-	Search(ctx context.Context, opts oms.SearchOptions) (*oms.SearchResult, error)
+	List(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error)
+	Search(ctx context.Context, opts oms.SearchOptions) (*oms.ObjectList, error)
 }

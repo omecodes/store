@@ -8,6 +8,7 @@ import (
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/omestore/router"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -96,7 +97,7 @@ func get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := object.Marshal()
+	data, err := ioutil.ReadAll(object.Content())
 	if err != nil {
 		log.Error("Get: failed to encoded object", log.Err(err))
 		w.WriteHeader(http.StatusInternalServerError)
@@ -124,7 +125,7 @@ func sel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := object.Marshal()
+	data, err := ioutil.ReadAll(object.Content())
 	if err != nil {
 		log.Error("Get: failed to encoded object", log.Err(err))
 		w.WriteHeader(http.StatusInternalServerError)
@@ -185,6 +186,7 @@ func list(w http.ResponseWriter, r *http.Request) {
 		log.Error("List: failed to write response")
 		return
 	}
+
 	position := 0
 	for _, object := range result.Objects {
 		var item string
@@ -194,7 +196,7 @@ func list(w http.ResponseWriter, r *http.Request) {
 			item = ","
 		}
 
-		data, err := object.Marshal()
+		data, err := ioutil.ReadAll(object.Content())
 		if err != nil {
 			log.Error("List: failed to encode object", log.Err(err))
 			return
@@ -245,7 +247,7 @@ func search(w http.ResponseWriter, r *http.Request) {
 			item = ","
 		}
 
-		data, err := object.Marshal()
+		data, err := ioutil.ReadAll(object.Content())
 		if err != nil {
 			log.Error("List: failed to encode object", log.Err(err))
 			return

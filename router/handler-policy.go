@@ -105,7 +105,7 @@ func (p *policyHandler) Delete(ctx context.Context, id string) error {
 	return p.base.Delete(ctx, id)
 }
 
-func (p *policyHandler) List(ctx context.Context, opts oms.ListOptions) (*oms.ListResult, error) {
+func (p *policyHandler) List(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
 	if !p.isAdmin(ctx) {
 		opts.Filter = oms.FilterObjectFunc(func(o *oms.Object) (bool, error) {
 			err := p.assertIsAllowedOnData(&ctx, oms.AllowedTo_read, o.ID())
@@ -121,9 +121,9 @@ func (p *policyHandler) List(ctx context.Context, opts oms.ListOptions) (*oms.Li
 	return p.base.List(ctx, opts)
 }
 
-func (p *policyHandler) Search(ctx context.Context, opts oms.SearchOptions) (*oms.SearchResult, error) {
+func (p *policyHandler) Search(ctx context.Context, opts oms.SearchOptions) (*oms.ObjectList, error) {
 	searchEnv := celSearchEnv(ctx)
-	ast, issues := searchEnv.Compile(opts.Expression)
+	ast, issues := searchEnv.Compile(opts.MatchedExpression)
 	if issues != nil && issues.Err() != nil {
 		return nil, issues.Err()
 	}
@@ -143,16 +143,16 @@ func (p *policyHandler) Search(ctx context.Context, opts oms.SearchOptions) (*om
 				return false, err
 			}
 
-			if opts.Expression == "" {
+			if opts.MatchedExpression == "" {
 				return false, nil
 			}
-			if opts.Expression == "false" {
+			if opts.MatchedExpression == "false" {
 				return false, nil
 			}
-			if opts.Expression == "true" {
+			if opts.MatchedExpression == "true" {
 				return true, nil
 			}
-			if opts.Expression != "" {
+			if opts.MatchedExpression != "" {
 				var object types.Struct
 				err = jsonpb.Unmarshal(o.Content(), &object)
 				if err != nil {

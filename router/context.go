@@ -2,16 +2,16 @@ package router
 
 import (
 	"context"
-	"github.com/omecodes/bome"
-	"github.com/omecodes/omestore/oms"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter/functions"
 
+	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/omestore/oms"
 )
 
 type ctxSettingsDB struct{}
@@ -54,10 +54,10 @@ func WithPermissions(perms oms.PermissionsStore) ContextUpdaterFunc {
 	}
 }
 
-// WithStore creates a context updater that adds store to a context
-func WithStore(store oms.Store) ContextUpdaterFunc {
+// WithObjectsStore creates a context updater that adds store to a context
+func WithObjectsStore(objects oms.Objects) ContextUpdaterFunc {
 	return func(parent context.Context) context.Context {
-		return context.WithValue(parent, ctxStore{}, store)
+		return context.WithValue(parent, ctxStore{}, objects)
 	}
 }
 
@@ -123,12 +123,12 @@ func celSearchEnv(ctx context.Context) *cel.Env {
 	return o.(*cel.Env)
 }
 
-func storage(ctx context.Context) oms.Store {
+func storage(ctx context.Context) oms.Objects {
 	o := ctx.Value(ctxStore{})
 	if o == nil {
 		return nil
 	}
-	return o.(oms.Store)
+	return o.(oms.Objects)
 }
 
 func settings(ctx context.Context) *bome.JSONMap {

@@ -47,10 +47,10 @@ func (d *dummyHandler) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (d *dummyHandler) List(ctx context.Context, opts oms.ListOptions) (*oms.ListResult, error) {
+func (d *dummyHandler) List(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
 	return nil, nil
 }
 
-func (d *dummyHandler) Search(ctx context.Context, opts oms.SearchOptions) (*oms.SearchResult, error) {
+func (d *dummyHandler) Search(ctx context.Context, opts oms.SearchOptions) (*oms.ObjectList, error) {
 	return nil, nil
 }

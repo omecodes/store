@@ -57,11 +57,12 @@ type Server struct {
 	key             []byte
 	celPolicyEnv    *cel.Env
 	celSearchEnv    *cel.Env
-	dataStore       oms.Store
-	settings        *bome.JSONMap
-	workers         *bome.JSONMap
-	permissions     *bome.JSONDoubleMap
-	dListener       net.Listener
+
+	objects     oms.Objects
+	settings    *bome.JSONMap
+	workers     *bome.JSONMap
+	permissions *bome.JSONDoubleMap
+	dListener   net.Listener
 }
 
 func (s *Server) init() error {
@@ -90,7 +91,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	s.dataStore, err = oms.NewStore(db)
+	s.objects, err = oms.NewStore(db)
 	if err != nil {
 		return err
 	}

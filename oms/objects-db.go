@@ -4,14 +4,34 @@ import (
 	"context"
 )
 
-type Store interface {
+type Objects interface {
+	// Save saves content as JSON in database
 	Save(ctx context.Context, object *Object) error
-	Update(ctx context.Context, patch *Patch) error
+
+	// Update updates object content with patch
+	Patch(ctx context.Context, objectID string, path string, data string) error
+
+	// Delete removes all content associated with objectID
 	Delete(ctx context.Context, objectID string) error
-	List(ctx context.Context, opts ListOptions) (*ListResult, error)
-	Get(ctx context.Context, objectID string, opts DataOptions) (*Object, error)
+
+	// List returns a list of objects long of at most opts.Count
+	// pass filter and
+	// have CreatedAt property lower than before
+	List(ctx context.Context, before int64, count int, filter ObjectFilter) (*ObjectList, error)
+
+	// ListAt returns a at most opts.Count list sized of objects value at path
+	// pass opts.Filter and
+	// have CreatedAt property lower than opts.Before
+	ListAt(ctx context.Context, path string, before int64, count int, filter ObjectFilter) (*ObjectList, error)
+
+	// Get gets the object associated with objectID
+	Get(ctx context.Context, objectID string) (*Object, error)
+
+	// GetPart get content at JSON-Path path in object identified by id
+	GetAt(ctx context.Context, objectID string, path string) (*Object, error)
+
+	// Info gets header of the object associated with objectID
 	Info(ctx context.Context, objectID string) (*Info, error)
-	Search(ctx context.Context, opts SearchOptions) (*SearchResult, error)
 }
 
 type GraftInfo struct {
@@ -29,7 +49,6 @@ type PatchOptions struct{}
 
 type DeleteOptions struct {
 	Path string `json:"path"`
-	Id   string `json:"id"`
 }
 
 type DataOptions struct {
@@ -40,16 +59,16 @@ type ListOptions struct {
 	Filter ObjectFilter
 	Path   string `json:"path"`
 	Before int64  `json:"before"`
-	Offset int    `json:"offset"`
 	Count  int    `json:"count"`
 }
 
 type SearchOptions struct {
-	Filter     ObjectFilter
-	Before     int64  `json:"before"`
-	Offset     int    `json:"offset"`
-	Count      int    `json:"count"`
-	Expression string `json:"expr"`
+	Filter            ObjectFilter
+	MatchedExpression string `json:"matched_expression"`
+	Path              string `json:"path"`
+	Before            int64  `json:"before"`
+	Offset            int    `json:"offset"`
+	Count             int    `json:"count"`
 }
 
 type SettingsOptions struct {
@@ -68,14 +87,7 @@ type GetDataOptions struct {
 	Info bool   `json:"info"`
 }
 
-type ListResult struct {
-	Before  int64 `json:"before"`
-	Offset  int   `json:"offset"`
-	Count   int   `json:"count"`
-	Objects []*Object
-}
-
-type SearchResult struct {
+type ObjectList struct {
 	Before  int64 `json:"before"`
 	Offset  int   `json:"offset"`
 	Count   int   `json:"count"`

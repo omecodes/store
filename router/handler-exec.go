@@ -118,7 +118,12 @@ func (e *execHandler) GetData(ctx context.Context, id string, opts oms.GetDataOp
 		log.Info("missing DB in context")
 		return nil, errors.New("wrong context")
 	}
-	return storage.Get(ctx, id, oms.DataOptions{Path: opts.Path})
+
+	if opts.Path == "" {
+		return storage.Get(ctx, id)
+	} else {
+		return storage.GetAt(ctx, id, opts.Path)
+	}
 }
 
 func (e *execHandler) Info(ctx context.Context, id string) (*oms.Info, error) {
@@ -139,11 +144,11 @@ func (e *execHandler) Delete(ctx context.Context, id string) error {
 	return storage.Delete(ctx, id)
 }
 
-func (e *execHandler) List(ctx context.Context, opts oms.ListOptions) (*oms.ListResult, error) {
+func (e *execHandler) List(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
 	storage := storage(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
 		return nil, errors.New("wrong context")
 	}
-	return storage.List(ctx, opts)
+	return storage.List(ctx, opts.Before, opts.Count, opts.Filter)
 }

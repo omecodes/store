@@ -39,7 +39,7 @@ func (p *policyHandler) evaluate(ctx *context.Context, state *celParams, rule st
 
 func (p *policyHandler) actionRuleForData(ctx *context.Context, action oms.AllowedTo) (string, error) {
 	route := Route(SkipPoliciesCheck(), SkipParamsCheck())
-	settings, err := route.GetSettings(*ctx, oms.SettingsOptions{Path: oms.SettingsDataAccessSecurityRulesPath})
+	settings, err := route.GetSettings(*ctx, oms.SettingsOptions{Path: oms.SettingsCreateDataSecurityRule})
 	if err != nil {
 		return "", errors.Internal
 	}
@@ -54,7 +54,7 @@ func (p *policyHandler) actionRuleForData(ctx *context.Context, action oms.Allow
 
 func (p *policyHandler) actionRuleForGraft(ctx *context.Context, action oms.AllowedTo) (string, error) {
 	route := Route(SkipPoliciesCheck(), SkipParamsCheck())
-	settings, err := route.GetSettings(*ctx, oms.SettingsOptions{Path: oms.SettingsGraftAccessSecurityRulesPath})
+	settings, err := route.GetSettings(*ctx, oms.SettingsOptions{Path: oms.SettingsCreateDataSecurityRule})
 	if err != nil {
 		return "", errors.Internal
 	}

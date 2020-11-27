@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 )
 
 const (
@@ -72,16 +71,6 @@ func (o *Object) Content() io.Reader {
 	return o.content
 }
 
-func (o *Object) Marshal() ([]byte, error) {
-	if o.decoded {
-		return ioutil.ReadAll(o.content)
-	}
-
-	m := map[string]interface{}{}
-	err := json.NewDecoder(o.content).Decode(&m)
-	if err != nil {
-		return nil, err
-	}
-	m[infoKey] = o.info
-	return json.Marshal(m)
+func (o *Object) Header() *Info {
+	return o.info
 }

@@ -66,7 +66,7 @@ func (b *base) Delete(ctx context.Context, id string) error {
 	return b.next.Delete(ctx, id)
 }
 
-func (b *base) List(ctx context.Context, opts oms.ListOptions) (*oms.ListResult, error) {
+func (b *base) List(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
 	if b.next == nil {
 		return nil, errors.New("not handler available")
 	}
@@ -80,6 +80,6 @@ func (b *base) PatchData(ctx context.Context, patch *oms.Patch, opts oms.PatchOp
 	return b.next.PatchData(ctx, patch, opts)
 }
 
-func (b *base) Search(ctx context.Context, opts oms.SearchOptions) (*oms.SearchResult, error) {
+func (b *base) Search(ctx context.Context, opts oms.SearchOptions) (*oms.ObjectList, error) {
 	return nil, nil
 }
