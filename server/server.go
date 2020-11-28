@@ -31,7 +31,7 @@ import (
 	"github.com/omecodes/service/v2"
 )
 
-var debug = os.Getenv("OMESTORE_DEBUG")
+var debug = os.Getenv("OMS_DEBUG")
 
 // Config contains info to configure an instance of Server
 type Config struct {
@@ -91,7 +91,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	s.objects, err = oms.NewStore(db)
+	s.objects, err = oms.NewSQLObjects(db, bome.MySQL)
 	if err != nil {
 		return err
 	}
