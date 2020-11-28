@@ -32,6 +32,9 @@ type Objects interface {
 
 	// Info gets header of the object associated with objectID
 	Info(ctx context.Context, objectID string) (*Info, error)
+
+	// Clear removes all objects store
+	Clear() error
 }
 
 type GraftInfo struct {

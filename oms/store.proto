@@ -27,11 +27,15 @@ message Permission {
   AllowedTo actions = 5;
 }
 
-message Info {
+message Header {
   string id = 1;
   string created_by = 2;
   int64 created_at = 3;
   int64 size = 4;
+}
+
+message SecurityRules {
+  map<string, string> path_rules = 5;
 }
 
 message Auth {

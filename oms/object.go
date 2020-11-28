@@ -6,10 +6,6 @@ import (
 	"io"
 )
 
-const (
-	infoKey = ".info"
-)
-
 type Object struct {
 	decoded bool
 	info    *Info
@@ -48,7 +44,14 @@ func (o *Object) SetCreatedAt(createdAt int64) {
 
 func (o *Object) SetContent(reader io.Reader, length int64) {
 	o.content = reader
+	if o.info == nil {
+		o.info = new(Info)
+	}
 	o.info.Size = length
+}
+
+func (o *Object) SetHeader(i *Info) {
+	o.info = i
 }
 
 func (o *Object) ID() string {
