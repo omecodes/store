@@ -7,7 +7,7 @@ import (
 	"github.com/omecodes/common/utils/prompt"
 	"github.com/omecodes/omestore/events"
 	"github.com/omecodes/omestore/server"
-	"github.com/omecodes/service/v2"
+	"github.com/omecodes/service"
 	"os"
 )
 

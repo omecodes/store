@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/omecodes/common/env/app"
-	"github.com/omecodes/service/v2"
+	"github.com/omecodes/service"
 	"github.com/spf13/cobra"
 )
 

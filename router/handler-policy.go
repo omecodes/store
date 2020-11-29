@@ -6,7 +6,7 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
-	"github.com/omecodes/libome/v2"
+	"github.com/omecodes/libome"
 	"github.com/omecodes/omestore/oms"
 )
 

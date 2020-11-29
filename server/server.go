@@ -6,8 +6,6 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
-	"github.com/omecodes/omestore/oms"
-	"github.com/omecodes/omestore/router"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -18,17 +16,18 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/gorilla/mux"
-	"github.com/sethvargo/go-password/password"
-	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
-
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/dao/mapping"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/httpx"
 	"github.com/omecodes/common/netx"
 	"github.com/omecodes/common/utils/log"
-	"github.com/omecodes/libome/v2"
-	"github.com/omecodes/service/v2"
+	"github.com/omecodes/libome"
+	"github.com/omecodes/omestore/oms"
+	"github.com/omecodes/omestore/router"
+	"github.com/omecodes/service"
+	"github.com/sethvargo/go-password/password"
+	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 var debug = os.Getenv("OMS_DEBUG")
