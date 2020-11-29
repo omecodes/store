@@ -10,12 +10,6 @@ import (
 	"github.com/omecodes/omestore/oms"
 )
 
-type celParams struct {
-	auth *oms.Auth
-	data *oms.Info
-	at   int64
-}
-
 type policyHandler struct {
 	base
 }
@@ -65,50 +59,72 @@ func (p *policyHandler) ListWorkers(ctx context.Context) ([]*oms.JSON, error) {
 	return p.base.ListWorkers(ctx)
 }
 
-func (p *policyHandler) PutData(ctx context.Context, object *oms.Object, opts oms.PutDataOptions) (string, error) {
-	err := p.assertIsAllowedOnData(&ctx, oms.AllowedTo_create, object.ID())
-	if err != nil {
-		return "", err
+func (p *policyHandler) PutObject(ctx context.Context, object *oms.Object, security *oms.PathAccessRules, opts oms.PutDataOptions) (string, error) {
+	ai := authInfo(ctx)
+	if ai == nil {
+		return "", errors.Forbidden
 	}
-	return p.base.PutData(ctx, object, opts)
+
+	if !ai.Validated {
+		return "", errors.Unauthorized
+	}
+
+	docRules := security.AccessRules["$"]
+	if docRules == nil {
+		docRules = &oms.AccessRules{}
+		security.AccessRules["$"] = docRules
+	}
+
+	if len(docRules.Read) == 0 && len(docRules.Write) == 0 {
+		docRules.Write = append(docRules.Write, "auth.user==\"admin\", auth.validated && data.created_by=auth.user", "auth.worker")
+		docRules.Read = append(docRules.Read, "auth.user==\"admin\",  auth.validated && data.created_by=auth.user", "auth.worker")
+	} else {
+		docRules.Read = append(docRules.Write, "auth.worker")
+		docRules.Write = append(docRules.Write, "auth.worker")
+	}
+
+	return p.base.PutObject(ctx, object, security, opts)
 }
 
-func (p *policyHandler) GetData(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error) {
+func (p *policyHandler) GetObject(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error) {
 	if !p.isAdmin(ctx) {
-		err := p.assertIsAllowedOnData(&ctx, oms.AllowedTo_read, id)
+		err := assetActionAllowedOnObject(&ctx, oms.AllowedTo_read, id, opts.Path)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return p.base.GetData(ctx, id, opts)
+	return p.base.GetObject(ctx, id, opts)
 }
 
-func (p *policyHandler) Info(ctx context.Context, id string) (*oms.Info, error) {
+func (p *policyHandler) GetObjectHeader(ctx context.Context, id string) (*oms.Header, error) {
 	if p.isAdmin(ctx) {
-		return p.base.Info(ctx, id)
+		return p.base.GetObjectHeader(ctx, id)
 	}
 
-	err := p.assertIsAllowedOnData(&ctx, oms.AllowedTo_read, id)
+	err := assetActionAllowedOnObject(&ctx, oms.AllowedTo_read, id, "")
 	if err != nil {
 		return nil, err
 	}
-	return dataInfo(ctx, id), nil
+	return p.base.GetObjectHeader(ctx, id)
 }
 
-func (p *policyHandler) Delete(ctx context.Context, id string) error {
+func (p *policyHandler) DeleteObject(ctx context.Context, id string) error {
 	if !p.isAdmin(ctx) {
-		err := p.assertIsAllowedOnData(&ctx, oms.AllowedTo_read, id)
+		err := assetActionAllowedOnObject(&ctx, oms.AllowedTo_write, id, "")
 		if err != nil {
 			return err
 		}
 	}
-	return p.base.Delete(ctx, id)
+	return p.base.DeleteObject(ctx, id)
 }
 
-func (p *policyHandler) List(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
+func (p *policyHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
 	if !p.isAdmin(ctx) {
-		opts.Filter = oms.FilterObjectFunc(func(o *oms.Object) (bool, error) {
-			err := p.assertIsAllowedOnData(&ctx, oms.AllowedTo_read, o.ID())
+		return p.base.ListObjects(ctx, opts)
+	}
+	newOpts := oms.ListOptions{
+		Filter: oms.FilterObjectFunc(func(o *oms.Object) (bool, error) {
+			err := assetActionAllowedOnObject(&ctx, oms.AllowedTo_read, o.ID(), opts.Path)
 			if err != nil {
 				if err == errors.Unauthorized || err == errors.Forbidden {
 					return false, nil
@@ -116,14 +132,37 @@ func (p *policyHandler) List(ctx context.Context, opts oms.ListOptions) (*oms.Ob
 				return false, err
 			}
 			return true, nil
-		})
+		}),
+		Path:   opts.Path,
+		Before: opts.Before,
+		Count:  opts.Count,
 	}
-	return p.base.List(ctx, opts)
+	return p.base.ListObjects(ctx, newOpts)
 }
 
-func (p *policyHandler) Search(ctx context.Context, opts oms.SearchOptions) (*oms.ObjectList, error) {
+func (p *policyHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
+	if p.isAdmin(ctx) {
+		return p.base.SearchObjects(ctx, params, opts)
+	}
+
+	if params.MatchedExpression == "false" {
+		return &oms.ObjectList{
+			Before: opts.Before,
+			Offset: opts.Offset,
+			Count:  0,
+		}, nil
+	}
+
+	if params.MatchedExpression == "true" {
+		return p.ListObjects(ctx, oms.ListOptions{
+			Path:   opts.Path,
+			Before: opts.Before,
+			Count:  opts.Count,
+		})
+	}
+
 	searchEnv := celSearchEnv(ctx)
-	ast, issues := searchEnv.Compile(opts.MatchedExpression)
+	ast, issues := searchEnv.Compile(params.MatchedExpression)
 	if issues != nil && issues.Err() != nil {
 		return nil, issues.Err()
 	}
@@ -133,42 +172,35 @@ func (p *policyHandler) Search(ctx context.Context, opts oms.SearchOptions) (*om
 		return nil, err
 	}
 
-	if !p.isAdmin(ctx) {
-		opts.Filter = oms.FilterObjectFunc(func(o *oms.Object) (bool, error) {
-			err := p.assertIsAllowedOnData(&ctx, oms.AllowedTo_read, o.ID())
-			if err != nil {
-				if err == errors.Unauthorized || err == errors.Forbidden {
-					return false, nil
-				}
-				return false, err
-			}
-
-			if opts.MatchedExpression == "" {
-				return false, nil
-			}
-			if opts.MatchedExpression == "false" {
-				return false, nil
-			}
-			if opts.MatchedExpression == "true" {
-				return true, nil
-			}
-			if opts.MatchedExpression != "" {
-				var object types.Struct
-				err = jsonpb.Unmarshal(o.Content(), &object)
-				if err != nil {
-					return false, err
-				}
-
-				vars := map[string]interface{}{"o": object}
-				out, details, err := matchProgram.Eval(vars)
-				if err != nil {
-					log.Error("cel execution", log.Field("details", details))
-					return false, err
-				}
-				return out.Value().(bool), nil
-			}
-			return true, nil
-		})
+	lOpts := oms.ListOptions{
+		Path:   opts.Path,
+		Before: opts.Before,
+		Count:  opts.Count,
 	}
-	return p.base.Search(ctx, opts)
+	lOpts.Filter = oms.FilterObjectFunc(func(o *oms.Object) (bool, error) {
+		err := assetActionAllowedOnObject(&ctx, oms.AllowedTo_read, o.ID(), opts.Path)
+		if err != nil {
+			if err == errors.Unauthorized || err == errors.Forbidden {
+				return false, nil
+			}
+			return false, err
+		}
+
+		var object types.Struct
+		err = jsonpb.Unmarshal(o.Content(), &object)
+		if err != nil {
+			return false, err
+		}
+
+		vars := map[string]interface{}{"o": object}
+		out, details, err := matchProgram.Eval(vars)
+		if err != nil {
+			log.Error("cel execution", log.Field("details", details))
+			return false, err
+		}
+
+		return out.Value().(bool), nil
+	})
+
+	return p.base.ListObjects(ctx, lOpts)
 }

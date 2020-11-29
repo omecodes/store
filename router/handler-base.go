@@ -38,48 +38,48 @@ func (b *base) RegisterWorker(ctx context.Context, info *oms.JSON) error {
 	return b.next.RegisterWorker(ctx, info)
 }
 
-func (b *base) PutData(ctx context.Context, object *oms.Object, opts oms.PutDataOptions) (string, error) {
+func (b *base) PutObject(ctx context.Context, object *oms.Object, security *oms.PathAccessRules, opts oms.PutDataOptions) (string, error) {
 	if b.next == nil {
 		return "", errors.New("no handler available")
 	}
-	return b.next.PutData(ctx, object, opts)
+	return b.next.PutObject(ctx, object, security, opts)
 }
 
-func (b *base) GetData(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error) {
+func (b *base) GetObject(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error) {
 	if b.next == nil {
 		return nil, errors.New("not handler available")
 	}
-	return b.next.GetData(ctx, id, opts)
+	return b.next.GetObject(ctx, id, opts)
 }
 
-func (b *base) Info(ctx context.Context, id string) (*oms.Info, error) {
+func (b *base) GetObjectHeader(ctx context.Context, id string) (*oms.Header, error) {
 	if b.next == nil {
 		return nil, errors.New("not handler available")
 	}
-	return b.next.Info(ctx, id)
+	return b.next.GetObjectHeader(ctx, id)
 }
 
-func (b *base) Delete(ctx context.Context, id string) error {
+func (b *base) DeleteObject(ctx context.Context, id string) error {
 	if b.next == nil {
 		return errors.New("no handler available")
 	}
-	return b.next.Delete(ctx, id)
+	return b.next.DeleteObject(ctx, id)
 }
 
-func (b *base) List(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
+func (b *base) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
 	if b.next == nil {
 		return nil, errors.New("not handler available")
 	}
-	return b.next.List(ctx, opts)
+	return b.next.ListObjects(ctx, opts)
 }
 
-func (b *base) PatchData(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
+func (b *base) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
 	if b.next == nil {
 		return errors.New("not handler available")
 	}
-	return b.next.PatchData(ctx, patch, opts)
+	return b.next.PatchObject(ctx, patch, opts)
 }
 
-func (b *base) Search(ctx context.Context, opts oms.SearchOptions) (*oms.ObjectList, error) {
+func (b *base) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
 	return nil, nil
 }

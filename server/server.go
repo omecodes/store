@@ -58,9 +58,9 @@ type Server struct {
 	celSearchEnv    *cel.Env
 
 	objects     oms.Objects
-	settings    *bome.JSONMap
 	workers     *bome.JSONMap
-	permissions *bome.JSONDoubleMap
+	settings    *bome.JSONMap
+	accessStore oms.AccessStore
 	dListener   net.Listener
 }
 
@@ -80,7 +80,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	s.permissions, err = bome.NewJSONDoubleMap(db, bome.MySQL, "permissions")
+	s.accessStore, err = oms.NewSQLAccessStore(db, bome.MySQL, "accesses")
 	if err != nil {
 		return err
 	}
@@ -97,12 +97,12 @@ func (s *Server) init() error {
 
 	s.celPolicyEnv, err = cel.NewEnv(
 		cel.Types(&oms.Auth{}),
-		cel.Types(&oms.Info{}),
+		cel.Types(&oms.Header{}),
 		cel.Types(&oms.Perm{}),
 		cel.Declarations(
 			decls.NewVar("at", decls.Int),
 			decls.NewVar("auth", decls.NewObjectType("Auth")),
-			decls.NewVar("data", decls.NewObjectType("Info")),
+			decls.NewVar("data", decls.NewObjectType("Header")),
 			decls.NewFunction("acl",
 				decls.NewOverload(
 					"acl",
@@ -205,6 +205,12 @@ func (s *Server) Start() error {
 func (s *Server) enrichContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		ctx = router.WithAccessStore(s.accessStore)(ctx)
+		ctx = router.WithCelPolicyEnv(s.celPolicyEnv)(ctx)
+		ctx = router.WithCelSearchEnv(s.celSearchEnv)(ctx)
+		ctx = router.WithSettings(nil)(ctx)
+		ctx = router.WithObjectsStore(nil)(ctx)
+
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
@@ -268,7 +274,7 @@ func (s *Server) detectAuthentication(next http.Handler) http.Handler {
 					}
 				}
 
-				ctx := router.ContextWithUserInfo(r.Context(), &oms.Auth{
+				ctx := router.WithUserInfo(r.Context(), &oms.Auth{
 					Uid:       authUser,
 					Validated: true,
 					Worker:    "admin" != authUser,
@@ -302,7 +308,7 @@ func (s *Server) detectOAuth2Authorization(next http.Handler) http.Handler {
 				return
 			}
 
-			ctx := router.ContextWithUserInfo(r.Context(), &oms.Auth{
+			ctx := router.WithUserInfo(r.Context(), &oms.Auth{
 				Uid:       jwt.Claims.Sub,
 				Email:     jwt.Claims.Profile.Email,
 				Worker:    false,

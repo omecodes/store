@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"encoding/json"
+	"github.com/google/uuid"
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
@@ -14,7 +15,7 @@ type execHandler struct {
 }
 
 func (e *execHandler) ListWorkers(ctx context.Context) ([]*oms.JSON, error) {
-	db := getWorkerInfoDB(ctx)
+	db := workersDB(ctx)
 	if db == nil {
 		log.Info("missing worker info db in context")
 		return nil, errors.Internal
@@ -24,7 +25,11 @@ func (e *execHandler) ListWorkers(ctx context.Context) ([]*oms.JSON, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer c.Close()
+	defer func() {
+		if err := c.Close(); err != nil {
+			log.Error("Workers: failed to close cursor", log.Err(err))
+		}
+	}()
 
 	var infoList []*oms.JSON
 	for c.HasNext() {
@@ -45,7 +50,7 @@ func (e *execHandler) ListWorkers(ctx context.Context) ([]*oms.JSON, error) {
 }
 
 func (e *execHandler) RegisterWorker(ctx context.Context, info *oms.JSON) error {
-	db := getWorkerInfoDB(ctx)
+	db := workersDB(ctx)
 	if db == nil {
 		log.Info("missing worker info db in context")
 		return errors.Internal
@@ -61,10 +66,6 @@ func (e *execHandler) RegisterWorker(ctx context.Context, info *oms.JSON) error 
 		Value: info.String(),
 	}
 	return db.Save(entry)
-}
-
-func (e *execHandler) PatchData(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
-	panic("implement me")
 }
 
 func (e *execHandler) SetSettings(ctx context.Context, value *oms.JSON, opts oms.SettingsOptions) error {
@@ -103,16 +104,36 @@ func (e *execHandler) GetSettings(ctx context.Context, opts oms.SettingsOptions)
 	return oms.NewJSON(o), err
 }
 
-func (e *execHandler) PutData(ctx context.Context, object *oms.Object, opts oms.PutDataOptions) (string, error) {
+func (e *execHandler) PutObject(ctx context.Context, object *oms.Object, security *oms.PathAccessRules, opts oms.PutDataOptions) (string, error) {
 	storage := storage(ctx)
 	if storage == nil {
 		log.Info("missing storage in context")
 		return "", errors.Internal
 	}
-	return "", storage.Save(ctx, object)
+
+	accessStore := accessStore(ctx)
+	if accessStore == nil {
+		log.Info("missing access store in context")
+		return "", errors.Internal
+	}
+
+	id := uuid.New().String()
+
+	err := accessStore.SaveRules(id, security)
+	if err != nil {
+		log.Error("PutObject-exec: failed to save object access security rules", log.Err(err))
+		return "", errors.Internal
+	}
+
+	object.SetID(id)
+	return id, storage.Save(ctx, object)
 }
 
-func (e *execHandler) GetData(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error) {
+func (e *execHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
+	panic("implement me")
+}
+
+func (e *execHandler) GetObject(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error) {
 	storage := storage(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
@@ -126,7 +147,7 @@ func (e *execHandler) GetData(ctx context.Context, id string, opts oms.GetDataOp
 	}
 }
 
-func (e *execHandler) Info(ctx context.Context, id string) (*oms.Info, error) {
+func (e *execHandler) GetObjectHeader(ctx context.Context, id string) (*oms.Header, error) {
 	storage := storage(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
@@ -135,7 +156,7 @@ func (e *execHandler) Info(ctx context.Context, id string) (*oms.Info, error) {
 	return storage.Info(ctx, id)
 }
 
-func (e *execHandler) Delete(ctx context.Context, id string) error {
+func (e *execHandler) DeleteObject(ctx context.Context, id string) error {
 	storage := storage(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
@@ -144,7 +165,7 @@ func (e *execHandler) Delete(ctx context.Context, id string) error {
 	return storage.Delete(ctx, id)
 }
 
-func (e *execHandler) List(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
+func (e *execHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
 	storage := storage(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")

@@ -31,7 +31,7 @@ type Objects interface {
 	GetAt(ctx context.Context, objectID string, path string) (*Object, error)
 
 	// Info gets header of the object associated with objectID
-	Info(ctx context.Context, objectID string) (*Info, error)
+	Info(ctx context.Context, objectID string) (*Header, error)
 
 	// Clear removes all objects store
 	Clear() error
@@ -65,13 +65,16 @@ type ListOptions struct {
 	Count  int    `json:"count"`
 }
 
-type SearchOptions struct {
-	Filter            ObjectFilter
+type SearchParams struct {
 	MatchedExpression string `json:"matched_expression"`
-	Path              string `json:"path"`
-	Before            int64  `json:"before"`
-	Offset            int    `json:"offset"`
-	Count             int    `json:"count"`
+}
+
+type SearchOptions struct {
+	Filter ObjectFilter
+	Path   string `json:"path"`
+	Before int64  `json:"before"`
+	Offset int    `json:"offset"`
+	Count  int    `json:"count"`
 }
 
 type SettingsOptions struct {
@@ -87,7 +90,7 @@ type UserOptions struct {
 
 type GetDataOptions struct {
 	Path string `json:"path"`
-	Info bool   `json:"info"`
+	Info bool   `json:"header"`
 }
 
 type ObjectList struct {

@@ -51,7 +51,7 @@ func (ms *mysqlStore) Save(ctx context.Context, object *Object) error {
 
 	headersData, err := json.Marshal(object.Header())
 	if err != nil {
-		log.Error("Save: could not get object info", log.Err(err))
+		log.Error("Save: could not get object header", log.Err(err))
 		return errors.BadInput
 	}
 
@@ -265,7 +265,7 @@ func (ms *mysqlStore) Get(ctx context.Context, objectID string) (*Object, error)
 		return nil, errors.Internal
 	}
 
-	var info Info
+	var info Header
 	err = json.Unmarshal([]byte(hv), &info)
 	if err != nil {
 		log.Error("Get: could not decode object header", log.Err(err))
@@ -283,7 +283,7 @@ func (ms *mysqlStore) Get(ctx context.Context, objectID string) (*Object, error)
 		return nil, errors.Internal
 	}
 
-	o.info = &info
+	o.header = &info
 	log.Debug("Get: loaded object", log.Field("id", objectID))
 	return o, nil
 }
@@ -298,7 +298,7 @@ func (ms *mysqlStore) GetAt(ctx context.Context, objectID string, path string) (
 		return nil, errors.Internal
 	}
 
-	var info Info
+	var info Header
 	err = json.Unmarshal([]byte(hv), &info)
 	if err != nil {
 		log.Error("Get: could not decode object header", log.Err(err))
@@ -317,16 +317,16 @@ func (ms *mysqlStore) GetAt(ctx context.Context, objectID string, path string) (
 	return o, nil
 }
 
-func (ms *mysqlStore) Info(ctx context.Context, id string) (*Info, error) {
+func (ms *mysqlStore) Info(ctx context.Context, id string) (*Header, error) {
 	value, err := ms.headers.Get(id)
 	if err != nil {
 		return nil, err
 	}
 
-	var info Info
+	var info Header
 	err = json.Unmarshal([]byte(value), &info)
 	if err != nil {
-		log.Error("List: failed to decode object info", log.Field("encoded", value), log.Err(err))
+		log.Error("List: failed to decode object header", log.Field("encoded", value), log.Err(err))
 		return nil, errors.Internal
 	}
 	return &info, nil

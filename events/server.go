@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/omecodes/zebou/v2"
+	"github.com/omecodes/zebou"
 	"github.com/siddontang/go-mysql/canal"
 )
 

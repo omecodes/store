@@ -22,35 +22,30 @@ func (d *dummyHandler) ListWorkers(ctx context.Context) ([]*oms.JSON, error) {
 func (d *dummyHandler) RegisterWorker(ctx context.Context, info *oms.JSON) error {
 	return nil
 }
-
-func (d *dummyHandler) GetCollections(ctx context.Context) ([]string, error) {
-	return nil, nil
-}
-
-func (d *dummyHandler) PutData(ctx context.Context, object *oms.Object, opts oms.PutDataOptions) (string, error) {
+func (d *dummyHandler) PutObject(ctx context.Context, object *oms.Object, security *oms.PathAccessRules, opts oms.PutDataOptions) (string, error) {
 	return "", nil
 }
 
-func (d *dummyHandler) PatchData(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
+func (d *dummyHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
 	return nil
 }
 
-func (d *dummyHandler) GetData(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error) {
+func (d *dummyHandler) GetObject(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error) {
 	return nil, nil
 }
 
-func (d *dummyHandler) Info(ctx context.Context, id string) (*oms.Info, error) {
+func (d *dummyHandler) GetObjectHeader(ctx context.Context, id string) (*oms.Header, error) {
 	return nil, nil
 }
 
-func (d *dummyHandler) Delete(ctx context.Context, id string) error {
+func (d *dummyHandler) DeleteObject(ctx context.Context, id string) error {
 	return nil
 }
 
-func (d *dummyHandler) List(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
+func (d *dummyHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
 	return nil, nil
 }
 
-func (d *dummyHandler) Search(ctx context.Context, opts oms.SearchOptions) (*oms.ObjectList, error) {
+func (d *dummyHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
 	return nil, nil
 }

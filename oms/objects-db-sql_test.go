@@ -57,7 +57,7 @@ func TestMysqlStore_Save(t *testing.T) {
 	"description": "Service Authority. Generates and signs certificates for services."
 }`
 		o := new(Object)
-		o.SetHeader(&Info{
+		o.SetHeader(&Header{
 			Id:        "ome-ca",
 			CreatedBy: "ome",
 			Size:      int64(len(content)),
@@ -73,7 +73,7 @@ func TestMysqlStore_Save(t *testing.T) {
 	"description": "Account manager application. Supports OAUTH2"
 }`
 		o = new(Object)
-		o.SetHeader(&Info{
+		o.SetHeader(&Header{
 			Id:        "ome-accounts",
 			CreatedBy: "ome",
 			Size:      int64(len(content)),
@@ -89,7 +89,7 @@ func TestMysqlStore_Save(t *testing.T) {
 	"description": "Token store app"
 }`
 		o = new(Object)
-		o.SetHeader(&Info{
+		o.SetHeader(&Header{
 			Id:        "ome-tdb",
 			CreatedBy: "ome",
 			Size:      int64(len(content)),
@@ -105,7 +105,7 @@ func TestMysqlStore_Save(t *testing.T) {
 	"description": "Base library for all service definition"
 }`
 		o = new(Object)
-		o.SetHeader(&Info{
+		o.SetHeader(&Header{
 			Id:        "ome-libome",
 			CreatedBy: "ome",
 			Size:      int64(len(content)),
@@ -147,7 +147,7 @@ func TestMysqlStore_Get(t *testing.T) {
 		initDB()
 		o, err := objects.Get(context.Background(), "ome-ca")
 		So(err, ShouldBeNil)
-		So(o.info.Id, ShouldEqual, "ome-ca")
+		So(o.header.Id, ShouldEqual, "ome-ca")
 
 		o, err = objects.Get(context.Background(), "non-existing-object-id")
 		So(err, ShouldNotBeNil)
@@ -166,12 +166,12 @@ func TestMysqlStore_GetAt(t *testing.T) {
 }
 
 func TestMysqlStore_Info(t *testing.T) {
-	Convey("Get object info", t, func() {
+	Convey("Get object header", t, func() {
 		initDB()
 
-		info, err := objects.Info(context.Background(), "ome-accounts")
+		header, err := objects.Info(context.Background(), "ome-accounts")
 		So(err, ShouldBeNil)
-		So(info.Id, ShouldEqual, "ome-accounts")
+		So(header.Id, ShouldEqual, "ome-accounts")
 	})
 }
 
@@ -214,7 +214,7 @@ func TestMysqlStore_ListAt(t *testing.T) {
 }
 
 func TestMysqlStore_Delete(t *testing.T) {
-	Convey("Delete objects", t, func() {
+	Convey("DeleteObject objects", t, func() {
 		initDB()
 
 		ctx := context.Background()

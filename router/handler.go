@@ -12,11 +12,11 @@ type Handler interface {
 	ListWorkers(ctx context.Context) ([]*oms.JSON, error)
 	RegisterWorker(ctx context.Context, info *oms.JSON) error
 
-	PutData(ctx context.Context, object *oms.Object, opts oms.PutDataOptions) (string, error)
-	PatchData(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error
-	GetData(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error)
-	Info(ctx context.Context, id string) (*oms.Info, error)
-	Delete(ctx context.Context, id string) error
-	List(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error)
-	Search(ctx context.Context, opts oms.SearchOptions) (*oms.ObjectList, error)
+	PutObject(ctx context.Context, object *oms.Object, security *oms.PathAccessRules, opts oms.PutDataOptions) (string, error)
+	PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error
+	GetObject(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error)
+	GetObjectHeader(ctx context.Context, id string) (*oms.Header, error)
+	DeleteObject(ctx context.Context, id string) error
+	ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error)
+	SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error)
 }

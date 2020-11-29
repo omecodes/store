@@ -8,20 +8,20 @@ import (
 
 type Object struct {
 	decoded bool
-	info    *Info
+	header  *Header
 	content io.Reader
 }
 
 func NewObject() *Object {
 	o := new(Object)
-	o.info = new(Info)
+	o.header = new(Header)
 	return o
 }
 
 func DecodeObject(encoded string) (*Object, error) {
 	o := new(Object)
 	o.decoded = true
-	var info Info
+	var info Header
 	err := json.Unmarshal([]byte(encoded), &info)
 	if err != nil {
 		return nil, err
@@ -31,49 +31,49 @@ func DecodeObject(encoded string) (*Object, error) {
 }
 
 func (o *Object) SetID(id string) {
-	o.info.Id = id
+	o.header.Id = id
 }
 
 func (o *Object) SetCreatedBy(createdBy string) {
-	o.info.CreatedBy = createdBy
+	o.header.CreatedBy = createdBy
 }
 
 func (o *Object) SetCreatedAt(createdAt int64) {
-	o.info.CreatedAt = createdAt
+	o.header.CreatedAt = createdAt
 }
 
 func (o *Object) SetContent(reader io.Reader, length int64) {
 	o.content = reader
-	if o.info == nil {
-		o.info = new(Info)
+	if o.header == nil {
+		o.header = new(Header)
 	}
-	o.info.Size = length
+	o.header.Size = length
 }
 
-func (o *Object) SetHeader(i *Info) {
-	o.info = i
+func (o *Object) SetHeader(i *Header) {
+	o.header = i
 }
 
 func (o *Object) ID() string {
-	return o.info.Id
+	return o.header.Id
 }
 
 func (o *Object) Size() int64 {
-	return o.info.Size
+	return o.header.Size
 }
 
 func (o *Object) CreatedBy() string {
-	return o.info.CreatedBy
+	return o.header.CreatedBy
 }
 
 func (o *Object) CreatedAt() int64 {
-	return o.info.CreatedAt
+	return o.header.CreatedAt
 }
 
 func (o *Object) Content() io.Reader {
 	return o.content
 }
 
-func (o *Object) Header() *Info {
-	return o.info
+func (o *Object) Header() *Header {
+	return o.header
 }

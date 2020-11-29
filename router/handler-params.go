@@ -28,8 +28,8 @@ func (p *paramsHandler) SetSettings(ctx context.Context, value *oms.JSON, opts o
 
 func (p *paramsHandler) GetSettings(ctx context.Context, opts oms.SettingsOptions) (*oms.JSON, error) {
 	if opts.Path != "" {
-		_, allowed := oms.SettingsPathFormats[opts.Path]
-		if !allowed {
+		_, exists := oms.SettingsPathFormats[opts.Path]
+		if !exists {
 			return nil, errors.BadInput
 		}
 	}
@@ -43,9 +43,14 @@ func (p *paramsHandler) RegisterWorker(ctx context.Context, info *oms.JSON) erro
 	return p.base.RegisterWorker(ctx, info)
 }
 
-func (p *paramsHandler) PutData(ctx context.Context, object *oms.Object, opts oms.PutDataOptions) (string, error) {
+func (p *paramsHandler) PutObject(ctx context.Context, object *oms.Object, security *oms.PathAccessRules, opts oms.PutDataOptions) (string, error) {
 	if object == nil || object.ID() == "" || object.Size() == 0 {
 		return "", errors.BadInput
+	}
+
+	if security == nil {
+		security = new(oms.PathAccessRules)
+		security.AccessRules = map[string]*oms.AccessRules{}
 	}
 
 	route := Route(SkipPoliciesCheck(), SkipParamsCheck())
@@ -66,10 +71,10 @@ func (p *paramsHandler) PutData(ctx context.Context, object *oms.Object, opts om
 		return "", errors.BadInput
 	}
 
-	return p.next.PutData(ctx, object, opts)
+	return p.next.PutObject(ctx, object, security, opts)
 }
 
-func (p *paramsHandler) PatchData(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
+func (p *paramsHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
 	if patch.GetObjectID() == "" || patch.Size() == 0 || patch.Path() == "" {
 		return errors.BadInput
 	}
@@ -92,26 +97,33 @@ func (p *paramsHandler) PatchData(ctx context.Context, patch *oms.Patch, opts om
 		return errors.BadInput
 	}
 
-	return p.next.PatchData(ctx, patch, opts)
+	return p.next.PatchObject(ctx, patch, opts)
 }
 
-func (p *paramsHandler) GetData(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error) {
+func (p *paramsHandler) GetObject(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error) {
 	if id == "" {
 		return nil, errors.BadInput
 	}
-	return p.base.GetData(ctx, id, opts)
+	return p.base.GetObject(ctx, id, opts)
 }
 
-func (p *paramsHandler) Info(ctx context.Context, id string) (*oms.Info, error) {
+func (p *paramsHandler) GetObjectHeader(ctx context.Context, id string) (*oms.Header, error) {
 	if id == "" {
 		return nil, errors.BadInput
 	}
-	return p.base.Info(ctx, id)
+	return p.base.GetObjectHeader(ctx, id)
 }
 
-func (p *paramsHandler) Delete(ctx context.Context, id string) error {
+func (p *paramsHandler) DeleteObject(ctx context.Context, id string) error {
 	if id == "" {
 		return errors.BadInput
 	}
-	return p.next.Delete(ctx, id)
+	return p.next.DeleteObject(ctx, id)
+}
+
+func (p *paramsHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
+	if params.MatchedExpression == "" {
+		return nil, errors.BadInput
+	}
+	return p.base.SearchObjects(ctx, params, opts)
 }

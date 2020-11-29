@@ -15,5 +15,5 @@ var SettingsPathValueMimes = map[string]string{
 
 const DefaultSettings = `{
     "data_max_size": 5242880
-	"create_security_rule": "auth.validated"
+	"create_security_rule": "auth.validated",
 }`

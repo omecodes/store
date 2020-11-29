@@ -32,7 +32,7 @@ func dataRouter() *mux.Router {
 	r.Name("Patch").Methods(http.MethodPatch).Path("/objects/{id}").Handler(http.HandlerFunc(patch))
 	r.Name("Get").Methods(http.MethodGet).Path("/objects/{id}").Handler(http.HandlerFunc(get))
 	r.Name("Del").Methods(http.MethodDelete).Path("/objects/{id}").Handler(http.HandlerFunc(del))
-	r.Name("List").Methods(http.MethodGet).Path("/objects").Handler(http.HandlerFunc(list))
+	r.Name("GetObjects").Methods(http.MethodGet).Path("/objects").Handler(http.HandlerFunc(list))
 	r.Name("Search").Methods(http.MethodPost).Path("/objects").Handler(http.HandlerFunc(search))
 	r.PathPrefix("/objects/{id}/").Subrouter().Name("PatchSubDoc").Methods(http.MethodPatch).Handler(http.HandlerFunc(patch))
 	r.PathPrefix("/objects/{id}/").Subrouter().Name("Select").Methods(http.MethodGet).Handler(http.HandlerFunc(sel))
@@ -54,7 +54,7 @@ func put(w http.ResponseWriter, r *http.Request) {
 	object := oms.NewObject()
 	object.SetContent(r.Body, r.ContentLength)
 
-	_, err := router.Route().PutData(ctx, object, opts)
+	_, err := router.Route().PutObject(ctx, object, nil, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -77,7 +77,7 @@ func patch(w http.ResponseWriter, r *http.Request) {
 	patch := oms.NewPatch(id, p)
 	patch.SetContent(r.Body, r.ContentLength)
 
-	err := router.Route().PatchData(ctx, patch, oms.PatchOptions{})
+	err := router.Route().PatchObject(ctx, patch, oms.PatchOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -91,7 +91,7 @@ func get(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 	onlyInfo := r.URL.Query().Get("info")
 
-	object, err := router.Route().GetData(ctx, id, oms.GetDataOptions{Info: onlyInfo == "true"})
+	object, err := router.Route().GetObject(ctx, id, oms.GetDataOptions{Info: onlyInfo == "true"})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -119,7 +119,7 @@ func sel(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 	filter := strings.Replace(r.RequestURI, fmt.Sprintf("/%s", id), "", 1)
 
-	object, err := router.Route().GetData(ctx, id, oms.GetDataOptions{Path: filter})
+	object, err := router.Route().GetObject(ctx, id, oms.GetDataOptions{Path: filter})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -144,7 +144,7 @@ func del(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
 
-	err := router.Route().Delete(ctx, vars["id"])
+	err := router.Route().DeleteObject(ctx, vars["id"])
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -174,7 +174,7 @@ func list(w http.ResponseWriter, r *http.Request) {
 		Before: before,
 	}
 
-	result, err := router.Route().List(ctx, opts)
+	result, err := router.Route().ListObjects(ctx, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -183,7 +183,7 @@ func list(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write([]byte(fmt.Sprintf("{\"count\": %d, \"offset\": %d, \"objects\": {", result.Count, result.Offset)))
 	if err != nil {
-		log.Error("List: failed to write response")
+		log.Error("GetObjects: failed to write response")
 		return
 	}
 
@@ -198,35 +198,55 @@ func list(w http.ResponseWriter, r *http.Request) {
 
 		data, err := ioutil.ReadAll(object.Content())
 		if err != nil {
-			log.Error("List: failed to encode object", log.Err(err))
+			log.Error("GetObjects: failed to encode object", log.Err(err))
 			return
 		}
 
 		item = item + fmt.Sprintf("\"%s\": %s", object.ID(), string(data))
 		_, err = w.Write([]byte(item))
 		if err != nil {
-			log.Error("List: failed to write result item", log.Err(err))
+			log.Error("GetObjects: failed to write result item", log.Err(err))
 			return
 		}
 	}
 	_, err = w.Write([]byte("}}"))
 	if err != nil {
-		log.Error("List: failed to write response")
+		log.Error("GetObjects: failed to write response")
 	}
 }
 
 func search(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var opts oms.SearchOptions
-	err := json.NewDecoder(r.Body).Decode(&opts)
+	var before int64
+	var err error
+
+	beforeParam := r.URL.Query().Get("before")
+	if beforeParam != "" {
+		before, err = strconv.ParseInt(beforeParam, 10, 64)
+		if err != nil {
+			log.Error("could not parse param 'before'")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	} else {
+		before = time.Now().Unix()
+	}
+
+	opts := oms.SearchOptions{
+		Path:   r.URL.Query().Get("path"),
+		Before: before,
+	}
+
+	var params oms.SearchParams
+	err = json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		log.Error("Search: wrong query", log.Err(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	result, err := router.Route().Search(ctx, opts)
+	result, err := router.Route().SearchObjects(ctx, params, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -249,7 +269,7 @@ func search(w http.ResponseWriter, r *http.Request) {
 
 		data, err := ioutil.ReadAll(object.Content())
 		if err != nil {
-			log.Error("List: failed to encode object", log.Err(err))
+			log.Error("GetObjects: failed to encode object", log.Err(err))
 			return
 		}
 

@@ -5,10 +5,16 @@ import (
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/omestore/oms"
+	"strings"
 	"time"
 )
 
-func (p *policyHandler) evaluate(ctx *context.Context, state *celParams, rule string) (bool, error) {
+type celParams struct {
+	auth *oms.Auth
+	data *oms.Header
+}
+
+func evaluate(ctx *context.Context, state *celParams, rule string) (bool, error) {
 	if rule == "" || rule == "false" {
 		return false, nil
 	}
@@ -17,7 +23,7 @@ func (p *policyHandler) evaluate(ctx *context.Context, state *celParams, rule st
 		return true, nil
 	}
 
-	prg, err := getACLProgram(ctx, rule)
+	prg, err := loadProgramForAccessValidation(ctx, rule)
 	if err != nil {
 		return false, err
 	}
@@ -25,7 +31,7 @@ func (p *policyHandler) evaluate(ctx *context.Context, state *celParams, rule st
 	vars := map[string]interface{}{
 		"auth": state.auth,
 		"data": state.data,
-		"at":   state.at,
+		"at":   time.Now().Unix(),
 	}
 	out, details, err := prg.Eval(vars)
 
@@ -37,66 +43,28 @@ func (p *policyHandler) evaluate(ctx *context.Context, state *celParams, rule st
 	return out.Value().(bool), nil
 }
 
-func (p *policyHandler) actionRuleForData(ctx *context.Context, action oms.AllowedTo) (string, error) {
-	route := Route(SkipPoliciesCheck(), SkipParamsCheck())
-	settings, err := route.GetSettings(*ctx, oms.SettingsOptions{Path: oms.SettingsCreateDataSecurityRule})
+func assetActionAllowedOnObject(ctx *context.Context, action oms.AllowedTo, objectID string, path string) error {
+	header, err := getObjectHeader(ctx, objectID)
 	if err != nil {
-		return "", errors.Internal
+		return err
 	}
 
-	rule, err := settings.StringAt(action.String())
-	if err != nil {
-		log.Error("could not get 'read' rule for access security rules settings", log.Err(err))
-		return "", errors.Internal
-	}
-	return rule, nil
-}
-
-func (p *policyHandler) actionRuleForGraft(ctx *context.Context, action oms.AllowedTo) (string, error) {
-	route := Route(SkipPoliciesCheck(), SkipParamsCheck())
-	settings, err := route.GetSettings(*ctx, oms.SettingsOptions{Path: oms.SettingsCreateDataSecurityRule})
-	if err != nil {
-		return "", errors.Internal
-	}
-
-	rule, err := settings.StringAt(action.String())
-	if err != nil {
-		log.Error("could not get 'read' rule for access security rules settings", log.Err(err))
-		return "", errors.Internal
-	}
-	return rule, nil
-}
-
-func (p *policyHandler) assertIsAllowedOnData(ctx *context.Context, action oms.AllowedTo, id string) error {
 	authCEL := authInfo(*ctx)
 	if authCEL == nil {
 		authCEL = &oms.Auth{}
 	}
 
 	s := &celParams{
-		at:   time.Now().Unix(),
-		data: &oms.Info{},
+		data: header,
 		auth: authCEL,
 	}
 
-	// load default 'action' rule for data
-	rule, err := p.actionRuleForData(ctx, action)
+	rule, err := getAccessRule(*ctx, action, objectID, path)
 	if err != nil {
 		return err
 	}
 
-	if action != oms.AllowedTo_create {
-		route := Route(SkipPoliciesCheck(), SkipParamsCheck())
-		info, err := route.Info(*ctx, id)
-		if err != nil {
-			return err
-		}
-		*ctx = contextWithDataInfo(*ctx, id, info)
-		s.data.CreatedBy = info.CreatedBy
-		s.data.Id = id
-	}
-
-	allowed, err := p.evaluate(ctx, s, rule)
+	allowed, err := evaluate(ctx, s, rule)
 	if err != nil {
 		log.Error("failed to evaluate access rule", log.Err(err))
 		return errors.Internal
@@ -107,4 +75,47 @@ func (p *policyHandler) assertIsAllowedOnData(ctx *context.Context, action oms.A
 	}
 
 	return nil
+}
+
+func getAccessRule(ctx context.Context, action oms.AllowedTo, objectID string, path string) (string, error) {
+	accessStore := accessStore(ctx)
+	if accessStore == nil {
+		log.Error("ACL-Read-Check: missing access store in context")
+		return "", errors.Internal
+	}
+
+	ruleCollection, err := accessStore.GetRules(objectID)
+	if err != nil {
+		return "", err
+	}
+
+	if path == "" {
+		path = "$"
+	}
+
+	rules, found := ruleCollection.AccessRules[path]
+	if !found {
+		log.Error("ACL: could not find access security rule", log.Field("object", objectID), log.Field("path", path))
+		return "", errors.Forbidden
+	}
+
+	var actionRules []string
+	switch action {
+	case oms.AllowedTo_read:
+		actionRules = rules.Read
+	case oms.AllowedTo_write:
+		actionRules = rules.Write
+
+	default:
+		log.Error("ACL: no rule for this action", log.Field("action", action.String()))
+		return "", errors.Internal
+	}
+
+	var formattedRules []string
+	for _, exp := range actionRules {
+		formattedRules = append(formattedRules, "("+exp+")")
+	}
+	rule := strings.Join(formattedRules, " || ")
+
+	return rule, nil
 }
