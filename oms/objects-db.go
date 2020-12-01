@@ -2,6 +2,7 @@ package oms
 
 import (
 	"context"
+	"github.com/omecodes/omestore/pb"
 )
 
 type Objects interface {
@@ -31,7 +32,7 @@ type Objects interface {
 	GetAt(ctx context.Context, objectID string, path string) (*Object, error)
 
 	// Info gets header of the object associated with objectID
-	Info(ctx context.Context, objectID string) (*Header, error)
+	Info(ctx context.Context, objectID string) (*pb.Header, error)
 
 	// Clear removes all objects store
 	Clear() error
@@ -73,13 +74,10 @@ type SearchOptions struct {
 	Filter ObjectFilter
 	Path   string `json:"path"`
 	Before int64  `json:"before"`
-	Offset int    `json:"offset"`
 	Count  int    `json:"count"`
 }
 
-type SettingsOptions struct {
-	Path string `json:"path"`
-}
+type SettingsOptions struct{}
 
 type UserOptions struct {
 	WithAccessList  bool
@@ -95,7 +93,6 @@ type GetDataOptions struct {
 
 type ObjectList struct {
 	Before  int64 `json:"before"`
-	Offset  int   `json:"offset"`
 	Count   int   `json:"count"`
 	Objects []*Object
 }

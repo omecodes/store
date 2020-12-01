@@ -302,7 +302,7 @@ func setSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = router.Route().SetSettings(ctx, oms.NewJSON(o), oms.SettingsOptions{Path: strings.TrimPrefix(r.RequestURI, "/.settings")})
+	err = router.Route().SetSettings(ctx, "", "", oms.SettingsOptions{Path: strings.TrimPrefix(r.RequestURI, "/.settings")})
 	if err != nil {
 		log.Error("failed to set settings", log.Err(err))
 		w.WriteHeader(errors.HttpStatus(err))
@@ -313,7 +313,7 @@ func getSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	opts := oms.SettingsOptions{Path: strings.TrimPrefix(r.RequestURI, "/.settings")}
-	s, err := router.Route().GetSettings(ctx, opts)
+	s, err := router.Route().GetSettings(ctx, "")
 	if err != nil {
 		log.Error("could not get settings", log.Err(err))
 		w.WriteHeader(errors.HttpStatus(err))

@@ -3,25 +3,26 @@ package oms
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/omecodes/omestore/pb"
 	"io"
 )
 
 type Object struct {
 	decoded bool
-	header  *Header
+	header  *pb.Header
 	content io.Reader
 }
 
 func NewObject() *Object {
 	o := new(Object)
-	o.header = new(Header)
+	o.header = new(pb.Header)
 	return o
 }
 
 func DecodeObject(encoded string) (*Object, error) {
 	o := new(Object)
 	o.decoded = true
-	var info Header
+	var info pb.Header
 	err := json.Unmarshal([]byte(encoded), &info)
 	if err != nil {
 		return nil, err
@@ -42,15 +43,15 @@ func (o *Object) SetCreatedAt(createdAt int64) {
 	o.header.CreatedAt = createdAt
 }
 
-func (o *Object) SetContent(reader io.Reader, length int64) {
-	o.content = reader
-	if o.header == nil {
-		o.header = new(Header)
-	}
-	o.header.Size = length
+func (o *Object) SetSize(size int64) {
+	o.header.Size = size
 }
 
-func (o *Object) SetHeader(i *Header) {
+func (o *Object) SetContent(reader io.Reader) {
+	o.content = reader
+}
+
+func (o *Object) SetHeader(i *pb.Header) {
 	o.header = i
 }
 
@@ -74,6 +75,6 @@ func (o *Object) Content() io.Reader {
 	return o.content
 }
 
-func (o *Object) Header() *Header {
+func (o *Object) Header() *pb.Header {
 	return o.header
 }

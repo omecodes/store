@@ -4,8 +4,13 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"flag"
+	"fmt"
 	"github.com/omecodes/bome"
+	"github.com/omecodes/omestore/pb"
 	"io/ioutil"
+	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -19,6 +24,36 @@ var (
 	db      *sql.DB
 	objects Objects
 )
+
+var (
+	testDBUri       string
+	jsonTestEnabled bool
+	testDialect     string
+)
+
+func init() {
+	testDBUri = os.Getenv("OMS_TESTS_DB")
+	if testDBUri == "" {
+		testDBUri = "objects.db"
+	}
+
+	jsonTestEnabled = "1" == os.Getenv("OMS_JSON_TESTS_ENABLED")
+
+	testDialect = os.Getenv("OMS_TESTS_DIALECT")
+	if testDialect == "" {
+		testDialect = bome.SQLite3
+	}
+
+	if flag.Lookup("test.v") != nil || strings.HasSuffix(os.Args[0], ".test") || strings.Contains(os.Args[0], "/_test/") {
+		fmt.Println()
+		fmt.Println()
+		fmt.Println("TESTS_DIALECT: ", testDialect)
+		fmt.Println("TESTS_DB     : ", testDBUri)
+		fmt.Println("TESTS_ENABLED: ", jsonTestEnabled)
+		fmt.Println()
+		fmt.Println()
+	}
+}
 
 func initDB() {
 	if objects == nil {
@@ -57,12 +92,13 @@ func TestMysqlStore_Save(t *testing.T) {
 	"description": "Service Authority. Generates and signs certificates for services."
 }`
 		o := new(Object)
-		o.SetHeader(&Header{
+		o.SetHeader(&pb.Header{
 			Id:        "ome-ca",
 			CreatedBy: "ome",
 			Size:      int64(len(content)),
 		})
-		o.SetContent(bytes.NewBufferString(content), int64(len(content)))
+		o.SetContent(bytes.NewBufferString(content))
+		o.SetSize(int64(len(content)))
 		err := objects.Save(context.Background(), o)
 		So(err, ShouldBeNil)
 
@@ -73,12 +109,13 @@ func TestMysqlStore_Save(t *testing.T) {
 	"description": "Account manager application. Supports OAUTH2"
 }`
 		o = new(Object)
-		o.SetHeader(&Header{
+		o.SetHeader(&pb.Header{
 			Id:        "ome-accounts",
 			CreatedBy: "ome",
 			Size:      int64(len(content)),
 		})
-		o.SetContent(bytes.NewBufferString(content), int64(len(content)))
+		o.SetContent(bytes.NewBufferString(content))
+		o.SetSize(int64(len(content)))
 		err = objects.Save(context.Background(), o)
 		So(err, ShouldBeNil)
 
@@ -89,12 +126,13 @@ func TestMysqlStore_Save(t *testing.T) {
 	"description": "Token store app"
 }`
 		o = new(Object)
-		o.SetHeader(&Header{
+		o.SetHeader(&pb.Header{
 			Id:        "ome-tdb",
 			CreatedBy: "ome",
 			Size:      int64(len(content)),
 		})
-		o.SetContent(bytes.NewBufferString(content), int64(len(content)))
+		o.SetContent(bytes.NewBufferString(content))
+		o.SetSize(int64(len(content)))
 		err = objects.Save(context.Background(), o)
 		So(err, ShouldBeNil)
 
@@ -105,12 +143,13 @@ func TestMysqlStore_Save(t *testing.T) {
 	"description": "Base library for all service definition"
 }`
 		o = new(Object)
-		o.SetHeader(&Header{
+		o.SetHeader(&pb.Header{
 			Id:        "ome-libome",
 			CreatedBy: "ome",
 			Size:      int64(len(content)),
 		})
-		o.SetContent(bytes.NewBufferString(content), int64(len(content)))
+		o.SetContent(bytes.NewBufferString(content))
+		o.SetSize(int64(len(content)))
 		err = objects.Save(context.Background(), o)
 		So(err, ShouldBeNil)
 	})

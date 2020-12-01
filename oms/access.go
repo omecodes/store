@@ -4,12 +4,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"github.com/omecodes/bome"
+	"github.com/omecodes/omestore/pb"
 )
 
 type AccessStore interface {
-	SaveRules(objectID string, rules *PathAccessRules) error
-	GetRules(objectID string) (*PathAccessRules, error)
-	GetForPath(objectID string, path string) (*AccessRules, error)
+	SaveRules(objectID string, rules *pb.PathAccessRules) error
+	GetRules(objectID string) (*pb.PathAccessRules, error)
+	GetForPath(objectID string, path string) (*pb.AccessRules, error)
 	Delete(objectID string) error
 }
 
@@ -24,7 +25,7 @@ type sqlPermStore struct {
 	store *bome.JSONMap
 }
 
-func (p *sqlPermStore) SaveRules(objectID string, rules *PathAccessRules) error {
+func (p *sqlPermStore) SaveRules(objectID string, rules *pb.PathAccessRules) error {
 	rulesBytes, err := json.Marshal(rules.AccessRules)
 	if err != nil {
 		return err
@@ -36,17 +37,17 @@ func (p *sqlPermStore) SaveRules(objectID string, rules *PathAccessRules) error 
 	return p.store.Save(entry)
 }
 
-func (p *sqlPermStore) GetRules(objectID string) (*PathAccessRules, error) {
+func (p *sqlPermStore) GetRules(objectID string) (*pb.PathAccessRules, error) {
 	value, err := p.store.Get(objectID)
 	if err != nil {
 		return nil, err
 	}
-	pr := &PathAccessRules{AccessRules: map[string]*AccessRules{}}
+	pr := &pb.PathAccessRules{AccessRules: map[string]*pb.AccessRules{}}
 	err = json.Unmarshal([]byte(value), &pr.AccessRules)
 	return pr, err
 }
 
-func (p *sqlPermStore) GetForPath(objectID string, path string) (*AccessRules, error) {
+func (p *sqlPermStore) GetForPath(objectID string, path string) (*pb.AccessRules, error) {
 	readRules, err := p.store.ExtractAt(objectID, path+".read")
 	if err != nil {
 		return nil, err
@@ -57,7 +58,7 @@ func (p *sqlPermStore) GetForPath(objectID string, path string) (*AccessRules, e
 		return nil, err
 	}
 
-	ar := new(AccessRules)
+	ar := new(pb.AccessRules)
 	err = json.Unmarshal([]byte(readRules), &ar.Read)
 	if err != nil {
 		return nil, err

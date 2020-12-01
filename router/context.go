@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"github.com/omecodes/omestore/pb"
 
 	"github.com/google/cel-go/cel"
 	"github.com/omecodes/bome"
@@ -10,21 +11,13 @@ import (
 )
 
 type ctxSettingsDB struct{}
-type ctxDataDir struct{}
-type ctxAdminPassword struct{}
 type ctxStore struct{}
 
 type ctxAccessStore struct{}
 type ctxCELPolicyEnv struct{}
 type ctxCELSearchEnv struct{}
-type ctxUserInfo struct{}
 
-type ctxSettings struct{}
-type ctxUsers struct{}
-type ctxAccesses struct{}
-type ctxInfo struct{}
 type ctxObjectHeader struct{}
-type ctxGraftInfo struct{}
 type ctxCELAclPrograms struct{}
 type ctxCELSearchPrograms struct{}
 type ctxAuthCEL struct{}
@@ -58,7 +51,7 @@ func WithObjectsStore(objects oms.Objects) ContextUpdaterFunc {
 }
 
 // WithSettings creates a context updater that adds permissions to a context
-func WithSettings(settings *bome.JSONMap) ContextUpdaterFunc {
+func WithSettings(settings *bome.Map) ContextUpdaterFunc {
 	return func(parent context.Context) context.Context {
 		return context.WithValue(parent, ctxSettingsDB{}, settings)
 	}
@@ -79,14 +72,14 @@ func WithCelSearchEnv(env *cel.Env) ContextUpdaterFunc {
 }
 
 // WithWorkers creates a context updater that adds CEL env to a context
-func WithWorkers(infoDB bome.JSONMap) ContextUpdaterFunc {
+func WithWorkers(infoDB *bome.JSONMap) ContextUpdaterFunc {
 	return func(parent context.Context) context.Context {
 		return context.WithValue(parent, ctxWorkers{}, infoDB)
 	}
 }
 
 // WithUserInfo creates a context updater that adds a Auth info to a context
-func WithUserInfo(ctx context.Context, a *oms.Auth) context.Context {
+func WithUserInfo(ctx context.Context, a *pb.Auth) context.Context {
 	return context.WithValue(ctx, ctxAuthCEL{}, a)
 }
 
@@ -114,23 +107,23 @@ func storage(ctx context.Context) oms.Objects {
 	return o.(oms.Objects)
 }
 
-func settings(ctx context.Context) *bome.JSONMap {
+func settings(ctx context.Context) *bome.Map {
 	o := ctx.Value(ctxSettingsDB{})
 	if o == nil {
 		return nil
 	}
-	return o.(*bome.JSONMap)
+	return o.(*bome.Map)
 }
 
-func authInfo(ctx context.Context) *oms.Auth {
+func authInfo(ctx context.Context) *pb.Auth {
 	o := ctx.Value(ctxAuthCEL{})
 	if o == nil {
 		return nil
 	}
-	return o.(*oms.Auth)
+	return o.(*pb.Auth)
 }
 
-func workersDB(ctx context.Context) *bome.JSONMap {
+func workers(ctx context.Context) *bome.JSONMap {
 	o := ctx.Value(ctxWorkers{})
 	if o == nil {
 		return nil
@@ -146,11 +139,11 @@ func accessStore(ctx context.Context) oms.AccessStore {
 	return o.(oms.AccessStore)
 }
 
-func getObjectHeader(ctx *context.Context, objectID string) (*oms.Header, error) {
-	var m map[string]*oms.Header
+func getObjectHeader(ctx *context.Context, objectID string) (*pb.Header, error) {
+	var m map[string]*pb.Header
 	o := (*ctx).Value(ctxObjectHeader{})
 	if o != nil {
-		m = o.(map[string]*oms.Header)
+		m = o.(map[string]*pb.Header)
 		if m != nil {
 			header, found := m[objectID]
 			if found {
@@ -160,7 +153,7 @@ func getObjectHeader(ctx *context.Context, objectID string) (*oms.Header, error)
 	}
 
 	if m == nil {
-		m = map[string]*oms.Header{}
+		m = map[string]*pb.Header{}
 	}
 
 	route := Route(SkipParamsCheck(), SkipPoliciesCheck())

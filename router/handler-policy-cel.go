@@ -4,14 +4,14 @@ import (
 	"context"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
-	"github.com/omecodes/omestore/oms"
+	"github.com/omecodes/omestore/pb"
 	"strings"
 	"time"
 )
 
 type celParams struct {
-	auth *oms.Auth
-	data *oms.Header
+	auth *pb.Auth
+	data *pb.Header
 }
 
 func evaluate(ctx *context.Context, state *celParams, rule string) (bool, error) {
@@ -29,12 +29,24 @@ func evaluate(ctx *context.Context, state *celParams, rule string) (bool, error)
 	}
 
 	vars := map[string]interface{}{
-		"auth": state.auth,
-		"data": state.data,
-		"at":   time.Now().Unix(),
+		"auth": map[string]interface{}{
+			"uid":       state.auth.Uid,
+			"email":     state.auth.Validated,
+			"worker":    state.auth.Worker,
+			"validated": state.auth.Validated,
+			"scope":     state.auth.Scope,
+			"group":     state.auth.Group,
+		},
+		"data": map[string]interface{}{
+			"id":         state.data.Id,
+			"created_by": state.data.CreatedBy,
+			"created_at": state.data.CreatedAt,
+			"size":       state.data.Size,
+		},
+		"at": time.Now().Unix(),
 	}
-	out, details, err := prg.Eval(vars)
 
+	out, details, err := prg.Eval(vars)
 	if err != nil {
 		log.Error("cel execution", log.Field("details", details))
 		return false, err
@@ -43,7 +55,7 @@ func evaluate(ctx *context.Context, state *celParams, rule string) (bool, error)
 	return out.Value().(bool), nil
 }
 
-func assetActionAllowedOnObject(ctx *context.Context, action oms.AllowedTo, objectID string, path string) error {
+func assetActionAllowedOnObject(ctx *context.Context, action pb.AllowedTo, objectID string, path string) error {
 	header, err := getObjectHeader(ctx, objectID)
 	if err != nil {
 		return err
@@ -51,7 +63,7 @@ func assetActionAllowedOnObject(ctx *context.Context, action oms.AllowedTo, obje
 
 	authCEL := authInfo(*ctx)
 	if authCEL == nil {
-		authCEL = &oms.Auth{}
+		authCEL = &pb.Auth{}
 	}
 
 	s := &celParams{
@@ -77,7 +89,7 @@ func assetActionAllowedOnObject(ctx *context.Context, action oms.AllowedTo, obje
 	return nil
 }
 
-func getAccessRule(ctx context.Context, action oms.AllowedTo, objectID string, path string) (string, error) {
+func getAccessRule(ctx context.Context, action pb.AllowedTo, objectID string, path string) (string, error) {
 	accessStore := accessStore(ctx)
 	if accessStore == nil {
 		log.Error("ACL-Read-Check: missing access store in context")
@@ -101,10 +113,12 @@ func getAccessRule(ctx context.Context, action oms.AllowedTo, objectID string, p
 
 	var actionRules []string
 	switch action {
-	case oms.AllowedTo_read:
+	case pb.AllowedTo_read:
 		actionRules = rules.Read
-	case oms.AllowedTo_write:
+	case pb.AllowedTo_write:
 		actionRules = rules.Write
+	case pb.AllowedTo_delete:
+		actionRules = rules.Delete
 
 	default:
 		log.Error("ACL: no rule for this action", log.Field("action", action.String()))

@@ -32,6 +32,6 @@ func (p *Patch) GetObjectID() string {
 	return p.objectID
 }
 
-func (p *Patch) Marshal() ([]byte, error) {
-	return nil, nil
+func (p *Patch) GetContent() io.Reader {
+	return p.content
 }

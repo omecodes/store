@@ -9,6 +9,7 @@ import (
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/omestore/pb"
 	"io/ioutil"
 	"time"
 )
@@ -49,12 +50,6 @@ func (ms *mysqlStore) Save(ctx context.Context, object *Object) error {
 		return errors.BadInput
 	}
 
-	headersData, err := json.Marshal(object.Header())
-	if err != nil {
-		log.Error("Save: could not get object header", log.Err(err))
-		return errors.BadInput
-	}
-
 	tx, err := ms.objects.BeginTransaction()
 	if err != nil {
 		log.Error("Save: could not start objects DB transaction", log.Err(err))
@@ -71,6 +66,22 @@ func (ms *mysqlStore) Save(ctx context.Context, object *Object) error {
 			log.Error("Save: rollback failed", log.Err(err))
 		}
 		return errors.Internal
+	}
+
+	size, err := tx.Size(object.ID())
+	if err != nil {
+		log.Error("Patch: failed to get object size", log.Field("id", object.ID()), log.Err(err))
+		if err := tx.Rollback(); err != nil {
+			log.Error("Patch: rollback failed", log.Err(err))
+		}
+		return err
+	}
+
+	object.Header().Size = size
+	headersData, err := json.Marshal(object.Header())
+	if err != nil {
+		log.Error("Save: could not get object header", log.Err(err))
+		return errors.BadInput
 	}
 
 	htx := ms.headers.ContinueTransaction(tx.TX())
@@ -199,6 +210,10 @@ func (ms *mysqlStore) List(ctx context.Context, before int64, count int, filter 
 		if filter != nil {
 			allowed, err := filter.Filter(o)
 			if err != nil {
+				if err == errors.Unauthorized || err == errors.Forbidden {
+					log.Error("List: object is not readable in context", log.Field("id", o.header.Id), log.Err(err))
+					continue
+				}
 				return nil, err
 			}
 
@@ -206,8 +221,12 @@ func (ms *mysqlStore) List(ctx context.Context, before int64, count int, filter 
 				continue
 			}
 		}
+		result.Count++
 		result.Objects = append(result.Objects, o)
 	}
+
+	result.Before = before
+	result.Count = len(result.Objects)
 	return &result, nil
 }
 
@@ -250,6 +269,7 @@ func (ms *mysqlStore) ListAt(ctx context.Context, partPath string, before int64,
 				continue
 			}
 		}
+		result.Count++
 		result.Objects = append(result.Objects, o)
 	}
 	return &result, nil
@@ -265,7 +285,7 @@ func (ms *mysqlStore) Get(ctx context.Context, objectID string) (*Object, error)
 		return nil, errors.Internal
 	}
 
-	var info Header
+	var info pb.Header
 	err = json.Unmarshal([]byte(hv), &info)
 	if err != nil {
 		log.Error("Get: could not decode object header", log.Err(err))
@@ -298,7 +318,7 @@ func (ms *mysqlStore) GetAt(ctx context.Context, objectID string, path string) (
 		return nil, errors.Internal
 	}
 
-	var info Header
+	var info pb.Header
 	err = json.Unmarshal([]byte(hv), &info)
 	if err != nil {
 		log.Error("Get: could not decode object header", log.Err(err))
@@ -312,18 +332,18 @@ func (ms *mysqlStore) GetAt(ctx context.Context, objectID string, path string) (
 
 	o := new(Object)
 	o.SetHeader(&info)
-	o.SetContent(bytes.NewBuffer([]byte(value)), int64(len(value)))
+	o.SetContent(bytes.NewBuffer([]byte(value)))
 	log.Debug("GetAt: content loaded", log.Field("id", objectID), log.Field("at", path))
 	return o, nil
 }
 
-func (ms *mysqlStore) Info(ctx context.Context, id string) (*Header, error) {
+func (ms *mysqlStore) Info(ctx context.Context, id string) (*pb.Header, error) {
 	value, err := ms.headers.Get(id)
 	if err != nil {
 		return nil, err
 	}
 
-	var info Header
+	var info pb.Header
 	err = json.Unmarshal([]byte(value), &info)
 	if err != nil {
 		log.Error("List: failed to decode object header", log.Field("encoded", value), log.Err(err))

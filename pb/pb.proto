@@ -1,7 +1,6 @@
 syntax = "proto3";
 
-import "google/protobuf/any.proto";
-option go_package = "github.com/omecodes/omestore/pb/api.proto;oms";
+option go_package = "github.com/omecodes/omestore/pb/pb.proto;pb";
 
 enum AllowedTo {
   doNothing = 0;
@@ -19,20 +18,22 @@ message RelationDef {
   bool equivalence = 2;
 }
 
+
+message AccessRules {
+  repeated string read = 1;
+  repeated string write = 2;
+  repeated string delete = 3;
+}
+
+message PathAccessRules {
+  map<string, AccessRules> access_rules = 5;
+}
+
 message Header {
   string id = 1;
   string created_by = 2;
   int64 created_at = 3;
   int64 size = 4;
-}
-
-message AccessRules {
-  repeated string read = 1;
-  repeated string write = 2;
-}
-
-message PathAccessRules {
-  map<string, AccessRules> access_rules = 5;
 }
 
 message Auth {
@@ -42,22 +43,4 @@ message Auth {
   bool validated = 4;
   repeated string scope = 5;
   string group = 6;
-}
-
-message Perm {
-  bool read = 1;
-  bool write = 2;
-  bool delete = 3;
-  bool edit_rules = 4;
-  bool graft = 5;
-}
-
-message OperationParams {
-  string func = 1;
-  string path = 2;
-  string value = 3;
-}
-
-message Conditions {
-  repeated google.protobuf.Any items = 1;
 }

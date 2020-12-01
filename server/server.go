@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
+	"github.com/omecodes/omestore/pb"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -17,7 +18,6 @@ import (
 	"github.com/google/cel-go/checker/decls"
 	"github.com/gorilla/mux"
 	"github.com/omecodes/bome"
-	"github.com/omecodes/common/dao/mapping"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/httpx"
 	"github.com/omecodes/common/netx"
@@ -27,7 +27,6 @@ import (
 	"github.com/omecodes/omestore/router"
 	"github.com/omecodes/service"
 	"github.com/sethvargo/go-password/password"
-	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 var debug = os.Getenv("OMS_DEBUG")
@@ -48,18 +47,17 @@ func New(config Config) *Server {
 // Server embeds an Ome data store
 // it also exposes an API server
 type Server struct {
-	initialized     bool
-	options         []netx.ListenOption
-	config          *Config
-	adminPassword   string
-	dataAccessRules mapping.DoubleMap
-	key             []byte
-	celPolicyEnv    *cel.Env
-	celSearchEnv    *cel.Env
+	initialized   bool
+	options       []netx.ListenOption
+	config        *Config
+	adminPassword string
+	key           []byte
+	celPolicyEnv  *cel.Env
+	celSearchEnv  *cel.Env
 
 	objects     oms.Objects
 	workers     *bome.JSONMap
-	settings    *bome.JSONMap
+	settings    *bome.Map
 	accessStore oms.AccessStore
 	dListener   net.Listener
 }
@@ -85,7 +83,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	s.settings, err = bome.NewJSONMap(db, bome.MySQL, "settings")
+	s.settings, err = bome.NewMap(db, bome.MySQL, "settings")
 	if err != nil {
 		return err
 	}
@@ -96,26 +94,17 @@ func (s *Server) init() error {
 	}
 
 	s.celPolicyEnv, err = cel.NewEnv(
-		cel.Types(&oms.Auth{}),
-		cel.Types(&oms.Header{}),
-		cel.Types(&oms.Perm{}),
 		cel.Declarations(
-			decls.NewVar("at", decls.Int),
-			decls.NewVar("auth", decls.NewObjectType("Auth")),
-			decls.NewVar("data", decls.NewObjectType("Header")),
-			decls.NewFunction("acl",
-				decls.NewOverload(
-					"acl",
-					[]*expr.Type{decls.String, decls.String}, decls.NewObjectType("Perm"),
-				),
-			),
+			decls.NewVar("auth", decls.NewMapType(decls.String, decls.Dyn)),
+			decls.NewVar("data", decls.NewMapType(decls.String, decls.Dyn)),
 		),
 	)
 	if err != nil {
 		return err
 	}
 
-	s.celSearchEnv, err = cel.NewEnv()
+	s.celSearchEnv, err = cel.NewEnv(
+		cel.Declarations(decls.NewVar("o", decls.NewMapType(decls.String, decls.Dyn))))
 	if err != nil {
 		return nil
 	}
@@ -142,18 +131,19 @@ func (s *Server) init() error {
 		return err
 	}
 
-	settings, err := s.settings.Get(oms.Settings)
+	err = s.settings.Save(&bome.MapEntry{
+		Key:   oms.SettingsDataMaxSizePath,
+		Value: oms.DefaultSettings[oms.SettingsDataMaxSizePath],
+	})
 	if err != nil && !errors.IsNotFound(err) {
-		log.Error("could not get db settings")
 		return err
 	}
-
-	if settings == "" {
-		defaultSettings := &bome.MapEntry{
-			Key:   oms.Settings,
-			Value: oms.DefaultSettings,
-		}
-		return s.settings.Save(defaultSettings)
+	err = s.settings.Save(&bome.MapEntry{
+		Key:   oms.SettingsCreateDataSecurityRule,
+		Value: oms.DefaultSettings[oms.SettingsCreateDataSecurityRule],
+	})
+	if err != nil && !errors.IsNotFound(err) {
+		return err
 	}
 	return nil
 }
@@ -274,7 +264,7 @@ func (s *Server) detectAuthentication(next http.Handler) http.Handler {
 					}
 				}
 
-				ctx := router.WithUserInfo(r.Context(), &oms.Auth{
+				ctx := router.WithUserInfo(r.Context(), &pb.Auth{
 					Uid:       authUser,
 					Validated: true,
 					Worker:    "admin" != authUser,
@@ -308,7 +298,7 @@ func (s *Server) detectOAuth2Authorization(next http.Handler) http.Handler {
 				return
 			}
 
-			ctx := router.WithUserInfo(r.Context(), &oms.Auth{
+			ctx := router.WithUserInfo(r.Context(), &pb.Auth{
 				Uid:       jwt.Claims.Sub,
 				Email:     jwt.Claims.Profile.Email,
 				Worker:    false,

@@ -8,6 +8,8 @@ import (
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/omestore/oms"
+	"github.com/omecodes/omestore/pb"
+	"io/ioutil"
 )
 
 type execHandler struct {
@@ -15,7 +17,7 @@ type execHandler struct {
 }
 
 func (e *execHandler) ListWorkers(ctx context.Context) ([]*oms.JSON, error) {
-	db := workersDB(ctx)
+	db := workers(ctx)
 	if db == nil {
 		log.Info("missing worker info db in context")
 		return nil, errors.Internal
@@ -50,7 +52,7 @@ func (e *execHandler) ListWorkers(ctx context.Context) ([]*oms.JSON, error) {
 }
 
 func (e *execHandler) RegisterWorker(ctx context.Context, info *oms.JSON) error {
-	db := workersDB(ctx)
+	db := workers(ctx)
 	if db == nil {
 		log.Info("missing worker info db in context")
 		return errors.Internal
@@ -68,60 +70,65 @@ func (e *execHandler) RegisterWorker(ctx context.Context, info *oms.JSON) error 
 	return db.Save(entry)
 }
 
-func (e *execHandler) SetSettings(ctx context.Context, value *oms.JSON, opts oms.SettingsOptions) error {
+func (e *execHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
 	s := settings(ctx)
 	if s == nil {
-		log.Info("missing settings database in context")
+		log.Info("exec-handler.SetSettings: missing settings database in context")
 		return errors.Internal
 	}
 
-	settings, err := json.Marshal(value)
-	if err != nil {
-		return err
-	}
-
 	entry := &bome.MapEntry{
-		Key:   oms.Settings,
-		Value: string(settings),
+		Key:   name,
+		Value: value,
 	}
 	return s.Save(entry)
 }
 
-func (e *execHandler) GetSettings(ctx context.Context, opts oms.SettingsOptions) (*oms.JSON, error) {
+func (e *execHandler) DeleteSettings(ctx context.Context, name string) error {
 	s := settings(ctx)
 	if s == nil {
-		log.Info("missing settings database in context")
-		return nil, errors.Internal
+		log.Info("exec-handler.DeleteSettings: missing settings database in context")
+		return errors.Internal
 	}
-
-	value, err := s.ExtractAt(oms.Settings, opts.Path)
-	if err != nil {
-		return nil, err
-	}
-
-	var o interface{}
-	err = json.Unmarshal([]byte(value), &o)
-	return oms.NewJSON(o), err
+	return s.Delete(name)
 }
 
-func (e *execHandler) PutObject(ctx context.Context, object *oms.Object, security *oms.PathAccessRules, opts oms.PutDataOptions) (string, error) {
+func (e *execHandler) ClearSettings(ctx context.Context) error {
+	s := settings(ctx)
+	if s == nil {
+		log.Info("exec-handler.ClearSettings: missing settings database in context")
+		return errors.Internal
+	}
+	return s.Clear()
+}
+
+func (e *execHandler) GetSettings(ctx context.Context, name string) (string, error) {
+	s := settings(ctx)
+	if s == nil {
+		log.Info("exec-handler.GetSettings: missing settings database in context")
+		return "", errors.Internal
+	}
+
+	return s.Get(name)
+}
+
+func (e *execHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
 	storage := storage(ctx)
 	if storage == nil {
-		log.Info("missing storage in context")
+		log.Info("exec-handler.PutObject: missing storage in context")
 		return "", errors.Internal
 	}
 
 	accessStore := accessStore(ctx)
 	if accessStore == nil {
-		log.Info("missing access store in context")
+		log.Info("exec-handler.PutObject: missing access store in context")
 		return "", errors.Internal
 	}
-
 	id := uuid.New().String()
 
 	err := accessStore.SaveRules(id, security)
 	if err != nil {
-		log.Error("PutObject-exec: failed to save object access security rules", log.Err(err))
+		log.Error("exec-handler.PutObject: failed to save object access security rules", log.Err(err))
 		return "", errors.Internal
 	}
 
@@ -130,10 +137,22 @@ func (e *execHandler) PutObject(ctx context.Context, object *oms.Object, securit
 }
 
 func (e *execHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
-	panic("implement me")
+	storage := storage(ctx)
+	if storage == nil {
+		log.Info("missing storage in context")
+		return errors.Internal
+	}
+
+	content, err := ioutil.ReadAll(patch.GetContent())
+	if err != nil {
+		log.Error("Handler-exec: could not get patch content", log.Err(err))
+		return err
+	}
+
+	return storage.Patch(ctx, patch.GetObjectID(), patch.Path(), string(content))
 }
 
-func (e *execHandler) GetObject(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error) {
+func (e *execHandler) GetObject(ctx context.Context, objectID string, opts oms.GetDataOptions) (*oms.Object, error) {
 	storage := storage(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
@@ -141,28 +160,41 @@ func (e *execHandler) GetObject(ctx context.Context, id string, opts oms.GetData
 	}
 
 	if opts.Path == "" {
-		return storage.Get(ctx, id)
+		return storage.Get(ctx, objectID)
 	} else {
-		return storage.GetAt(ctx, id, opts.Path)
+		return storage.GetAt(ctx, objectID, opts.Path)
 	}
 }
 
-func (e *execHandler) GetObjectHeader(ctx context.Context, id string) (*oms.Header, error) {
+func (e *execHandler) GetObjectHeader(ctx context.Context, objectID string) (*pb.Header, error) {
 	storage := storage(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
 		return nil, errors.New("wrong context")
 	}
-	return storage.Info(ctx, id)
+	return storage.Info(ctx, objectID)
 }
 
-func (e *execHandler) DeleteObject(ctx context.Context, id string) error {
+func (e *execHandler) DeleteObject(ctx context.Context, objectID string) error {
 	storage := storage(ctx)
 	if storage == nil {
-		log.Info("missing DB in context")
+		log.Info("exec-handler.DeleteObjet: missing DB in context")
 		return errors.New("wrong context")
 	}
-	return storage.Delete(ctx, id)
+
+	err := storage.Delete(ctx, objectID)
+	if err != nil {
+		log.Error("exec-handler.DeleteObjet: failed to delete object from storage", log.Err(err))
+		return err
+	}
+
+	accessStore := accessStore(ctx)
+	if accessStore == nil {
+		log.Info("exec-handler.DeleteObjet: missing access store in context")
+		return errors.Internal
+	}
+
+	return accessStore.Delete(objectID)
 }
 
 func (e *execHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {

@@ -4,24 +4,39 @@ import (
 	"context"
 	"errors"
 	"github.com/omecodes/omestore/oms"
+	"github.com/omecodes/omestore/pb"
 )
 
 type base struct {
 	next Handler
 }
 
-func (b *base) SetSettings(ctx context.Context, value *oms.JSON, opts oms.SettingsOptions) error {
+func (b *base) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
 	if b.next == nil {
 		return errors.New("no handler available")
 	}
-	return b.next.SetSettings(ctx, value, opts)
+	return b.next.SetSettings(ctx, name, value, opts)
 }
 
-func (b *base) GetSettings(ctx context.Context, opts oms.SettingsOptions) (*oms.JSON, error) {
+func (b *base) GetSettings(ctx context.Context, name string) (string, error) {
 	if b.next == nil {
-		return nil, errors.New("no handler available")
+		return "", errors.New("no handler available")
 	}
-	return b.next.GetSettings(ctx, opts)
+	return b.next.GetSettings(ctx, name)
+}
+
+func (b *base) DeleteSettings(ctx context.Context, name string) error {
+	if b.next == nil {
+		return errors.New("no handler available")
+	}
+	return b.next.DeleteSettings(ctx, name)
+}
+
+func (b *base) ClearSettings(ctx context.Context) error {
+	if b.next == nil {
+		return errors.New("no handler available")
+	}
+	return b.next.ClearSettings(ctx)
 }
 
 func (b *base) ListWorkers(ctx context.Context) ([]*oms.JSON, error) {
@@ -38,7 +53,7 @@ func (b *base) RegisterWorker(ctx context.Context, info *oms.JSON) error {
 	return b.next.RegisterWorker(ctx, info)
 }
 
-func (b *base) PutObject(ctx context.Context, object *oms.Object, security *oms.PathAccessRules, opts oms.PutDataOptions) (string, error) {
+func (b *base) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
 	if b.next == nil {
 		return "", errors.New("no handler available")
 	}
@@ -52,7 +67,7 @@ func (b *base) GetObject(ctx context.Context, id string, opts oms.GetDataOptions
 	return b.next.GetObject(ctx, id, opts)
 }
 
-func (b *base) GetObjectHeader(ctx context.Context, id string) (*oms.Header, error) {
+func (b *base) GetObjectHeader(ctx context.Context, id string) (*pb.Header, error) {
 	if b.next == nil {
 		return nil, errors.New("not handler available")
 	}

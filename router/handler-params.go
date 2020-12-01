@@ -5,35 +5,13 @@ import (
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/omestore/oms"
+	"github.com/omecodes/omestore/pb"
+	"strconv"
+	"time"
 )
 
 type paramsHandler struct {
 	base
-}
-
-func (p *paramsHandler) SetSettings(ctx context.Context, value *oms.JSON, opts oms.SettingsOptions) error {
-	if value == nil {
-		return errors.BadInput
-	}
-
-	if opts.Path != "" {
-		_, allowed := oms.SettingsPathFormats[opts.Path]
-		if !allowed {
-			return errors.BadInput
-		}
-	}
-
-	return p.base.SetSettings(ctx, value, opts)
-}
-
-func (p *paramsHandler) GetSettings(ctx context.Context, opts oms.SettingsOptions) (*oms.JSON, error) {
-	if opts.Path != "" {
-		_, exists := oms.SettingsPathFormats[opts.Path]
-		if !exists {
-			return nil, errors.BadInput
-		}
-	}
-	return p.base.GetSettings(ctx, opts)
 }
 
 func (p *paramsHandler) RegisterWorker(ctx context.Context, info *oms.JSON) error {
@@ -43,24 +21,45 @@ func (p *paramsHandler) RegisterWorker(ctx context.Context, info *oms.JSON) erro
 	return p.base.RegisterWorker(ctx, info)
 }
 
-func (p *paramsHandler) PutObject(ctx context.Context, object *oms.Object, security *oms.PathAccessRules, opts oms.PutDataOptions) (string, error) {
-	if object == nil || object.ID() == "" || object.Size() == 0 {
+func (p *paramsHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
+	if name == "" || value == "" {
+		return errors.BadInput
+	}
+	return p.base.SetSettings(ctx, name, value, opts)
+}
+
+func (p *paramsHandler) DeleteSettings(ctx context.Context, name string) error {
+	if name == "" {
+		return errors.BadInput
+	}
+	return p.base.DeleteSettings(ctx, name)
+}
+
+func (p *paramsHandler) GetSettings(ctx context.Context, name string) (string, error) {
+	if name == "" {
+		return "", errors.BadInput
+	}
+	return p.base.GetSettings(ctx, name)
+}
+
+func (p *paramsHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
+	if object == nil || object.Size() == 0 {
 		return "", errors.BadInput
 	}
 
 	if security == nil {
-		security = new(oms.PathAccessRules)
-		security.AccessRules = map[string]*oms.AccessRules{}
+		security = new(pb.PathAccessRules)
+		security.AccessRules = map[string]*pb.AccessRules{}
 	}
 
 	route := Route(SkipPoliciesCheck(), SkipParamsCheck())
-	s, err := route.GetSettings(ctx, oms.SettingsOptions{Path: oms.SettingsDataMaxSizePath})
+	s, err := route.GetSettings(ctx, oms.SettingsDataMaxSizePath)
 	if err != nil {
 		log.Error("could not get data max length from settings", log.Err(err))
 		return "", errors.Internal
 	}
 
-	maxLength, err := s.ToInt64()
+	maxLength, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		log.Error("could not get data max length from settings", log.Err(err))
 		return "", errors.Internal
@@ -80,13 +79,13 @@ func (p *paramsHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts 
 	}
 
 	route := Route(SkipPoliciesCheck(), SkipParamsCheck())
-	s, err := route.GetSettings(ctx, oms.SettingsOptions{Path: oms.SettingsDataMaxSizePath})
+	s, err := route.GetSettings(ctx, oms.SettingsDataMaxSizePath)
 	if err != nil {
 		log.Error("could not get data max length from settings", log.Err(err))
 		return errors.Internal
 	}
 
-	maxLength, err := s.ToInt64()
+	maxLength, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		log.Error("could not get data max length from settings", log.Err(err))
 		return errors.Internal
@@ -107,7 +106,7 @@ func (p *paramsHandler) GetObject(ctx context.Context, id string, opts oms.GetDa
 	return p.base.GetObject(ctx, id, opts)
 }
 
-func (p *paramsHandler) GetObjectHeader(ctx context.Context, id string) (*oms.Header, error) {
+func (p *paramsHandler) GetObjectHeader(ctx context.Context, id string) (*pb.Header, error) {
 	if id == "" {
 		return nil, errors.BadInput
 	}
@@ -119,6 +118,17 @@ func (p *paramsHandler) DeleteObject(ctx context.Context, id string) error {
 		return errors.BadInput
 	}
 	return p.next.DeleteObject(ctx, id)
+}
+
+func (p *paramsHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
+	if opts.Count == 0 {
+		opts.Count = 100
+	}
+
+	if opts.Before == 0 {
+		opts.Before = time.Now().Unix()
+	}
+	return p.base.ListObjects(ctx, opts)
 }
 
 func (p *paramsHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
