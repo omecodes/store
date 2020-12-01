@@ -1,23 +1,21 @@
-name: API
+name: UNIT TESTS
 
 on:
   create:
     tags:
       - 'v*'
-
   workflow_dispatch:
-    inputs:
-      fx_debug:
-        description: 'Enables debug mode'
-        required: false
-        default: true
+
+
 
 jobs:
-
-  tests:
-    name: Test Firex server API with postman
+  tests_mysql:
+    name:  Unit tests
     runs-on: ubuntu-latest
-
+    env:
+      JSON_TESTS_ENABLED: 1
+      TESTS_DB: bome:bome@tcp(localhost:3306)/bome?charset=utf8
+      TESTS_DIALECT: mysql
     steps:
 
       - name: Set up Go 1.x
@@ -37,11 +35,6 @@ jobs:
               dep ensure
           fi
 
-      - name: Build
-        run: go build -o fire -v .
-
-      - name: Test
-        run: go test -v .
 
       - name: Set up MySQL
         uses: samin/mysql-action@v1
@@ -51,36 +44,10 @@ jobs:
           character set server: 'utf8'
           collation server: 'utf8_general_ci'
           mysql version: '8.0'
-          mysql database: 'omestore'
-          mysql root password: 'omestore'
-          mysql user: 'omestore'
-          mysql password: 'omestore'
+          mysql database: 'bome'
+          mysql root password: 'bome'
+          mysql user: 'bome'
+          mysql password: 'bome'
 
-      - name: Run Firex server
-        run: ./fire --p=8080 --d=./working-dir --m="root:omestore@(127.0.0.1:3306)/omestore?charset=utf8"
-
-      - name: Set up Newman enviroment
-        run: |
-          ADMINPSSWD=`cat ./wroking-dir/admin-pwd`
-          cat > api.postman_environment.json <<EOC
-            "id": "fxenv",
-            "name": "omestore",
-            "values": [
-              {
-                "key": "url",
-                "value": "http://127.0.0.1:8080",
-                "enabled": true
-              },
-              {
-                "key": "adminpwd",
-                "value": "$ADMINPSSWD",
-                "enabled": true
-              }
-            ],
-            "_postman_variable_scope": "environment"
-          EOC
-      - name: Run Newman api tests
-        uses: matt-ball/newman-action@master
-        with:
-          collection: api.postman_collection.json
-          environment: api.postman_environment.json
+      - name: Test
+        run: go test -v .
