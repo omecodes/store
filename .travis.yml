@@ -21,6 +21,6 @@ script:
       dep ensure
     fi
 
-  - go build
+  - go build oms.go
 
-  - go test -v .
+  - go test -v ./...
