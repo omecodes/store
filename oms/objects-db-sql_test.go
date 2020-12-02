@@ -266,3 +266,11 @@ func TestMysqlStore_Delete(t *testing.T) {
 		So(o, ShouldBeNil)
 	})
 }
+
+func TestMysqlStore_Clear(t *testing.T) {
+	Convey("Clear objects", t, func() {
+		initDB()
+		err := objects.Clear()
+		So(err, ShouldBeNil)
+	})
+}
