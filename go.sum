@@ -234,8 +234,8 @@ github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRW
 github.com/mwitkow/go-proto-validators v0.3.2/go.mod h1:ej0Qp0qMgHN/KtDyUt+Q1/tA7a5VarXUOUxD+oeD30w=
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=
 github.com/omecodes/bome v0.0.0-20201128175554-02096488538b/go.mod h1:yn7sMaUBVd5CEFvX0IUYY8JuTF7Tn/PPeMFDA9pT3Sg=
-github.com/omecodes/common v0.0.0-20201202083724-645bddb64925 h1:GAc2Xw2HXmTFnXoD9HAiy4uySoUhRGb4L9vOSRiFOfc=
-github.com/omecodes/common v0.0.0-20201202083724-645bddb64925/go.mod h1:ORHcmOlnZMs77fvBLp41cuh0R3bOw/e+2jaoIxN0WP0=
+github.com/omecodes/common v0.0.0-20201202084727-364a206597f8 h1:81lNGXm7nPIC2+eUtzPm9RIjP7blcarGy1OejgLhXTI=
+github.com/omecodes/common v0.0.0-20201202084727-364a206597f8/go.mod h1:ORHcmOlnZMs77fvBLp41cuh0R3bOw/e+2jaoIxN0WP0=
 github.com/omecodes/libome v0.0.0-20201128214815-2b3f03af9fa6/go.mod h1:zWK7ZcUVGB+F7XO5fSkwzypxtHjMM05UAPcwpnd+BcI=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
