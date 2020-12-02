@@ -74,7 +74,7 @@ func (p *paramsHandler) PutObject(ctx context.Context, object *oms.Object, secur
 }
 
 func (p *paramsHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
-	if patch.GetObjectID() == "" || patch.Size() == 0 || patch.Path() == "" {
+	if patch == nil || patch.GetObjectID() == "" || patch.Size() == 0 || patch.Path() == "" {
 		return errors.BadInput
 	}
 

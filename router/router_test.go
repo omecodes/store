@@ -307,29 +307,75 @@ func Test_DeleteSettings(t *testing.T) {
 }
 
 func Test_DeleteSettings0(t *testing.T) {
-	Convey("Delete settings with incomplete context", t, func() {
-
+	Convey("Non authenticated context cannot delete settings", t, func() {
 		route := Route()
+		err := route.DeleteSettings(context.Background(), "something")
+		So(err, ShouldEqual, errors.Forbidden)
+	})
+}
 
+func Test_DeleteSettings1(t *testing.T) {
+	Convey("Delete settings with incomplete context", t, func() {
+		route := Route()
 		adminCtx := WithUserInfo(contextWithoutSettings(), admin)
 		err := route.DeleteSettings(adminCtx, "hello")
 		So(err, ShouldEqual, errors.Internal)
 	})
 }
 
-func Test_DeleteSettings1(t *testing.T) {
+func Test_DeleteSettings2(t *testing.T) {
 	Convey("Delete settings with wrong parameters", t, func() {
-
 		route := Route()
-
 		adminCtx := WithUserInfo(fullConfiguredContext(), admin)
 		err := route.DeleteSettings(adminCtx, "hello")
 		So(err, ShouldBeNil)
 	})
 }
 
+func Test_ClearSettings(t *testing.T) {
+	Convey("Non authenticated user cannot clear settings", t, func() {
+		route := Route()
+		err := route.ClearSettings(context.Background())
+		So(err, ShouldEqual, errors.Forbidden)
+	})
+}
+
+func Test_ClearSettings0(t *testing.T) {
+	Convey("Non admin user cannot clear settings", t, func() {
+		route := Route()
+		userACtx := WithUserInfo(fullConfiguredContext(), userA)
+		err := route.ClearSettings(userACtx)
+		So(err, ShouldEqual, errors.Forbidden)
+	})
+}
+
+func Test_ClearSettings1(t *testing.T) {
+	Convey("Non admin user cannot clear settings", t, func() {
+		route := Route()
+		userACtx := WithUserInfo(fullConfiguredContext(), userA)
+		err := route.ClearSettings(userACtx)
+		So(err, ShouldEqual, errors.Forbidden)
+	})
+}
+
+func Test_ClearSettings2(t *testing.T) {
+	Convey("Admin user can clear settings", t, func() {
+		route := Route()
+		adminCtx := WithUserInfo(fullConfiguredContext(), admin)
+
+		err := route.ClearSettings(adminCtx)
+		So(err, ShouldBeNil)
+
+		err = route.SetSettings(adminCtx, oms.SettingsDataMaxSizePath, "1024", oms.SettingsOptions{})
+		So(err, ShouldBeNil)
+
+		err = route.SetSettings(adminCtx, oms.SettingsCreateDataSecurityRule, "auth.worker || auth.validated", oms.SettingsOptions{})
+		So(err, ShouldBeNil)
+	})
+}
+
 func Test_PutObject(t *testing.T) {
-	Convey("Trying to put object with wrong parameters", t, func() {
+	Convey("Cannot put object without having set default settings", t, func() {
 		route := Route()
 
 		o := new(oms.Object)
@@ -376,7 +422,7 @@ func Test_PutObject(t *testing.T) {
 }
 
 func Test_PutObject0(t *testing.T) {
-	Convey("Put object without having set default settings", t, func() {
+	Convey("Cannot put object with wrong parameters", t, func() {
 
 		route := Route()
 
@@ -534,7 +580,11 @@ func Test_GetObject(t *testing.T) {
 		So(err, ShouldEqual, errors.Unauthorized)
 		So(o, ShouldBeNil)
 
-		h, err := route.GetObjectHeader(userBCtx, id)
+		h, err := route.GetObjectHeader(userBCtx, "")
+		So(err, ShouldEqual, errors.BadInput)
+		So(h, ShouldBeNil)
+
+		h, err = route.GetObjectHeader(userBCtx, id)
 		So(err, ShouldEqual, errors.Unauthorized)
 		So(h, ShouldBeNil)
 	})
@@ -572,6 +622,81 @@ func Test_GetObject3(t *testing.T) {
 	})
 }
 
+func Test_Patch(t *testing.T) {
+	Convey("Patch object with wrong parameters", t, func() {
+		p := oms.NewPatch("", "")
+		ctx := context.Background()
+		route := Route()
+		err := route.PatchObject(ctx, p, oms.PatchOptions{})
+		So(err, ShouldEqual, errors.BadInput)
+	})
+}
+
+func Test_Patch0(t *testing.T) {
+	Convey("Patch object without defined default settings", t, func() {
+		route := Route()
+
+		adminCtx := WithUserInfo(fullConfiguredContext(), admin)
+		err := route.DeleteSettings(adminCtx, oms.SettingsDataMaxSizePath)
+		So(err, ShouldBeNil)
+
+		p := oms.NewPatch("id", "$.user.name")
+		p.SetContent(bytes.NewBufferString("What are you doing?"))
+		p.SetSize(42)
+
+		err = route.PatchObject(fullConfiguredContext(), p, oms.PatchOptions{})
+		So(err, ShouldEqual, errors.Internal)
+
+		err = route.SetSettings(adminCtx, oms.SettingsDataMaxSizePath, "1024", oms.SettingsOptions{})
+		So(err, ShouldBeNil)
+
+		p.SetSize(1025)
+		err = route.PatchObject(fullConfiguredContext(), p, oms.PatchOptions{})
+		So(err, ShouldEqual, errors.BadInput)
+
+		err = route.SetSettings(adminCtx, oms.SettingsDataMaxSizePath, "1024", oms.SettingsOptions{})
+		So(err, ShouldBeNil)
+
+		err = route.SetSettings(adminCtx, oms.SettingsDataMaxSizePath, "ekhfs", oms.SettingsOptions{})
+		So(err, ShouldBeNil)
+
+		p.SetSize(100)
+		err = route.PatchObject(fullConfiguredContext(), p, oms.PatchOptions{})
+		So(err, ShouldEqual, errors.Internal)
+
+		err = route.SetSettings(adminCtx, oms.SettingsDataMaxSizePath, "1024", oms.SettingsOptions{})
+		So(err, ShouldBeNil)
+	})
+}
+
+func Test_Patch1(t *testing.T) {
+	Convey("Cannot patch other user object", t, func() {
+		buf := bytes.NewBufferString("[\"" + userA.Uid + "\"]")
+		p := oms.NewPatch(userAObjects[0].ID(), "$.followers")
+		p.SetContent(buf)
+		p.SetSize(int64(buf.Len()))
+
+		userBCtx := WithUserInfo(fullConfiguredContext(), userB)
+		route := Route()
+		err := route.PatchObject(userBCtx, p, oms.PatchOptions{})
+		So(err, ShouldEqual, errors.Unauthorized)
+	})
+}
+
+func Test_Patch2(t *testing.T) {
+	Convey("Cannot patch other user object", t, func() {
+		buf := bytes.NewBufferString("[\"" + userA.Uid + "\"]")
+		p := oms.NewPatch(userBObjects[0].ID(), "$.followers")
+		p.SetContent(buf)
+		p.SetSize(int64(buf.Len()))
+
+		userBCtx := WithUserInfo(fullConfiguredContext(), userB)
+		route := Route()
+		err := route.PatchObject(userBCtx, p, oms.PatchOptions{})
+		So(err, ShouldBeNil)
+	})
+}
+
 func Test_Delete(t *testing.T) {
 	Convey("Delete all items", t, func() {
 		ctx := fullConfiguredContext()
@@ -590,6 +715,15 @@ func Test_Delete(t *testing.T) {
 
 		for _, o := range objectList.Objects {
 			err = route.DeleteObject(userACtx, o.ID())
+			So(err, ShouldBeNil)
+		}
+
+		userBCtx := WithUserInfo(fullConfiguredContext(), userB)
+		objectList, err = route.ListObjects(userBCtx, oms.ListOptions{})
+		So(err, ShouldBeNil)
+
+		for _, o := range objectList.Objects {
+			err = route.DeleteObject(userBCtx, o.ID())
 			So(err, ShouldBeNil)
 		}
 	})

@@ -12,12 +12,16 @@ type Patch struct {
 func NewPatch(objectID string, path string) *Patch {
 	p := new(Patch)
 	p.objectID = objectID
+	p.path = path
 	return p
 }
 
-func (p *Patch) SetContent(reader io.Reader, length int64) {
+func (p *Patch) SetContent(reader io.Reader) {
 	p.content = reader
-	p.length = length
+}
+
+func (p *Patch) SetSize(size int64) {
+	p.length = size
 }
 
 func (p *Patch) Size() int64 {

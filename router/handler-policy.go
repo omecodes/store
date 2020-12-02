@@ -113,6 +113,15 @@ func (p *policyHandler) GetObject(ctx context.Context, id string, opts oms.GetDa
 	return p.base.GetObject(ctx, id, opts)
 }
 
+func (p *policyHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
+	err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_delete, patch.GetObjectID(), "")
+	if err != nil {
+		return err
+	}
+
+	return p.base.PatchObject(ctx, patch, opts)
+}
+
 func (p *policyHandler) GetObjectHeader(ctx context.Context, id string) (*pb.Header, error) {
 	err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, id, "")
 	if err != nil {
@@ -141,7 +150,6 @@ func (p *policyHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (
 }
 
 func (p *policyHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
-
 	if params.MatchedExpression == "false" {
 		return &oms.ObjectList{
 			Before: opts.Before,

@@ -76,7 +76,8 @@ func patch(w http.ResponseWriter, r *http.Request) {
 	p := strings.Replace(r.RequestURI, fmt.Sprintf("/%s", id), "", 1)
 
 	patch := oms.NewPatch(id, p)
-	patch.SetContent(r.Body, r.ContentLength)
+	patch.SetContent(r.Body)
+	patch.SetSize(r.ContentLength)
 
 	err := router.Route().PatchObject(ctx, patch, oms.PatchOptions{})
 	if err != nil {
