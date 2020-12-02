@@ -43,7 +43,7 @@ func init() {
 			fmt.Println()
 		},
 	}
-	command.AddCommand(command, versionCMD)
+	command.AddCommand(versionCMD)
 
 	startCommand := application.StartCommand()
 	flags = startCommand.PersistentFlags()
