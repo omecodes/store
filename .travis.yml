@@ -3,8 +3,7 @@ rvm:
   - 1.15
 
 env:
-  - OMS_TEST_DB=bome:bome@tcp(localhost:3306)/bome?charset=utf8
-  - OMS_TEST_DIALECT=mysql
+  - OMS_TEST_DB=bome:bome@tcp(localhost:3306)/bome?charset=utf8 OMS_TEST_DIALECT=mysql
 
 services:
   - mysql
