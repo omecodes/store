@@ -211,7 +211,6 @@ func (ms *mysqlStore) List(ctx context.Context, before int64, count int, filter 
 			allowed, err := filter.Filter(o)
 			if err != nil {
 				if err == errors.Unauthorized || err == errors.Forbidden {
-					log.Error("List: object is not readable in context", log.Field("id", o.header.Id), log.Err(err))
 					continue
 				}
 				return nil, err
