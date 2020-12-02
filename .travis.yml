@@ -14,12 +14,7 @@ before_script:
   - mysql -u root -e "GRANT ALL ON bome.* TO 'bome'@'localhost';"
 
 script:
-  - |
-    go get -v -t -d ./...
-    if [ -f Gopkg.toml ]; then
-      curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-      dep ensure
-    fi
+  - go download
 
   - go build oms.go
 
