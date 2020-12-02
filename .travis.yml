@@ -9,5 +9,4 @@ script:
       curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
       dep ensure
     fi
-  - go build
-  - go test ./...
+  - go build oms.go
