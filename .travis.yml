@@ -2,6 +2,18 @@ language: golang
 rvm:
   - 1.15
 
+env:
+  - OMS_TEST_DB=bome:bome@tcp(localhost:3306)/bome?charset=utf8
+  - OMS_TEST_DIALECT=mysql
+
+services:
+  - mysql
+
+before_script:
+  - mysql -u root -e "CREATE DATABASE bome;"
+  - mysql -u root -e "CREATE USER 'bome'@'localhost' IDENTIFIED BY 'bome';"
+  - mysql -u root -e "GRANT ALL ON bome.* TO 'bome'@'localhost';"
+
 script:
   - |
     go get -v -t -d ./...
@@ -9,4 +21,7 @@ script:
       curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
       dep ensure
     fi
-  - go build oms.go
+
+  - go build
+
+  - go test -v .
