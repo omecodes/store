@@ -52,7 +52,8 @@ func put(w http.ResponseWriter, r *http.Request) {
 	var opts oms.PutDataOptions
 
 	object := oms.NewObject()
-	object.SetContent(r.Body, r.ContentLength)
+	object.SetContent(r.Body)
+	object.SetSize(r.ContentLength)
 
 	_, err := router.Route().PutObject(ctx, object, nil, opts)
 	if err != nil {
@@ -181,7 +182,7 @@ func list(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-	_, err = w.Write([]byte(fmt.Sprintf("{\"count\": %d, \"offset\": %d, \"objects\": {", result.Count, result.Offset)))
+	_, err = w.Write([]byte(fmt.Sprintf("{\"count\": %d, \"before\": %d, \"objects\": {", result.Count, result.Before)))
 	if err != nil {
 		log.Error("GetObjects: failed to write response")
 		return
@@ -253,7 +254,7 @@ func search(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-	_, err = w.Write([]byte(fmt.Sprintf("{\"count\": %d, \"offset\": %d, \"objects\": {", result.Count, result.Offset)))
+	_, err = w.Write([]byte(fmt.Sprintf("{\"count\": %d, \"before\": %d, \"objects\": {", result.Count, result.Before)))
 	if err != nil {
 		log.Error("Search: failed to write response")
 		return
@@ -302,7 +303,7 @@ func setSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = router.Route().SetSettings(ctx, "", "", oms.SettingsOptions{Path: strings.TrimPrefix(r.RequestURI, "/.settings")})
+	err = router.Route().SetSettings(ctx, "", "", oms.SettingsOptions{})
 	if err != nil {
 		log.Error("failed to set settings", log.Err(err))
 		w.WriteHeader(errors.HttpStatus(err))
@@ -310,9 +311,10 @@ func setSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 func getSettings(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	/*ctx := r.Context()
 
-	opts := oms.SettingsOptions{Path: strings.TrimPrefix(r.RequestURI, "/.settings")}
+	// opts := oms.SettingsOptions{Path: strings.TrimPrefix(r.RequestURI, "/.settings")}
+	 opts := oms.SettingsOptions{}
 	s, err := router.Route().GetSettings(ctx, "")
 	if err != nil {
 		log.Error("could not get settings", log.Err(err))
@@ -338,5 +340,5 @@ func getSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-	_, _ = w.Write(data)
+	_, _ = w.Write(data)*/
 }

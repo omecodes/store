@@ -3,14 +3,15 @@ package cmd
 import (
 	"fmt"
 	"github.com/omecodes/common/env/app"
-	"github.com/omecodes/service"
 	"github.com/spf13/cobra"
 )
 
 var (
 	addr           string
+	certFilename   string
+	keyFilename    string
+	selfSignedTLS  bool
 	dsn            string
-	cmdParams      service.Params
 	application    *app.App
 	options        []app.Option
 	command        *cobra.Command
@@ -30,7 +31,6 @@ func init() {
 
 	flags := command.PersistentFlags()
 	flags.StringVar(&dsn, "dsn", "bome:bome@(127.0.0.1:3306)/bome?charset=utf8", "MySQL database source name")
-
 	versionCMD := &cobra.Command{
 		Use:   "version",
 		Short: "Version info",
@@ -53,11 +53,14 @@ func init() {
 	}
 	flags = eventsCMD.PersistentFlags()
 	flags.StringVar(&addr, "addr", "", "Events server bind address")
-
 	command.AddCommand(eventsCMD, versionCMD)
 
 	startCommand := application.StartCommand()
-	service.SetCMDFlags(startCommand, &cmdParams, true)
+	flags = startCommand.PersistentFlags()
+	flags.StringVar(&addr, "addr", ":8080", "Http server bind address")
+	flags.StringVar(&certFilename, "cert", "", "Certificate file path")
+	flags.StringVar(&keyFilename, "key", "", "Key file path")
+	flags.BoolVar(&selfSignedTLS, "ss-tls", false, "Is certificate self-signed")
 }
 
 func Get() *cobra.Command {

@@ -3,9 +3,11 @@ package server
 import (
 	"crypto/rand"
 	"crypto/sha512"
+	"crypto/tls"
 	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
+	"github.com/omecodes/common/env/app"
 	"github.com/omecodes/omestore/pb"
 	"io/ioutil"
 	"net"
@@ -25,7 +27,6 @@ import (
 	"github.com/omecodes/libome"
 	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/omestore/router"
-	"github.com/omecodes/service"
 	"github.com/sethvargo/go-password/password"
 )
 
@@ -33,8 +34,10 @@ var debug = os.Getenv("OMS_DEBUG")
 
 // Config contains info to configure an instance of Server
 type Config struct {
-	Box *service.Box
-	DSN string
+	App         *app.App
+	TLS         *tls.Config
+	BindAddress string
+	DSN         string
 }
 
 // New is a server constructor
@@ -59,7 +62,9 @@ type Server struct {
 	workers     *bome.JSONMap
 	settings    *bome.Map
 	accessStore oms.AccessStore
-	dListener   net.Listener
+	listener    net.Listener
+	Errors      chan error
+	server      *http.Server
 }
 
 func (s *Server) init() error {
@@ -109,7 +114,7 @@ func (s *Server) init() error {
 		return nil
 	}
 
-	adminPwdFilename := filepath.Join(s.config.Box.Dir(), "admin-pwd")
+	adminPwdFilename := filepath.Join(s.config.App.DataDir(), "admin-pwd")
 	passwordBytes, err := ioutil.ReadFile(adminPwdFilename)
 	if err != nil {
 		genPassword, err := password.Generate(16, 5, 11, false, false)
@@ -149,7 +154,7 @@ func (s *Server) init() error {
 }
 
 func (s *Server) getStoredKey(name string, size int) ([]byte, error) {
-	cookiesKeyFilename := filepath.Join(s.config.Box.Dir(), name+".key")
+	cookiesKeyFilename := filepath.Join(s.config.App.DataDir(), name+".key")
 	key, err := ioutil.ReadFile(cookiesKeyFilename)
 	if err != nil {
 		key = make([]byte, size)
@@ -174,22 +179,41 @@ func (s *Server) Start() error {
 		return err
 	}
 
-	return s.config.Box.StartGateway(&service.GatewayParams{
-		ForceRegister: false,
-		MiddlewareList: []mux.MiddlewareFunc{
-			s.enrichContext,
-			s.detectAuthentication,
-			httpx.Logger("omestore").Handle,
-		},
-		Port: 80,
-		ProvideRouter: func() *mux.Router {
-			return dataRouter()
-		},
-		Node: &ome.Node{
-			Protocol: ome.Protocol_Http,
-			Security: ome.Security_Insecure,
-		},
-	})
+	if s.config.TLS != nil {
+		s.listener, err = tls.Listen("tcp", s.config.BindAddress, s.config.TLS)
+	} else {
+		s.listener, err = net.Listen("tcp", s.config.BindAddress)
+	}
+	if err != nil {
+		return err
+	}
+
+	address := s.listener.Addr().String()
+	log.Info("starting HTTP server", log.Field("address", address))
+
+	middlewareList := []mux.MiddlewareFunc{
+		s.enrichContext,
+		s.detectAuthentication,
+		s.detectOAuth2Authorization,
+		httpx.Logger("omestore").Handle,
+	}
+	var handler http.Handler
+	handler = dataRouter()
+	for _, m := range middlewareList {
+		handler = m.Middleware(handler)
+	}
+
+	go func() {
+		s.server = &http.Server{
+			Addr:    address,
+			Handler: handler,
+		}
+		if err := s.server.Serve(s.listener); err != nil {
+			s.Errors <- err
+		}
+	}()
+
+	return nil
 }
 
 func (s *Server) enrichContext(next http.Handler) http.Handler {
@@ -314,5 +338,5 @@ func (s *Server) detectOAuth2Authorization(next http.Handler) http.Handler {
 
 // Stop stops API server
 func (s *Server) Stop() {
-	_ = s.dListener.Close()
+	_ = s.listener.Close()
 }
