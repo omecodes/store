@@ -60,25 +60,3 @@ func runStore() {
 		log.Error("server error", log.Err(err))
 	}
 }
-
-func runEventsServer() {
-	/*cfg := &events.Config{
-		Address:   addr,
-		Table:     "",
-		DBUri:     "",
-		TlsConfig: nil,
-	}
-
-	s, err := events.Serve(cfg)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
-	defer func() {
-		if err := s.Stop(); err != nil {
-			log.Error("server stop caused error", log.Err(err))
-		}
-	}()
-
-	<-prompt.QuitSignal() */
-}

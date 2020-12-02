@@ -11,18 +11,13 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.8.0
 	github.com/jinzhu/gorm v1.9.16
-	github.com/jmoiron/sqlx v1.2.0 // indirect
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/omecodes/bome v0.0.0-20201128175554-02096488538b
-	github.com/omecodes/common v0.0.0-20201107101523-fe88c58889ab
+	github.com/omecodes/common v0.0.0-20201202082108-22827d42785b
 	github.com/omecodes/libome v0.0.0-20201128214815-2b3f03af9fa6
-	github.com/omecodes/zebou v0.0.0-20201128215001-171108c99072
-	github.com/pingcap/tidb v1.0.9 // indirect
 	github.com/sethvargo/go-password v0.2.0
-	github.com/siddontang/go-mysql v1.1.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.1.1
-	github.com/xo/dburl v0.0.0-20200910011426-652e0d5720a3
 	go.uber.org/multierr v1.6.0 // indirect
 	google.golang.org/protobuf v1.25.0
 )

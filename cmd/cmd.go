@@ -43,17 +43,7 @@ func init() {
 			fmt.Println()
 		},
 	}
-
-	eventsCMD := &cobra.Command{
-		Use:   "events",
-		Short: "Runs the events server",
-		Run: func(cmd *cobra.Command, args []string) {
-			runEventsServer()
-		},
-	}
-	flags = eventsCMD.PersistentFlags()
-	flags.StringVar(&addr, "addr", "", "Events server bind address")
-	command.AddCommand(eventsCMD, versionCMD)
+	command.AddCommand(command, versionCMD)
 
 	startCommand := application.StartCommand()
 	flags = startCommand.PersistentFlags()
