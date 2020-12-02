@@ -16,7 +16,7 @@ require (
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/omecodes/bome v0.0.0-20201128175554-02096488538b
-	github.com/omecodes/common v0.0.0-20201202082108-22827d42785b
+	github.com/omecodes/common v0.0.0-20201202083724-645bddb64925
 	github.com/omecodes/libome v0.0.0-20201128214815-2b3f03af9fa6
 	github.com/sethvargo/go-password v0.2.0
 	github.com/smartystreets/goconvey v1.6.4
