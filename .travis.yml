@@ -14,7 +14,6 @@ before_script:
   - mysql -u root -e "GRANT ALL ON bome.* TO 'bome'@'localhost';"
 
 script:
-  - go mod tidy
-  - go mod download
+  - go get -v -t -d ./...
   - go build oms.go
   - go test -v ./...
