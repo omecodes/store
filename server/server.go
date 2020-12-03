@@ -223,8 +223,9 @@ func (s *Server) enrichContext(next http.Handler) http.Handler {
 		ctx = router.WithAccessStore(s.accessStore)(ctx)
 		ctx = router.WithCelPolicyEnv(s.celPolicyEnv)(ctx)
 		ctx = router.WithCelSearchEnv(s.celSearchEnv)(ctx)
-		ctx = router.WithSettings(nil)(ctx)
-		ctx = router.WithObjectsStore(nil)(ctx)
+		ctx = router.WithSettings(s.settings)(ctx)
+		ctx = router.WithObjectsStore(s.objects)(ctx)
+		ctx = router.WithWorkers(s.workers)(ctx)
 
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
