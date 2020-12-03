@@ -12,6 +12,14 @@ import (
 
 func runStore() {
 
+	if jwtSecret == "" {
+		if err := application.StartCommand().Help(); err != nil {
+			fmt.Println(err)
+			os.Exit(-1)
+		}
+		return
+	}
+
 	var tc *tls.Config
 	if certFilename != "" || keyFilename != "" {
 		if certFilename == "" {
