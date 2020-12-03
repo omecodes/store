@@ -168,7 +168,9 @@ func TestMysqlStore_Patch(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(string(value), ShouldEqual, "true")
 
-			err = objects.Patch(ctx, "ome-libome", "$.private", "false")
+			patch := NewPatch("ome-libome", "$.private")
+			patch.SetContent(bytes.NewBufferString("false"))
+			err = objects.Patch(ctx, patch)
 			So(err, ShouldBeNil)
 
 			o, err = objects.GetAt(ctx, "ome-libome", "$.private")

@@ -2,7 +2,6 @@ package oms
 
 import (
 	"bytes"
-	"encoding/json"
 	"github.com/omecodes/omestore/pb"
 	"io"
 )
@@ -22,11 +21,6 @@ func NewObject() *Object {
 func DecodeObject(encoded string) (*Object, error) {
 	o := new(Object)
 	o.decoded = true
-	var info pb.Header
-	err := json.Unmarshal([]byte(encoded), &info)
-	if err != nil {
-		return nil, err
-	}
 	o.content = bytes.NewBufferString(encoded)
 	return o, nil
 }

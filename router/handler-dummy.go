@@ -40,7 +40,7 @@ func (d *dummyHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts o
 	return nil
 }
 
-func (d *dummyHandler) GetObject(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error) {
+func (d *dummyHandler) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*oms.Object, error) {
 	return nil, nil
 }
 

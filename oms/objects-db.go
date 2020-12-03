@@ -6,11 +6,11 @@ import (
 )
 
 type Objects interface {
-	// Save saves content as JSON in database
+	// Save saves object content as JSON in database
 	Save(ctx context.Context, object *Object) error
 
-	// Update updates object content with patch
-	Patch(ctx context.Context, objectID string, path string, data string) error
+	// Update applies patch to object with id equals patch.ID()
+	Patch(ctx context.Context, patch *Patch) error
 
 	// Delete removes all content associated with objectID
 	Delete(ctx context.Context, objectID string) error
@@ -86,7 +86,7 @@ type UserOptions struct {
 	WithPassword    bool
 }
 
-type GetDataOptions struct {
+type GetObjectOptions struct {
 	Path string `json:"path"`
 	Info bool   `json:"header"`
 }

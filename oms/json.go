@@ -127,6 +127,21 @@ func (s *JSON) StringAt(name string) (string, error) {
 	return v, nil
 }
 
+func (s *JSON) BoolAt(name string) (bool, error) {
+	name = at(name)
+	o, err := jsonpath.Get(name, s.object)
+	if err != nil {
+		return false, err
+	}
+
+	v, ok := o.(bool)
+	if !ok {
+		return false, errors.New("settings value type conversion")
+	}
+
+	return v, nil
+}
+
 func (s *JSON) Get(name string) (*JSON, error) {
 	name = at(name)
 	o, err := jsonpath.Get(name, s.object)

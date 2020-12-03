@@ -99,7 +99,7 @@ func (p *paramsHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts 
 	return p.next.PatchObject(ctx, patch, opts)
 }
 
-func (p *paramsHandler) GetObject(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error) {
+func (p *paramsHandler) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*oms.Object, error) {
 	if id == "" {
 		return nil, errors.BadInput
 	}
@@ -134,6 +134,14 @@ func (p *paramsHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (
 func (p *paramsHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
 	if params.MatchedExpression == "" {
 		return nil, errors.BadInput
+	}
+
+	if opts.Before == 0 {
+		opts.Before = time.Now().Unix()
+	}
+
+	if opts.Count == 0 {
+		opts.Count = 100
 	}
 	return p.base.SearchObjects(ctx, params, opts)
 }

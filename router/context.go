@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/omestore/pb"
 
 	"github.com/google/cel-go/cel"
@@ -230,8 +231,10 @@ func loadProgramForSearch(ctx *context.Context, expression string) (cel.Program,
 
 	ast, issues := env.Compile(expression)
 	if issues != nil && issues.Err() != nil {
-		return nil, issues.Err()
+		log.Error("failed to compile expression", log.Err(issues.Err()))
+		return nil, errors.BadInput
 	}
+
 	prg, err := env.Program(ast)
 	if err != nil {
 		return nil, err

@@ -26,10 +26,7 @@ type sqlPermStore struct {
 }
 
 func (p *sqlPermStore) SaveRules(objectID string, rules *pb.PathAccessRules) error {
-	rulesBytes, err := json.Marshal(rules.AccessRules)
-	if err != nil {
-		return err
-	}
+	rulesBytes, _ := json.Marshal(rules.AccessRules)
 	entry := &bome.MapEntry{
 		Key:   objectID,
 		Value: string(rulesBytes),

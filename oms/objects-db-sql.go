@@ -107,22 +107,28 @@ func (ms *mysqlStore) Save(ctx context.Context, object *Object) error {
 	return nil
 }
 
-func (ms *mysqlStore) Patch(ctx context.Context, objectID string, path string, data string) error {
+func (ms *mysqlStore) Patch(ctx context.Context, patch *Patch) error {
 	tx, err := ms.objects.BeginTransaction()
 	if err != nil {
 		log.Error("Patch: could not start objects DB transaction", log.Err(err))
 		return errors.Internal
 	}
 
-	err = tx.EditAt(objectID, path, bome.StringExpr(data))
+	content, err := ioutil.ReadAll(patch.GetContent())
 	if err != nil {
-		log.Error("Update: object patch failed", log.Field("id", objectID), log.Err(err))
+		log.Error("Patch: could not get patch content", log.Err(err))
+		return errors.BadInput
+	}
+
+	err = tx.EditAt(patch.GetObjectID(), patch.Path(), bome.StringExpr(string(content)))
+	if err != nil {
+		log.Error("Update: object patch failed", log.Field("id", patch.GetObjectID()), log.Err(err))
 		return errors.Internal
 	}
 
-	size, err := tx.Size(objectID)
+	size, err := tx.Size(patch.GetObjectID())
 	if err != nil {
-		log.Error("Patch: failed to get object size", log.Field("id", objectID), log.Err(err))
+		log.Error("Patch: failed to get object size", log.Field("id", patch.GetObjectID()), log.Err(err))
 		if err := tx.Rollback(); err != nil {
 			log.Error("Patch: rollback failed", log.Err(err))
 		}
@@ -130,7 +136,7 @@ func (ms *mysqlStore) Patch(ctx context.Context, objectID string, path string, d
 	}
 
 	htx := ms.headers.ContinueTransaction(tx.TX())
-	err = htx.EditAt(objectID, "$.size", bome.IntExpr(size))
+	err = htx.EditAt(patch.GetObjectID(), "$.size", bome.IntExpr(size))
 	if err != nil {
 		log.Error("Patch: failed to save object headers", log.Err(err))
 		if err := tx.Rollback(); err != nil {
@@ -145,7 +151,7 @@ func (ms *mysqlStore) Patch(ctx context.Context, objectID string, path string, d
 		return errors.Internal
 	}
 
-	log.Debug("Patch: object updated", log.Field("id", objectID))
+	log.Debug("Patch: object updated", log.Field("id", patch.GetObjectID()))
 	return nil
 }
 
@@ -180,9 +186,9 @@ func (ms *mysqlStore) Delete(ctx context.Context, objectID string) error {
 }
 
 func (ms *mysqlStore) List(ctx context.Context, before int64, count int, filter ObjectFilter) (*ObjectList, error) {
-	cursor, err := ms.headers.ExtractAll("$.id", bome.JsonAtLe("$.created_at", bome.IntExpr(before)), bome.StringScanner)
+	cursor, err := ms.headers.List()
 	if err != nil {
-		log.Error("List: failed to get objects",
+		log.Error("List: failed to get headers",
 			log.Field("created before", before),
 			log.Field("count", count), log.Err(err))
 		return nil, errors.Internal
@@ -201,13 +207,23 @@ func (ms *mysqlStore) List(ctx context.Context, before int64, count int, filter 
 			return nil, err
 		}
 
-		id := item.(string)
-		o, err := ms.Get(ctx, id)
+		entry := item.(*bome.MapEntry)
+		var header pb.Header
+		err = json.Unmarshal([]byte(entry.Value), &header)
+		if err != nil {
+			log.Error("List: failed to decode object", log.Err(err))
+			return nil, errors.Internal
+		}
+
+		value, err := ms.objects.Get(header.Id)
 		if err != nil {
 			return nil, err
 		}
 
+		o := NewObject()
+		o.SetHeader(&header)
 		if filter != nil {
+			o.SetContent(bytes.NewBufferString(value))
 			allowed, err := filter.Filter(o)
 			if err != nil {
 				if err == errors.Unauthorized || err == errors.Forbidden {
@@ -221,6 +237,7 @@ func (ms *mysqlStore) List(ctx context.Context, before int64, count int, filter 
 			}
 		}
 		result.Count++
+		o.SetContent(bytes.NewBufferString(value))
 		result.Objects = append(result.Objects, o)
 	}
 

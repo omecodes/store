@@ -17,7 +17,7 @@ type Handler interface {
 
 	PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error)
 	PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error
-	GetObject(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error)
+	GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*oms.Object, error)
 	GetObjectHeader(ctx context.Context, id string) (*pb.Header, error)
 	DeleteObject(ctx context.Context, id string) error
 	ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error)

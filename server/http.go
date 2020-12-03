@@ -93,7 +93,7 @@ func get(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 	onlyInfo := r.URL.Query().Get("info")
 
-	object, err := router.Route().GetObject(ctx, id, oms.GetDataOptions{Info: onlyInfo == "true"})
+	object, err := router.Route().GetObject(ctx, id, oms.GetObjectOptions{Info: onlyInfo == "true"})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -121,7 +121,7 @@ func sel(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 	filter := strings.Replace(r.RequestURI, fmt.Sprintf("/%s", id), "", 1)
 
-	object, err := router.Route().GetObject(ctx, id, oms.GetDataOptions{Path: filter})
+	object, err := router.Route().GetObject(ctx, id, oms.GetObjectOptions{Path: filter})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -312,34 +312,16 @@ func setSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 func getSettings(w http.ResponseWriter, r *http.Request) {
-	/*ctx := r.Context()
+	ctx := r.Context()
+	name := r.URL.Query().Get("name")
 
-	// opts := oms.SettingsOptions{Path: strings.TrimPrefix(r.RequestURI, "/.settings")}
-	 opts := oms.SettingsOptions{}
-	s, err := router.Route().GetSettings(ctx, "")
+	s, err := router.Route().GetSettings(ctx, name)
 	if err != nil {
 		log.Error("could not get settings", log.Err(err))
 		w.WriteHeader(errors.HttpStatus(err))
 		return
 	}
 
-	if opts.Path != "" {
-		format := oms.SettingsPathFormats[opts.Path]
-		if format != "" {
-			mime := oms.SettingsPathValueMimes[opts.Path]
-			w.Header().Add("Content-Type", mime)
-			_, _ = w.Write([]byte(fmt.Sprintf(format, s.GetObject())))
-			return
-		}
-	}
-
-	data, err := s.Marshal()
-	if err != nil {
-		log.Error("could not encode settings result", log.Err(err))
-		w.WriteHeader(errors.HttpStatus(err))
-		return
-	}
-
 	w.Header().Add("Content-Type", "application/json")
-	_, _ = w.Write(data)*/
+	_, _ = w.Write([]byte(s))
 }

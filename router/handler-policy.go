@@ -105,7 +105,7 @@ func (p *policyHandler) PutObject(ctx context.Context, object *oms.Object, secur
 	return p.base.PutObject(ctx, object, security, opts)
 }
 
-func (p *policyHandler) GetObject(ctx context.Context, id string, opts oms.GetDataOptions) (*oms.Object, error) {
+func (p *policyHandler) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*oms.Object, error) {
 	err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, id, opts.Path)
 	if err != nil {
 		return nil, err
@@ -196,6 +196,5 @@ func (p *policyHandler) SearchObjects(ctx context.Context, params oms.SearchPara
 		}
 		return out.Value().(bool), nil
 	})
-
 	return p.base.ListObjects(ctx, lOpts)
 }

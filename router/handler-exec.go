@@ -9,7 +9,6 @@ import (
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/omestore/pb"
-	"io/ioutil"
 )
 
 type execHandler struct {
@@ -108,7 +107,6 @@ func (e *execHandler) GetSettings(ctx context.Context, name string) (string, err
 		log.Info("exec-handler.GetSettings: missing settings database in context")
 		return "", errors.Internal
 	}
-
 	return s.Get(name)
 }
 
@@ -142,21 +140,14 @@ func (e *execHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts om
 		log.Info("missing storage in context")
 		return errors.Internal
 	}
-
-	content, err := ioutil.ReadAll(patch.GetContent())
-	if err != nil {
-		log.Error("Handler-exec: could not get patch content", log.Err(err))
-		return err
-	}
-
-	return storage.Patch(ctx, patch.GetObjectID(), patch.Path(), string(content))
+	return storage.Patch(ctx, patch)
 }
 
-func (e *execHandler) GetObject(ctx context.Context, objectID string, opts oms.GetDataOptions) (*oms.Object, error) {
+func (e *execHandler) GetObject(ctx context.Context, objectID string, opts oms.GetObjectOptions) (*oms.Object, error) {
 	storage := storage(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
-		return nil, errors.New("wrong context")
+		return nil, errors.Internal
 	}
 
 	if opts.Path == "" {
@@ -170,7 +161,7 @@ func (e *execHandler) GetObjectHeader(ctx context.Context, objectID string) (*pb
 	storage := storage(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
-		return nil, errors.New("wrong context")
+		return nil, errors.Internal
 	}
 	return storage.Info(ctx, objectID)
 }
@@ -179,7 +170,7 @@ func (e *execHandler) DeleteObject(ctx context.Context, objectID string) error {
 	storage := storage(ctx)
 	if storage == nil {
 		log.Info("exec-handler.DeleteObjet: missing DB in context")
-		return errors.New("wrong context")
+		return errors.Internal
 	}
 
 	err := storage.Delete(ctx, objectID)
@@ -201,7 +192,7 @@ func (e *execHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*o
 	storage := storage(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
-		return nil, errors.New("wrong context")
+		return nil, errors.Internal
 	}
 	return storage.List(ctx, opts.Before, opts.Count, opts.Filter)
 }

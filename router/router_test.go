@@ -13,6 +13,7 @@ import (
 	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/omestore/pb"
 	. "github.com/smartystreets/goconvey/convey"
+	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -95,6 +96,62 @@ var (
 }`
 )
 
+type failureDummyAccessStore struct{}
+
+func (f *failureDummyAccessStore) SaveRules(objectID string, rules *pb.PathAccessRules) error {
+	return errors.New("failure")
+}
+
+func (f *failureDummyAccessStore) GetRules(objectID string) (*pb.PathAccessRules, error) {
+	return nil, errors.New("failure")
+}
+
+func (f *failureDummyAccessStore) GetForPath(objectID string, path string) (*pb.AccessRules, error) {
+	return nil, errors.New("failure")
+}
+
+func (f *failureDummyAccessStore) Delete(objectID string) error {
+	return errors.New("failure")
+}
+
+type failureDummyStorage struct{}
+
+func (f *failureDummyStorage) Save(ctx context.Context, object *oms.Object) error {
+	return errors.New("failure")
+}
+
+func (f *failureDummyStorage) Patch(ctx context.Context, patch *oms.Patch) error {
+	return errors.New("failure")
+}
+
+func (f *failureDummyStorage) Delete(ctx context.Context, objectID string) error {
+	return errors.New("failure")
+}
+
+func (f *failureDummyStorage) List(ctx context.Context, before int64, count int, filter oms.ObjectFilter) (*oms.ObjectList, error) {
+	return nil, errors.New("failure")
+}
+
+func (f *failureDummyStorage) ListAt(ctx context.Context, path string, before int64, count int, filter oms.ObjectFilter) (*oms.ObjectList, error) {
+	return nil, errors.New("failure")
+}
+
+func (f *failureDummyStorage) Get(ctx context.Context, objectID string) (*oms.Object, error) {
+	return nil, errors.New("failure")
+}
+
+func (f *failureDummyStorage) GetAt(ctx context.Context, objectID string, path string) (*oms.Object, error) {
+	return nil, errors.New("failure")
+}
+
+func (f *failureDummyStorage) Info(ctx context.Context, objectID string) (*pb.Header, error) {
+	return nil, errors.New("failure")
+}
+
+func (f *failureDummyStorage) Clear() error {
+	return errors.New("failure")
+}
+
 func init() {
 	testDBUri = os.Getenv("OMS_TESTS_DB")
 	if testDBUri == "" {
@@ -151,7 +208,11 @@ func initDBs() {
 	}
 
 	if xSearchEnv == nil {
-		xSearchEnv, err = cel.NewEnv()
+		xSearchEnv, err = cel.NewEnv(
+			cel.Declarations(
+				decls.NewVar("o", decls.NewMapType(decls.String, decls.Dyn)),
+			),
+		)
 		So(err, ShouldBeNil)
 	}
 }
@@ -162,6 +223,17 @@ func fullConfiguredContext() context.Context {
 	ctx = WithAccessStore(aclDB)(ctx)
 	ctx = WithSettings(settingsDB)(ctx)
 	ctx = WithObjectsStore(objectsDB)(ctx)
+	ctx = WithCelSearchEnv(xSearchEnv)(ctx)
+	ctx = WithCelPolicyEnv(xPolicyEnv)(ctx)
+	return ctx
+}
+
+func contextWithFailureDummyStore() context.Context {
+	initDBs()
+	ctx := WithWorkers(workersDB)(context.Background())
+	ctx = WithAccessStore(aclDB)(ctx)
+	ctx = WithSettings(settingsDB)(ctx)
+	ctx = WithObjectsStore(&failureDummyStorage{})(ctx)
 	ctx = WithCelSearchEnv(xSearchEnv)(ctx)
 	ctx = WithCelPolicyEnv(xPolicyEnv)(ctx)
 	return ctx
@@ -182,6 +254,17 @@ func contextWithoutACLStore() context.Context {
 	initDBs()
 	ctx := WithWorkers(workersDB)(context.Background())
 	//ctx = WithAccessStore(aclDB)(ctx)
+	ctx = WithSettings(settingsDB)(ctx)
+	ctx = WithObjectsStore(objectsDB)(ctx)
+	ctx = WithCelSearchEnv(xSearchEnv)(ctx)
+	ctx = WithCelPolicyEnv(xPolicyEnv)(ctx)
+	return ctx
+}
+
+func contextFailureDummyACLStore() context.Context {
+	initDBs()
+	ctx := WithWorkers(workersDB)(context.Background())
+	ctx = WithAccessStore(&failureDummyAccessStore{})(ctx)
 	ctx = WithSettings(settingsDB)(ctx)
 	ctx = WithObjectsStore(objectsDB)(ctx)
 	ctx = WithCelSearchEnv(xSearchEnv)(ctx)
@@ -374,6 +457,16 @@ func Test_ClearSettings2(t *testing.T) {
 	})
 }
 
+func Test_ClearSettings3(t *testing.T) {
+	Convey("Cannot clear settings without settings db in context", t, func() {
+		route := Route()
+		adminCtx := WithUserInfo(contextWithoutSettings(), admin)
+
+		err := route.ClearSettings(adminCtx)
+		So(err, ShouldEqual, errors.Internal)
+	})
+}
+
 func Test_PutObject(t *testing.T) {
 	Convey("Cannot put object without having set default settings", t, func() {
 		route := Route()
@@ -554,7 +647,37 @@ func Test_PutObject4(t *testing.T) {
 	})
 }
 
+func Test_PutObject5(t *testing.T) {
+	Convey("Cannot save object with broken access store", t, func() {
+		route := Route()
+
+		o := new(oms.Object)
+		o.SetHeader(&pb.Header{
+			Id:        "ome-ca",
+			CreatedBy: "ome",
+			Size:      int64(len(object1)),
+		})
+		o.SetContent(bytes.NewBufferString(object1))
+
+		userACtx := WithUserInfo(contextFailureDummyACLStore(), userA)
+		id, err := route.PutObject(userACtx, o, nil, oms.PutDataOptions{})
+		So(err, ShouldEqual, errors.Internal)
+		So(id, ShouldEqual, "")
+	})
+}
+
 func Test_ListObjects(t *testing.T) {
+	Convey("Cannot list objects without storage in context", t, func() {
+		route := Route()
+
+		userACtx := WithUserInfo(contextWithoutStore(), userA)
+		objects, err := route.ListObjects(userACtx, oms.ListOptions{})
+		So(err, ShouldEqual, errors.Internal)
+		So(objects, ShouldBeNil)
+	})
+}
+
+func Test_ListObjects0(t *testing.T) {
 	Convey("List user objects", t, func() {
 		route := Route()
 
@@ -570,32 +693,53 @@ func Test_ListObjects(t *testing.T) {
 	})
 }
 
-func Test_GetObject(t *testing.T) {
+func Test_GetObjectHeader(t *testing.T) {
+	Convey("Get object header with wrong parameters", t, func() {
+		route := Route()
+		h, err := route.GetObjectHeader(fullConfiguredContext(), "")
+		So(err, ShouldEqual, errors.BadInput)
+		So(h, ShouldBeNil)
+	})
+}
+
+func Test_GetObjectHeader0(t *testing.T) {
 	Convey("Non admin user cannot read other user objects", t, func() {
 		route := Route()
 		userBCtx := WithUserInfo(fullConfiguredContext(), userB)
-
 		id := userAObjects[0].ID()
-		o, err := route.GetObject(userBCtx, id, oms.GetDataOptions{})
+		o, err := route.GetObjectHeader(userBCtx, id)
 		So(err, ShouldEqual, errors.Unauthorized)
 		So(o, ShouldBeNil)
+	})
+}
 
-		h, err := route.GetObjectHeader(userBCtx, "")
+func Test_GetObjectHeader1(t *testing.T) {
+	Convey("Cannot read object header without storage in context", t, func() {
+		route := Route(SkipPoliciesCheck())
+		userBCtx := WithUserInfo(contextWithoutStore(), userB)
+
+		o, err := route.GetObjectHeader(userBCtx, "some-id")
+		So(err, ShouldEqual, errors.Internal)
+		So(o, ShouldBeNil)
+	})
+}
+
+func Test_GetObject(t *testing.T) {
+	Convey("Get object with wrong parameters", t, func() {
+		route := Route()
+		h, err := route.GetObject(fullConfiguredContext(), "", oms.GetObjectOptions{})
 		So(err, ShouldEqual, errors.BadInput)
-		So(h, ShouldBeNil)
-
-		h, err = route.GetObjectHeader(userBCtx, id)
-		So(err, ShouldEqual, errors.Unauthorized)
 		So(h, ShouldBeNil)
 	})
 }
 
 func Test_GetObject1(t *testing.T) {
-	Convey("Getting object without specifying ID", t, func() {
-		route := Route()
-		userBCtx := WithUserInfo(fullConfiguredContext(), userB)
-		o, err := route.GetObject(userBCtx, "", oms.GetDataOptions{})
-		So(err, ShouldEqual, errors.BadInput)
+	Convey("Cannot get object without storage", t, func() {
+		route := Route(SkipPoliciesCheck())
+
+		userBCtx := WithUserInfo(contextWithoutStore(), userB)
+		o, err := route.GetObject(userBCtx, "some-id", oms.GetObjectOptions{})
+		So(err, ShouldEqual, errors.Internal)
 		So(o, ShouldBeNil)
 	})
 }
@@ -613,12 +757,37 @@ func Test_GetObject2(t *testing.T) {
 }
 
 func Test_GetObject3(t *testing.T) {
+	Convey("Non admin user cannot read other user objects", t, func() {
+		route := Route()
+		userBCtx := WithUserInfo(fullConfiguredContext(), userB)
+
+		id := userAObjects[0].ID()
+		o, err := route.GetObject(userBCtx, id, oms.GetObjectOptions{})
+		So(err, ShouldEqual, errors.Unauthorized)
+		So(o, ShouldBeNil)
+	})
+}
+
+func Test_GetObject4(t *testing.T) {
 	Convey("User reads his own objects", t, func() {
 		route := Route()
 		userBCtx := WithUserInfo(fullConfiguredContext(), userB)
-		o, err := route.GetObject(userBCtx, userBObjects[0].ID(), oms.GetDataOptions{})
+		o, err := route.GetObject(userBCtx, userBObjects[0].ID(), oms.GetObjectOptions{})
 		So(err, ShouldBeNil)
 		So(o.ID(), ShouldEqual, userBObjects[0].ID())
+	})
+}
+
+func Test_GetObject5(t *testing.T) {
+	Convey("User reads his own objects: using Path", t, func() {
+		route := Route(SkipPoliciesCheck())
+		userBCtx := WithUserInfo(fullConfiguredContext(), userB)
+		o, err := route.GetObject(userBCtx, userBObjects[0].ID(), oms.GetObjectOptions{Path: "$.private"})
+		So(err, ShouldBeNil)
+		So(o.ID(), ShouldEqual, userBObjects[0].ID())
+		data, err := ioutil.ReadAll(o.Content())
+		So(err, ShouldBeNil)
+		So(string(data), ShouldBeIn, "true", "false")
 	})
 }
 
@@ -684,7 +853,21 @@ func Test_Patch1(t *testing.T) {
 }
 
 func Test_Patch2(t *testing.T) {
-	Convey("Cannot patch other user object", t, func() {
+	Convey("Cannot patch object without storage in context", t, func() {
+		buf := bytes.NewBufferString("[\"" + userA.Uid + "\"]")
+		p := oms.NewPatch(userBObjects[0].ID(), "$.followers")
+		p.SetContent(buf)
+		p.SetSize(int64(buf.Len()))
+
+		userBCtx := WithUserInfo(contextWithoutStore(), userB)
+		route := Route(SkipPoliciesCheck())
+		err := route.PatchObject(userBCtx, p, oms.PatchOptions{})
+		So(err, ShouldEqual, errors.Internal)
+	})
+}
+
+func Test_Patch3(t *testing.T) {
+	Convey("User can only patch object they own", t, func() {
 		buf := bytes.NewBufferString("[\"" + userA.Uid + "\"]")
 		p := oms.NewPatch(userBObjects[0].ID(), "$.followers")
 		p.SetContent(buf)
@@ -697,34 +880,140 @@ func Test_Patch2(t *testing.T) {
 	})
 }
 
+func Test_SearchObjects(t *testing.T) {
+	Convey("Cannot perform search with empty expression parameters", t, func() {
+		route := Route(SkipExec(), SkipPoliciesCheck())
+		objects, err := route.SearchObjects(fullConfiguredContext(), oms.SearchParams{MatchedExpression: ""}, oms.SearchOptions{})
+		So(err, ShouldEqual, errors.BadInput)
+		So(objects, ShouldBeNil)
+
+	})
+}
+
+func Test_SearchObjects0(t *testing.T) {
+	Convey("Searching with 'false' expression returns empty object list", t, func() {
+		route := Route(SkipExec())
+		objects, err := route.SearchObjects(fullConfiguredContext(), oms.SearchParams{MatchedExpression: "false"}, oms.SearchOptions{})
+		So(err, ShouldBeNil)
+		So(objects.Objects, ShouldHaveLength, 0)
+	})
+}
+
+func Test_SearchObjects1(t *testing.T) {
+	Convey("Searching with 'true' expression returns the same result as list", t, func() {
+		route := Route()
+		userACtx := WithUserInfo(fullConfiguredContext(), userA)
+		objects, err := route.SearchObjects(userACtx, oms.SearchParams{MatchedExpression: "true"}, oms.SearchOptions{})
+		So(err, ShouldBeNil)
+		So(objects.Objects, ShouldNotBeEmpty)
+	})
+}
+
+func Test_SearchObjects2(t *testing.T) {
+	Convey("User can search on objects he created", t, func() {
+		route := Route()
+		userACtx := WithUserInfo(fullConfiguredContext(), userA)
+		objects, err := route.SearchObjects(userACtx, oms.SearchParams{MatchedExpression: "o.private"}, oms.SearchOptions{})
+		So(err, ShouldBeNil)
+		So(objects.Objects, ShouldNotBeEmpty)
+
+		for _, o := range objects.Objects {
+			data, err := ioutil.ReadAll(o.Content())
+			So(err, ShouldBeNil)
+
+			content := string(data)
+
+			js, err := oms.JSONParse(content)
+			So(err, ShouldBeNil)
+
+			val, err := js.BoolAt("$.private")
+			So(err, ShouldBeNil)
+			So(val, ShouldBeTrue)
+		}
+	})
+}
+
+func Test_SearchObjects3(t *testing.T) {
+	Convey("Cannot perform search on broken store", t, func() {
+		route := Route()
+		userACtx := WithUserInfo(contextWithFailureDummyStore(), userA)
+		objects, err := route.SearchObjects(userACtx, oms.SearchParams{MatchedExpression: "o.private "}, oms.SearchOptions{})
+		So(err, ShouldNotBeNil)
+		So(err.Error(), ShouldEqual, "failure")
+		So(objects, ShouldBeNil)
+	})
+}
+
+func Test_SearchObjects4(t *testing.T) {
+	Convey("Cannot perform search on wrong syntax cel-expression", t, func() {
+		route := Route()
+		userACtx := WithUserInfo(contextWithFailureDummyStore(), userA)
+		objects, err := route.SearchObjects(userACtx, oms.SearchParams{MatchedExpression: "o.private && a.public"}, oms.SearchOptions{})
+		So(err, ShouldEqual, errors.BadInput)
+		So(objects, ShouldBeNil)
+	})
+}
+
 func Test_Delete(t *testing.T) {
-	Convey("Delete all items", t, func() {
+	Convey("Cannot perform delete object with wrong parameters", t, func() {
 		ctx := fullConfiguredContext()
 		route := Route()
-
 		err := route.DeleteObject(ctx, "")
 		So(err, ShouldEqual, errors.BadInput)
+	})
+}
 
-		objectList, err := route.ListObjects(ctx, oms.ListOptions{})
-		So(err, ShouldBeNil)
-		So(objectList.Count, ShouldEqual, 0)
-
+func Test_Delete0(t *testing.T) {
+	Convey("Cannot delete other user object", t, func() {
+		route := Route()
 		userACtx := WithUserInfo(fullConfiguredContext(), userA)
-		objectList, err = route.ListObjects(userACtx, oms.ListOptions{})
+
+		err := route.DeleteObject(userACtx, userBObjects[0].ID())
+		So(err, ShouldEqual, errors.Unauthorized)
+	})
+}
+
+func Test_Delete1(t *testing.T) {
+	Convey("Cannot delete object without storage in context", t, func() {
+		route := Route(SkipPoliciesCheck())
+		userACtx := WithUserInfo(contextWithoutStore(), userA)
+
+		err := route.DeleteObject(userACtx, userAObjects[0].ID())
+		So(err, ShouldEqual, errors.Internal)
+	})
+}
+
+func Test_Delete2(t *testing.T) {
+	Convey("Cannot delete object without acl in context", t, func() {
+		route := Route(SkipPoliciesCheck())
+		userACtx := WithUserInfo(contextWithoutACLStore(), userA)
+
+		err := route.DeleteObject(userACtx, userAObjects[0].ID())
+		So(err, ShouldEqual, errors.Internal)
+	})
+}
+
+func Test_Delete3(t *testing.T) {
+	Convey("Clear delete their objects", t, func() {
+		route := Route(SkipPoliciesCheck())
+
+		adminCtx := WithUserInfo(fullConfiguredContext(), admin)
+		objectList, err := route.ListObjects(adminCtx, oms.ListOptions{})
 		So(err, ShouldBeNil)
 
 		for _, o := range objectList.Objects {
-			err = route.DeleteObject(userACtx, o.ID())
+			err = route.DeleteObject(adminCtx, o.ID())
 			So(err, ShouldBeNil)
 		}
+	})
+}
 
-		userBCtx := WithUserInfo(fullConfiguredContext(), userB)
-		objectList, err = route.ListObjects(userBCtx, oms.ListOptions{})
-		So(err, ShouldBeNil)
-
-		for _, o := range objectList.Objects {
-			err = route.DeleteObject(userBCtx, o.ID())
-			So(err, ShouldBeNil)
-		}
+func Test_Delete4(t *testing.T) {
+	Convey("Cannot delete object using broken store", t, func() {
+		route := Route(SkipPoliciesCheck())
+		userACtx := WithUserInfo(contextWithFailureDummyStore(), userA)
+		err := route.DeleteObject(userACtx, "object")
+		So(err, ShouldNotBeNil)
+		So(err.Error(), ShouldEqual, "failure")
 	})
 }
