@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/omecodes/common/env/app"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 var (
@@ -53,6 +54,11 @@ func init() {
 	flags.StringVar(&keyFilename, "key", "", "Key file path")
 	flags.BoolVar(&selfSignedTLS, "ss-tls", false, "Is certificate self-signed")
 	flags.StringVar(&jwtSecret, "jwt-secret", "", "Secret used to verify JWT hmac based signature")
+
+	if err := cobra.MarkFlagRequired(flags, "jwt-secret"); err!= nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
 }
 
 func Get() *cobra.Command {
