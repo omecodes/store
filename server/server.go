@@ -34,6 +34,7 @@ var debug = os.Getenv("OMS_DEBUG")
 
 // Config contains info to configure an instance of Server
 type Config struct {
+	JwtSecret   string
 	App         *app.App
 	TLS         *tls.Config
 	BindAddress string
@@ -311,13 +312,14 @@ func (s *Server) detectOAuth2Authorization(next http.Handler) http.Handler {
 				return
 			}
 
-			state, err := jwt.Verify("")
+			signature, err := jwt.SecretBasedSignature(s.config.JwtSecret)
 			if err != nil {
 				w.WriteHeader(http.StatusForbidden)
 				return
 			}
 
-			if state != ome.JWTState_Valid {
+
+			if signature != jwt.Signature {
 				w.WriteHeader(http.StatusForbidden)
 				return
 			}
@@ -329,7 +331,6 @@ func (s *Server) detectOAuth2Authorization(next http.Handler) http.Handler {
 				Validated: jwt.Claims.Profile.Verified,
 				Scope:     strings.Split(jwt.Claims.Scope, ""),
 			})
-
 			r = r.WithContext(ctx)
 		}
 		next.ServeHTTP(w, r)

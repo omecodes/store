@@ -7,6 +7,7 @@ import (
 )
 
 var (
+	jwtSecret      string
 	addr           string
 	certFilename   string
 	keyFilename    string
@@ -51,6 +52,7 @@ func init() {
 	flags.StringVar(&certFilename, "cert", "", "Certificate file path")
 	flags.StringVar(&keyFilename, "key", "", "Key file path")
 	flags.BoolVar(&selfSignedTLS, "ss-tls", false, "Is certificate self-signed")
+	flags.StringVar(&jwtSecret, "jwt-secret", "", "Secret used to verify JWT hmac based signature")
 }
 
 func Get() *cobra.Command {

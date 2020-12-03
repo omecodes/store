@@ -41,6 +41,7 @@ func runStore() {
 	}
 
 	s := server.New(server.Config{
+		JwtSecret: jwtSecret,
 		DSN:         dsn,
 		BindAddress: addr,
 		App:         application,
