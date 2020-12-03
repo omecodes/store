@@ -16,13 +16,15 @@ require (
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/omecodes/bome v0.0.0-20201128175554-02096488538b
-	github.com/omecodes/common v0.0.0-20201202084727-364a206597f8
-	github.com/omecodes/libome v0.0.0-20201128214815-2b3f03af9fa6
+	github.com/omecodes/common v0.0.0-20201203182603-a18355eb1bff
+	github.com/omecodes/libome v0.0.0-20201202084519-7cffbc7a04c8
 	github.com/sethvargo/go-password v0.2.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.1.1
-	golang.org/x/net v0.0.0-20201201195509-5d6afe98e0b7 // indirect
-	golang.org/x/sys v0.0.0-20201201145000-ef89a241ccb3 // indirect
-	google.golang.org/genproto v0.0.0-20201201144952-b05cb90ed32e // indirect
+	golang.org/x/crypto v0.0.0-20201203163018-be400aefbc4c // indirect
+	golang.org/x/net v0.0.0-20201202161906-c7110b5ffcbb // indirect
+	golang.org/x/sys v0.0.0-20201202213521-69691e467435 // indirect
+	google.golang.org/genproto v0.0.0-20201203001206-6486ece9c497 // indirect
+	google.golang.org/grpc v1.34.0 // indirect
 	google.golang.org/protobuf v1.25.0
 )
