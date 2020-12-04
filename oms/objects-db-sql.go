@@ -40,7 +40,7 @@ type mysqlStore struct {
 
 func (ms *mysqlStore) Save(ctx context.Context, object *Object) error {
 	if object.CreatedAt() == 0 {
-		d := time.Now().Unix()
+		d := time.Now().UnixNano() / int64(time.Nanosecond)
 		object.SetCreatedAt(d)
 	}
 

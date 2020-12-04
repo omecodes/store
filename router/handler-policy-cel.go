@@ -43,7 +43,7 @@ func evaluate(ctx *context.Context, state *celParams, rule string) (bool, error)
 			"created_at": state.data.CreatedAt,
 			"size":       state.data.Size,
 		},
-		"at": time.Now().Unix(),
+		"at": time.Now().UnixNano() / int64(time.Nanosecond),
 	}
 
 	out, details, err := prg.Eval(vars)

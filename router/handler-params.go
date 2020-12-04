@@ -126,7 +126,7 @@ func (p *paramsHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (
 	}
 
 	if opts.Before == 0 {
-		opts.Before = time.Now().Unix()
+		opts.Before = time.Now().UnixNano() / int64(time.Nanosecond)
 	}
 	return p.base.ListObjects(ctx, opts)
 }
@@ -137,7 +137,7 @@ func (p *paramsHandler) SearchObjects(ctx context.Context, params oms.SearchPara
 	}
 
 	if opts.Before == 0 {
-		opts.Before = time.Now().Unix()
+		opts.Before = time.Now().UnixNano() / int64(time.Nanosecond)
 	}
 
 	if opts.Count == 0 {
