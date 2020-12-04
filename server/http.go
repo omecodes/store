@@ -168,7 +168,7 @@ func list(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		before = time.Now().UnixNano() / int64(time.Nanosecond)
+		before = time.Now().UnixNano() / 1e6
 	}
 
 	opts := oms.ListOptions{
@@ -232,7 +232,7 @@ func search(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		before = time.Now().UnixNano() / int64(time.Nanosecond)
+		before = time.Now().UnixNano() / 1e6
 	}
 
 	opts := oms.SearchOptions{

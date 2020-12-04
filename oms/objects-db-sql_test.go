@@ -220,7 +220,7 @@ func TestMysqlStore_List(t *testing.T) {
 	Convey("List objects", t, func() {
 		initDB()
 
-		now := time.Now().UnixNano() / int64(time.Nanosecond)
+		now := time.Now().UnixNano() / 1e6
 
 		list, err := objects.List(context.Background(), now, 3, FilterObjectFunc(func(o *Object) (bool, error) {
 			return true, nil
@@ -239,7 +239,7 @@ func TestMysqlStore_List(t *testing.T) {
 
 func TestMysqlStore_ListAt(t *testing.T) {
 	Convey("List objects item at", t, func() {
-		now := time.Now().UnixNano() / int64(time.Nanosecond)
+		now := time.Now().UnixNano() / 1e6
 		list, err := objects.ListAt(context.Background(), "$.private", now, 3, FilterObjectFunc(func(o *Object) (bool, error) {
 			return true, nil
 		}))
