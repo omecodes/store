@@ -1,20 +1,14 @@
-package oms
+package acl
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"github.com/omecodes/bome"
 	"github.com/omecodes/omestore/pb"
 )
 
-type AccessStore interface {
-	SaveRules(objectID string, rules *pb.PathAccessRules) error
-	GetRules(objectID string) (*pb.PathAccessRules, error)
-	GetForPath(objectID string, path string) (*pb.AccessRules, error)
-	Delete(objectID string) error
-}
-
-func NewSQLAccessStore(db *sql.DB, dialect string, tableName string) (AccessStore, error) {
+func NewSQLStore(db *sql.DB, dialect string, tableName string) (Store, error) {
 	store, err := bome.NewJSONMap(db, dialect, tableName)
 	return &sqlPermStore{
 		store: store,
@@ -25,7 +19,7 @@ type sqlPermStore struct {
 	store *bome.JSONMap
 }
 
-func (p *sqlPermStore) SaveRules(objectID string, rules *pb.PathAccessRules) error {
+func (p *sqlPermStore) SaveRules(ctx context.Context, objectID string, rules *pb.PathAccessRules) error {
 	rulesBytes, _ := json.Marshal(rules.AccessRules)
 	entry := &bome.MapEntry{
 		Key:   objectID,
@@ -34,7 +28,7 @@ func (p *sqlPermStore) SaveRules(objectID string, rules *pb.PathAccessRules) err
 	return p.store.Save(entry)
 }
 
-func (p *sqlPermStore) GetRules(objectID string) (*pb.PathAccessRules, error) {
+func (p *sqlPermStore) GetRules(ctx context.Context, objectID string) (*pb.PathAccessRules, error) {
 	value, err := p.store.Get(objectID)
 	if err != nil {
 		return nil, err
@@ -44,7 +38,7 @@ func (p *sqlPermStore) GetRules(objectID string) (*pb.PathAccessRules, error) {
 	return pr, err
 }
 
-func (p *sqlPermStore) GetForPath(objectID string, path string) (*pb.AccessRules, error) {
+func (p *sqlPermStore) GetForPath(ctx context.Context, objectID string, path string) (*pb.AccessRules, error) {
 	readRules, err := p.store.ExtractAt(objectID, path+".read")
 	if err != nil {
 		return nil, err
@@ -69,6 +63,16 @@ func (p *sqlPermStore) GetForPath(objectID string, path string) (*pb.AccessRules
 	return ar, nil
 }
 
-func (p *sqlPermStore) Delete(objectID string) error {
+func (p *sqlPermStore) Delete(ctx context.Context, objectID string) error {
 	return p.store.Delete(objectID)
+}
+
+func (p *sqlPermStore) DeleteForPath(ctx context.Context, objectID string, path string) error {
+	rules, err := p.GetRules(ctx, objectID)
+	if err != nil {
+		return err
+	}
+
+	delete(rules.AccessRules, path)
+	return p.SaveRules(ctx, objectID, rules)
 }
