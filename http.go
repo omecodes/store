@@ -1,4 +1,4 @@
-package server
+package oms
 
 import (
 	"encoding/json"
@@ -15,32 +15,42 @@ import (
 	"time"
 )
 
-func dataRouter() *mux.Router {
+func NewHttpUnit(provider router.Provider) *HTTPUnit {
+	return &HTTPUnit{
+		provider: provider,
+	}
+}
+
+type HTTPUnit struct {
+	provider router.Provider
+}
+
+func (s *HTTPUnit) MuxRouter() *mux.Router {
 	r := mux.NewRouter()
 
-	r.Name("RegisterWorker").Methods(http.MethodPost).Path("/workers").Handler(http.HandlerFunc(registerWorker))
-	r.Name("ListWorkers").Methods(http.MethodGet).Path("/workers").Handler(http.HandlerFunc(listWorkers))
+	r.Name("RegisterWorker").Methods(http.MethodPost).Path("/workers").Handler(http.HandlerFunc(s.registerWorker))
+	r.Name("ListWorkers").Methods(http.MethodGet).Path("/workers").Handler(http.HandlerFunc(s.listWorkers))
 
-	r.Name("SetSettings").Methods(http.MethodPut).Path("/settings").Handler(http.HandlerFunc(setSettings))
-	r.Name("GetSettings").Methods(http.MethodGet).Path("/settings").Handler(http.HandlerFunc(getSettings))
+	r.Name("SetSettings").Methods(http.MethodPut).Path("/settings").Handler(http.HandlerFunc(s.setSettings))
+	r.Name("GetSettings").Methods(http.MethodGet).Path("/settings").Handler(http.HandlerFunc(s.getSettings))
 
 	settingsSubRouter := r.PathPrefix("/settings/").Subrouter()
-	settingsSubRouter.Name("SetSettings").Methods(http.MethodPost).Handler(http.HandlerFunc(setSettings))
-	settingsSubRouter.Name("GetSettings").Methods(http.MethodGet).Handler(http.HandlerFunc(getSettings))
+	settingsSubRouter.Name("SetSettings").Methods(http.MethodPost).Handler(http.HandlerFunc(s.setSettings))
+	settingsSubRouter.Name("GetSettings").Methods(http.MethodGet).Handler(http.HandlerFunc(s.getSettings))
 
-	r.Name("Put").Methods(http.MethodPut).Path("/objects/{id}").Handler(http.HandlerFunc(put))
-	r.Name("Patch").Methods(http.MethodPatch).Path("/objects/{id}").Handler(http.HandlerFunc(patch))
-	r.Name("Get").Methods(http.MethodGet).Path("/objects/{id}").Handler(http.HandlerFunc(get))
-	r.Name("Del").Methods(http.MethodDelete).Path("/objects/{id}").Handler(http.HandlerFunc(del))
-	r.Name("GetObjects").Methods(http.MethodGet).Path("/objects").Handler(http.HandlerFunc(list))
-	r.Name("Search").Methods(http.MethodPost).Path("/objects").Handler(http.HandlerFunc(search))
-	r.PathPrefix("/objects/{id}/").Subrouter().Name("PatchSubDoc").Methods(http.MethodPatch).Handler(http.HandlerFunc(patch))
-	r.PathPrefix("/objects/{id}/").Subrouter().Name("Select").Methods(http.MethodGet).Handler(http.HandlerFunc(sel))
+	r.Name("Put").Methods(http.MethodPut).Path("/objects/{id}").Handler(http.HandlerFunc(s.put))
+	r.Name("Patch").Methods(http.MethodPatch).Path("/objects/{id}").Handler(http.HandlerFunc(s.patch))
+	r.Name("Get").Methods(http.MethodGet).Path("/objects/{id}").Handler(http.HandlerFunc(s.get))
+	r.Name("Del").Methods(http.MethodDelete).Path("/objects/{id}").Handler(http.HandlerFunc(s.del))
+	r.Name("GetObjects").Methods(http.MethodGet).Path("/objects").Handler(http.HandlerFunc(s.list))
+	r.Name("Search").Methods(http.MethodPost).Path("/objects").Handler(http.HandlerFunc(s.search))
+	r.PathPrefix("/objects/{id}/").Subrouter().Name("PatchSubDoc").Methods(http.MethodPatch).Handler(http.HandlerFunc(s.patch))
+	r.PathPrefix("/objects/{id}/").Subrouter().Name("Select").Methods(http.MethodGet).Handler(http.HandlerFunc(s.sel))
 
 	return r
 }
 
-func put(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPUnit) put(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	contentType := r.Header.Get("Content-Type")
@@ -55,14 +65,14 @@ func put(w http.ResponseWriter, r *http.Request) {
 	object.SetContent(r.Body)
 	object.SetSize(r.ContentLength)
 
-	_, err := router.Route().PutObject(ctx, object, nil, opts)
+	_, err := router.NewRoute(ctx).PutObject(ctx, object, nil, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
 	}
 }
 
-func patch(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPUnit) patch(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	contentType := r.Header.Get("Content-Type")
@@ -79,27 +89,27 @@ func patch(w http.ResponseWriter, r *http.Request) {
 	patch.SetContent(r.Body)
 	patch.SetSize(r.ContentLength)
 
-	err := router.Route().PatchObject(ctx, patch, oms.PatchOptions{})
+	err := router.NewRoute(ctx).PatchObject(ctx, patch, oms.PatchOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
 	}
 }
 
-func get(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPUnit) get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
 
 	id := vars["id"]
 	onlyInfo := r.URL.Query().Get("info")
 
-	object, err := router.Route().GetObject(ctx, id, oms.GetObjectOptions{Info: onlyInfo == "true"})
+	object, err := router.NewRoute(ctx).GetObject(ctx, id, oms.GetObjectOptions{Info: onlyInfo == "true"})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
 	}
 
-	data, err := ioutil.ReadAll(object.Content())
+	data, err := ioutil.ReadAll(object.GetContent())
 	if err != nil {
 		log.Error("Get: failed to encoded object", log.Err(err))
 		w.WriteHeader(http.StatusInternalServerError)
@@ -114,20 +124,20 @@ func get(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func sel(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPUnit) sel(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
 
 	id := vars["id"]
 	filter := strings.Replace(r.RequestURI, fmt.Sprintf("/%s", id), "", 1)
 
-	object, err := router.Route().GetObject(ctx, id, oms.GetObjectOptions{Path: filter})
+	object, err := router.NewRoute(ctx).GetObject(ctx, id, oms.GetObjectOptions{Path: filter})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
 	}
 
-	data, err := ioutil.ReadAll(object.Content())
+	data, err := ioutil.ReadAll(object.GetContent())
 	if err != nil {
 		log.Error("Get: failed to encoded object", log.Err(err))
 		w.WriteHeader(http.StatusInternalServerError)
@@ -142,18 +152,18 @@ func sel(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func del(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPUnit) del(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
 
-	err := router.Route().DeleteObject(ctx, vars["id"])
+	err := router.NewRoute(ctx).DeleteObject(ctx, vars["id"])
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
 	}
 }
 
-func list(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var before int64
@@ -176,7 +186,7 @@ func list(w http.ResponseWriter, r *http.Request) {
 		Before: before,
 	}
 
-	result, err := router.Route().ListObjects(ctx, opts)
+	result, err := router.NewRoute(ctx).ListObjects(ctx, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -198,7 +208,7 @@ func list(w http.ResponseWriter, r *http.Request) {
 			item = ","
 		}
 
-		data, err := ioutil.ReadAll(object.Content())
+		data, err := ioutil.ReadAll(object.GetContent())
 		if err != nil {
 			log.Error("GetObjects: failed to encode object", log.Err(err))
 			return
@@ -217,7 +227,7 @@ func list(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func search(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var before int64
@@ -248,7 +258,7 @@ func search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := router.Route().SearchObjects(ctx, params, opts)
+	result, err := router.NewRoute(ctx).SearchObjects(ctx, params, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -269,7 +279,7 @@ func search(w http.ResponseWriter, r *http.Request) {
 			item = ","
 		}
 
-		data, err := ioutil.ReadAll(object.Content())
+		data, err := ioutil.ReadAll(object.GetContent())
 		if err != nil {
 			log.Error("GetObjects: failed to encode object", log.Err(err))
 			return
@@ -288,11 +298,11 @@ func search(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func registerWorker(w http.ResponseWriter, r *http.Request) {}
+func (s *HTTPUnit) registerWorker(w http.ResponseWriter, r *http.Request) {}
 
-func listWorkers(w http.ResponseWriter, r *http.Request) {}
+func (s *HTTPUnit) listWorkers(w http.ResponseWriter, r *http.Request) {}
 
-func setSettings(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPUnit) setSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var o interface{}
@@ -304,18 +314,18 @@ func setSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = router.Route().SetSettings(ctx, "", "", oms.SettingsOptions{})
+	err = router.NewRoute(ctx).SetSettings(ctx, "", "", oms.SettingsOptions{})
 	if err != nil {
 		log.Error("failed to set settings", log.Err(err))
 		w.WriteHeader(errors.HttpStatus(err))
 	}
 }
 
-func getSettings(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPUnit) getSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	name := r.URL.Query().Get("name")
 
-	s, err := router.Route().GetSettings(ctx, name)
+	settings, err := router.NewRoute(ctx).GetSettings(ctx, name)
 	if err != nil {
 		log.Error("could not get settings", log.Err(err))
 		w.WriteHeader(errors.HttpStatus(err))
@@ -323,5 +333,5 @@ func getSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-	_, _ = w.Write([]byte(s))
+	_, _ = w.Write([]byte(settings))
 }
