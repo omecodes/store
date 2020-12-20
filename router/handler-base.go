@@ -26,14 +26,6 @@ func (b *base) ClearSettings(ctx context.Context) error {
 	return b.next.ClearSettings(ctx)
 }
 
-func (b *base) ListWorkers(ctx context.Context) ([]*oms.JSON, error) {
-	return b.next.ListWorkers(ctx)
-}
-
-func (b *base) RegisterWorker(ctx context.Context, info *oms.JSON) error {
-	return b.next.RegisterWorker(ctx, info)
-}
-
 func (b *base) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
 	return b.next.PutObject(ctx, object, security, opts)
 }

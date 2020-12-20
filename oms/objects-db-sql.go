@@ -44,7 +44,7 @@ func (ms *mysqlStore) Save(ctx context.Context, object *Object) error {
 		object.SetCreatedAt(d)
 	}
 
-	contentData, err := ioutil.ReadAll(object.Content())
+	contentData, err := ioutil.ReadAll(object.GetContent())
 	if err != nil {
 		log.Error("Save: could not get object content", log.Err(err))
 		return errors.BadInput

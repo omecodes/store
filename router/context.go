@@ -3,12 +3,13 @@ package router
 import (
 	"context"
 	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/omestore/pb"
+	"github.com/omecodes/omestore/services/acl"
 
 	"github.com/google/cel-go/cel"
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
-	"github.com/omecodes/omestore/oms"
 )
 
 type ctxSettingsDB struct{}
@@ -23,6 +24,7 @@ type ctxCELAclPrograms struct{}
 type ctxCELSearchPrograms struct{}
 type ctxAuthCEL struct{}
 type ctxWorkers struct{}
+type ctxRouterProvider struct{}
 
 // ContextUpdater is a convenience for context enriching object
 // It take a Context object and return a new one with that contains
@@ -38,7 +40,7 @@ func (u ContextUpdaterFunc) UpdateContext(ctx context.Context) context.Context {
 }
 
 // WithAccessStore creates a context updater that adds permissions store to a context
-func WithAccessStore(store oms.AccessStore) ContextUpdaterFunc {
+func WithAccessStore(store acl.Store) ContextUpdaterFunc {
 	return func(parent context.Context) context.Context {
 		return context.WithValue(parent, ctxAccessStore{}, store)
 	}
@@ -84,7 +86,12 @@ func WithUserInfo(ctx context.Context, a *pb.Auth) context.Context {
 	return context.WithValue(ctx, ctxAuthCEL{}, a)
 }
 
-func celPolicyEnv(ctx context.Context) *cel.Env {
+// WithRouterProvider updates context by adding a RouterProvider object in its values
+func WithRouterProvider(ctx context.Context, p Provider) context.Context {
+	return context.WithValue(ctx, ctxRouterProvider{}, p)
+}
+
+func CELPolicyEnv(ctx context.Context) *cel.Env {
 	o := ctx.Value(ctxCELPolicyEnv{})
 	if o == nil {
 		return nil
@@ -92,7 +99,7 @@ func celPolicyEnv(ctx context.Context) *cel.Env {
 	return o.(*cel.Env)
 }
 
-func celSearchEnv(ctx context.Context) *cel.Env {
+func CELSearchEnv(ctx context.Context) *cel.Env {
 	o := ctx.Value(ctxCELSearchEnv{})
 	if o == nil {
 		return nil
@@ -100,7 +107,7 @@ func celSearchEnv(ctx context.Context) *cel.Env {
 	return o.(*cel.Env)
 }
 
-func storage(ctx context.Context) oms.Objects {
+func Objects(ctx context.Context) oms.Objects {
 	o := ctx.Value(ctxStore{})
 	if o == nil {
 		return nil
@@ -108,7 +115,7 @@ func storage(ctx context.Context) oms.Objects {
 	return o.(oms.Objects)
 }
 
-func settings(ctx context.Context) *bome.Map {
+func Settings(ctx context.Context) *bome.Map {
 	o := ctx.Value(ctxSettingsDB{})
 	if o == nil {
 		return nil
@@ -116,7 +123,7 @@ func settings(ctx context.Context) *bome.Map {
 	return o.(*bome.Map)
 }
 
-func authInfo(ctx context.Context) *pb.Auth {
+func AuthInfo(ctx context.Context) *pb.Auth {
 	o := ctx.Value(ctxAuthCEL{})
 	if o == nil {
 		return nil
@@ -124,23 +131,15 @@ func authInfo(ctx context.Context) *pb.Auth {
 	return o.(*pb.Auth)
 }
 
-func workers(ctx context.Context) *bome.JSONMap {
-	o := ctx.Value(ctxWorkers{})
-	if o == nil {
-		return nil
-	}
-	return o.(*bome.JSONMap)
-}
-
-func accessStore(ctx context.Context) oms.AccessStore {
+func ACLStore(ctx context.Context) acl.Store {
 	o := ctx.Value(ctxAccessStore{})
 	if o == nil {
 		return nil
 	}
-	return o.(oms.AccessStore)
+	return o.(acl.Store)
 }
 
-func getObjectHeader(ctx *context.Context, objectID string) (*pb.Header, error) {
+func GetObjectHeader(ctx *context.Context, objectID string) (*pb.Header, error) {
 	var m map[string]*pb.Header
 	o := (*ctx).Value(ctxObjectHeader{})
 	if o != nil {
@@ -157,7 +156,7 @@ func getObjectHeader(ctx *context.Context, objectID string) (*pb.Header, error) 
 		m = map[string]*pb.Header{}
 	}
 
-	route := Route(SkipParamsCheck(), SkipPoliciesCheck())
+	route := NewRoute(*ctx, SkipParamsCheck(), SkipPoliciesCheck())
 	header, err := route.GetObjectHeader(*ctx, objectID)
 	if err != nil {
 		return nil, err
@@ -168,7 +167,7 @@ func getObjectHeader(ctx *context.Context, objectID string) (*pb.Header, error) 
 	return header, nil
 }
 
-func loadProgramForAccessValidation(ctx *context.Context, expression string) (cel.Program, error) {
+func LoadProgramForAccessValidation(ctx *context.Context, expression string) (cel.Program, error) {
 	var m map[string]cel.Program
 
 	o := (*ctx).Value(ctxCELAclPrograms{})
@@ -186,7 +185,7 @@ func loadProgramForAccessValidation(ctx *context.Context, expression string) (ce
 		m = map[string]cel.Program{}
 	}
 
-	env := celPolicyEnv(*ctx)
+	env := CELPolicyEnv(*ctx)
 	if env == nil {
 		return nil, errors.Internal
 	}
@@ -206,7 +205,7 @@ func loadProgramForAccessValidation(ctx *context.Context, expression string) (ce
 	return prg, nil
 }
 
-func loadProgramForSearch(ctx *context.Context, expression string) (cel.Program, error) {
+func LoadProgramForSearch(ctx *context.Context, expression string) (cel.Program, error) {
 	var m map[string]cel.Program
 
 	o := (*ctx).Value(ctxCELSearchPrograms{})
@@ -224,7 +223,7 @@ func loadProgramForSearch(ctx *context.Context, expression string) (cel.Program,
 		m = map[string]cel.Program{}
 	}
 
-	env := celSearchEnv(*ctx)
+	env := CELSearchEnv(*ctx)
 	if env == nil {
 		return nil, errors.Internal
 	}
@@ -243,4 +242,15 @@ func loadProgramForSearch(ctx *context.Context, expression string) (cel.Program,
 	m[expression] = prg
 	*ctx = context.WithValue(*ctx, ctxCELAclPrograms{}, m)
 	return prg, nil
+}
+
+func NewRoute(ctx context.Context, opt ...RouteOption) Handler {
+	o := ctx.Value(ctxRouterProvider{})
+	if o == nil {
+		return DefaultRouter().GetRoute(opt...)
+	}
+
+	p := o.(Provider)
+	router := p.GetRouter(ctx)
+	return router.GetRoute(opt...)
 }

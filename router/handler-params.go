@@ -14,13 +14,6 @@ type paramsHandler struct {
 	base
 }
 
-func (p *paramsHandler) RegisterWorker(ctx context.Context, info *oms.JSON) error {
-	if info == nil {
-		return errors.BadInput
-	}
-	return p.base.RegisterWorker(ctx, info)
-}
-
 func (p *paramsHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
 	if name == "" || value == "" {
 		return errors.BadInput
@@ -52,7 +45,7 @@ func (p *paramsHandler) PutObject(ctx context.Context, object *oms.Object, secur
 		security.AccessRules = map[string]*pb.AccessRules{}
 	}
 
-	route := Route(SkipPoliciesCheck(), SkipParamsCheck())
+	route := NewRoute(ctx, SkipPoliciesCheck(), SkipParamsCheck())
 	s, err := route.GetSettings(ctx, oms.SettingsDataMaxSizePath)
 	if err != nil {
 		log.Error("could not get data max length from settings", log.Err(err))
@@ -78,7 +71,7 @@ func (p *paramsHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts 
 		return errors.BadInput
 	}
 
-	route := Route(SkipPoliciesCheck(), SkipParamsCheck())
+	route := NewRoute(ctx, SkipPoliciesCheck(), SkipParamsCheck())
 	s, err := route.GetSettings(ctx, oms.SettingsDataMaxSizePath)
 	if err != nil {
 		log.Error("could not get data max length from settings", log.Err(err))

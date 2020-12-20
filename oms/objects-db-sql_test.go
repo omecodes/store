@@ -164,7 +164,7 @@ func TestMysqlStore_Patch(t *testing.T) {
 			o, err := objects.GetAt(ctx, "ome-libome", "$.private")
 			So(err, ShouldBeNil)
 
-			value, err := ioutil.ReadAll(o.Content())
+			value, err := ioutil.ReadAll(o.GetContent())
 			So(err, ShouldBeNil)
 			So(string(value), ShouldEqual, "true")
 
@@ -176,7 +176,7 @@ func TestMysqlStore_Patch(t *testing.T) {
 			o, err = objects.GetAt(ctx, "ome-libome", "$.private")
 			So(err, ShouldBeNil)
 
-			value, err = ioutil.ReadAll(o.Content())
+			value, err = ioutil.ReadAll(o.GetContent())
 			So(err, ShouldBeNil)
 			So(string(value), ShouldEqual, "false")
 		})
@@ -247,7 +247,7 @@ func TestMysqlStore_ListAt(t *testing.T) {
 		So(list.Objects, ShouldHaveLength, 3)
 
 		for _, o := range list.Objects {
-			content, err := ioutil.ReadAll(o.Content())
+			content, err := ioutil.ReadAll(o.GetContent())
 			So(err, ShouldBeNil)
 			So(string(content), ShouldBeIn, "true", "false")
 		}

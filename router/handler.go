@@ -12,9 +12,6 @@ type Handler interface {
 	DeleteSettings(ctx context.Context, name string) error
 	ClearSettings(ctx context.Context) error
 
-	ListWorkers(ctx context.Context) ([]*oms.JSON, error)
-	RegisterWorker(ctx context.Context, info *oms.JSON) error
-
 	PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error)
 	PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error
 	GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*oms.Object, error)

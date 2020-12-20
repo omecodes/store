@@ -23,7 +23,7 @@ func evaluate(ctx *context.Context, state *celParams, rule string) (bool, error)
 		return true, nil
 	}
 
-	prg, err := loadProgramForAccessValidation(ctx, rule)
+	prg, err := LoadProgramForAccessValidation(ctx, rule)
 	if err != nil {
 		return false, err
 	}
@@ -56,12 +56,12 @@ func evaluate(ctx *context.Context, state *celParams, rule string) (bool, error)
 }
 
 func assetActionAllowedOnObject(ctx *context.Context, action pb.AllowedTo, objectID string, path string) error {
-	header, err := getObjectHeader(ctx, objectID)
+	header, err := GetObjectHeader(ctx, objectID)
 	if err != nil {
 		return err
 	}
 
-	authCEL := authInfo(*ctx)
+	authCEL := AuthInfo(*ctx)
 	if authCEL == nil {
 		authCEL = &pb.Auth{}
 	}
@@ -90,13 +90,13 @@ func assetActionAllowedOnObject(ctx *context.Context, action pb.AllowedTo, objec
 }
 
 func getAccessRule(ctx context.Context, action pb.AllowedTo, objectID string, path string) (string, error) {
-	accessStore := accessStore(ctx)
+	accessStore := ACLStore(ctx)
 	if accessStore == nil {
 		log.Error("ACL-Read-Check: missing access store in context")
 		return "", errors.Internal
 	}
 
-	ruleCollection, err := accessStore.GetRules(objectID)
+	ruleCollection, err := accessStore.GetRules(ctx, objectID)
 	if err != nil {
 		return "", err
 	}

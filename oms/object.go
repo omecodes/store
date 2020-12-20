@@ -65,7 +65,7 @@ func (o *Object) CreatedAt() int64 {
 	return o.header.CreatedAt
 }
 
-func (o *Object) Content() io.Reader {
+func (o *Object) GetContent() io.Reader {
 	return o.content
 }
 

@@ -6,7 +6,7 @@ import (
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/common/utils/prompt"
 	"github.com/omecodes/libome/crypt"
-	"github.com/omecodes/omestore/server"
+	oms "github.com/omecodes/omestore"
 	"os"
 )
 
@@ -48,8 +48,8 @@ func runStore() {
 		}
 	}
 
-	s := server.New(server.Config{
-		JwtSecret: jwtSecret,
+	s := oms.NewMono(oms.MonoConfig{
+		JwtSecret:   jwtSecret,
 		DSN:         dsn,
 		BindAddress: addr,
 		App:         application,

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
-	"github.com/omecodes/libome"
 	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/omestore/pb"
 )
@@ -16,28 +15,11 @@ type policyHandler struct {
 }
 
 func (p *policyHandler) isAdmin(ctx context.Context) bool {
-	authCEL := authInfo(ctx)
+	authCEL := AuthInfo(ctx)
 	if authCEL == nil {
 		return false
 	}
 	return authCEL.Uid == "admin"
-}
-
-func (p *policyHandler) RegisterWorker(ctx context.Context, info *oms.JSON) error {
-	if !p.isAdmin(ctx) {
-		return errors.Forbidden
-	}
-	return p.base.RegisterWorker(ctx, info)
-}
-
-func (p *policyHandler) ListWorkers(ctx context.Context) ([]*oms.JSON, error) {
-	if !p.isAdmin(ctx) {
-		cred := ome.CredentialsFromContext(ctx)
-		if cred == nil {
-			return nil, errors.Forbidden
-		}
-	}
-	return p.base.ListWorkers(ctx)
 }
 
 func (p *policyHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
@@ -69,7 +51,7 @@ func (p *policyHandler) ClearSettings(ctx context.Context) error {
 }
 
 func (p *policyHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
-	ai := authInfo(ctx)
+	ai := AuthInfo(ctx)
 	if ai == nil {
 		return "", errors.Forbidden
 	}
@@ -165,7 +147,7 @@ func (p *policyHandler) SearchObjects(ctx context.Context, params oms.SearchPara
 		})
 	}
 
-	program, err := loadProgramForSearch(&ctx, params.MatchedExpression)
+	program, err := LoadProgramForSearch(&ctx, params.MatchedExpression)
 	if err != nil {
 		log.Error("Handler-policy.Search: failed to load CEL program", log.Err(err))
 		return nil, err
@@ -183,7 +165,7 @@ func (p *policyHandler) SearchObjects(ctx context.Context, params oms.SearchPara
 		}
 
 		var object = map[string]interface{}{}
-		err = json.NewDecoder(o.Content()).Decode(&object)
+		err = json.NewDecoder(o.GetContent()).Decode(&object)
 		if err != nil {
 			return false, err
 		}
