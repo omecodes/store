@@ -18,15 +18,17 @@ message RelationDef {
   bool equivalence = 2;
 }
 
-
 message AccessRules {
-  repeated string read = 1;
-  repeated string write = 2;
-  repeated string delete = 3;
+  string id = 1;
+  string label = 2;
+  string description = 3;
+  repeated string read = 4;
+  repeated string write = 5;
+  repeated string delete = 6;
 }
 
 message PathAccessRules {
-  map<string, AccessRules> access_rules = 5;
+  map<string, AccessRules> access_rules = 1;
 }
 
 message Header {
@@ -43,4 +45,135 @@ message Auth {
   bool validated = 4;
   repeated string scope = 5;
   string group = 6;
+}
+
+message DataObject {
+  Header header = 1;
+  bytes data = 2;
+}
+
+service HandlerUnit {
+  rpc PutObject(PutObjectRequest) returns (PutObjectResponse);
+  rpc UpdateObject(UpdateObjectRequest) returns (UpdateObjectResponse);
+  rpc GetObject(GetObjectRequest) returns (GetObjectResponse);
+  rpc DeleteObject(DeleteObjectRequest) returns (DeleteObjectResponse);
+  rpc ObjectInfo(ObjectInfoRequest) returns (ObjectInfoResponse);
+  rpc ListObjects(ListObjectsRequest) returns (stream DataObject);
+  rpc SearchObjects(SearchObjectsRequest) returns (stream DataObject);
+}
+
+message PutObjectRequest {
+  Header header = 1;
+  PathAccessRules access_security_rules = 2;
+  bytes data = 3;
+}
+message PutObjectResponse {
+  string object_id = 1;
+}
+
+message UpdateObjectRequest{
+  string object_id = 1;
+  string path = 2;
+  bytes data = 3;
+}
+message UpdateObjectResponse{}
+
+message GetObjectRequest {
+  string object_id = 1;
+}
+message GetObjectResponse {
+  DataObject data = 1;
+}
+
+message DeleteObjectRequest {
+  string object_id = 1;
+}
+message DeleteObjectResponse {}
+
+message ObjectInfoRequest {
+  string object_id = 1;
+}
+message ObjectInfoResponse {
+  Header header = 1;
+}
+
+message ListObjectsRequest {
+  int64 before = 1;
+  uint32 count = 2;
+}
+message ListObjectsResponse {
+  uint64 offset = 1;
+  int64 total = 2;
+  repeated DataObject objects = 3;
+}
+
+message SearchObjectsRequest {
+  int64 before = 1;
+  uint32 count = 2;
+  string match_expression = 3;
+}
+message SearchObjectsResponse {
+  uint64 offset = 1;
+  int64 total = 2;
+  repeated DataObject objects = 3;
+}
+
+
+service ACL {
+  rpc PutRules(PutRulesRequest) returns (PutRulesResponse);
+  rpc GetRules(GetRulesRequest) returns (GetRulesResponse);
+  rpc GetRulesForPath(GetRulesForPathRequest) returns (GetRulesForPathResponse);
+  rpc DeleteRules(DeleteRulesRequest) returns (DeleteRulesResponse);
+  rpc DeleteRulesForPath(DeleteRulesForPathRequest) returns (DeleteRulesForPathResponse);
+}
+
+message PutRulesRequest {
+  string object_id = 1;
+  PathAccessRules rules = 2;
+}
+message PutRulesResponse {}
+
+message GetRulesRequest {
+  string object_id = 1;
+}
+message GetRulesResponse {
+  PathAccessRules rules = 1;
+}
+
+message GetRulesForPathRequest {
+  string object_id = 1;
+  repeated string paths = 2;
+}
+message GetRulesForPathResponse {
+  PathAccessRules rules = 1;
+}
+
+message DeleteRulesRequest {
+  string object_id = 1;
+}
+message DeleteRulesResponse {}
+
+message DeleteRulesForPathRequest {
+  string object_id = 1;
+  repeated string paths = 2;
+}
+message DeleteRulesForPathResponse {}
+
+
+service Settings {
+  rpc SetSettings(SetSettingsRequest) returns (SetSettingsResponse);
+  rpc GetSettings(GetSettingsRequest) returns (GetSettingsResponse);
+}
+
+message SetSettingsRequest {
+  string name = 1;
+  string value = 2;
+}
+message SetSettingsResponse {}
+
+message GetSettingsRequest {
+  string name = 1;
+}
+message GetSettingsResponse {
+  string value = 1;
 }
