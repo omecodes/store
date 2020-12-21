@@ -15,21 +15,14 @@ import (
 	"time"
 )
 
-func NewHttpUnit(provider router.Provider) *HTTPUnit {
-	return &HTTPUnit{
-		provider: provider,
-	}
+func NewHttpUnit() *HTTPUnit {
+	return &HTTPUnit{}
 }
 
-type HTTPUnit struct {
-	provider router.Provider
-}
+type HTTPUnit struct{}
 
 func (s *HTTPUnit) MuxRouter() *mux.Router {
 	r := mux.NewRouter()
-
-	r.Name("RegisterWorker").Methods(http.MethodPost).Path("/workers").Handler(http.HandlerFunc(s.registerWorker))
-	r.Name("ListWorkers").Methods(http.MethodGet).Path("/workers").Handler(http.HandlerFunc(s.listWorkers))
 
 	r.Name("SetSettings").Methods(http.MethodPut).Path("/settings").Handler(http.HandlerFunc(s.setSettings))
 	r.Name("GetSettings").Methods(http.MethodGet).Path("/settings").Handler(http.HandlerFunc(s.getSettings))
@@ -297,10 +290,6 @@ func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 		log.Error("Search: failed to write response")
 	}
 }
-
-func (s *HTTPUnit) registerWorker(w http.ResponseWriter, r *http.Request) {}
-
-func (s *HTTPUnit) listWorkers(w http.ResponseWriter, r *http.Request) {}
 
 func (s *HTTPUnit) setSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
