@@ -18,15 +18,15 @@ require (
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/omecodes/bome v0.0.0-20201212145154-cc0621995609
 	github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08
-	github.com/omecodes/discover v0.0.0-20201219125130-b93285a50df5
+	github.com/omecodes/discover v0.0.0-20201221184512-1ada749c5a84
 	github.com/omecodes/libome v0.0.0-20201219125050-603bd134339c
 	github.com/omecodes/service v0.0.0-20201219125424-52168ada9a94
 	github.com/sethvargo/go-password v0.2.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.1.1
-	golang.org/x/crypto v0.0.0-20201217014255-9d1352758620 // indirect
+	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect
 	golang.org/x/net v0.0.0-20201216054612-986b41b23924 // indirect
-	golang.org/x/sys v0.0.0-20201218084310-7d0127a74742 // indirect
+	golang.org/x/sys v0.0.0-20201221093633-bc327ba9c2f0 // indirect
 	google.golang.org/genproto v0.0.0-20201214200347-8c77b98c765d // indirect
 	google.golang.org/grpc v1.34.0
 	google.golang.org/protobuf v1.25.0

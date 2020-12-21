@@ -303,6 +303,8 @@ github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08 h1:cw7bAWTQwcV4w2A
 github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08/go.mod h1:ORHcmOlnZMs77fvBLp41cuh0R3bOw/e+2jaoIxN0WP0=
 github.com/omecodes/discover v0.0.0-20201219125130-b93285a50df5 h1:f578n0v84tpApcxSVGpJStqc9q9XcmNKSi40vcX50Rk=
 github.com/omecodes/discover v0.0.0-20201219125130-b93285a50df5/go.mod h1:kJR9DuqdlsFe3bPXGLSD7Vl02QhEif7bUtSDkitLbpo=
+github.com/omecodes/discover v0.0.0-20201221184512-1ada749c5a84 h1:qbbV+fNlhKIJqBQTNVSeLcKT4Ap2ALkwOYEO9t6vdgQ=
+github.com/omecodes/discover v0.0.0-20201221184512-1ada749c5a84/go.mod h1:kJR9DuqdlsFe3bPXGLSD7Vl02QhEif7bUtSDkitLbpo=
 github.com/omecodes/libome v0.0.0-20201128214815-2b3f03af9fa6/go.mod h1:zWK7ZcUVGB+F7XO5fSkwzypxtHjMM05UAPcwpnd+BcI=
 github.com/omecodes/libome v0.0.0-20201202084519-7cffbc7a04c8 h1:eW7ggxaNPVOJ9Gfl04IVOA8C95kdM6gutBmxKzF84dY=
 github.com/omecodes/libome v0.0.0-20201202084519-7cffbc7a04c8/go.mod h1:KDrBixAwkiu9Ooe/f0MRAbiD5GgQgOwDpCVm7sX2F84=
@@ -413,6 +415,8 @@ golang.org/x/crypto v0.0.0-20201203163018-be400aefbc4c h1:9HhBz5L/UjnK9XLtiZhYAd
 golang.org/x/crypto v0.0.0-20201203163018-be400aefbc4c/go.mod h1:jdWPYTVW3xRLrWPugEBEK3UY2ZEsg3UU495nc5E+M+I=
 golang.org/x/crypto v0.0.0-20201217014255-9d1352758620 h1:3wPMTskHO3+O6jqTEXyFcsnuxMQOqYSaHsDxcbUXpqA=
 golang.org/x/crypto v0.0.0-20201217014255-9d1352758620/go.mod h1:jdWPYTVW3xRLrWPugEBEK3UY2ZEsg3UU495nc5E+M+I=
+golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad h1:DN0cp81fZ3njFcrLCytUHRSUkqBjfTo4Tx9RJTWs0EY=
+golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad/go.mod h1:jdWPYTVW3xRLrWPugEBEK3UY2ZEsg3UU495nc5E+M+I=
 golang.org/x/exp v0.0.0-20190121172915-509febef88a4/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/exp v0.0.0-20190306152737-a1d7652674e8/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/exp v0.0.0-20190510132918-efd6b22b2522/go.mod h1:ZjyILWgesfNpC6sMxTJOJm9Kp84zZh5NQWvqDGG3Qr8=
@@ -547,6 +551,8 @@ golang.org/x/sys v0.0.0-20201204225414-ed752295db88 h1:KmZPnMocC93w341XZp26yTJg8
 golang.org/x/sys v0.0.0-20201204225414-ed752295db88/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20201218084310-7d0127a74742 h1:+CBz4km/0KPU3RGTwARGh/noP3bEwtHcq+0YcBQM2JQ=
 golang.org/x/sys v0.0.0-20201218084310-7d0127a74742/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20201221093633-bc327ba9c2f0 h1:n+DPcgTwkgWzIFpLmoimYR2K2b0Ga5+Os4kayIN0vGo=
+golang.org/x/sys v0.0.0-20201221093633-bc327ba9c2f0/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/term v0.0.0-20201117132131-f5c789dd3221/go.mod h1:Nr5EML6q2oocZ2LXRh80K7BxOlk5/8JxuGnuhpl+muw=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 h1:v+OssWQX+hTHEmOBgwxdZxK4zHq3yOs8F9J7mk0PY8E=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
