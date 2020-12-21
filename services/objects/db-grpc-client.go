@@ -6,6 +6,7 @@ import (
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/omestore/clients"
+	"github.com/omecodes/omestore/meta"
 	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/omestore/pb"
 	"google.golang.org/grpc/metadata"
@@ -94,13 +95,13 @@ func (d *dbClient) List(ctx context.Context, before int64, count int, filter oms
 		return nil, errors.Internal
 	}
 
-	result.Count, err = strconv.Atoi(md.Get(MetaCount)[0])
+	result.Count, err = strconv.Atoi(md.Get(meta.Count)[0])
 	if err != nil {
 		log.Error("Objects client • stream › unreadable metadata 'count'", log.Err(err))
 		return nil, errors.Internal
 	}
 
-	result.Before, err = strconv.ParseInt(md.Get(MetaBefore)[0], 10, 64)
+	result.Before, err = strconv.ParseInt(md.Get(meta.Before)[0], 10, 64)
 	if err != nil {
 		log.Error("Objects client • stream › unreadable metadata 'count'", log.Err(err))
 		return nil, errors.Internal
@@ -129,7 +130,7 @@ func (d *dbClient) ListAt(ctx context.Context, path string, before int64, count 
 	}
 
 	outMD := metadata.MD{}
-	outMD.Set(MetaAt, path)
+	outMD.Set(meta.At, path)
 	newCtx := metadata.NewOutgoingContext(ctx, outMD)
 
 	stream, err := objects.ListObjects(newCtx, &pb.ListObjectsRequest{
@@ -150,13 +151,13 @@ func (d *dbClient) ListAt(ctx context.Context, path string, before int64, count 
 		return nil, errors.Internal
 	}
 
-	result.Count, err = strconv.Atoi(md.Get(MetaCount)[0])
+	result.Count, err = strconv.Atoi(md.Get(meta.Count)[0])
 	if err != nil {
 		log.Error("Objects client • stream › unreadable metadata 'count'", log.Err(err))
 		return nil, errors.Internal
 	}
 
-	result.Before, err = strconv.ParseInt(md.Get(MetaBefore)[0], 10, 64)
+	result.Before, err = strconv.ParseInt(md.Get(meta.Before)[0], 10, 64)
 	if err != nil {
 		log.Error("Objects client • stream › unreadable metadata 'count'", log.Err(err))
 		return nil, errors.Internal
@@ -203,7 +204,7 @@ func (d *dbClient) GetAt(ctx context.Context, objectID string, path string) (*om
 	}
 
 	md := metadata.MD{}
-	md.Set(MetaAt, path)
+	md.Set(meta.At, path)
 	newCtx := metadata.NewOutgoingContext(ctx, md)
 	rsp, err := objects.GetObject(newCtx, &pb.GetObjectRequest{ObjectId: objectID})
 	if err != nil {
