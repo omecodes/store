@@ -204,7 +204,7 @@ func (s *Mono) Start() error {
 		httpx.Logger("omestore").Handle,
 	}
 	var handler http.Handler
-	handler = NewHttpUnit(s).MuxRouter()
+	handler = NewHttpUnit().MuxRouter()
 
 	for _, m := range middlewareList {
 		handler = m.Middleware(handler)
