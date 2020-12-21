@@ -20,7 +20,7 @@ type handler struct {
 	pb.UnimplementedHandlerUnitServer
 }
 
-func (h *handler) Put(ctx context.Context, request *pb.PutObjectRequest) (*pb.PutObjectResponse, error) {
+func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (*pb.PutObjectResponse, error) {
 	handler := router.NewRoute(ctx)
 	if handler == nil {
 		return nil, errors.Internal
@@ -40,7 +40,7 @@ func (h *handler) Put(ctx context.Context, request *pb.PutObjectRequest) (*pb.Pu
 	}, nil
 }
 
-func (h *handler) Update(ctx context.Context, request *pb.UpdateObjectRequest) (*pb.UpdateObjectResponse, error) {
+func (h *handler) UpdateObject(ctx context.Context, request *pb.UpdateObjectRequest) (*pb.UpdateObjectResponse, error) {
 	handler := router.NewRoute(ctx)
 	if handler == nil {
 		return nil, errors.Internal
@@ -52,7 +52,7 @@ func (h *handler) Update(ctx context.Context, request *pb.UpdateObjectRequest) (
 	return &pb.UpdateObjectResponse{}, handler.PatchObject(ctx, patch, oms.PatchOptions{})
 }
 
-func (h *handler) Get(ctx context.Context, request *pb.GetObjectRequest) (*pb.GetObjectResponse, error) {
+func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (*pb.GetObjectResponse, error) {
 	handler := router.NewRoute(ctx)
 	if handler == nil {
 		return nil, errors.Internal
@@ -77,7 +77,7 @@ func (h *handler) Get(ctx context.Context, request *pb.GetObjectRequest) (*pb.Ge
 	return rsp, nil
 }
 
-func (h *handler) Delete(ctx context.Context, request *pb.DeleteObjectRequest) (*pb.DeleteObjectResponse, error) {
+func (h *handler) DeleteObject(ctx context.Context, request *pb.DeleteObjectRequest) (*pb.DeleteObjectResponse, error) {
 	handler := router.NewRoute(ctx)
 	if handler == nil {
 		return nil, errors.Internal
@@ -85,7 +85,7 @@ func (h *handler) Delete(ctx context.Context, request *pb.DeleteObjectRequest) (
 	return &pb.DeleteObjectResponse{}, handler.DeleteObject(ctx, request.ObjectId)
 }
 
-func (h *handler) Info(ctx context.Context, request *pb.ObjectInfoRequest) (*pb.ObjectInfoResponse, error) {
+func (h *handler) ObjectInfo(ctx context.Context, request *pb.ObjectInfoRequest) (*pb.ObjectInfoResponse, error) {
 	handler := router.NewRoute(ctx)
 	if handler == nil {
 		return nil, errors.Internal
@@ -99,7 +99,7 @@ func (h *handler) Info(ctx context.Context, request *pb.ObjectInfoRequest) (*pb.
 	return &pb.ObjectInfoResponse{Header: header}, nil
 }
 
-func (h *handler) List(request *pb.ListObjectsRequest, stream pb.HandlerUnit_ListObjectsServer) error {
+func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerUnit_ListObjectsServer) error {
 	ctx := stream.Context()
 
 	handler := router.NewRoute(ctx)
@@ -143,7 +143,7 @@ func (h *handler) List(request *pb.ListObjectsRequest, stream pb.HandlerUnit_Lis
 	return nil
 }
 
-func (h *handler) Search(request *pb.SearchObjectsRequest, stream pb.HandlerUnit_SearchObjectsServer) error {
+func (h *handler) SearchObjects(request *pb.SearchObjectsRequest, stream pb.HandlerUnit_SearchObjectsServer) error {
 	ctx := stream.Context()
 
 	handler := router.NewRoute(ctx)
