@@ -11,7 +11,7 @@ import (
 )
 
 type execHandler struct {
-	base
+	BaseHandler
 }
 
 func (e *execHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {

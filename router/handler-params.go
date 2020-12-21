@@ -11,28 +11,28 @@ import (
 )
 
 type paramsHandler struct {
-	base
+	BaseHandler
 }
 
 func (p *paramsHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
 	if name == "" || value == "" {
 		return errors.BadInput
 	}
-	return p.base.SetSettings(ctx, name, value, opts)
+	return p.BaseHandler.SetSettings(ctx, name, value, opts)
 }
 
 func (p *paramsHandler) DeleteSettings(ctx context.Context, name string) error {
 	if name == "" {
 		return errors.BadInput
 	}
-	return p.base.DeleteSettings(ctx, name)
+	return p.BaseHandler.DeleteSettings(ctx, name)
 }
 
 func (p *paramsHandler) GetSettings(ctx context.Context, name string) (string, error) {
 	if name == "" {
 		return "", errors.BadInput
 	}
-	return p.base.GetSettings(ctx, name)
+	return p.BaseHandler.GetSettings(ctx, name)
 }
 
 func (p *paramsHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
@@ -96,14 +96,14 @@ func (p *paramsHandler) GetObject(ctx context.Context, id string, opts oms.GetOb
 	if id == "" {
 		return nil, errors.BadInput
 	}
-	return p.base.GetObject(ctx, id, opts)
+	return p.BaseHandler.GetObject(ctx, id, opts)
 }
 
 func (p *paramsHandler) GetObjectHeader(ctx context.Context, id string) (*pb.Header, error) {
 	if id == "" {
 		return nil, errors.BadInput
 	}
-	return p.base.GetObjectHeader(ctx, id)
+	return p.BaseHandler.GetObjectHeader(ctx, id)
 }
 
 func (p *paramsHandler) DeleteObject(ctx context.Context, id string) error {
@@ -121,7 +121,7 @@ func (p *paramsHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (
 	if opts.Before == 0 {
 		opts.Before = time.Now().UnixNano() / 1e6
 	}
-	return p.base.ListObjects(ctx, opts)
+	return p.BaseHandler.ListObjects(ctx, opts)
 }
 
 func (p *paramsHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
@@ -136,5 +136,5 @@ func (p *paramsHandler) SearchObjects(ctx context.Context, params oms.SearchPara
 	if opts.Count == 0 {
 		opts.Count = 100
 	}
-	return p.base.SearchObjects(ctx, params, opts)
+	return p.BaseHandler.SearchObjects(ctx, params, opts)
 }

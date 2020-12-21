@@ -6,50 +6,50 @@ import (
 	"github.com/omecodes/omestore/pb"
 )
 
-type base struct {
+type BaseHandler struct {
 	next Handler
 }
 
-func (b *base) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
+func (b *BaseHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
 	return b.next.SetSettings(ctx, name, value, opts)
 }
 
-func (b *base) GetSettings(ctx context.Context, name string) (string, error) {
+func (b *BaseHandler) GetSettings(ctx context.Context, name string) (string, error) {
 	return b.next.GetSettings(ctx, name)
 }
 
-func (b *base) DeleteSettings(ctx context.Context, name string) error {
+func (b *BaseHandler) DeleteSettings(ctx context.Context, name string) error {
 	return b.next.DeleteSettings(ctx, name)
 }
 
-func (b *base) ClearSettings(ctx context.Context) error {
+func (b *BaseHandler) ClearSettings(ctx context.Context) error {
 	return b.next.ClearSettings(ctx)
 }
 
-func (b *base) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
+func (b *BaseHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
 	return b.next.PutObject(ctx, object, security, opts)
 }
 
-func (b *base) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*oms.Object, error) {
+func (b *BaseHandler) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*oms.Object, error) {
 	return b.next.GetObject(ctx, id, opts)
 }
 
-func (b *base) GetObjectHeader(ctx context.Context, id string) (*pb.Header, error) {
+func (b *BaseHandler) GetObjectHeader(ctx context.Context, id string) (*pb.Header, error) {
 	return b.next.GetObjectHeader(ctx, id)
 }
 
-func (b *base) DeleteObject(ctx context.Context, id string) error {
+func (b *BaseHandler) DeleteObject(ctx context.Context, id string) error {
 	return b.next.DeleteObject(ctx, id)
 }
 
-func (b *base) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
+func (b *BaseHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
 	return b.next.ListObjects(ctx, opts)
 }
 
-func (b *base) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
+func (b *BaseHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
 	return b.next.PatchObject(ctx, patch, opts)
 }
 
-func (b *base) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
+func (b *BaseHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
 	return b.next.SearchObjects(ctx, params, opts)
 }

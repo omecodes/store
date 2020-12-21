@@ -11,7 +11,7 @@ import (
 )
 
 type policyHandler struct {
-	base
+	BaseHandler
 }
 
 func (p *policyHandler) isAdmin(ctx context.Context) bool {
@@ -26,28 +26,28 @@ func (p *policyHandler) SetSettings(ctx context.Context, name string, value stri
 	if !p.isAdmin(ctx) {
 		return errors.Forbidden
 	}
-	return p.base.SetSettings(ctx, name, value, opts)
+	return p.BaseHandler.SetSettings(ctx, name, value, opts)
 }
 
 func (p *policyHandler) GetSettings(ctx context.Context, name string) (string, error) {
 	if !p.isAdmin(ctx) {
 		return "", errors.Forbidden
 	}
-	return p.base.GetSettings(ctx, name)
+	return p.BaseHandler.GetSettings(ctx, name)
 }
 
 func (p *policyHandler) DeleteSettings(ctx context.Context, name string) error {
 	if !p.isAdmin(ctx) {
 		return errors.Forbidden
 	}
-	return p.base.DeleteSettings(ctx, name)
+	return p.BaseHandler.DeleteSettings(ctx, name)
 }
 
 func (p *policyHandler) ClearSettings(ctx context.Context) error {
 	if !p.isAdmin(ctx) {
 		return errors.Forbidden
 	}
-	return p.base.ClearSettings(ctx)
+	return p.BaseHandler.ClearSettings(ctx)
 }
 
 func (p *policyHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
@@ -84,7 +84,7 @@ func (p *policyHandler) PutObject(ctx context.Context, object *oms.Object, secur
 	}
 
 	object.SetCreatedBy(ai.Uid)
-	return p.base.PutObject(ctx, object, security, opts)
+	return p.BaseHandler.PutObject(ctx, object, security, opts)
 }
 
 func (p *policyHandler) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*oms.Object, error) {
@@ -92,7 +92,7 @@ func (p *policyHandler) GetObject(ctx context.Context, id string, opts oms.GetOb
 	if err != nil {
 		return nil, err
 	}
-	return p.base.GetObject(ctx, id, opts)
+	return p.BaseHandler.GetObject(ctx, id, opts)
 }
 
 func (p *policyHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
@@ -101,7 +101,7 @@ func (p *policyHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts 
 		return err
 	}
 
-	return p.base.PatchObject(ctx, patch, opts)
+	return p.BaseHandler.PatchObject(ctx, patch, opts)
 }
 
 func (p *policyHandler) GetObjectHeader(ctx context.Context, id string) (*pb.Header, error) {
@@ -109,7 +109,7 @@ func (p *policyHandler) GetObjectHeader(ctx context.Context, id string) (*pb.Hea
 	if err != nil {
 		return nil, err
 	}
-	return p.base.GetObjectHeader(ctx, id)
+	return p.BaseHandler.GetObjectHeader(ctx, id)
 }
 
 func (p *policyHandler) DeleteObject(ctx context.Context, id string) error {
@@ -117,7 +117,7 @@ func (p *policyHandler) DeleteObject(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	return p.base.DeleteObject(ctx, id)
+	return p.BaseHandler.DeleteObject(ctx, id)
 }
 
 func (p *policyHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
@@ -128,7 +128,7 @@ func (p *policyHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (
 		}
 		return true, nil
 	})
-	return p.base.ListObjects(ctx, opts)
+	return p.BaseHandler.ListObjects(ctx, opts)
 }
 
 func (p *policyHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
@@ -178,5 +178,5 @@ func (p *policyHandler) SearchObjects(ctx context.Context, params oms.SearchPara
 		}
 		return out.Value().(bool), nil
 	})
-	return p.base.ListObjects(ctx, lOpts)
+	return p.BaseHandler.ListObjects(ctx, lOpts)
 }
