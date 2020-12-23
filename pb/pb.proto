@@ -80,6 +80,7 @@ message UpdateObjectResponse{}
 
 message GetObjectRequest {
   string object_id = 1;
+  string path = 2;
 }
 message GetObjectResponse {
   DataObject data = 1;

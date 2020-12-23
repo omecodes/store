@@ -10,32 +10,32 @@ import (
 	"time"
 )
 
-type paramsHandler struct {
+type ParamsHandler struct {
 	BaseHandler
 }
 
-func (p *paramsHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
+func (p *ParamsHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
 	if name == "" || value == "" {
 		return errors.BadInput
 	}
 	return p.BaseHandler.SetSettings(ctx, name, value, opts)
 }
 
-func (p *paramsHandler) DeleteSettings(ctx context.Context, name string) error {
+func (p *ParamsHandler) DeleteSettings(ctx context.Context, name string) error {
 	if name == "" {
 		return errors.BadInput
 	}
 	return p.BaseHandler.DeleteSettings(ctx, name)
 }
 
-func (p *paramsHandler) GetSettings(ctx context.Context, name string) (string, error) {
+func (p *ParamsHandler) GetSettings(ctx context.Context, name string) (string, error) {
 	if name == "" {
 		return "", errors.BadInput
 	}
 	return p.BaseHandler.GetSettings(ctx, name)
 }
 
-func (p *paramsHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
+func (p *ParamsHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
 	if object == nil || object.Size() == 0 {
 		return "", errors.BadInput
 	}
@@ -66,7 +66,7 @@ func (p *paramsHandler) PutObject(ctx context.Context, object *oms.Object, secur
 	return p.next.PutObject(ctx, object, security, opts)
 }
 
-func (p *paramsHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
+func (p *ParamsHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
 	if patch == nil || patch.GetObjectID() == "" || patch.Size() == 0 || patch.Path() == "" {
 		return errors.BadInput
 	}
@@ -92,28 +92,28 @@ func (p *paramsHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts 
 	return p.next.PatchObject(ctx, patch, opts)
 }
 
-func (p *paramsHandler) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*oms.Object, error) {
+func (p *ParamsHandler) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*oms.Object, error) {
 	if id == "" {
 		return nil, errors.BadInput
 	}
 	return p.BaseHandler.GetObject(ctx, id, opts)
 }
 
-func (p *paramsHandler) GetObjectHeader(ctx context.Context, id string) (*pb.Header, error) {
+func (p *ParamsHandler) GetObjectHeader(ctx context.Context, id string) (*pb.Header, error) {
 	if id == "" {
 		return nil, errors.BadInput
 	}
 	return p.BaseHandler.GetObjectHeader(ctx, id)
 }
 
-func (p *paramsHandler) DeleteObject(ctx context.Context, id string) error {
+func (p *ParamsHandler) DeleteObject(ctx context.Context, id string) error {
 	if id == "" {
 		return errors.BadInput
 	}
 	return p.next.DeleteObject(ctx, id)
 }
 
-func (p *paramsHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
+func (p *ParamsHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
 	if opts.Count == 0 {
 		opts.Count = 100
 	}
@@ -124,7 +124,7 @@ func (p *paramsHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (
 	return p.BaseHandler.ListObjects(ctx, opts)
 }
 
-func (p *paramsHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
+func (p *ParamsHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
 	if params.MatchedExpression == "" {
 		return nil, errors.BadInput
 	}

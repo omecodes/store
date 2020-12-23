@@ -124,7 +124,8 @@ func (s *HTTPUnit) sel(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 	filter := strings.Replace(r.RequestURI, fmt.Sprintf("/%s", id), "", 1)
 
-	object, err := router.NewRoute(ctx).GetObject(ctx, id, oms.GetObjectOptions{Path: filter})
+	route := router.NewRoute(ctx)
+	object, err := route.GetObject(ctx, id, oms.GetObjectOptions{Path: filter})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -179,7 +180,8 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 		Before: before,
 	}
 
-	result, err := router.NewRoute(ctx).ListObjects(ctx, opts)
+	route := router.NewRoute(ctx)
+	result, err := route.ListObjects(ctx, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return

@@ -10,11 +10,11 @@ import (
 	"github.com/omecodes/omestore/pb"
 )
 
-type policyHandler struct {
+type PolicyHandler struct {
 	BaseHandler
 }
 
-func (p *policyHandler) isAdmin(ctx context.Context) bool {
+func (p *PolicyHandler) isAdmin(ctx context.Context) bool {
 	authCEL := AuthInfo(ctx)
 	if authCEL == nil {
 		return false
@@ -22,35 +22,35 @@ func (p *policyHandler) isAdmin(ctx context.Context) bool {
 	return authCEL.Uid == "admin"
 }
 
-func (p *policyHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
+func (p *PolicyHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
 	if !p.isAdmin(ctx) {
 		return errors.Forbidden
 	}
 	return p.BaseHandler.SetSettings(ctx, name, value, opts)
 }
 
-func (p *policyHandler) GetSettings(ctx context.Context, name string) (string, error) {
+func (p *PolicyHandler) GetSettings(ctx context.Context, name string) (string, error) {
 	if !p.isAdmin(ctx) {
 		return "", errors.Forbidden
 	}
 	return p.BaseHandler.GetSettings(ctx, name)
 }
 
-func (p *policyHandler) DeleteSettings(ctx context.Context, name string) error {
+func (p *PolicyHandler) DeleteSettings(ctx context.Context, name string) error {
 	if !p.isAdmin(ctx) {
 		return errors.Forbidden
 	}
 	return p.BaseHandler.DeleteSettings(ctx, name)
 }
 
-func (p *policyHandler) ClearSettings(ctx context.Context) error {
+func (p *PolicyHandler) ClearSettings(ctx context.Context) error {
 	if !p.isAdmin(ctx) {
 		return errors.Forbidden
 	}
 	return p.BaseHandler.ClearSettings(ctx)
 }
 
-func (p *policyHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
+func (p *PolicyHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
 	ai := AuthInfo(ctx)
 	if ai == nil {
 		return "", errors.Forbidden
@@ -87,7 +87,7 @@ func (p *policyHandler) PutObject(ctx context.Context, object *oms.Object, secur
 	return p.BaseHandler.PutObject(ctx, object, security, opts)
 }
 
-func (p *policyHandler) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*oms.Object, error) {
+func (p *PolicyHandler) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*oms.Object, error) {
 	err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, id, opts.Path)
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (p *policyHandler) GetObject(ctx context.Context, id string, opts oms.GetOb
 	return p.BaseHandler.GetObject(ctx, id, opts)
 }
 
-func (p *policyHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
+func (p *PolicyHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
 	err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_delete, patch.GetObjectID(), "")
 	if err != nil {
 		return err
@@ -104,7 +104,7 @@ func (p *policyHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts 
 	return p.BaseHandler.PatchObject(ctx, patch, opts)
 }
 
-func (p *policyHandler) GetObjectHeader(ctx context.Context, id string) (*pb.Header, error) {
+func (p *PolicyHandler) GetObjectHeader(ctx context.Context, id string) (*pb.Header, error) {
 	err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, id, "")
 	if err != nil {
 		return nil, err
@@ -112,7 +112,7 @@ func (p *policyHandler) GetObjectHeader(ctx context.Context, id string) (*pb.Hea
 	return p.BaseHandler.GetObjectHeader(ctx, id)
 }
 
-func (p *policyHandler) DeleteObject(ctx context.Context, id string) error {
+func (p *PolicyHandler) DeleteObject(ctx context.Context, id string) error {
 	err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_delete, id, "")
 	if err != nil {
 		return err
@@ -120,7 +120,7 @@ func (p *policyHandler) DeleteObject(ctx context.Context, id string) error {
 	return p.BaseHandler.DeleteObject(ctx, id)
 }
 
-func (p *policyHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
+func (p *PolicyHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
 	opts.Filter = oms.FilterObjectFunc(func(o *oms.Object) (bool, error) {
 		err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, o.ID(), opts.Path)
 		if err != nil {
@@ -131,7 +131,7 @@ func (p *policyHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (
 	return p.BaseHandler.ListObjects(ctx, opts)
 }
 
-func (p *policyHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
+func (p *PolicyHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
 	if params.MatchedExpression == "false" {
 		return &oms.ObjectList{
 			Before: opts.Before,

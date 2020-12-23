@@ -10,11 +10,11 @@ import (
 	"github.com/omecodes/omestore/pb"
 )
 
-type execHandler struct {
+type ExecHandler struct {
 	BaseHandler
 }
 
-func (e *execHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
+func (e *ExecHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
 	s := Settings(ctx)
 	if s == nil {
 		log.Info("exec-handler.SetSettings: missing settings database in context")
@@ -28,7 +28,7 @@ func (e *execHandler) SetSettings(ctx context.Context, name string, value string
 	return s.Save(entry)
 }
 
-func (e *execHandler) DeleteSettings(ctx context.Context, name string) error {
+func (e *ExecHandler) DeleteSettings(ctx context.Context, name string) error {
 	s := Settings(ctx)
 	if s == nil {
 		log.Info("exec-handler.DeleteSettings: missing settings database in context")
@@ -37,7 +37,7 @@ func (e *execHandler) DeleteSettings(ctx context.Context, name string) error {
 	return s.Delete(name)
 }
 
-func (e *execHandler) ClearSettings(ctx context.Context) error {
+func (e *ExecHandler) ClearSettings(ctx context.Context) error {
 	s := Settings(ctx)
 	if s == nil {
 		log.Info("exec-handler.ClearSettings: missing settings database in context")
@@ -46,7 +46,7 @@ func (e *execHandler) ClearSettings(ctx context.Context) error {
 	return s.Clear()
 }
 
-func (e *execHandler) GetSettings(ctx context.Context, name string) (string, error) {
+func (e *ExecHandler) GetSettings(ctx context.Context, name string) (string, error) {
 	s := Settings(ctx)
 	if s == nil {
 		log.Info("exec-handler.GetSettings: missing settings database in context")
@@ -55,7 +55,7 @@ func (e *execHandler) GetSettings(ctx context.Context, name string) (string, err
 	return s.Get(name)
 }
 
-func (e *execHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
+func (e *ExecHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
 	storage := Objects(ctx)
 	if storage == nil {
 		log.Info("exec-handler.PutObject: missing storage in context")
@@ -79,7 +79,7 @@ func (e *execHandler) PutObject(ctx context.Context, object *oms.Object, securit
 	return id, storage.Save(ctx, object)
 }
 
-func (e *execHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
+func (e *ExecHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
 	storage := Objects(ctx)
 	if storage == nil {
 		log.Info("missing storage in context")
@@ -88,7 +88,7 @@ func (e *execHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts om
 	return storage.Patch(ctx, patch)
 }
 
-func (e *execHandler) GetObject(ctx context.Context, objectID string, opts oms.GetObjectOptions) (*oms.Object, error) {
+func (e *ExecHandler) GetObject(ctx context.Context, objectID string, opts oms.GetObjectOptions) (*oms.Object, error) {
 	storage := Objects(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
@@ -102,7 +102,7 @@ func (e *execHandler) GetObject(ctx context.Context, objectID string, opts oms.G
 	}
 }
 
-func (e *execHandler) GetObjectHeader(ctx context.Context, objectID string) (*pb.Header, error) {
+func (e *ExecHandler) GetObjectHeader(ctx context.Context, objectID string) (*pb.Header, error) {
 	storage := Objects(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
@@ -111,7 +111,7 @@ func (e *execHandler) GetObjectHeader(ctx context.Context, objectID string) (*pb
 	return storage.Info(ctx, objectID)
 }
 
-func (e *execHandler) DeleteObject(ctx context.Context, objectID string) error {
+func (e *ExecHandler) DeleteObject(ctx context.Context, objectID string) error {
 	storage := Objects(ctx)
 	if storage == nil {
 		log.Info("exec-handler.DeleteObjet: missing DB in context")
@@ -133,7 +133,7 @@ func (e *execHandler) DeleteObject(ctx context.Context, objectID string) error {
 	return accessStore.Delete(ctx, objectID)
 }
 
-func (e *execHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
+func (e *ExecHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
 	storage := Objects(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")

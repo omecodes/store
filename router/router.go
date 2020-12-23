@@ -9,27 +9,39 @@ const (
 )
 
 type CustomRouter struct {
-	paramsHandler *BaseHandler
-	policyHandler *BaseHandler
+	paramsHandler *ParamsHandler
+	policyHandler *PolicyHandler
 	execHandler   Handler
 }
 
 type handlersOptions struct {
-	params *BaseHandler
-	policy *BaseHandler
+	params *ParamsHandler
+	policy *PolicyHandler
 }
 
 type HandlerOption func(*handlersOptions)
 
-func WithParamsHandler(handler *BaseHandler) HandlerOption {
+func WithParamsHandler(handler *ParamsHandler) HandlerOption {
 	return func(options *handlersOptions) {
 		options.params = handler
 	}
 }
 
-func WithPolicyHandler(handler *BaseHandler) HandlerOption {
+func WithPolicyHandler(handler *PolicyHandler) HandlerOption {
 	return func(options *handlersOptions) {
 		options.policy = handler
+	}
+}
+
+func WithDefaultParamsHandler() HandlerOption {
+	return func(options *handlersOptions) {
+		options.params = &ParamsHandler{}
+	}
+}
+
+func WithDefaultPoliciesHandler() HandlerOption {
+	return func(options *handlersOptions) {
+		options.policy = &PolicyHandler{}
 	}
 }
 
@@ -54,16 +66,17 @@ func (r *CustomRouter) GetRoute(opts ...RouteOption) Handler {
 	if !options.skipPolicies {
 		if r.policyHandler != nil {
 			r.policyHandler.next = handler
+			handler = r.policyHandler
 		}
-		handler = r.policyHandler
 	}
 
 	if !options.skipParams {
 		if r.paramsHandler != nil {
 			r.paramsHandler.next = handler
+			handler = r.paramsHandler
 		}
-		handler = r.paramsHandler
 	}
+
 	return handler
 }
 
@@ -88,6 +101,12 @@ type Router interface {
 type Provider interface {
 	//GetRouter returns a router
 	GetRouter(ctx context.Context) Router
+}
+
+type ProviderFunc func(ctx context.Context) Router
+
+func (f ProviderFunc) GetRouter(ctx context.Context) Router {
+	return f(ctx)
 }
 
 type routesOptions struct {
@@ -116,14 +135,14 @@ func SkipExec() RouteOption {
 	}
 }
 
-type GetRouterFunc func(opts ...RouteOption) Handler
+type RouteProviderFunc func(opts ...RouteOption) Handler
 
-func (f GetRouterFunc) GetRoute(opts ...RouteOption) Handler {
+func (f RouteProviderFunc) GetRoute(opts ...RouteOption) Handler {
 	return f(opts...)
 }
 
 func DefaultRouter() Router {
-	return GetRouterFunc(getRoute)
+	return RouteProviderFunc(getRoute)
 }
 
 func getRoute(opts ...RouteOption) (handler Handler) {
@@ -134,19 +153,19 @@ func getRoute(opts ...RouteOption) (handler Handler) {
 	}
 
 	if !routes.skipExecution {
-		handler = &execHandler{}
+		handler = &ExecHandler{}
 	} else {
 		handler = &dummyHandler{}
 	}
 
 	if !routes.skipPolicies {
-		handler = &policyHandler{BaseHandler: BaseHandler{
+		handler = &PolicyHandler{BaseHandler: BaseHandler{
 			next: handler,
 		}}
 	}
 
 	if !routes.skipParams {
-		handler = &paramsHandler{
+		handler = &ParamsHandler{
 			BaseHandler{next: handler},
 		}
 	}
