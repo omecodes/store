@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"crypto/tls"
@@ -48,7 +48,7 @@ func runStore() {
 		}
 	}
 
-	s := oms.NewMono(oms.MonoConfig{
+	s := oms.NewMNServer(oms.MNConfig{
 		JwtSecret:   jwtSecret,
 		DSN:         dsn,
 		BindAddress: addr,

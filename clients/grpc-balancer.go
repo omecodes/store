@@ -5,7 +5,6 @@ import (
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	ome "github.com/omecodes/libome"
-	context2 "github.com/omecodes/omestore/context"
 	"github.com/omecodes/omestore/pb"
 	"github.com/omecodes/service"
 	"sync"
@@ -20,7 +19,7 @@ func (b *LoadBalancer) GetClient(ctx context.Context, serviceType uint32) (pb.Ha
 	b.Lock()
 	defer b.Unlock()
 
-	registry := context2.Registry(ctx)
+	registry := service.GetRegistry(ctx)
 	if registry == nil {
 		log.Error("Load balancer • missing registry in context")
 		return nil, errors.Internal

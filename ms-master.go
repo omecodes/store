@@ -5,27 +5,28 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
-	"github.com/foomo/simplecert"
-	"github.com/foomo/tlsconfig"
-	"github.com/omecodes/libome/ports"
-	context2 "github.com/omecodes/omestore/context"
-	"github.com/omecodes/omestore/services/units"
+	"github.com/omecodes/discover"
+	"github.com/omecodes/service"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/foomo/simplecert"
+	"github.com/foomo/tlsconfig"
 	"github.com/gorilla/mux"
+
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/httpx"
 	"github.com/omecodes/common/utils/log"
 	ome "github.com/omecodes/libome"
+	"github.com/omecodes/libome/ports"
 	"github.com/omecodes/omestore/clients"
+	"github.com/omecodes/omestore/common"
 	"github.com/omecodes/omestore/pb"
 	"github.com/omecodes/omestore/router"
-	"github.com/omecodes/service"
 	sca "github.com/omecodes/services-ca"
 )
 
@@ -54,7 +55,6 @@ type MSServer struct {
 	workerPassword string
 	Errors         chan error
 	loadBalancer   *router.BaseHandler
-	box            *service.Box
 	registry       ome.Registry
 	caServer       *sca.Server
 }
@@ -62,35 +62,17 @@ type MSServer struct {
 func (s *MSServer) init() error {
 	var err error
 
-	s.box = service.CreateBox(
-		service.Name(s.config.Name),
-		service.Dir(s.config.WorkingDir),
-		service.RegAddr(fmt.Sprintf("%s:%d", s.config.BindIP, s.config.RegistryPort)),
-		service.Domain(s.config.Domain),
-		service.Ip(s.config.BindIP),
-	)
-
 	db, err := sql.Open("mysql", s.config.DBUri)
 	if err != nil {
 		return err
 	}
 
 	s.settings, err = bome.NewMap(db, bome.MySQL, "settings")
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *MSServer) startRegistry() error {
-	err := s.box.Options.StartRegistryServer()
-	s.registry = s.box.Registry()
 	return err
 }
 
 func (s *MSServer) getServiceSecret(name string) (string, error) {
-	return "", nil
+	return "ome", nil
 }
 
 func (s *MSServer) startCA() error {
@@ -114,6 +96,18 @@ func (s *MSServer) startCA() error {
 	}
 	s.caServer = sca.NewServer(cfg)
 	return s.caServer.Start()
+}
+
+func (s *MSServer) startRegistry() (err error) {
+	s.registry, err = discover.Serve(&discover.ServerConfig{
+		Name:                 s.config.Name,
+		StoreDir:             s.config.WorkingDir,
+		BindAddress:          fmt.Sprintf("%s:%d", s.config.BindIP, s.config.RegistryPort),
+		CertFilename:         "ca/ca.crt",
+		KeyFilename:          "ca/ca.key",
+		ClientCACertFilename: "ca/ca.crt",
+	})
+	return
 }
 
 func (s *MSServer) startAPIServer() error {
@@ -209,12 +203,18 @@ func (s *MSServer) startProductionAPIServer() error {
 }
 
 func (s *MSServer) httpEnrichContext(next http.Handler) http.Handler {
+	box := service.CreateBox(
+		service.Registry(s.registry),
+		service.CertFile("ca/ca.crt"),
+		service.KeyFIle("ca/ca.key"),
+		service.CACertFile("ca/ca.crt"),
+	)
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		ctx = context2.WithRegistry(ctx, s.registry)
+		ctx = service.ContextWithBox(ctx, box)
 		ctx = router.WithRouterProvider(ctx, router.ProviderFunc(s.GetRouter))
 		ctx = router.WithSettings(s.settings)(ctx)
-		ctx = service.ContextWithBox(ctx, s.box)
 		ctx = clients.WithUnitClientProvider(ctx, &clients.LoadBalancer{})
 
 		r = r.WithContext(ctx)
@@ -224,7 +224,7 @@ func (s *MSServer) httpEnrichContext(next http.Handler) http.Handler {
 
 func (s *MSServer) GetRouter(ctx context.Context) router.Router {
 	return router.NewCustomRouter(
-		units.NewGRPCClientHandler(),
+		router.NewGRPCClientHandler(common.ServiceTypeHandler),
 		router.WithDefaultParamsHandler(),
 	)
 }
@@ -336,6 +336,12 @@ func (s *MSServer) Start() error {
 }
 
 func (s *MSServer) Stop() error {
-	s.box.Stop()
-	return s.box.StopRegistry()
+	if closer, ok := s.registry.(interface {
+		Close() error
+	}); ok {
+		if err := closer.Close(); err != nil {
+			return err
+		}
+	}
+	return s.caServer.Stop()
 }

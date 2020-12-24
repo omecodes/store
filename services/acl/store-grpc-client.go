@@ -6,6 +6,10 @@ import (
 	"github.com/omecodes/omestore/pb"
 )
 
+func NewStoreClient() *gRPCClient {
+	return &gRPCClient{}
+}
+
 type gRPCClient struct{}
 
 func (g *gRPCClient) SaveRules(ctx context.Context, objectID string, rules *pb.PathAccessRules) error {

@@ -1,4 +1,4 @@
-package objects
+package oms
 
 import (
 	"bytes"
@@ -21,7 +21,7 @@ type handler struct {
 }
 
 func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (*pb.PutObjectResponse, error) {
-	handler := router.NewRoute(ctx, router.SkipParamsCheck(), router.SkipPoliciesCheck())
+	handler := router.NewRoute(ctx)
 	if handler == nil {
 		return nil, errors.Internal
 	}
@@ -41,7 +41,7 @@ func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (
 }
 
 func (h *handler) UpdateObject(ctx context.Context, request *pb.UpdateObjectRequest) (*pb.UpdateObjectResponse, error) {
-	handler := router.NewRoute(ctx, router.SkipParamsCheck(), router.SkipPoliciesCheck())
+	handler := router.NewRoute(ctx)
 	if handler == nil {
 		return nil, errors.Internal
 	}
@@ -53,7 +53,7 @@ func (h *handler) UpdateObject(ctx context.Context, request *pb.UpdateObjectRequ
 }
 
 func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (*pb.GetObjectResponse, error) {
-	handler := router.NewRoute(ctx, router.SkipParamsCheck(), router.SkipPoliciesCheck())
+	handler := router.NewRoute(ctx)
 	if handler == nil {
 		return nil, errors.Internal
 	}
@@ -78,7 +78,7 @@ func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (
 }
 
 func (h *handler) DeleteObject(ctx context.Context, request *pb.DeleteObjectRequest) (*pb.DeleteObjectResponse, error) {
-	handler := router.NewRoute(ctx, router.SkipParamsCheck(), router.SkipPoliciesCheck())
+	handler := router.NewRoute(ctx)
 	if handler == nil {
 		return nil, errors.Internal
 	}
@@ -86,7 +86,7 @@ func (h *handler) DeleteObject(ctx context.Context, request *pb.DeleteObjectRequ
 }
 
 func (h *handler) ObjectInfo(ctx context.Context, request *pb.ObjectInfoRequest) (*pb.ObjectInfoResponse, error) {
-	handler := router.NewRoute(ctx, router.SkipParamsCheck(), router.SkipPoliciesCheck())
+	handler := router.NewRoute(ctx)
 	if handler == nil {
 		return nil, errors.Internal
 	}
@@ -102,7 +102,7 @@ func (h *handler) ObjectInfo(ctx context.Context, request *pb.ObjectInfoRequest)
 func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerUnit_ListObjectsServer) error {
 	ctx := stream.Context()
 
-	handler := router.NewRoute(ctx, router.SkipParamsCheck(), router.SkipPoliciesCheck())
+	handler := router.NewRoute(ctx)
 	if handler == nil {
 		return errors.Internal
 	}
@@ -146,7 +146,7 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 func (h *handler) SearchObjects(request *pb.SearchObjectsRequest, stream pb.HandlerUnit_SearchObjectsServer) error {
 	ctx := stream.Context()
 
-	handler := router.NewRoute(ctx, router.SkipParamsCheck(), router.SkipPoliciesCheck())
+	handler := router.NewRoute(ctx)
 	if handler == nil {
 		return errors.Internal
 	}

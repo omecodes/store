@@ -10,7 +10,6 @@ require (
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/PaesslerAG/gval v1.1.0 // indirect
 	github.com/PaesslerAG/jsonpath v0.1.1
-	github.com/aliyun/alibaba-cloud-sdk-go v1.61.798 // indirect
 	github.com/antlr/antlr4 v0.0.0-20201214011320-c79b0fd80c9d // indirect
 	github.com/aws/aws-sdk-go v1.36.15 // indirect
 	github.com/exoscale/egoscale v0.37.1 // indirect
@@ -26,9 +25,10 @@ require (
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/omecodes/bome v0.0.0-20201212145154-cc0621995609
 	github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08
+	github.com/omecodes/discover v0.0.0-20201224203918-4be6856ee8fb
 	github.com/omecodes/libome v0.0.0-20201222212527-11e3f5f47526
-	github.com/omecodes/service v0.0.0-20201223213433-47a7cdc98401
-	github.com/omecodes/services-ca v0.0.0-20201223123449-5bd43922c20f
+	github.com/omecodes/service v0.0.0-20201224215055-24e35bcfb87e
+	github.com/omecodes/services-ca v0.0.0-20201224183919-c7cef3fb9aa8
 	github.com/sethvargo/go-password v0.2.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.1.1

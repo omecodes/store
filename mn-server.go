@@ -34,7 +34,7 @@ import (
 )
 
 // Config contains info to configure an instance of Server
-type MonoConfig struct {
+type MNConfig struct {
 	JwtSecret   string
 	App         *app.App
 	TLS         *tls.Config
@@ -42,19 +42,19 @@ type MonoConfig struct {
 	DSN         string
 }
 
-// NewMono is a server constructor
-func NewMono(config MonoConfig) *Mono {
-	s := new(Mono)
+// NewMNServer is a server constructor
+func NewMNServer(config MNConfig) *MNServer {
+	s := new(MNServer)
 	s.config = &config
 	return s
 }
 
 // Server embeds an Ome data store
 // it also exposes an API server
-type Mono struct {
+type MNServer struct {
 	initialized   bool
 	options       []netx.ListenOption
-	config        *MonoConfig
+	config        *MNConfig
 	adminPassword string
 	key           []byte
 	celPolicyEnv  *cel.Env
@@ -69,7 +69,7 @@ type Mono struct {
 	server      *http.Server
 }
 
-func (s *Mono) init() error {
+func (s *MNServer) init() error {
 	if s.initialized {
 		return nil
 	}
@@ -113,7 +113,7 @@ func (s *Mono) init() error {
 	s.celSearchEnv, err = cel.NewEnv(
 		cel.Declarations(decls.NewVar("o", decls.NewMapType(decls.String, decls.Dyn))))
 	if err != nil {
-		return nil
+		return err
 	}
 
 	adminPwdFilename := filepath.Join(s.config.App.DataDir(), "admin-pwd")
@@ -155,7 +155,7 @@ func (s *Mono) init() error {
 	return nil
 }
 
-func (s *Mono) getStoredKey(name string, size int) ([]byte, error) {
+func (s *MNServer) getStoredKey(name string, size int) ([]byte, error) {
 	cookiesKeyFilename := filepath.Join(s.config.App.DataDir(), name+".key")
 	key, err := ioutil.ReadFile(cookiesKeyFilename)
 	if err != nil {
@@ -174,12 +174,12 @@ func (s *Mono) getStoredKey(name string, size int) ([]byte, error) {
 	return key, nil
 }
 
-func (s *Mono) GetRouter(ctx context.Context) router.Router {
+func (s *MNServer) GetRouter(ctx context.Context) router.Router {
 	return router.DefaultRouter()
 }
 
 // Start starts API server
-func (s *Mono) Start() error {
+func (s *MNServer) Start() error {
 	err := s.init()
 	if err != nil {
 		return err
@@ -223,7 +223,7 @@ func (s *Mono) Start() error {
 	return nil
 }
 
-func (s *Mono) enrichContext(next http.Handler) http.Handler {
+func (s *MNServer) enrichContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		ctx = router.WithAccessStore(s.accessStore)(ctx)
@@ -238,7 +238,7 @@ func (s *Mono) enrichContext(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Mono) detectAuthentication(next http.Handler) http.Handler {
+func (s *MNServer) detectAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// ctx := r.Context()
 		h := r.Header
@@ -308,7 +308,7 @@ func (s *Mono) detectAuthentication(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Mono) detectOAuth2Authorization(next http.Handler) http.Handler {
+func (s *MNServer) detectOAuth2Authorization(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authorization := r.Header.Get("authorization")
 		if authorization != "" && strings.HasPrefix(authorization, "Bearer ") {
@@ -344,6 +344,6 @@ func (s *Mono) detectOAuth2Authorization(next http.Handler) http.Handler {
 }
 
 // Stop stops API server
-func (s *Mono) Stop() {
+func (s *MNServer) Stop() {
 	_ = s.listener.Close()
 }

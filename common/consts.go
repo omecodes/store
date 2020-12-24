@@ -3,5 +3,6 @@ package common
 const (
 	ServiceTypeStore   = 1
 	ServiceTypeHandler = 2
-	ServiceTypeWorker  = 3
+	ServiceTypeACL     = 3
+	ServiceTypeWorker  = 4
 )

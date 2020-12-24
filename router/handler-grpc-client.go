@@ -1,4 +1,4 @@
-package units
+package router
 
 import (
 	"bytes"
@@ -9,22 +9,24 @@ import (
 	"github.com/omecodes/omestore/common"
 	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/omestore/pb"
-	"github.com/omecodes/omestore/router"
 	"io"
 	"io/ioutil"
 )
 
 // NewGRPCClientHandler creates a router Handler that embed that calls a gRPC service to perform final actions
-func NewGRPCClientHandler() router.Handler {
-	return &gRPCClientHandler{}
+func NewGRPCClientHandler(nodeType uint32) Handler {
+	return &gRPCClientHandler{
+		nodeType: nodeType,
+	}
 }
 
 type gRPCClientHandler struct {
-	router.BaseHandler
+	nodeType uint32
+	BaseHandler
 }
 
 func (g *gRPCClientHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
-	client, err := clients.Unit(ctx, common.ServiceTypeHandler)
+	client, err := clients.Unit(ctx, g.nodeType)
 	if err != nil {
 		return "", err
 	}
@@ -175,4 +177,8 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts oms.ListOption
 		Count:   len(objects),
 		Objects: objects,
 	}, nil
+}
+
+func (g *gRPCClientHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
+	return nil, nil
 }

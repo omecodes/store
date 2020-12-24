@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"fmt"
@@ -55,7 +55,7 @@ func init() {
 	flags.BoolVar(&selfSignedTLS, "ss-tls", false, "Is certificate self-signed")
 	flags.StringVar(&jwtSecret, "jwt-secret", "", "Secret used to verify JWT hmac based signature")
 
-	if err := cobra.MarkFlagRequired(flags, "jwt-secret"); err!= nil {
+	if err := cobra.MarkFlagRequired(flags, "jwt-secret"); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
