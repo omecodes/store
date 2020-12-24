@@ -24,7 +24,7 @@ type dbClient struct {
 }
 
 func (d *dbClient) Save(ctx context.Context, object *oms.Object) error {
-	objects, err := clients.Unit(ctx, common.ServiceTypeStore)
+	objects, err := clients.Unit(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func (d *dbClient) Save(ctx context.Context, object *oms.Object) error {
 }
 
 func (d *dbClient) Patch(ctx context.Context, patch *oms.Patch) error {
-	objects, err := clients.Unit(ctx, common.ServiceTypeStore)
+	objects, err := clients.Unit(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func (d *dbClient) Patch(ctx context.Context, patch *oms.Patch) error {
 }
 
 func (d *dbClient) Delete(ctx context.Context, objectID string) error {
-	objects, err := clients.Unit(ctx, common.ServiceTypeStore)
+	objects, err := clients.Unit(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (d *dbClient) Delete(ctx context.Context, objectID string) error {
 }
 
 func (d *dbClient) List(ctx context.Context, before int64, count int, filter oms.ObjectFilter) (*oms.ObjectList, error) {
-	objects, err := clients.Unit(ctx, common.ServiceTypeStore)
+	objects, err := clients.Unit(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (d *dbClient) List(ctx context.Context, before int64, count int, filter oms
 }
 
 func (d *dbClient) ListAt(ctx context.Context, path string, before int64, count int, filter oms.ObjectFilter) (*oms.ObjectList, error) {
-	objects, err := clients.Unit(ctx, common.ServiceTypeStore)
+	objects, err := clients.Unit(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +181,7 @@ func (d *dbClient) ListAt(ctx context.Context, path string, before int64, count 
 }
 
 func (d *dbClient) Get(ctx context.Context, objectID string) (*oms.Object, error) {
-	objects, err := clients.Unit(ctx, common.ServiceTypeStore)
+	objects, err := clients.Unit(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +199,7 @@ func (d *dbClient) Get(ctx context.Context, objectID string) (*oms.Object, error
 }
 
 func (d *dbClient) GetAt(ctx context.Context, objectID string, path string) (*oms.Object, error) {
-	objects, err := clients.Unit(ctx, common.ServiceTypeStore)
+	objects, err := clients.Unit(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +220,7 @@ func (d *dbClient) GetAt(ctx context.Context, objectID string, path string) (*om
 }
 
 func (d *dbClient) Info(ctx context.Context, objectID string) (*pb.Header, error) {
-	objects, err := clients.Unit(ctx, common.ServiceTypeStore)
+	objects, err := clients.Unit(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return nil, err
 	}

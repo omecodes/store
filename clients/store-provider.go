@@ -10,7 +10,7 @@ import (
 type StoreProvider struct{}
 
 func (p *StoreProvider) GetClient(ctx context.Context, serviceType uint32) (pb.HandlerUnitClient, error) {
-	conn, err := service.Connect(ctx, common.ServiceTypeStore)
+	conn, err := service.Connect(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return nil, err
 	}
