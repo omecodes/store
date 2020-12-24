@@ -4,10 +4,12 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha512"
-	"crypto/tls"
 	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
+	"github.com/foomo/simplecert"
+	"github.com/foomo/tlsconfig"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -21,7 +23,6 @@ import (
 	"github.com/sethvargo/go-password/password"
 
 	"github.com/omecodes/bome"
-	"github.com/omecodes/common/env/app"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/httpx"
 	"github.com/omecodes/common/netx"
@@ -35,11 +36,11 @@ import (
 
 // Config contains info to configure an instance of Server
 type MNConfig struct {
-	JwtSecret   string
-	App         *app.App
-	TLS         *tls.Config
-	BindAddress string
-	DSN         string
+	Domains    []string
+	WorkingDir string
+	AutoCert   bool
+	JwtSecret  string
+	DSN        string
 }
 
 // NewMNServer is a server constructor
@@ -116,7 +117,7 @@ func (s *MNServer) init() error {
 		return err
 	}
 
-	adminPwdFilename := filepath.Join(s.config.App.DataDir(), "admin-pwd")
+	adminPwdFilename := filepath.Join(s.config.WorkingDir, "admin-pwd")
 	passwordBytes, err := ioutil.ReadFile(adminPwdFilename)
 	if err != nil {
 		genPassword, err := password.Generate(16, 5, 11, false, false)
@@ -156,7 +157,7 @@ func (s *MNServer) init() error {
 }
 
 func (s *MNServer) getStoredKey(name string, size int) ([]byte, error) {
-	cookiesKeyFilename := filepath.Join(s.config.App.DataDir(), name+".key")
+	cookiesKeyFilename := filepath.Join(s.config.WorkingDir, name+".key")
 	key, err := ioutil.ReadFile(cookiesKeyFilename)
 	if err != nil {
 		key = make([]byte, size)
@@ -185,11 +186,16 @@ func (s *MNServer) Start() error {
 		return err
 	}
 
-	if s.config.TLS != nil {
-		s.listener, err = tls.Listen("tcp", s.config.BindAddress, s.config.TLS)
-	} else {
-		s.listener, err = net.Listen("tcp", s.config.BindAddress)
+	if s.config.AutoCert {
+		return s.startAutoCertAPIServer()
 	}
+
+	return s.startDefaultAPIServer()
+}
+
+func (s *MNServer) startDefaultAPIServer() error {
+	var err error
+	s.listener, err = net.Listen("tcp", ":")
 	if err != nil {
 		return err
 	}
@@ -219,7 +225,61 @@ func (s *MNServer) Start() error {
 			s.Errors <- err
 		}
 	}()
+	return nil
+}
 
+func (s *MNServer) startAutoCertAPIServer() error {
+	cfg := simplecert.Default
+	cfg.Domains = s.config.Domains
+	cfg.CacheDir = filepath.Join(s.config.WorkingDir, "lets-encrypt")
+	cfg.SSLEmail = "omecodes@gmail.com"
+	cfg.DNSProvider = "cloudflare"
+
+	certReloadAgent, err := simplecert.Init(cfg, nil)
+	if err != nil {
+		return err
+	}
+
+	log.Info("starting HTTP Listener on Port 80")
+	go func() {
+		if err := http.ListenAndServe(":80", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			httpx.Redirect(w, &httpx.RedirectURL{
+				URL:         fmt.Sprintf("https://%s:443%s", s.config.Domains[0], r.URL.Path),
+				Code:        http.StatusPermanentRedirect,
+				ContentType: "text/html",
+			})
+		})); err != nil {
+			log.Error("listen to port 80 failed", log.Err(err))
+		}
+	}()
+
+	tlsConf := tlsconfig.NewServerTLSConfig(tlsconfig.TLSModeServerStrict)
+	tlsConf.GetCertificate = certReloadAgent.GetCertificateFunc()
+
+	middlewareList := []mux.MiddlewareFunc{
+		s.enrichContext,
+		s.detectAuthentication,
+		s.detectOAuth2Authorization,
+		httpx.Logger("omestore").Handle,
+	}
+	var handler http.Handler
+	handler = NewHttpUnit().MuxRouter()
+
+	for _, m := range middlewareList {
+		handler = m.Middleware(handler)
+	}
+
+	// init server
+	srv := &http.Server{
+		Addr:      ":443",
+		TLSConfig: tlsConf,
+		Handler:   handler,
+	}
+	go func() {
+		if err := srv.ListenAndServe(); err != nil {
+			s.Errors <- err
+		}
+	}()
 	return nil
 }
 
