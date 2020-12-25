@@ -159,22 +159,3 @@ message DeleteRulesForPathRequest {
   repeated string paths = 2;
 }
 message DeleteRulesForPathResponse {}
-
-
-service Settings {
-  rpc SetSettings(SetSettingsRequest) returns (SetSettingsResponse);
-  rpc GetSettings(GetSettingsRequest) returns (GetSettingsResponse);
-}
-
-message SetSettingsRequest {
-  string name = 1;
-  string value = 2;
-}
-message SetSettingsResponse {}
-
-message GetSettingsRequest {
-  string name = 1;
-}
-message GetSettingsResponse {
-  string value = 1;
-}
