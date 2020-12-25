@@ -3,7 +3,6 @@ package router
 import (
 	"context"
 	"github.com/google/uuid"
-	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/omestore/oms"
@@ -12,47 +11,6 @@ import (
 
 type ExecHandler struct {
 	BaseHandler
-}
-
-func (e *ExecHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
-	s := Settings(ctx)
-	if s == nil {
-		log.Info("exec-handler.SetSettings: missing settings database in context")
-		return errors.Internal
-	}
-
-	entry := &bome.MapEntry{
-		Key:   name,
-		Value: value,
-	}
-	return s.Save(entry)
-}
-
-func (e *ExecHandler) DeleteSettings(ctx context.Context, name string) error {
-	s := Settings(ctx)
-	if s == nil {
-		log.Info("exec-handler.DeleteSettings: missing settings database in context")
-		return errors.Internal
-	}
-	return s.Delete(name)
-}
-
-func (e *ExecHandler) ClearSettings(ctx context.Context) error {
-	s := Settings(ctx)
-	if s == nil {
-		log.Info("exec-handler.ClearSettings: missing settings database in context")
-		return errors.Internal
-	}
-	return s.Clear()
-}
-
-func (e *ExecHandler) GetSettings(ctx context.Context, name string) (string, error) {
-	s := Settings(ctx)
-	if s == nil {
-		log.Info("exec-handler.GetSettings: missing settings database in context")
-		return "", errors.Internal
-	}
-	return s.Get(name)
 }
 
 func (e *ExecHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/omestore/auth"
 	"github.com/omecodes/omestore/pb"
 	"strings"
 	"time"
@@ -61,7 +62,7 @@ func assetActionAllowedOnObject(ctx *context.Context, action pb.AllowedTo, objec
 		return err
 	}
 
-	authCEL := AuthInfo(*ctx)
+	authCEL := auth.Get(*ctx)
 	if authCEL == nil {
 		authCEL = &pb.Auth{}
 	}

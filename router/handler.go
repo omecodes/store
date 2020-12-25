@@ -7,11 +7,6 @@ import (
 )
 
 type Handler interface {
-	SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error
-	GetSettings(ctx context.Context, name string) (string, error)
-	DeleteSettings(ctx context.Context, name string) error
-	ClearSettings(ctx context.Context) error
-
 	PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error)
 	PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error
 	GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*oms.Object, error)

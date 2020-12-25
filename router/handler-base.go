@@ -10,22 +10,6 @@ type BaseHandler struct {
 	next Handler
 }
 
-func (b *BaseHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
-	return b.next.SetSettings(ctx, name, value, opts)
-}
-
-func (b *BaseHandler) GetSettings(ctx context.Context, name string) (string, error) {
-	return b.next.GetSettings(ctx, name)
-}
-
-func (b *BaseHandler) DeleteSettings(ctx context.Context, name string) error {
-	return b.next.DeleteSettings(ctx, name)
-}
-
-func (b *BaseHandler) ClearSettings(ctx context.Context) error {
-	return b.next.ClearSettings(ctx)
-}
-
 func (b *BaseHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
 	return b.next.PutObject(ctx, object, security, opts)
 }

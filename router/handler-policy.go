@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/omestore/auth"
 	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/omestore/pb"
 )
@@ -15,43 +16,15 @@ type PolicyHandler struct {
 }
 
 func (p *PolicyHandler) isAdmin(ctx context.Context) bool {
-	authCEL := AuthInfo(ctx)
+	authCEL := auth.Get(ctx)
 	if authCEL == nil {
 		return false
 	}
 	return authCEL.Uid == "admin"
 }
 
-func (p *PolicyHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
-	if !p.isAdmin(ctx) {
-		return errors.Forbidden
-	}
-	return p.BaseHandler.SetSettings(ctx, name, value, opts)
-}
-
-func (p *PolicyHandler) GetSettings(ctx context.Context, name string) (string, error) {
-	if !p.isAdmin(ctx) {
-		return "", errors.Forbidden
-	}
-	return p.BaseHandler.GetSettings(ctx, name)
-}
-
-func (p *PolicyHandler) DeleteSettings(ctx context.Context, name string) error {
-	if !p.isAdmin(ctx) {
-		return errors.Forbidden
-	}
-	return p.BaseHandler.DeleteSettings(ctx, name)
-}
-
-func (p *PolicyHandler) ClearSettings(ctx context.Context) error {
-	if !p.isAdmin(ctx) {
-		return errors.Forbidden
-	}
-	return p.BaseHandler.ClearSettings(ctx)
-}
-
 func (p *PolicyHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
-	ai := AuthInfo(ctx)
+	ai := auth.Get(ctx)
 	if ai == nil {
 		return "", errors.Forbidden
 	}

@@ -14,27 +14,6 @@ type ParamsHandler struct {
 	BaseHandler
 }
 
-func (p *ParamsHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
-	if name == "" || value == "" {
-		return errors.BadInput
-	}
-	return p.BaseHandler.SetSettings(ctx, name, value, opts)
-}
-
-func (p *ParamsHandler) DeleteSettings(ctx context.Context, name string) error {
-	if name == "" {
-		return errors.BadInput
-	}
-	return p.BaseHandler.DeleteSettings(ctx, name)
-}
-
-func (p *ParamsHandler) GetSettings(ctx context.Context, name string) (string, error) {
-	if name == "" {
-		return "", errors.BadInput
-	}
-	return p.BaseHandler.GetSettings(ctx, name)
-}
-
 func (p *ParamsHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
 	if object == nil || object.Size() == 0 {
 		return "", errors.BadInput
@@ -45,8 +24,12 @@ func (p *ParamsHandler) PutObject(ctx context.Context, object *oms.Object, secur
 		security.AccessRules = map[string]*pb.AccessRules{}
 	}
 
-	route := NewRoute(ctx, SkipPoliciesCheck(), SkipParamsCheck())
-	s, err := route.GetSettings(ctx, oms.SettingsDataMaxSizePath)
+	settings := Settings(ctx)
+	if settings == nil {
+		return "", errors.Internal
+	}
+
+	s, err := settings.Get(oms.SettingsDataMaxSizePath)
 	if err != nil {
 		log.Error("could not get data max length from settings", log.Err(err))
 		return "", errors.Internal
@@ -71,8 +54,8 @@ func (p *ParamsHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts 
 		return errors.BadInput
 	}
 
-	route := NewRoute(ctx, SkipPoliciesCheck(), SkipParamsCheck())
-	s, err := route.GetSettings(ctx, oms.SettingsDataMaxSizePath)
+	settings := Settings(ctx)
+	s, err := settings.Get(oms.SettingsDataMaxSizePath)
 	if err != nil {
 		log.Error("could not get data max length from settings", log.Err(err))
 		return errors.Internal

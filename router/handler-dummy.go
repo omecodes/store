@@ -8,22 +8,6 @@ import (
 
 type dummyHandler struct{}
 
-func (d *dummyHandler) SetSettings(ctx context.Context, name string, value string, opts oms.SettingsOptions) error {
-	return nil
-}
-
-func (d *dummyHandler) GetSettings(ctx context.Context, name string) (string, error) {
-	return "", nil
-}
-
-func (d *dummyHandler) DeleteSettings(ctx context.Context, name string) error {
-	return nil
-}
-
-func (d *dummyHandler) ClearSettings(ctx context.Context) error {
-	return nil
-}
-
 func (d *dummyHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
 	return "", nil
 }

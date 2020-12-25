@@ -29,7 +29,7 @@ var (
 	xSearchEnv *cel.Env
 	objectsDB  oms.Objects
 	workersDB  *bome.JSONMap
-	settingsDB *bome.Map
+	settingsDB oms.SettingsManager
 	aclDB      acl.Store
 
 	userA = &pb.Auth{
@@ -193,7 +193,7 @@ func initDBs() {
 	}
 
 	if settingsDB == nil {
-		settingsDB, err = bome.NewMap(db, testDialect, "settings")
+		settingsDB, err = oms.NewSQLSettings(db, testDialect, "settings")
 		So(err, ShouldBeNil)
 	}
 
@@ -288,193 +288,11 @@ func contextWithoutSettings() context.Context {
 	return ctx
 }
 
-func Test_SetSettings(t *testing.T) {
-	Convey("Set settings with wrong parameters", t, func() {
-		ctx := fullConfiguredContext()
-		route := getRoute()
-
-		userACtx := WithUserInfo(ctx, userA)
-		err := route.SetSettings(userACtx, "", "1024", oms.SettingsOptions{})
-		So(err, ShouldEqual, errors.BadInput)
-
-		err = route.SetSettings(userACtx, "something", "", oms.SettingsOptions{})
-		So(err, ShouldEqual, errors.BadInput)
-	})
-}
-
-func Test_SetSettings1(t *testing.T) {
-	Convey("Non admin cannot set/get settings", t, func() {
-		ctx := fullConfiguredContext()
-		route := getRoute()
-
-		userACtx := WithUserInfo(ctx, userA)
-		err := route.SetSettings(userACtx, oms.SettingsDataMaxSizePath, "1024", oms.SettingsOptions{})
-		So(err, ShouldEqual, errors.Forbidden)
-	})
-}
-
-func Test_SetSettings2(t *testing.T) {
-	Convey("Writing settings always requires settings DB in context", t, func() {
-		route := getRoute()
-		adminCtxWoSettings := WithUserInfo(contextWithoutSettings(), admin)
-
-		err := route.SetSettings(adminCtxWoSettings, oms.SettingsDataMaxSizePath, "1024", oms.SettingsOptions{})
-		So(err, ShouldEqual, errors.Internal)
-
-		value, err := route.GetSettings(adminCtxWoSettings, oms.SettingsDataMaxSizePath)
-		So(err, ShouldEqual, errors.Internal)
-		So(value, ShouldEqual, "")
-
-	})
-}
-
-func Test_SetSettings3(t *testing.T) {
-	Convey("Only Admin can set settings with properly configured context", t, func() {
-		route := getRoute()
-
-		adminCtx := WithUserInfo(fullConfiguredContext(), admin)
-
-		err := route.SetSettings(adminCtx, oms.SettingsDataMaxSizePath, "1024", oms.SettingsOptions{})
-		So(err, ShouldBeNil)
-
-		err = route.SetSettings(adminCtx, oms.SettingsCreateDataSecurityRule, "auth.worker || auth.validated", oms.SettingsOptions{})
-		So(err, ShouldBeNil)
-	})
-}
-
-func Test_GetSetting(t *testing.T) {
-	Convey("Get settings with wrong parameters", t, func() {
-		route := getRoute()
-		userACtx := WithUserInfo(fullConfiguredContext(), userA)
-
-		value, err := route.GetSettings(userACtx, "")
-		So(err, ShouldEqual, errors.BadInput)
-		So(value, ShouldEqual, "")
-	})
-}
-
-func Test_GetSetting1(t *testing.T) {
-	Convey("Non admin cannot read settings", t, func() {
-		route := getRoute()
-		userACtx := WithUserInfo(fullConfiguredContext(), userA)
-
-		value, err := route.GetSettings(userACtx, oms.SettingsDataMaxSizePath)
-		So(err, ShouldEqual, errors.Forbidden)
-		So(value, ShouldEqual, "")
-
-		value, err = route.GetSettings(userACtx, oms.SettingsCreateDataSecurityRule)
-		So(err, ShouldEqual, errors.Forbidden)
-		So(value, ShouldEqual, "")
-	})
-}
-
-func Test_GetSetting2(t *testing.T) {
-	Convey("Admin is allowed to get settings", t, func() {
-
-		ctx := fullConfiguredContext()
-		route := getRoute()
-
-		adminCtx := WithUserInfo(ctx, admin)
-
-		value, err := route.GetSettings(adminCtx, oms.SettingsDataMaxSizePath)
-		So(err, ShouldBeNil)
-		So(value, ShouldEqual, "1024")
-
-		value, err = route.GetSettings(adminCtx, oms.SettingsCreateDataSecurityRule)
-		So(err, ShouldBeNil)
-		So(value, ShouldEqual, "auth.worker || auth.validated")
-	})
-}
-
-func Test_DeleteSettings(t *testing.T) {
-	Convey("Delete settings with wrong parameters", t, func() {
-		route := getRoute()
-		err := route.DeleteSettings(context.Background(), "")
-		So(err, ShouldEqual, errors.BadInput)
-	})
-}
-
-func Test_DeleteSettings0(t *testing.T) {
-	Convey("Non authenticated context cannot delete settings", t, func() {
-		route := getRoute()
-		err := route.DeleteSettings(context.Background(), "something")
-		So(err, ShouldEqual, errors.Forbidden)
-	})
-}
-
-func Test_DeleteSettings1(t *testing.T) {
-	Convey("Delete settings with incomplete context", t, func() {
-		route := getRoute()
-		adminCtx := WithUserInfo(contextWithoutSettings(), admin)
-		err := route.DeleteSettings(adminCtx, "hello")
-		So(err, ShouldEqual, errors.Internal)
-	})
-}
-
-func Test_DeleteSettings2(t *testing.T) {
-	Convey("Delete settings with wrong parameters", t, func() {
-		route := getRoute()
-		adminCtx := WithUserInfo(fullConfiguredContext(), admin)
-		err := route.DeleteSettings(adminCtx, "hello")
-		So(err, ShouldBeNil)
-	})
-}
-
-func Test_ClearSettings(t *testing.T) {
-	Convey("Non authenticated user cannot clear settings", t, func() {
-		route := getRoute()
-		err := route.ClearSettings(context.Background())
-		So(err, ShouldEqual, errors.Forbidden)
-	})
-}
-
-func Test_ClearSettings0(t *testing.T) {
-	Convey("Non admin user cannot clear settings", t, func() {
-		route := getRoute()
-		userACtx := WithUserInfo(fullConfiguredContext(), userA)
-		err := route.ClearSettings(userACtx)
-		So(err, ShouldEqual, errors.Forbidden)
-	})
-}
-
-func Test_ClearSettings1(t *testing.T) {
-	Convey("Non admin user cannot clear settings", t, func() {
-		route := getRoute()
-		userACtx := WithUserInfo(fullConfiguredContext(), userA)
-		err := route.ClearSettings(userACtx)
-		So(err, ShouldEqual, errors.Forbidden)
-	})
-}
-
-func Test_ClearSettings2(t *testing.T) {
-	Convey("Admin user can clear settings", t, func() {
-		route := getRoute()
-		adminCtx := WithUserInfo(fullConfiguredContext(), admin)
-
-		err := route.ClearSettings(adminCtx)
-		So(err, ShouldBeNil)
-
-		err = route.SetSettings(adminCtx, oms.SettingsDataMaxSizePath, "1024", oms.SettingsOptions{})
-		So(err, ShouldBeNil)
-
-		err = route.SetSettings(adminCtx, oms.SettingsCreateDataSecurityRule, "auth.worker || auth.validated", oms.SettingsOptions{})
-		So(err, ShouldBeNil)
-	})
-}
-
-func Test_ClearSettings3(t *testing.T) {
-	Convey("Cannot clear settings without settings db in context", t, func() {
-		route := getRoute()
-		adminCtx := WithUserInfo(contextWithoutSettings(), admin)
-
-		err := route.ClearSettings(adminCtx)
-		So(err, ShouldEqual, errors.Internal)
-	})
-}
-
 func Test_PutObject(t *testing.T) {
 	Convey("Cannot put object without having set default settings", t, func() {
 		route := getRoute()
+		ctx := fullConfiguredContext()
+		settings := Settings(ctx)
 
 		o := new(oms.Object)
 		o.SetHeader(&pb.Header{
@@ -484,37 +302,36 @@ func Test_PutObject(t *testing.T) {
 		})
 		o.SetContent(bytes.NewBufferString(object1))
 
-		id, err := route.PutObject(fullConfiguredContext(), nil, nil, oms.PutDataOptions{})
+		id, err := route.PutObject(ctx, nil, nil, oms.PutDataOptions{})
 		So(err, ShouldEqual, errors.BadInput)
 		So(id, ShouldEqual, "")
 
 		o.SetSize(0)
-		id, err = route.PutObject(fullConfiguredContext(), o, nil, oms.PutDataOptions{})
+		id, err = route.PutObject(ctx, o, nil, oms.PutDataOptions{})
 		So(err, ShouldEqual, errors.BadInput)
 		So(id, ShouldEqual, "")
 
 		o.SetSize(1220)
-		id, err = route.PutObject(fullConfiguredContext(), o, nil, oms.PutDataOptions{})
+		id, err = route.PutObject(ctx, o, nil, oms.PutDataOptions{})
 		So(err, ShouldEqual, errors.BadInput)
 		So(id, ShouldEqual, "")
 
-		adminCtx := WithUserInfo(fullConfiguredContext(), admin)
-		err = route.DeleteSettings(adminCtx, oms.SettingsDataMaxSizePath)
+		err = settings.Delete(oms.SettingsDataMaxSizePath)
 		So(err, ShouldBeNil)
 
 		o.SetSize(int64(len(object1)))
-		id, err = route.PutObject(fullConfiguredContext(), o, nil, oms.PutDataOptions{})
+		id, err = route.PutObject(ctx, o, nil, oms.PutDataOptions{})
 		So(err, ShouldEqual, errors.Internal)
 		So(id, ShouldEqual, "")
 
-		err = route.SetSettings(adminCtx, oms.SettingsDataMaxSizePath, "ekhfs", oms.SettingsOptions{})
+		err = settings.Set(oms.SettingsDataMaxSizePath, "ekhfs")
 		So(err, ShouldBeNil)
 
-		id, err = route.PutObject(fullConfiguredContext(), o, nil, oms.PutDataOptions{})
+		id, err = route.PutObject(ctx, o, nil, oms.PutDataOptions{})
 		So(err, ShouldEqual, errors.Internal)
 		So(id, ShouldEqual, "")
 
-		err = route.SetSettings(adminCtx, oms.SettingsDataMaxSizePath, "1024", oms.SettingsOptions{})
+		err = settings.Set(oms.SettingsDataMaxSizePath, "1024")
 		So(err, ShouldBeNil)
 	})
 }
@@ -809,36 +626,38 @@ func Test_Patch(t *testing.T) {
 func Test_Patch0(t *testing.T) {
 	Convey("Patch object without defined default settings", t, func() {
 		route := getRoute()
+		ctx := fullConfiguredContext()
 
-		adminCtx := WithUserInfo(fullConfiguredContext(), admin)
-		err := route.DeleteSettings(adminCtx, oms.SettingsDataMaxSizePath)
+		settings := Settings(ctx)
+
+		err := settings.Delete(oms.SettingsDataMaxSizePath)
 		So(err, ShouldBeNil)
 
 		p := oms.NewPatch("id", "$.user.name")
 		p.SetContent(bytes.NewBufferString("What are you doing?"))
 		p.SetSize(42)
 
-		err = route.PatchObject(fullConfiguredContext(), p, oms.PatchOptions{})
+		err = route.PatchObject(ctx, p, oms.PatchOptions{})
 		So(err, ShouldEqual, errors.Internal)
 
-		err = route.SetSettings(adminCtx, oms.SettingsDataMaxSizePath, "1024", oms.SettingsOptions{})
+		err = settings.Set(oms.SettingsDataMaxSizePath, "1024")
 		So(err, ShouldBeNil)
 
 		p.SetSize(1025)
-		err = route.PatchObject(fullConfiguredContext(), p, oms.PatchOptions{})
+		err = route.PatchObject(ctx, p, oms.PatchOptions{})
 		So(err, ShouldEqual, errors.BadInput)
 
-		err = route.SetSettings(adminCtx, oms.SettingsDataMaxSizePath, "1024", oms.SettingsOptions{})
+		err = settings.Set(oms.SettingsDataMaxSizePath, "1024")
 		So(err, ShouldBeNil)
 
-		err = route.SetSettings(adminCtx, oms.SettingsDataMaxSizePath, "ekhfs", oms.SettingsOptions{})
+		err = settings.Set(oms.SettingsDataMaxSizePath, "ekhfs")
 		So(err, ShouldBeNil)
 
 		p.SetSize(100)
-		err = route.PatchObject(fullConfiguredContext(), p, oms.PatchOptions{})
+		err = route.PatchObject(ctx, p, oms.PatchOptions{})
 		So(err, ShouldEqual, errors.Internal)
 
-		err = route.SetSettings(adminCtx, oms.SettingsDataMaxSizePath, "1024", oms.SettingsOptions{})
+		err = settings.Set(oms.SettingsDataMaxSizePath, "1024")
 		So(err, ShouldBeNil)
 	})
 }

@@ -22,7 +22,6 @@ type ctxCELSearchEnv struct{}
 type ctxObjectHeader struct{}
 type ctxCELAclPrograms struct{}
 type ctxCELSearchPrograms struct{}
-type ctxAuthCEL struct{}
 type ctxWorkers struct{}
 type ctxRouterProvider struct{}
 
@@ -54,7 +53,7 @@ func WithObjectsStore(objects oms.Objects) ContextUpdaterFunc {
 }
 
 // WithSettings creates a context updater that adds permissions to a context
-func WithSettings(settings *bome.Map) ContextUpdaterFunc {
+func WithSettings(settings oms.SettingsManager) ContextUpdaterFunc {
 	return func(parent context.Context) context.Context {
 		return context.WithValue(parent, ctxSettingsDB{}, settings)
 	}
@@ -79,11 +78,6 @@ func WithWorkers(infoDB *bome.JSONMap) ContextUpdaterFunc {
 	return func(parent context.Context) context.Context {
 		return context.WithValue(parent, ctxWorkers{}, infoDB)
 	}
-}
-
-// WithUserInfo creates a context updater that adds a Auth info to a context
-func WithUserInfo(ctx context.Context, a *pb.Auth) context.Context {
-	return context.WithValue(ctx, ctxAuthCEL{}, a)
 }
 
 // WithRouterProvider updates context by adding a RouterProvider object in its values
@@ -115,20 +109,12 @@ func Objects(ctx context.Context) oms.Objects {
 	return o.(oms.Objects)
 }
 
-func Settings(ctx context.Context) *bome.Map {
+func Settings(ctx context.Context) oms.SettingsManager {
 	o := ctx.Value(ctxSettingsDB{})
 	if o == nil {
 		return nil
 	}
-	return o.(*bome.Map)
-}
-
-func AuthInfo(ctx context.Context) *pb.Auth {
-	o := ctx.Value(ctxAuthCEL{})
-	if o == nil {
-		return nil
-	}
-	return o.(*pb.Auth)
+	return o.(oms.SettingsManager)
 }
 
 func ACLStore(ctx context.Context) acl.Store {
@@ -156,7 +142,11 @@ func GetObjectHeader(ctx *context.Context, objectID string) (*pb.Header, error) 
 		m = map[string]*pb.Header{}
 	}
 
-	route := NewRoute(*ctx, SkipParamsCheck(), SkipPoliciesCheck())
+	route, err := NewRoute(*ctx, SkipParamsCheck(), SkipPoliciesCheck())
+	if err != nil {
+		return nil, err
+	}
+
 	header, err := route.GetObjectHeader(*ctx, objectID)
 	if err != nil {
 		return nil, err
@@ -244,13 +234,14 @@ func LoadProgramForSearch(ctx *context.Context, expression string) (cel.Program,
 	return prg, nil
 }
 
-func NewRoute(ctx context.Context, opt ...RouteOption) Handler {
+func NewRoute(ctx context.Context, opt ...RouteOption) (Handler, error) {
 	o := ctx.Value(ctxRouterProvider{})
 	if o == nil {
-		return DefaultRouter().GetRoute(opt...)
+		return nil, errors.New("no router provider")
 	}
 
 	p := o.(Provider)
 	router := p.GetRouter(ctx)
-	return router.GetRoute(opt...)
+
+	return router.GetRoute(opt...), nil
 }
