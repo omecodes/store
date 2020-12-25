@@ -2,11 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/omecodes/common/utils/prompt"
-	oms "github.com/omecodes/omestore"
-	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/spf13/cobra"
+
+	"github.com/omecodes/common/utils/prompt"
+	oms "github.com/omecodes/omestore"
 )
 
 var (
@@ -55,16 +58,11 @@ func init() {
 	flags.StringVar(&caCertFilename, "ca-cert", "", "CA certificate")
 	flags.StringVar(&caApiKey, "ca-api-key", "", "CA access API key")
 	flags.StringVar(&caApiSecret, "ca-api-secret", "", "CA access API secret")
-	flags.StringVar(&dbURI, "db-uri", "ms-store:ms-store@tcp(localhost:3306)/ms-store?charset=utf8", "CA access API secret")
-	flags.IntVar(&objectsPort, "port", 8080, "API server port")
-	flags.IntVar(&aclPort, "port", 8180, "API server port")
+	flags.StringVar(&dbURI, "db-uri", "store:store@tcp(localhost:3306)/store?charset=utf8", "MySQL database uri")
+	flags.IntVar(&objectsPort, "objects-port", 8080, "API server port")
+	flags.IntVar(&aclPort, "acl-port", 8180, "API server port")
 	flags.StringVar(&bindIP, "ip", "", "Http server address")
 	flags.StringVar(&domain, "domain", "", "Domain name")
-
-	if err := cobra.MarkFlagRequired(flags, "db-uri"); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
 
 	if err := cobra.MarkFlagRequired(flags, "ip"); err != nil {
 		fmt.Println(err)
@@ -125,6 +123,7 @@ func run(cmd *cobra.Command, args []string) {
 		IP:             bindIP,
 		ObjectsPort:    objectsPort,
 		ACLPort:        aclPort,
+		DBUri:          dbURI,
 	}
 
 	server := oms.NewMSStore(config)
