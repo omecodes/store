@@ -2,11 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/omecodes/common/utils/prompt"
-	oms "github.com/omecodes/omestore"
-	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
+
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/spf13/cobra"
+
+	"github.com/omecodes/common/utils/prompt"
+	oms "github.com/omecodes/omestore"
 )
 
 var (
