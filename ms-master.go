@@ -3,19 +3,20 @@ package oms
 import (
 	"context"
 	"database/sql"
-	"encoding/base64"
 	"fmt"
+	"github.com/foomo/simplecert"
+	"github.com/foomo/tlsconfig"
+	"github.com/gorilla/mux"
 	"github.com/omecodes/discover"
+	errors2 "github.com/omecodes/libome/errors"
+	"github.com/omecodes/libome/logs"
+	"github.com/omecodes/omestore/auth"
+	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/service"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
-
-	"github.com/foomo/simplecert"
-	"github.com/foomo/tlsconfig"
-	"github.com/gorilla/mux"
 
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
@@ -25,7 +26,6 @@ import (
 	"github.com/omecodes/libome/ports"
 	"github.com/omecodes/omestore/clients"
 	"github.com/omecodes/omestore/common"
-	"github.com/omecodes/omestore/pb"
 	"github.com/omecodes/omestore/router"
 	sca "github.com/omecodes/services-ca"
 )
@@ -49,7 +49,7 @@ func NewMSServer(cfg MsConfig) *MSServer {
 
 type MSServer struct {
 	config         MsConfig
-	settings       *bome.Map
+	settings       oms.SettingsManager
 	listener       net.Listener
 	adminPassword  string
 	workerPassword string
@@ -67,7 +67,7 @@ func (s *MSServer) init() error {
 		return err
 	}
 
-	s.settings, err = bome.NewMap(db, bome.MySQL, "settings")
+	s.settings, err = oms.NewSQLSettings(db, bome.MySQL, "settings")
 	return err
 }
 
@@ -129,8 +129,13 @@ func (s *MSServer) startAPIServer() error {
 	log.Info("starting HTTP server", log.Field("address", address))
 
 	middlewareList := []mux.MiddlewareFunc{
-		s.detectAuthentication,
-		s.detectOAuth2Authorization,
+		auth.DetectBasicMiddleware(auth.CredentialsMangerFunc(func(user string) (string, error) {
+			if user == "admin" {
+				return s.adminPassword, nil
+			}
+			return "", errors2.New(errors2.CodeForbidden, "authentication failed")
+		})),
+		auth.DetectOauth2Middleware(s.config.JWTSecret),
 		httpx.Logger("OMS").Handle,
 		s.httpEnrichContext,
 	}
@@ -166,9 +171,6 @@ func (s *MSServer) startProductionAPIServer() error {
 		log.Fatal("simplecert init failed: ", log.Err(err))
 	}
 
-	// redirect HTTP to HTTPS
-	// CAUTION: This has to be done AFTER simplecert setup
-	// Otherwise Port 80 will be blocked and cert registration fails!
 	log.Info("starting HTTP Listener on Port 80")
 	go func() {
 		if err := http.ListenAndServe(":80", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -178,16 +180,30 @@ func (s *MSServer) startProductionAPIServer() error {
 				ContentType: "text/html",
 			})
 		})); err != nil {
-			log.Error("listen to port 80 failed", log.Err(err))
+			logs.Error("Plain http listen caused error", logs.Err(err))
 		}
 	}()
 
-	// init strict tlsConfig with certReloadAgent
-	// you could also use a default &tls.Config{}, but be warned this is highly insecure
 	tlsConf := tlsconfig.NewServerTLSConfig(tlsconfig.TLSModeServerStrict)
-
-	// now set GetCertificate to the reload agent GetCertificateFunc to enable hot reload
 	tlsConf.GetCertificate = certReloadAgent.GetCertificateFunc()
+
+	middlewareList := []mux.MiddlewareFunc{
+		auth.DetectBasicMiddleware(auth.CredentialsMangerFunc(func(user string) (string, error) {
+			if user == "admin" {
+				return s.adminPassword, nil
+			}
+			return "", errors2.New(errors2.CodeForbidden, "authentication failed")
+		})),
+		auth.DetectOauth2Middleware(s.config.JWTSecret),
+		httpx.Logger("OMS").Handle,
+		s.httpEnrichContext,
+	}
+	var handler http.Handler
+	handler = NewHttpUnit().MuxRouter()
+
+	for _, m := range middlewareList {
+		handler = m.Middleware(handler)
+	}
 
 	// init server
 	srv := &http.Server{
@@ -227,91 +243,6 @@ func (s *MSServer) GetRouter(ctx context.Context) router.Router {
 		router.NewGRPCClientHandler(common.ServiceTypeHandler),
 		router.WithDefaultParamsHandler(),
 	)
-}
-
-func (s *MSServer) detectAuthentication(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h := r.Header
-		authorization := h.Get("Authorization")
-
-		if authorization != "" {
-			splits := strings.SplitN(authorization, " ", 2)
-			if strings.ToLower(splits[0]) == "basic" {
-				bytes, err := base64.StdEncoding.DecodeString(splits[1])
-				if err != nil {
-					w.WriteHeader(http.StatusBadRequest)
-					return
-				}
-
-				parts := strings.Split(string(bytes), ":")
-				if len(parts) != 2 {
-					w.WriteHeader(http.StatusForbidden)
-					return
-				}
-
-				authUser := parts[0]
-				var pass string
-				if len(parts) > 1 {
-					pass = parts[1]
-				}
-
-				if authUser == "admin" {
-					if pass != s.adminPassword {
-						w.WriteHeader(http.StatusForbidden)
-						return
-					}
-				} else {
-					if pass != s.workerPassword {
-						w.WriteHeader(http.StatusForbidden)
-						return
-					}
-				}
-
-				ctx := router.WithUserInfo(r.Context(), &pb.Auth{
-					Uid:       authUser,
-					Validated: true,
-					Worker:    "admin" != authUser,
-				})
-				r = r.WithContext(ctx)
-			}
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (s *MSServer) detectOAuth2Authorization(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authorization := r.Header.Get("authorization")
-		if authorization != "" && strings.HasPrefix(authorization, "Bearer ") {
-			authorization = strings.TrimPrefix(authorization, "Bearer ")
-			jwt, err := ome.ParseJWT(authorization)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-
-			signature, err := jwt.SecretBasedSignature(s.config.JWTSecret)
-			if err != nil {
-				w.WriteHeader(http.StatusForbidden)
-				return
-			}
-
-			if signature != jwt.Signature {
-				w.WriteHeader(http.StatusForbidden)
-				return
-			}
-
-			ctx := router.WithUserInfo(r.Context(), &pb.Auth{
-				Uid:       jwt.Claims.Sub,
-				Email:     jwt.Claims.Profile.Email,
-				Worker:    false,
-				Validated: jwt.Claims.Profile.Verified,
-				Scope:     strings.Split(jwt.Claims.Scope, ""),
-			})
-			r = r.WithContext(ctx)
-		}
-		next.ServeHTTP(w, r)
-	})
 }
 
 func (s *MSServer) Start() error {

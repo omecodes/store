@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/omestore/auth"
 	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/omestore/router"
 	"io/ioutil"
@@ -58,7 +59,13 @@ func (s *HTTPUnit) put(w http.ResponseWriter, r *http.Request) {
 	object.SetContent(r.Body)
 	object.SetSize(r.ContentLength)
 
-	_, err := router.NewRoute(ctx).PutObject(ctx, object, nil, opts)
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	_, err = route.PutObject(ctx, object, nil, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -81,8 +88,13 @@ func (s *HTTPUnit) patch(w http.ResponseWriter, r *http.Request) {
 	patch := oms.NewPatch(id, p)
 	patch.SetContent(r.Body)
 	patch.SetSize(r.ContentLength)
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
-	err := router.NewRoute(ctx).PatchObject(ctx, patch, oms.PatchOptions{})
+	err = route.PatchObject(ctx, patch, oms.PatchOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -96,7 +108,13 @@ func (s *HTTPUnit) get(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 	onlyInfo := r.URL.Query().Get("info")
 
-	object, err := router.NewRoute(ctx).GetObject(ctx, id, oms.GetObjectOptions{Info: onlyInfo == "true"})
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	object, err := route.GetObject(ctx, id, oms.GetObjectOptions{Info: onlyInfo == "true"})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -124,7 +142,12 @@ func (s *HTTPUnit) sel(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 	filter := strings.Replace(r.RequestURI, fmt.Sprintf("/%s", id), "", 1)
 
-	route := router.NewRoute(ctx)
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	object, err := route.GetObject(ctx, id, oms.GetObjectOptions{Path: filter})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
@@ -150,7 +173,13 @@ func (s *HTTPUnit) del(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
 
-	err := router.NewRoute(ctx).DeleteObject(ctx, vars["id"])
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = route.DeleteObject(ctx, vars["id"])
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -180,7 +209,12 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 		Before: before,
 	}
 
-	route := router.NewRoute(ctx)
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	result, err := route.ListObjects(ctx, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
@@ -252,8 +286,13 @@ func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
-	result, err := router.NewRoute(ctx).SearchObjects(ctx, params, opts)
+	result, err := route.SearchObjects(ctx, params, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -296,16 +335,33 @@ func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 func (s *HTTPUnit) setSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var o interface{}
+	ai := auth.Get(ctx)
+	if ai == nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
 
-	err := json.NewDecoder(r.Body).Decode(&o)
+	if ai.Uid != "admin" {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	name := r.URL.Query().Get("name")
+
+	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Error("could not read request body", log.Err(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	err = router.NewRoute(ctx).SetSettings(ctx, "", "", oms.SettingsOptions{})
+	settings := router.Settings(ctx)
+	if settings == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = settings.Set(name, string(data))
 	if err != nil {
 		log.Error("failed to set settings", log.Err(err))
 		w.WriteHeader(errors.HttpStatus(err))
@@ -316,13 +372,29 @@ func (s *HTTPUnit) getSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	name := r.URL.Query().Get("name")
 
-	settings, err := router.NewRoute(ctx).GetSettings(ctx, name)
-	if err != nil {
-		log.Error("could not get settings", log.Err(err))
-		w.WriteHeader(errors.HttpStatus(err))
+	ai := auth.Get(ctx)
+	if ai == nil {
+		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 
-	w.Header().Add("Content-Type", "application/json")
-	_, _ = w.Write([]byte(settings))
+	if ai.Uid != "admin" {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	settings := router.Settings(ctx)
+	if settings == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	value, err := settings.Get(name)
+	if err != nil {
+		log.Error("failed to set settings", log.Err(err))
+		w.WriteHeader(errors.HttpStatus(err))
+	}
+
+	w.Header().Add("Content-Type", "text/plain")
+	_, _ = w.Write([]byte(value))
 }

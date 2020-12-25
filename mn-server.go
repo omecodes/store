@@ -3,33 +3,29 @@ package oms
 import (
 	"context"
 	"crypto/rand"
-	"crypto/sha512"
 	"database/sql"
 	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"github.com/foomo/simplecert"
 	"github.com/foomo/tlsconfig"
+	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/checker/decls"
+	"github.com/gorilla/mux"
+	"github.com/omecodes/omestore/auth"
+	"github.com/sethvargo/go-password/password"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
-
-	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
-	"github.com/gorilla/mux"
-	"github.com/sethvargo/go-password/password"
 
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/httpx"
 	"github.com/omecodes/common/netx"
 	"github.com/omecodes/common/utils/log"
-	"github.com/omecodes/libome"
+	errors2 "github.com/omecodes/libome/errors"
 	"github.com/omecodes/omestore/oms"
-	"github.com/omecodes/omestore/pb"
 	"github.com/omecodes/omestore/router"
 	"github.com/omecodes/omestore/services/acl"
 )
@@ -63,7 +59,7 @@ type MNServer struct {
 
 	objects     oms.Objects
 	workers     *bome.JSONMap
-	settings    *bome.Map
+	settings    oms.SettingsManager
 	accessStore acl.Store
 	listener    net.Listener
 	Errors      chan error
@@ -91,7 +87,7 @@ func (s *MNServer) init() error {
 		return err
 	}
 
-	s.settings, err = bome.NewMap(db, bome.MySQL, "settings")
+	s.settings, err = oms.NewSQLSettings(db, bome.MySQL, "settings")
 	if err != nil {
 		return err
 	}
@@ -139,17 +135,11 @@ func (s *MNServer) init() error {
 		return err
 	}
 
-	err = s.settings.Save(&bome.MapEntry{
-		Key:   oms.SettingsDataMaxSizePath,
-		Value: oms.DefaultSettings[oms.SettingsDataMaxSizePath],
-	})
+	err = s.settings.Set(oms.SettingsDataMaxSizePath, oms.DefaultSettings[oms.SettingsDataMaxSizePath])
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
-	err = s.settings.Save(&bome.MapEntry{
-		Key:   oms.SettingsCreateDataSecurityRule,
-		Value: oms.DefaultSettings[oms.SettingsCreateDataSecurityRule],
-	})
+	err = s.settings.Set(oms.SettingsCreateDataSecurityRule, oms.DefaultSettings[oms.SettingsCreateDataSecurityRule])
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -204,9 +194,14 @@ func (s *MNServer) startDefaultAPIServer() error {
 	log.Info("starting HTTP server", log.Field("address", address))
 
 	middlewareList := []mux.MiddlewareFunc{
+		auth.DetectBasicMiddleware(auth.CredentialsMangerFunc(func(user string) (string, error) {
+			if user == "admin" {
+				return s.adminPassword, nil
+			}
+			return "", errors2.New(errors2.CodeForbidden, "authentication failed")
+		})),
+		auth.DetectOauth2Middleware(s.config.JwtSecret),
 		s.enrichContext,
-		s.detectAuthentication,
-		s.detectOAuth2Authorization,
 		httpx.Logger("omestore").Handle,
 	}
 	var handler http.Handler
@@ -257,9 +252,14 @@ func (s *MNServer) startAutoCertAPIServer() error {
 	tlsConf.GetCertificate = certReloadAgent.GetCertificateFunc()
 
 	middlewareList := []mux.MiddlewareFunc{
+		auth.DetectBasicMiddleware(auth.CredentialsMangerFunc(func(user string) (string, error) {
+			if user == "admin" {
+				return s.adminPassword, nil
+			}
+			return "", errors2.New(errors2.CodeForbidden, "authentication failed")
+		})),
+		auth.DetectOauth2Middleware(s.config.JwtSecret),
 		s.enrichContext,
-		s.detectAuthentication,
-		s.detectOAuth2Authorization,
 		httpx.Logger("omestore").Handle,
 	}
 	var handler http.Handler
@@ -294,111 +294,6 @@ func (s *MNServer) enrichContext(next http.Handler) http.Handler {
 		ctx = router.WithWorkers(s.workers)(ctx)
 
 		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (s *MNServer) detectAuthentication(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// ctx := r.Context()
-		h := r.Header
-		authorization := h.Get("Authorization")
-
-		if authorization != "" {
-			splits := strings.SplitN(authorization, " ", 2)
-			if strings.ToLower(splits[0]) == "basic" {
-				bytes, err := base64.StdEncoding.DecodeString(splits[1])
-				if err != nil {
-					w.WriteHeader(http.StatusBadRequest)
-					return
-				}
-
-				parts := strings.Split(string(bytes), ":")
-				if len(parts) != 2 {
-					w.WriteHeader(http.StatusForbidden)
-					return
-				}
-
-				authUser := parts[0]
-				var pass string
-				if len(parts) > 1 {
-					pass = parts[1]
-				}
-
-				if authUser == "admin" {
-					if pass != s.adminPassword {
-						w.WriteHeader(http.StatusForbidden)
-						return
-					}
-				} else {
-					secret, err := s.workers.ExtractAt(authUser, "$.secret")
-					if err != nil {
-						if bome.IsNotFound(err) {
-							w.WriteHeader(http.StatusForbidden)
-							return
-						}
-						log.Error("could not get auth user info", log.Err(err))
-						w.WriteHeader(http.StatusInternalServerError)
-						return
-					}
-
-					sh := sha512.New()
-					_, err = sh.Write([]byte(pass))
-					if err != nil {
-						log.Error("could not hash password", log.Err(err))
-						w.WriteHeader(http.StatusInternalServerError)
-						return
-					}
-					hashed := sh.Sum(nil)
-					if hex.EncodeToString(hashed) != secret {
-						w.WriteHeader(http.StatusForbidden)
-						return
-					}
-				}
-
-				ctx := router.WithUserInfo(r.Context(), &pb.Auth{
-					Uid:       authUser,
-					Validated: true,
-					Worker:    "admin" != authUser,
-				})
-				r = r.WithContext(ctx)
-			}
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (s *MNServer) detectOAuth2Authorization(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authorization := r.Header.Get("authorization")
-		if authorization != "" && strings.HasPrefix(authorization, "Bearer ") {
-			authorization = strings.TrimPrefix(authorization, "Bearer ")
-			jwt, err := ome.ParseJWT(authorization)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-
-			signature, err := jwt.SecretBasedSignature(s.config.JwtSecret)
-			if err != nil {
-				w.WriteHeader(http.StatusForbidden)
-				return
-			}
-
-			if signature != jwt.Signature {
-				w.WriteHeader(http.StatusForbidden)
-				return
-			}
-
-			ctx := router.WithUserInfo(r.Context(), &pb.Auth{
-				Uid:       jwt.Claims.Sub,
-				Email:     jwt.Claims.Profile.Email,
-				Worker:    false,
-				Validated: jwt.Claims.Profile.Verified,
-				Scope:     strings.Split(jwt.Claims.Scope, ""),
-			})
-			r = r.WithContext(ctx)
-		}
 		next.ServeHTTP(w, r)
 	})
 }

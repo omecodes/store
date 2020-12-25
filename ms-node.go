@@ -88,6 +88,7 @@ func (n *MSNode) updateGrpcContext(ctx context.Context) (context.Context, error)
 	ctx = router.WithCelSearchEnv(n.celSearchEnv)(ctx)
 	ctx = router.WithObjectsStore(n.objects)(ctx)
 	ctx = service.ContextWithBox(ctx, n.box)
+	ctx = router.WithRouterProvider(ctx, n)
 	ctx = clients.WithUnitClientProvider(ctx, &clients.StoreProvider{})
 	return ctx, nil
 }
@@ -96,7 +97,6 @@ func (n *MSNode) GetRouter(ctx context.Context) router.Router {
 	return router.NewCustomRouter(
 		&router.ExecHandler{},
 		router.WithDefaultPoliciesHandler(),
-		router.WithDefaultParamsHandler(),
 	)
 }
 

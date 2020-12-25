@@ -26,8 +26,8 @@ require (
 	github.com/omecodes/bome v0.0.0-20201212145154-cc0621995609
 	github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08
 	github.com/omecodes/discover v0.0.0-20201224203918-4be6856ee8fb
-	github.com/omecodes/libome v0.0.0-20201222212527-11e3f5f47526
-	github.com/omecodes/service v0.0.0-20201224215055-24e35bcfb87e
+	github.com/omecodes/libome v0.0.0-20201225162725-c89c7a20a215
+	github.com/omecodes/service v0.0.0-20201225164225-61abcb2b2087
 	github.com/omecodes/services-ca v0.0.0-20201224183919-c7cef3fb9aa8
 	github.com/sethvargo/go-password v0.2.0
 	github.com/smartystreets/goconvey v1.6.4

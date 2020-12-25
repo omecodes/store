@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/omecodes/common/errors"
 	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/omestore/pb"
 	"github.com/omecodes/omestore/router"
@@ -21,16 +20,16 @@ type handler struct {
 }
 
 func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (*pb.PutObjectResponse, error) {
-	handler := router.NewRoute(ctx)
-	if handler == nil {
-		return nil, errors.Internal
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	object := oms.NewObject()
 	object.SetHeader(request.Header)
 	object.SetContent(bytes.NewBuffer(request.Data))
 
-	id, err := handler.PutObject(ctx, object, request.AccessSecurityRules, oms.PutDataOptions{})
+	id, err := route.PutObject(ctx, object, request.AccessSecurityRules, oms.PutDataOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -41,24 +40,24 @@ func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (
 }
 
 func (h *handler) UpdateObject(ctx context.Context, request *pb.UpdateObjectRequest) (*pb.UpdateObjectResponse, error) {
-	handler := router.NewRoute(ctx)
-	if handler == nil {
-		return nil, errors.Internal
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	patch := oms.NewPatch(request.ObjectId, request.Path)
 	patch.SetContent(bytes.NewBuffer(request.Data))
 
-	return &pb.UpdateObjectResponse{}, handler.PatchObject(ctx, patch, oms.PatchOptions{})
+	return &pb.UpdateObjectResponse{}, route.PatchObject(ctx, patch, oms.PatchOptions{})
 }
 
 func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (*pb.GetObjectResponse, error) {
-	handler := router.NewRoute(ctx)
-	if handler == nil {
-		return nil, errors.Internal
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	object, err := handler.GetObject(ctx, "", oms.GetObjectOptions{})
+	object, err := route.GetObject(ctx, "", oms.GetObjectOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -78,20 +77,21 @@ func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (
 }
 
 func (h *handler) DeleteObject(ctx context.Context, request *pb.DeleteObjectRequest) (*pb.DeleteObjectResponse, error) {
-	handler := router.NewRoute(ctx)
-	if handler == nil {
-		return nil, errors.Internal
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		return nil, err
 	}
-	return &pb.DeleteObjectResponse{}, handler.DeleteObject(ctx, request.ObjectId)
+
+	return &pb.DeleteObjectResponse{}, route.DeleteObject(ctx, request.ObjectId)
 }
 
 func (h *handler) ObjectInfo(ctx context.Context, request *pb.ObjectInfoRequest) (*pb.ObjectInfoResponse, error) {
-	handler := router.NewRoute(ctx)
-	if handler == nil {
-		return nil, errors.Internal
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	header, err := handler.GetObjectHeader(ctx, request.ObjectId)
+	header, err := route.GetObjectHeader(ctx, request.ObjectId)
 	if err != nil {
 		return nil, err
 	}
@@ -102,9 +102,9 @@ func (h *handler) ObjectInfo(ctx context.Context, request *pb.ObjectInfoRequest)
 func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerUnit_ListObjectsServer) error {
 	ctx := stream.Context()
 
-	handler := router.NewRoute(ctx)
-	if handler == nil {
-		return errors.Internal
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		return err
 	}
 
 	opts := oms.ListOptions{
@@ -112,7 +112,7 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 		Count:  int(request.Count),
 	}
 
-	items, err := handler.ListObjects(ctx, opts)
+	items, err := route.ListObjects(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -146,9 +146,9 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 func (h *handler) SearchObjects(request *pb.SearchObjectsRequest, stream pb.HandlerUnit_SearchObjectsServer) error {
 	ctx := stream.Context()
 
-	handler := router.NewRoute(ctx)
-	if handler == nil {
-		return errors.Internal
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		return err
 	}
 
 	params := oms.SearchParams{
@@ -160,7 +160,7 @@ func (h *handler) SearchObjects(request *pb.SearchObjectsRequest, stream pb.Hand
 		Count:  int(request.Count),
 	}
 
-	items, err := handler.SearchObjects(ctx, params, opts)
+	items, err := route.SearchObjects(ctx, params, opts)
 	if err != nil {
 		return err
 	}
