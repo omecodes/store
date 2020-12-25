@@ -5,6 +5,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	ome "github.com/omecodes/libome"
+	"github.com/omecodes/omestore/clients"
 	"github.com/omecodes/omestore/common"
 	context2 "github.com/omecodes/omestore/context"
 	"github.com/omecodes/omestore/oms"
@@ -87,6 +88,7 @@ func (n *MSNode) updateGrpcContext(ctx context.Context) (context.Context, error)
 	ctx = router.WithCelSearchEnv(n.celSearchEnv)(ctx)
 	ctx = router.WithObjectsStore(n.objects)(ctx)
 	ctx = service.ContextWithBox(ctx, n.box)
+	ctx = clients.WithUnitClientProvider(ctx, &clients.StoreProvider{})
 	return ctx, nil
 }
 
