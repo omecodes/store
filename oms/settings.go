@@ -18,3 +18,10 @@ var DefaultSettings = map[string]string{
 	SettingsDataMaxSizePath:        "5242880",
 	SettingsCreateDataSecurityRule: "auth.worker || auth.validated",
 }
+
+type SettingsManager interface {
+	Set(string, string) error
+	Get(string) (string, error)
+	Delete(string) error
+	Clear() error
+}
