@@ -25,6 +25,10 @@ func Get(ctx context.Context) *pb.Auth {
 	return o.(*pb.Auth)
 }
 
+func Context(parent context.Context, a *pb.Auth) context.Context {
+	return context.WithValue(parent, ctxAuthentication{}, a)
+}
+
 func BasicContextUpdater(manager CredentialsManager) ome.GrpcContextUpdaterFunc {
 	return func(ctx context.Context) (context.Context, error) {
 		md, ok := metadata.FromIncomingContext(ctx)
