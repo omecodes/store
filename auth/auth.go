@@ -78,6 +78,14 @@ func OAuth2ContextUpdater(secret string) ome.GrpcContextUpdaterFunc {
 	}
 }
 
+func UpdateFromMeta(parent context.Context) (context.Context, error) {
+	a := FindInMD(parent)
+	if a != nil {
+		return context.WithValue(parent, ctxAuthentication{}, a), nil
+	}
+	return parent, nil
+}
+
 func DetectBasicMiddleware(manager CredentialsManager) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
