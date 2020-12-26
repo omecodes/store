@@ -3,19 +3,18 @@ package router
 import (
 	"context"
 	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/omestore/acl"
 	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/omestore/pb"
-	"github.com/omecodes/omestore/services/acl"
 
 	"github.com/google/cel-go/cel"
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
 )
 
+type ctxACL struct{}
 type ctxSettingsDB struct{}
-type ctxStore struct{}
 
-type ctxAccessStore struct{}
 type ctxCELPolicyEnv struct{}
 type ctxCELSearchEnv struct{}
 
@@ -38,17 +37,10 @@ func (u ContextUpdaterFunc) UpdateContext(ctx context.Context) context.Context {
 	return u(ctx)
 }
 
-// WithAccessStore creates a context updater that adds permissions store to a context
-func WithAccessStore(store acl.Store) ContextUpdaterFunc {
-	return func(parent context.Context) context.Context {
-		return context.WithValue(parent, ctxAccessStore{}, store)
-	}
-}
-
-// WithObjectsStore creates a context updater that adds store to a context
-func WithObjectsStore(objects oms.Objects) ContextUpdaterFunc {
-	return func(parent context.Context) context.Context {
-		return context.WithValue(parent, ctxStore{}, objects)
+// WithObjectsStore creates a context updater that adds ACL to a context
+func WithACL(store acl.Store) ContextUpdaterFunc {
+	return func(ctx context.Context) context.Context {
+		return context.WithValue(ctx, ctxACL{}, store)
 	}
 }
 
@@ -101,28 +93,12 @@ func CELSearchEnv(ctx context.Context) *cel.Env {
 	return o.(*cel.Env)
 }
 
-func Objects(ctx context.Context) oms.Objects {
-	o := ctx.Value(ctxStore{})
-	if o == nil {
-		return nil
-	}
-	return o.(oms.Objects)
-}
-
 func Settings(ctx context.Context) oms.SettingsManager {
 	o := ctx.Value(ctxSettingsDB{})
 	if o == nil {
 		return nil
 	}
 	return o.(oms.SettingsManager)
-}
-
-func ACLStore(ctx context.Context) acl.Store {
-	o := ctx.Value(ctxAccessStore{})
-	if o == nil {
-		return nil
-	}
-	return o.(acl.Store)
 }
 
 func GetObjectHeader(ctx *context.Context, objectID string) (*pb.Header, error) {

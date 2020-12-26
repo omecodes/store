@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/omestore/acl"
 	"github.com/omecodes/omestore/auth"
 	"github.com/omecodes/omestore/pb"
 	"strings"
@@ -31,12 +32,11 @@ func evaluate(ctx *context.Context, state *celParams, rule string) (bool, error)
 
 	vars := map[string]interface{}{
 		"auth": map[string]interface{}{
-			"uid":       state.auth.Uid,
-			"email":     state.auth.Validated,
-			"worker":    state.auth.Worker,
-			"validated": state.auth.Validated,
-			"scope":     state.auth.Scope,
-			"group":     state.auth.Group,
+			"uid":    state.auth.Uid,
+			"email":  state.auth.Email,
+			"worker": state.auth.Worker,
+			"scope":  state.auth.Scope,
+			"group":  state.auth.Group,
 		},
 		"data": map[string]interface{}{
 			"id":         state.data.Id,
@@ -91,7 +91,7 @@ func assetActionAllowedOnObject(ctx *context.Context, action pb.AllowedTo, objec
 }
 
 func getAccessRule(ctx context.Context, action pb.AllowedTo, objectID string, path string) (string, error) {
-	accessStore := ACLStore(ctx)
+	accessStore := acl.GetStore(ctx)
 	if accessStore == nil {
 		log.Error("ACL-Read-Check: missing access store in context")
 		return "", errors.Internal

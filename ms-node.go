@@ -5,6 +5,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	ome "github.com/omecodes/libome"
+	"github.com/omecodes/omestore/acl"
 	"github.com/omecodes/omestore/auth"
 	"github.com/omecodes/omestore/clients"
 	"github.com/omecodes/omestore/common"
@@ -12,8 +13,6 @@ import (
 	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/omestore/pb"
 	"github.com/omecodes/omestore/router"
-	"github.com/omecodes/omestore/services/acl"
-	"github.com/omecodes/omestore/services/objects"
 	"github.com/omecodes/service"
 	"google.golang.org/grpc"
 )
@@ -48,7 +47,7 @@ type MSNode struct {
 func (n *MSNode) init() error {
 	var err error
 	n.accessStore = acl.NewStoreClient()
-	n.objects = objects.NewStoreClient()
+	n.objects = oms.NewStoreGrpcClient()
 
 	n.celPolicyEnv, err = cel.NewEnv(
 		cel.Declarations(
@@ -84,13 +83,14 @@ func (n *MSNode) init() error {
 
 func (n *MSNode) updateGrpcContext(ctx context.Context) (context.Context, error) {
 	ctx = context2.WithRegistry(ctx, n.reg)
-	ctx = router.WithAccessStore(n.accessStore)(ctx)
+	ctx = acl.ContextWithStore(ctx, n.accessStore)
 	ctx = router.WithCelPolicyEnv(n.celPolicyEnv)(ctx)
 	ctx = router.WithCelSearchEnv(n.celSearchEnv)(ctx)
-	ctx = router.WithObjectsStore(n.objects)(ctx)
+	ctx = oms.ContextWithStore(ctx, n.objects)
 	ctx = service.ContextWithBox(ctx, n.box)
 	ctx = router.WithRouterProvider(ctx, n)
-	ctx = clients.WithUnitClientProvider(ctx, &clients.StoreProvider{})
+	ctx = clients.WithACLGrpcClientProvider(ctx, &clients.DefaultACLGrpcProvider{})
+	ctx = clients.WithRouterGrpcClientProvider(ctx, &clients.DefaultRouterGrpcProvider{})
 	return ctx, nil
 }
 

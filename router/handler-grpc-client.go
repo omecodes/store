@@ -27,7 +27,7 @@ type gRPCClientHandler struct {
 }
 
 func (g *gRPCClientHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
-	client, err := clients.Unit(ctx, g.nodeType)
+	client, err := clients.RouterGrpc(ctx, g.nodeType)
 	if err != nil {
 		return "", err
 	}
@@ -39,8 +39,9 @@ func (g *gRPCClientHandler) PutObject(ctx context.Context, object *oms.Object, s
 	}
 
 	rsp, err := client.PutObject(auth.SetMetaWithExisting(ctx), &pb.PutObjectRequest{
-		Header: object.Header(),
-		Data:   data,
+		AccessSecurityRules: security,
+		Header:              object.Header(),
+		Data:                data,
 	})
 	if err != nil {
 		return "", err
@@ -50,7 +51,7 @@ func (g *gRPCClientHandler) PutObject(ctx context.Context, object *oms.Object, s
 }
 
 func (g *gRPCClientHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
-	client, err := clients.Unit(ctx, common.ServiceTypeHandler)
+	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return err
 	}
@@ -70,7 +71,7 @@ func (g *gRPCClientHandler) PatchObject(ctx context.Context, patch *oms.Patch, o
 }
 
 func (g *gRPCClientHandler) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*oms.Object, error) {
-	client, err := clients.Unit(ctx, common.ServiceTypeHandler)
+	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +92,7 @@ func (g *gRPCClientHandler) GetObject(ctx context.Context, id string, opts oms.G
 }
 
 func (g *gRPCClientHandler) GetObjectHeader(ctx context.Context, id string) (*pb.Header, error) {
-	client, err := clients.Unit(ctx, common.ServiceTypeHandler)
+	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +107,7 @@ func (g *gRPCClientHandler) GetObjectHeader(ctx context.Context, id string) (*pb
 }
 
 func (g *gRPCClientHandler) DeleteObject(ctx context.Context, id string) error {
-	client, err := clients.Unit(ctx, common.ServiceTypeHandler)
+	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return err
 	}
@@ -118,7 +119,7 @@ func (g *gRPCClientHandler) DeleteObject(ctx context.Context, id string) error {
 }
 
 func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
-	client, err := clients.Unit(ctx, common.ServiceTypeHandler)
+	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +182,7 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts oms.ListOption
 }
 
 func (g *gRPCClientHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
-	client, err := clients.Unit(ctx, common.ServiceTypeHandler)
+	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return nil, err
 	}

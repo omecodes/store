@@ -20,7 +20,7 @@ func NewSQLObjects(db *sql.DB, dialect string) (Objects, error) {
 		return nil, err
 	}
 
-	h, err := bome.NewJSONMap(db, dialect, "headers")
+	h, err := bome.NewJSONMap(db, dialect, "objects_headers")
 	if err != nil {
 		return nil, err
 	}

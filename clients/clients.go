@@ -6,12 +6,16 @@ import (
 	"github.com/omecodes/omestore/pb"
 )
 
-func ACLStore(ctx context.Context) (pb.ACLClient, error) {
-	return nil, errors.ServiceNotAvailable
+func ACLGrpc(ctx context.Context) (pb.ACLClient, error) {
+	provider := ACLGrpcClientProvider(ctx)
+	if provider == nil {
+		return nil, errors.NotFound
+	}
+	return provider.GetClient(ctx)
 }
 
-func Unit(ctx context.Context, unitType uint32) (pb.HandlerUnitClient, error) {
-	provider := UnitClientProvider(ctx)
+func RouterGrpc(ctx context.Context, unitType uint32) (pb.HandlerUnitClient, error) {
+	provider := RouterGrpcClientProvider(ctx)
 	if provider == nil {
 		return nil, errors.NotFound
 	}

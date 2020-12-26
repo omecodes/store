@@ -190,9 +190,8 @@ func updateContextWithBasic(ctx context.Context, manager CredentialsManager, aut
 	}
 
 	return context.WithValue(ctx, ctxAuthentication{}, &pb.Auth{
-		Uid:       authUser,
-		Validated: true,
-		Worker:    "admin" != authUser,
+		Uid:    authUser,
+		Worker: "admin" != authUser,
 	}), nil
 }
 
@@ -212,10 +211,9 @@ func updateContextWithOauth2(ctx context.Context, secret string, authorization s
 	} */
 
 	return context.WithValue(ctx, ctxAuthentication{}, &pb.Auth{
-		Uid:       jwt.Claims.Sub,
-		Email:     jwt.Claims.Profile.Email,
-		Worker:    false,
-		Validated: jwt.Claims.Profile.Verified,
-		Scope:     strings.Split(jwt.Claims.Scope, ""),
+		Uid:    jwt.Claims.Sub,
+		Email:  jwt.Claims.Profile.Email,
+		Worker: false,
+		Scope:  strings.Split(jwt.Claims.Scope, ""),
 	}), nil
 }

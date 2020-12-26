@@ -67,8 +67,22 @@ func (s *MSServer) init() error {
 		return err
 	}
 
-	s.settings, err = oms.NewSQLSettings(db, bome.MySQL, "settings")
-	return err
+	s.settings, err = oms.NewSQLSettings(db, bome.MySQL, "objects_settings")
+	if err != nil {
+		return err
+	}
+
+	err = s.settings.Set(oms.SettingsDataMaxSizePath, oms.DefaultSettings[oms.SettingsDataMaxSizePath])
+	if err != nil && !errors.IsNotFound(err) {
+		return err
+	}
+
+	err = s.settings.Set(oms.SettingsCreateDataSecurityRule, oms.DefaultSettings[oms.SettingsCreateDataSecurityRule])
+	if err != nil && !errors.IsNotFound(err) {
+		return err
+	}
+
+	return nil
 }
 
 func (s *MSServer) getServiceSecret(name string) (string, error) {
@@ -231,7 +245,7 @@ func (s *MSServer) httpEnrichContext(next http.Handler) http.Handler {
 		ctx = service.ContextWithBox(ctx, box)
 		ctx = router.WithRouterProvider(ctx, router.ProviderFunc(s.GetRouter))
 		ctx = router.WithSettings(s.settings)(ctx)
-		ctx = clients.WithUnitClientProvider(ctx, &clients.LoadBalancer{})
+		ctx = clients.WithRouterGrpcClientProvider(ctx, &clients.LoadBalancer{})
 
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)

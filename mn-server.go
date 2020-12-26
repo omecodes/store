@@ -11,6 +11,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/gorilla/mux"
+	"github.com/omecodes/omestore/acl"
 	"github.com/omecodes/omestore/auth"
 	"github.com/sethvargo/go-password/password"
 	"io/ioutil"
@@ -27,7 +28,6 @@ import (
 	errors2 "github.com/omecodes/libome/errors"
 	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/omestore/router"
-	"github.com/omecodes/omestore/services/acl"
 )
 
 // Config contains info to configure an instance of Server
@@ -286,11 +286,11 @@ func (s *MNServer) startAutoCertAPIServer() error {
 func (s *MNServer) enrichContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		ctx = router.WithAccessStore(s.accessStore)(ctx)
+		ctx = acl.ContextWithStore(ctx, s.accessStore)
+		ctx = oms.ContextWithStore(ctx, s.objects)
 		ctx = router.WithCelPolicyEnv(s.celPolicyEnv)(ctx)
 		ctx = router.WithCelSearchEnv(s.celSearchEnv)(ctx)
 		ctx = router.WithSettings(s.settings)(ctx)
-		ctx = router.WithObjectsStore(s.objects)(ctx)
 		ctx = router.WithWorkers(s.workers)(ctx)
 
 		r = r.WithContext(ctx)

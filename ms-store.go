@@ -5,11 +5,12 @@ import (
 	"database/sql"
 	"github.com/omecodes/bome"
 	ome "github.com/omecodes/libome"
+	"github.com/omecodes/omestore/acl"
+	"github.com/omecodes/omestore/auth"
 	"github.com/omecodes/omestore/common"
 	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/omestore/pb"
 	"github.com/omecodes/omestore/router"
-	"github.com/omecodes/omestore/services/acl"
 	"github.com/omecodes/service"
 	"google.golang.org/grpc"
 )
@@ -53,7 +54,7 @@ func (s *MSStore) init() error {
 		return err
 	}
 
-	s.accessStore, err = acl.NewSQLStore(db, bome.MySQL, "acl")
+	s.accessStore, err = acl.NewSQLStore(db, bome.MySQL, "objects_acl")
 	if err != nil {
 		return err
 	}
@@ -74,6 +75,13 @@ func (s *MSStore) init() error {
 
 func (s *MSStore) updateGrpcContext(ctx context.Context) (context.Context, error) {
 	ctx = service.ContextWithBox(ctx, s.box)
+	ctx = acl.ContextWithStore(ctx, s.accessStore)
+	ctx = oms.ContextWithStore(ctx, s.objects)
+	ctx = router.WithRouterProvider(ctx, router.ProviderFunc(
+		func(ctx context.Context) router.Router {
+			return router.NewCustomRouter(&router.ExecHandler{})
+		},
+	))
 	return ctx, nil
 }
 
@@ -88,17 +96,21 @@ func (s *MSStore) startACLService() error {
 		Meta:        nil,
 	}
 	opts := []service.NodeOption{service.Register(true),
-		service.WithInterceptor(ome.GrpcContextUpdaterFunc(func(ctx context.Context) (context.Context, error) {
-			ctx = router.WithAccessStore(s.accessStore)(ctx)
-			return ctx, nil
-		}))}
+		service.WithInterceptor(
+			ome.GrpcContextUpdaterFunc(
+				func(ctx context.Context) (context.Context, error) {
+					ctx = acl.ContextWithStore(ctx, s.accessStore)
+					return ctx, nil
+				}),
+		),
+	}
 	return s.box.StartNode(params, opts...)
 }
 
 func (s *MSStore) startObjectsService() error {
 	params := &service.NodeParams{
 		RegisterHandlerFunc: func(server *grpc.Server) {
-			pb.RegisterHandlerUnitServer(server, NewHandler())
+			pb.RegisterHandlerUnitServer(server, oms.NewStoreGrpcHandler())
 		},
 		ServiceType: common.ServiceTypeObjects,
 		ServiceID:   s.config.Name + "-objects",
@@ -106,15 +118,11 @@ func (s *MSStore) startObjectsService() error {
 		Meta:        nil,
 	}
 	opts := []service.NodeOption{service.Register(true),
-		service.WithInterceptor(ome.GrpcContextUpdaterFunc(func(ctx context.Context) (context.Context, error) {
-			ctx = router.WithObjectsStore(s.objects)(ctx)
-			ctx = router.WithRouterProvider(ctx, router.ProviderFunc(
-				func(ctx context.Context) router.Router {
-					return router.NewCustomRouter(&router.ExecHandler{})
-				},
-			))
-			return ctx, nil
-		}))}
+		service.WithInterceptor(
+			ome.GrpcContextUpdaterFunc(s.updateGrpcContext),
+			ome.GrpcContextUpdaterFunc(auth.UpdateFromMeta),
+		),
+	}
 	return s.box.StartNode(params, opts...)
 }
 

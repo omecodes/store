@@ -7,12 +7,11 @@ import (
 )
 
 const (
-	uuid      = "auth.user"
-	email     = "auth.user"
-	worker    = "auth.is_worker"
-	validated = "auth.is_validated"
-	scope     = "auth.scope"
-	group     = "auth.group"
+	uuid   = "auth.user"
+	email  = "auth.user"
+	worker = "auth.is_worker"
+	scope  = "auth.scope"
+	group  = "auth.group"
 )
 
 func SetMetaWithExisting(ctx context.Context) context.Context {
@@ -46,12 +45,6 @@ func ToMD(a *pb.Auth) metadata.MD {
 		md.Set(worker, "false")
 	}
 
-	if a.Validated {
-		md.Set(validated, "true")
-	} else {
-		md.Set(validated, "false")
-	}
-
 	if len(a.Scope) > 0 {
 		md.Set(scope, a.Scope...)
 	}
@@ -79,11 +72,6 @@ func FromMD(md metadata.MD) *pb.Auth {
 	workerValues := md.Get(worker)
 	if len(workerValues) > 0 {
 		a.Worker = workerValues[0] == "true"
-	}
-
-	validatedValues := md.Get(validated)
-	if len(validatedValues) > 0 {
-		a.Validated = validatedValues[0] == "true"
 	}
 
 	a.Scope = md.Get(scope)

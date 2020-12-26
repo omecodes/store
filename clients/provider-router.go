@@ -8,9 +8,9 @@ import (
 	"github.com/omecodes/service"
 )
 
-type StoreProvider struct{}
+type DefaultRouterGrpcProvider struct{}
 
-func (p *StoreProvider) GetClient(ctx context.Context, serviceType uint32) (pb.HandlerUnitClient, error) {
+func (p *DefaultRouterGrpcProvider) GetClient(ctx context.Context, serviceType uint32) (pb.HandlerUnitClient, error) {
 	switch serviceType {
 	case common.ServiceTypeObjects:
 		conn, err := service.Connect(ctx, common.ServiceTypeObjects)

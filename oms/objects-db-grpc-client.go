@@ -1,4 +1,4 @@
-package objects
+package oms
 
 import (
 	"bytes"
@@ -8,14 +8,13 @@ import (
 	"github.com/omecodes/omestore/clients"
 	"github.com/omecodes/omestore/common"
 	"github.com/omecodes/omestore/meta"
-	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/omestore/pb"
 	"google.golang.org/grpc/metadata"
 	"io/ioutil"
 	"strconv"
 )
 
-func NewStoreClient() oms.Objects {
+func NewStoreGrpcClient() Objects {
 	return &dbClient{}
 }
 
@@ -23,8 +22,8 @@ type dbClient struct {
 	pb.UnimplementedHandlerUnitServer
 }
 
-func (d *dbClient) Save(ctx context.Context, object *oms.Object) error {
-	objects, err := clients.Unit(ctx, common.ServiceTypeObjects)
+func (d *dbClient) Save(ctx context.Context, object *Object) error {
+	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return err
 	}
@@ -41,8 +40,8 @@ func (d *dbClient) Save(ctx context.Context, object *oms.Object) error {
 	return err
 }
 
-func (d *dbClient) Patch(ctx context.Context, patch *oms.Patch) error {
-	objects, err := clients.Unit(ctx, common.ServiceTypeObjects)
+func (d *dbClient) Patch(ctx context.Context, patch *Patch) error {
+	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return err
 	}
@@ -60,7 +59,7 @@ func (d *dbClient) Patch(ctx context.Context, patch *oms.Patch) error {
 }
 
 func (d *dbClient) Delete(ctx context.Context, objectID string) error {
-	objects, err := clients.Unit(ctx, common.ServiceTypeObjects)
+	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return err
 	}
@@ -71,8 +70,8 @@ func (d *dbClient) Delete(ctx context.Context, objectID string) error {
 	return err
 }
 
-func (d *dbClient) List(ctx context.Context, before int64, count int, filter oms.ObjectFilter) (*oms.ObjectList, error) {
-	objects, err := clients.Unit(ctx, common.ServiceTypeObjects)
+func (d *dbClient) List(ctx context.Context, before int64, count int, filter ObjectFilter) (*ObjectList, error) {
+	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +87,7 @@ func (d *dbClient) List(ctx context.Context, before int64, count int, filter oms
 		}
 	}()
 
-	result := &oms.ObjectList{}
+	result := &ObjectList{}
 
 	md, err := stream.Header()
 	if err != nil {
@@ -115,7 +114,7 @@ func (d *dbClient) List(ctx context.Context, before int64, count int, filter oms
 			return nil, errors.Internal
 		}
 
-		object := oms.NewObject()
+		object := NewObject()
 		object.SetHeader(do.Header)
 		object.SetContent(bytes.NewBuffer(do.Data))
 		result.Objects = append(result.Objects, object)
@@ -124,8 +123,8 @@ func (d *dbClient) List(ctx context.Context, before int64, count int, filter oms
 	return result, nil
 }
 
-func (d *dbClient) ListAt(ctx context.Context, path string, before int64, count int, filter oms.ObjectFilter) (*oms.ObjectList, error) {
-	objects, err := clients.Unit(ctx, common.ServiceTypeObjects)
+func (d *dbClient) ListAt(ctx context.Context, path string, before int64, count int, filter ObjectFilter) (*ObjectList, error) {
+	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +143,7 @@ func (d *dbClient) ListAt(ctx context.Context, path string, before int64, count 
 		}
 	}()
 
-	result := &oms.ObjectList{}
+	result := &ObjectList{}
 
 	md, err := stream.Header()
 	if err != nil {
@@ -171,7 +170,7 @@ func (d *dbClient) ListAt(ctx context.Context, path string, before int64, count 
 			return nil, errors.Internal
 		}
 
-		object := oms.NewObject()
+		object := NewObject()
 		object.SetHeader(do.Header)
 		object.SetContent(bytes.NewBuffer(do.Data))
 		result.Objects = append(result.Objects, object)
@@ -180,8 +179,8 @@ func (d *dbClient) ListAt(ctx context.Context, path string, before int64, count 
 	return result, nil
 }
 
-func (d *dbClient) Get(ctx context.Context, objectID string) (*oms.Object, error) {
-	objects, err := clients.Unit(ctx, common.ServiceTypeObjects)
+func (d *dbClient) Get(ctx context.Context, objectID string) (*Object, error) {
+	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return nil, err
 	}
@@ -191,15 +190,15 @@ func (d *dbClient) Get(ctx context.Context, objectID string) (*oms.Object, error
 		return nil, err
 	}
 
-	object := &oms.Object{}
+	object := &Object{}
 	object.SetHeader(rsp.Data.Header)
 	object.SetContent(bytes.NewBuffer(rsp.Data.Data))
 
 	return object, nil
 }
 
-func (d *dbClient) GetAt(ctx context.Context, objectID string, path string) (*oms.Object, error) {
-	objects, err := clients.Unit(ctx, common.ServiceTypeObjects)
+func (d *dbClient) GetAt(ctx context.Context, objectID string, path string) (*Object, error) {
+	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +211,7 @@ func (d *dbClient) GetAt(ctx context.Context, objectID string, path string) (*om
 		return nil, err
 	}
 
-	object := &oms.Object{}
+	object := &Object{}
 	object.SetHeader(rsp.Data.Header)
 	object.SetContent(bytes.NewBuffer(rsp.Data.Data))
 
@@ -220,7 +219,7 @@ func (d *dbClient) GetAt(ctx context.Context, objectID string, path string) (*om
 }
 
 func (d *dbClient) Info(ctx context.Context, objectID string) (*pb.Header, error) {
-	objects, err := clients.Unit(ctx, common.ServiceTypeObjects)
+	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return nil, err
 	}

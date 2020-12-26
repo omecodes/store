@@ -29,17 +29,13 @@ func (p *PolicyHandler) PutObject(ctx context.Context, object *oms.Object, secur
 		return "", errors.Forbidden
 	}
 
-	if !ai.Validated {
-		return "", errors.Unauthorized
-	}
-
 	docRules := security.AccessRules["$"]
 	if docRules == nil {
 		docRules = &pb.AccessRules{}
 		security.AccessRules["$"] = docRules
 	}
 
-	userDefaultRule := fmt.Sprintf("auth.validated && auth.uid=='%s'", ai.Uid)
+	userDefaultRule := fmt.Sprintf("auth.uid=='%s'", ai.Uid)
 	if len(docRules.Read) == 0 {
 		docRules.Read = append(docRules.Read, userDefaultRule, "auth.worker", "auth.uid=='admin'")
 	} else {
