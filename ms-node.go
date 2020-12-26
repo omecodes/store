@@ -5,6 +5,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	ome "github.com/omecodes/libome"
+	"github.com/omecodes/omestore/auth"
 	"github.com/omecodes/omestore/clients"
 	"github.com/omecodes/omestore/common"
 	context2 "github.com/omecodes/omestore/context"
@@ -116,7 +117,10 @@ func (n *MSNode) Start() error {
 		Meta:        nil,
 	}
 	opts := []service.NodeOption{service.Register(true),
-		service.WithInterceptor(ome.GrpcContextUpdaterFunc(n.updateGrpcContext))}
+		service.WithInterceptor(
+			ome.GrpcContextUpdaterFunc(n.updateGrpcContext),
+			ome.GrpcContextUpdaterFunc(auth.UpdateFromMeta),
+		)}
 
 	return n.box.StartNode(params, opts...)
 }
