@@ -5,6 +5,7 @@ import (
 	"context"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/omestore/auth"
 	"github.com/omecodes/omestore/clients"
 	"github.com/omecodes/omestore/common"
 	"github.com/omecodes/omestore/oms"
@@ -37,7 +38,7 @@ func (g *gRPCClientHandler) PutObject(ctx context.Context, object *oms.Object, s
 		return "", errors.BadInput
 	}
 
-	rsp, err := client.PutObject(ctx, &pb.PutObjectRequest{
+	rsp, err := client.PutObject(auth.SetMetaWithExisting(ctx), &pb.PutObjectRequest{
 		Header: object.Header(),
 		Data:   data,
 	})
@@ -60,7 +61,7 @@ func (g *gRPCClientHandler) PatchObject(ctx context.Context, patch *oms.Patch, o
 		return errors.BadInput
 	}
 
-	_, err = client.UpdateObject(ctx, &pb.UpdateObjectRequest{
+	_, err = client.UpdateObject(auth.SetMetaWithExisting(ctx), &pb.UpdateObjectRequest{
 		ObjectId: patch.GetObjectID(),
 		Path:     patch.Path(),
 		Data:     data,
@@ -74,7 +75,7 @@ func (g *gRPCClientHandler) GetObject(ctx context.Context, id string, opts oms.G
 		return nil, err
 	}
 
-	rsp, err := client.GetObject(ctx, &pb.GetObjectRequest{
+	rsp, err := client.GetObject(auth.SetMetaWithExisting(ctx), &pb.GetObjectRequest{
 		ObjectId: id,
 		Path:     opts.Path,
 	})
@@ -95,7 +96,7 @@ func (g *gRPCClientHandler) GetObjectHeader(ctx context.Context, id string) (*pb
 		return nil, err
 	}
 
-	rsp, err := client.ObjectInfo(ctx, &pb.ObjectInfoRequest{
+	rsp, err := client.ObjectInfo(auth.SetMetaWithExisting(ctx), &pb.ObjectInfoRequest{
 		ObjectId: id,
 	})
 	if err != nil {
@@ -110,7 +111,7 @@ func (g *gRPCClientHandler) DeleteObject(ctx context.Context, id string) error {
 		return err
 	}
 
-	_, err = client.DeleteObject(ctx, &pb.DeleteObjectRequest{
+	_, err = client.DeleteObject(auth.SetMetaWithExisting(ctx), &pb.DeleteObjectRequest{
 		ObjectId: id,
 	})
 	return err
@@ -122,7 +123,7 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts oms.ListOption
 		return nil, err
 	}
 
-	stream, err := client.ListObjects(ctx, &pb.ListObjectsRequest{
+	stream, err := client.ListObjects(auth.SetMetaWithExisting(ctx), &pb.ListObjectsRequest{
 		Before: opts.Before,
 		Count:  uint32(opts.Count),
 	})
@@ -180,5 +181,49 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts oms.ListOption
 }
 
 func (g *gRPCClientHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
-	return nil, nil
+	client, err := clients.Unit(ctx, common.ServiceTypeHandler)
+	if err != nil {
+		return nil, err
+	}
+
+	stream, err := client.SearchObjects(auth.SetMetaWithExisting(ctx), &pb.SearchObjectsRequest{
+		Before:          opts.Before,
+		Count:           uint32(opts.Count),
+		MatchExpression: params.MatchedExpression,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err := stream.CloseSend(); err != nil {
+			log.Error("gRPC Router Handler • error while closing stream", log.Err(err))
+		}
+	}()
+
+	var objects []*oms.Object
+
+	for {
+		dataObject, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+
+		o := oms.NewObject()
+		o.SetHeader(dataObject.Header)
+		o.SetContent(bytes.NewBuffer(dataObject.Data))
+		objects = append(objects, o)
+		if len(objects) == opts.Count {
+			break
+		}
+	}
+
+	return &oms.ObjectList{
+		Before:  opts.Before,
+		Count:   len(objects),
+		Objects: objects,
+	}, nil
 }
