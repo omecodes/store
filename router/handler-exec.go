@@ -15,32 +15,40 @@ type ExecHandler struct {
 }
 
 func (e *ExecHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
-	storage := oms.Get(ctx)
-	if storage == nil {
-		log.Info("exec-handler.PutObject: missing storage in context")
+
+	id := object.ID()
+	if id == "" {
+		id = uuid.New().String()
+		object.SetID(id)
+	}
+
+	accessStore := acl.GetStore(ctx)
+	if accessStore == nil {
+		log.Info("exec-handler.PutObject: missing access store in context")
 		return "", errors.Internal
 	}
 
-	id := uuid.New().String()
-	object.SetID(id)
-
-	err := storage.Save(ctx, object)
+	err := accessStore.SaveRules(ctx, object.ID(), security)
 	if err != nil {
-		return "", err
+		log.Error("exec-handler.PutObject: failed to save object access security rules", log.Err(err))
+		return "", errors.Internal
 	}
 
-	if security != nil {
-		accessStore := acl.GetStore(ctx)
-		if accessStore == nil {
-			log.Info("exec-handler.PutObject: missing access store in context")
-			return "", errors.Internal
+	storage := oms.Get(ctx)
+	if storage == nil {
+		log.Error("exec-handler.PutObject: missing storage in context")
+		if err2 := accessStore.Delete(ctx, object.ID()); err2 != nil {
+			log.Error("exec-handler.PutObject: failed to clear access rules", log.Err(err2))
 		}
+		return "", errors.Internal
+	}
 
-		err = accessStore.SaveRules(ctx, object.ID(), security)
-		if err != nil {
-			log.Error("exec-handler.PutObject: failed to save object access security rules", log.Err(err))
-			return "", errors.Internal
+	err = storage.Save(ctx, object)
+	if err != nil {
+		if err2 := accessStore.Delete(ctx, object.ID()); err2 != nil {
+			log.Error("exec-handler.PutObject: failed to clear access rules", log.Err(err2))
 		}
+		return "", err
 	}
 
 	return id, nil

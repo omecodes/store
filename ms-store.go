@@ -49,7 +49,7 @@ func (s *MSStore) init() error {
 		return err
 	}
 
-	s.objects, err = oms.NewSQLObjects(db, bome.MySQL)
+	s.objects, err = oms.NewSQLObjects(db, bome.MySQL, "objects")
 	if err != nil {
 		return err
 	}

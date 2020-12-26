@@ -16,7 +16,7 @@ var SettingsPathValueMimes = map[string]string{
 
 var DefaultSettings = map[string]string{
 	SettingsDataMaxSizePath:        "5242880",
-	SettingsCreateDataSecurityRule: "auth.worker || auth.validated",
+	SettingsCreateDataSecurityRule: "auth.worker",
 }
 
 type SettingsManager interface {

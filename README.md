@@ -40,7 +40,6 @@ The request context is a set of objects that hold information about:
 type auth {
     uid string //user id
     email string
-    validated bool
     scope string
     group string
 }
@@ -81,7 +80,7 @@ Allowing everybody to read document and allowing only creator to edit documents 
 
 ``` protobuf
     read: true
-    write: auth.validated && auth.uid == data.creator
+    write: auth.uid == data.creator
 ``` 
 
 and to apply these rules on a server that runs at localhost send an http post request as follow:
@@ -92,7 +91,7 @@ curl --location --request POST 'http://127.0.0.1/.settings/security/rules/access
 --header 'Content-Type: application/json' \
 --data-raw '{
     "read": "true",
-    "write": "auth.validated && auth.uid == data.id"
+    "write": "auth.uid == data.id"
 }'
 ```
 

@@ -62,11 +62,11 @@ func initDB() {
 		So(err, ShouldBeNil)
 		So(db, ShouldNotBeNil)
 
-		objects, err = NewSQLObjects(db, "unknown-dialect")
+		objects, err = NewSQLObjects(db, "unknown-dialect", "tests_objects")
 		So(objects, ShouldBeNil)
 		So(err, ShouldNotBeNil)
 
-		objects, err = NewSQLObjects(db, testDialect)
+		objects, err = NewSQLObjects(db, testDialect, "tests_objects")
 		So(err, ShouldBeNil)
 		So(objects, ShouldNotBeNil)
 

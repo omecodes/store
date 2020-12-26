@@ -14,13 +14,13 @@ import (
 	"time"
 )
 
-func NewSQLObjects(db *sql.DB, dialect string) (Objects, error) {
-	m, err := bome.NewJSONMap(db, dialect, "objects")
+func NewSQLObjects(db *sql.DB, dialect string, tableName string) (Objects, error) {
+	m, err := bome.NewJSONMap(db, dialect, tableName)
 	if err != nil {
 		return nil, err
 	}
 
-	h, err := bome.NewJSONMap(db, dialect, "objects_headers")
+	h, err := bome.NewJSONMap(db, dialect, tableName+"_headers")
 	if err != nil {
 		return nil, err
 	}
