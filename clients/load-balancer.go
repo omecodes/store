@@ -5,7 +5,6 @@ import (
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	ome "github.com/omecodes/libome"
-	"github.com/omecodes/omestore/auth"
 	"github.com/omecodes/omestore/pb"
 	"github.com/omecodes/service"
 	"sync"
@@ -46,7 +45,7 @@ func (b *LoadBalancer) GetClient(ctx context.Context, serviceType uint32) (pb.Ha
 		b.counter = counter + 1
 	}
 
-	conn, err := service.ConnectToSpecificService(auth.SetMetaWithExisting(ctx), info.Id)
+	conn, err := service.ConnectToSpecificService(ctx, info.Id)
 	if err != nil {
 		return nil, err
 	}
