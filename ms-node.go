@@ -5,6 +5,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	ome "github.com/omecodes/libome"
+	"github.com/omecodes/service"
 	"github.com/omecodes/store/acl"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/clients"
@@ -13,7 +14,6 @@ import (
 	"github.com/omecodes/store/oms"
 	"github.com/omecodes/store/pb"
 	"github.com/omecodes/store/router"
-	"github.com/omecodes/service"
 	"google.golang.org/grpc"
 )
 
