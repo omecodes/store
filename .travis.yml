@@ -21,6 +21,8 @@ script:
       dep ensure
     fi
 
-  - go build oms.go
+  - |
+    cd cmd/mn-server
+    go build
 
   - go test -v ./...
