@@ -1,0 +1,218 @@
+swagger: "2.0"
+info:
+  description: "API specification for Objects Store"
+  version: "v0.0.0"
+  title: "Store API"
+  termsOfService: ""
+  contact:
+    email: "omecodes@gmail.com"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: ""
+basePath: "/"
+tags:
+  - name: "Store"
+    description: "Objects backend server"
+schemes:
+  - "https"
+  - "http"
+
+paths:
+  /objects:
+    put:
+      tags:
+        - "Store"
+      summary: "Saves an object"
+      operationId: "CreateObject"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+      responses:
+        "400":
+          description: "Invalid input"
+        "403":
+          description: "You are not authorized to create a resource"
+    get:
+      tags:
+        - "Store"
+      summary: "Get objects list"
+      description: ""
+      operationId: "ListObjects"
+      produces:
+        - "application/json"
+      parameters:
+        - in: query
+          type: number
+          name: before
+        - in: query
+          type: number
+          name: offset
+        - in: query
+          type: number
+          name: count
+      responses:
+        "403":
+          description: "You are not authorized to read this resource"
+        "404":
+          description: "Resource not found"
+    post:
+      tags:
+        - "Store"
+      summary: "Search for objects"
+      description: ""
+      operationId: "SearchObjects"
+      produces:
+        - "application/json"
+      parameters:
+        - in: query
+          type: number
+          name: before
+        - in: query
+          type: number
+          name: offset
+        - in: query
+          type: number
+          name: count
+        - in: body
+          name: params
+          schema:
+            type: object
+      responses:
+        "403":
+          description: "You are not authorized to read this resource"
+        "404":
+          description: "Resource not found"
+  /objects/{id}:
+    parameters:
+      - in: path
+        name: "id"
+        required: true
+        type: string
+        description: "object id"
+    put:
+      tags:
+        - "Store"
+      summary: "Save an object to the store with id"
+      operationId: "CreateObjectWithID"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+      responses:
+        "400":
+          description: "Invalid input"
+        "403":
+          description: "You are not authorized to create a resource"
+    patch:
+      tags:
+        - "Store"
+      summary: "Patch an object"
+      description: ""
+      operationId: "Patch"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+        - in: query
+          required: true
+          type: string
+          name: path
+      responses:
+        "400":
+          description: "Bad input"
+        "403":
+          description: "You are not allowed to edit this resource"
+        "404":
+          description: "Resource not found"
+    get:
+      tags:
+        - "Store"
+      summary: "Get an object"
+      description: ""
+      operationId: "GetObject"
+      produces:
+        - "application/json"
+      parameters:
+        - in: query
+          type: boolean
+          name: info
+        - in: query
+          type: string
+          name: path
+      responses:
+        "403":
+          description: "You are not authorized to read this resource"
+        "404":
+          description: "Resource not found"
+    delete:
+      tags:
+        - "Store"
+      summary: "Delete an object"
+      description: ""
+      operationId: "DeleteData"
+      produces:
+        - "application/json"
+      parameters:
+        - in: query
+          type: string
+          name: path
+      responses:
+        "403":
+          description: "You are not authorized to delete this resource"
+        "404":
+          description: "Resource not found"
+  /objects/{id}/acl:
+    parameters:
+      - in: path
+        name: "id"
+        required: true
+        type: string
+        description: "object id"
+    get:
+      tags:
+        - "Store"
+      summary: "Get an object ACL"
+      description: ""
+      operationId: "GetACL"
+      produces:
+        - "application/json"
+      responses:
+        "403":
+          description: "You are not authorized to read this resource"
+        "404":
+          description: "Resource not found"
+    post:
+      tags:
+        - "Store"
+      summary: "Update object ACL"
+      description: ""
+      operationId: "UpdateACL"
+      produces:
+        - "application/json"
+      parameters:
+        - in: body
+          name: acl
+          schema:
+            type: object
+      responses:
+        "403":
+          description: "You are not authorized to read this resource"
+        "404":
+          description: "Resource not found"

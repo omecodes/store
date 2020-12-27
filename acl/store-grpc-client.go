@@ -2,8 +2,8 @@ package acl
 
 import (
 	"context"
-	"github.com/omecodes/omestore/clients"
-	"github.com/omecodes/omestore/pb"
+	"github.com/omecodes/store/clients"
+	"github.com/omecodes/store/pb"
 )
 
 func NewStoreClient() *gRPCClient {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
-	"github.com/omecodes/omestore/pb"
+	"github.com/omecodes/store/pb"
 )
 
 func NewUnitServerHandler() pb.ACLServer {

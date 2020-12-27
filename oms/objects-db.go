@@ -2,7 +2,7 @@ package oms
 
 import (
 	"context"
-	"github.com/omecodes/omestore/pb"
+	"github.com/omecodes/store/pb"
 )
 
 type Objects interface {

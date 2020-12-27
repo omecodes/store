@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/omecodes/omestore/pb/pb.proto;pb";
+option go_package = "github.com/omecodes/store/pb/pb.proto;pb";
 
 enum AllowedTo {
   doNothing = 0;

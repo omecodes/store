@@ -6,9 +6,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
-	"github.com/omecodes/omestore/auth"
-	"github.com/omecodes/omestore/oms"
-	"github.com/omecodes/omestore/router"
+	"github.com/omecodes/store/auth"
+	"github.com/omecodes/store/oms"
+	"github.com/omecodes/store/router"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -38,8 +38,6 @@ func (s *HTTPUnit) MuxRouter() *mux.Router {
 	r.Name("Del").Methods(http.MethodDelete).Path("/objects/{id}").Handler(http.HandlerFunc(s.del))
 	r.Name("GetObjects").Methods(http.MethodGet).Path("/objects").Handler(http.HandlerFunc(s.list))
 	r.Name("Search").Methods(http.MethodPost).Path("/objects").Handler(http.HandlerFunc(s.search))
-	r.PathPrefix("/objects/{id}/").Subrouter().Name("PatchSubDoc").Methods(http.MethodPatch).Handler(http.HandlerFunc(s.patch))
-	r.PathPrefix("/objects/{id}/").Subrouter().Name("Select").Methods(http.MethodGet).Handler(http.HandlerFunc(s.sel))
 
 	return r
 }
@@ -115,40 +113,6 @@ func (s *HTTPUnit) get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	object, err := route.GetObject(ctx, id, oms.GetObjectOptions{Info: onlyInfo == "true"})
-	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
-		return
-	}
-
-	data, err := ioutil.ReadAll(object.GetContent())
-	if err != nil {
-		log.Error("Get: failed to encoded object", log.Err(err))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Header().Add("Content-Type", "application/json")
-	_, err = w.Write(data)
-	if err != nil {
-		log.Error("failed to write response", log.Err(err))
-	}
-}
-
-func (s *HTTPUnit) sel(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	vars := mux.Vars(r)
-
-	id := vars["id"]
-	filter := strings.Replace(r.RequestURI, fmt.Sprintf("/%s", id), "", 1)
-
-	route, err := router.NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	object, err := route.GetObject(ctx, id, oms.GetObjectOptions{Path: filter})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/libome/logs"
-	"github.com/omecodes/omestore/pb"
+	"github.com/omecodes/store/pb"
 	"google.golang.org/grpc/metadata"
 	"io/ioutil"
 )

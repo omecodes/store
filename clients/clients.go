@@ -3,7 +3,7 @@ package clients
 import (
 	"context"
 	"github.com/omecodes/common/errors"
-	"github.com/omecodes/omestore/pb"
+	"github.com/omecodes/store/pb"
 )
 
 func ACLGrpc(ctx context.Context) (pb.ACLClient, error) {

@@ -2,7 +2,7 @@ package acl
 
 import (
 	"context"
-	"github.com/omecodes/omestore/pb"
+	"github.com/omecodes/store/pb"
 )
 
 type Store interface {

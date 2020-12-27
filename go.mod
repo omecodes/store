@@ -1,4 +1,4 @@
-module github.com/omecodes/omestore
+module github.com/omecodes/store
 
 go 1.15
 
@@ -27,6 +27,7 @@ require (
 	github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08
 	github.com/omecodes/discover v0.0.0-20201224203918-4be6856ee8fb
 	github.com/omecodes/libome v0.0.0-20201225162725-c89c7a20a215
+	github.com/omecodes/omestore v0.0.0-20201227132932-7cff7244b86b
 	github.com/omecodes/service v0.0.0-20201225164225-61abcb2b2087
 	github.com/omecodes/services-ca v0.0.0-20201224183919-c7cef3fb9aa8
 	github.com/sethvargo/go-password v0.2.0

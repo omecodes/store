@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"github.com/omecodes/omestore/pb"
+	"github.com/omecodes/store/pb"
 	"google.golang.org/grpc/metadata"
 )
 

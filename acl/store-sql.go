@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"github.com/omecodes/bome"
-	"github.com/omecodes/omestore/pb"
+	"github.com/omecodes/store/pb"
 )
 
 func NewSQLStore(db *sql.DB, dialect string, tableName string) (Store, error) {

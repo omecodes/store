@@ -11,8 +11,8 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/gorilla/mux"
-	"github.com/omecodes/omestore/acl"
-	"github.com/omecodes/omestore/auth"
+	"github.com/omecodes/store/acl"
+	"github.com/omecodes/store/auth"
 	"github.com/sethvargo/go-password/password"
 	"io/ioutil"
 	"net"
@@ -26,8 +26,8 @@ import (
 	"github.com/omecodes/common/netx"
 	"github.com/omecodes/common/utils/log"
 	errors2 "github.com/omecodes/libome/errors"
-	"github.com/omecodes/omestore/oms"
-	"github.com/omecodes/omestore/router"
+	"github.com/omecodes/store/oms"
+	"github.com/omecodes/store/router"
 )
 
 // Config contains info to configure an instance of Server
@@ -92,7 +92,7 @@ func (s *MNServer) init() error {
 		return err
 	}
 
-	s.objects, err = oms.NewSQLObjects(db, bome.MySQL)
+	s.objects, err = oms.NewSQLObjects(db, bome.MySQL, "objects")
 	if err != nil {
 		return err
 	}

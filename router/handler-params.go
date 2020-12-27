@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
-	"github.com/omecodes/omestore/oms"
-	"github.com/omecodes/omestore/pb"
+	"github.com/omecodes/store/oms"
+	"github.com/omecodes/store/pb"
 	"strconv"
 	"time"
 )

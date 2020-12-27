@@ -2,7 +2,7 @@ package oms
 
 import (
 	"bytes"
-	"github.com/omecodes/omestore/pb"
+	"github.com/omecodes/store/pb"
 	"io"
 )
 

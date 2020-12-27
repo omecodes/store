@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/omecodes/common/utils/prompt"
-	oms "github.com/omecodes/omestore"
+	oms "github.com/omecodes/store"
 )
 
 var (

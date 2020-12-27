@@ -534,6 +534,8 @@ github.com/omecodes/libome v0.0.0-20201222212527-11e3f5f47526 h1:3mNaGmt0pmT+clG
 github.com/omecodes/libome v0.0.0-20201222212527-11e3f5f47526/go.mod h1:KDrBixAwkiu9Ooe/f0MRAbiD5GgQgOwDpCVm7sX2F84=
 github.com/omecodes/libome v0.0.0-20201225162725-c89c7a20a215 h1:L7a15UHxMv52ZDLZoUGSMQhawi2Mnsb7YiJoLrlFJb8=
 github.com/omecodes/libome v0.0.0-20201225162725-c89c7a20a215/go.mod h1:KDrBixAwkiu9Ooe/f0MRAbiD5GgQgOwDpCVm7sX2F84=
+github.com/omecodes/omestore v0.0.0-20201227132932-7cff7244b86b h1:zzmx2z9tODcUsFfxxCgAS12rqoK2Z4ueA4BoiQ0afY8=
+github.com/omecodes/omestore v0.0.0-20201227132932-7cff7244b86b/go.mod h1:dShy3yHgNH5n7zozTwLPB5ve8lEXEE9MaAlcusBlxV4=
 github.com/omecodes/service v0.0.0-20201222180952-396e2e9206f4 h1:3Ec1SV6GJyoqR6AU6FS9SQkDflVd9zSyy99we2KKpj0=
 github.com/omecodes/service v0.0.0-20201222180952-396e2e9206f4/go.mod h1:AGaYELajC8uX+0aNhfWv4C6SvApqjSk6lBuDvJj6JsE=
 github.com/omecodes/service v0.0.0-20201222221015-0b66ab975e18 h1:KbPxuMPigG2XF8sdNUib3VzhkSqvXPYwwdX9F/ofAvs=

@@ -9,7 +9,7 @@ import (
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
-	"github.com/omecodes/omestore/pb"
+	"github.com/omecodes/store/pb"
 	"io/ioutil"
 	"time"
 )

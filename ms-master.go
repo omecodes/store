@@ -10,9 +10,9 @@ import (
 	"github.com/omecodes/discover"
 	errors2 "github.com/omecodes/libome/errors"
 	"github.com/omecodes/libome/logs"
-	"github.com/omecodes/omestore/auth"
-	"github.com/omecodes/omestore/oms"
 	"github.com/omecodes/service"
+	"github.com/omecodes/store/auth"
+	"github.com/omecodes/store/oms"
 	"net"
 	"net/http"
 	"os"
@@ -24,10 +24,10 @@ import (
 	"github.com/omecodes/common/utils/log"
 	ome "github.com/omecodes/libome"
 	"github.com/omecodes/libome/ports"
-	"github.com/omecodes/omestore/clients"
-	"github.com/omecodes/omestore/common"
-	"github.com/omecodes/omestore/router"
 	sca "github.com/omecodes/services-ca"
+	"github.com/omecodes/store/clients"
+	"github.com/omecodes/store/common"
+	"github.com/omecodes/store/router"
 )
 
 type MsConfig struct {

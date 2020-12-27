@@ -12,7 +12,7 @@ import (
 
 	ome "github.com/omecodes/libome"
 	"github.com/omecodes/libome/errors"
-	"github.com/omecodes/omestore/pb"
+	"github.com/omecodes/store/pb"
 )
 
 type ctxAuthentication struct{}

@@ -5,8 +5,8 @@ import (
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	ome "github.com/omecodes/libome"
-	"github.com/omecodes/omestore/pb"
 	"github.com/omecodes/service"
+	"github.com/omecodes/store/pb"
 	"sync"
 )
 

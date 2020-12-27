@@ -3,9 +3,9 @@ package router
 import (
 	"context"
 	"github.com/omecodes/common/utils/log"
-	"github.com/omecodes/omestore/acl"
-	"github.com/omecodes/omestore/oms"
-	"github.com/omecodes/omestore/pb"
+	"github.com/omecodes/store/acl"
+	"github.com/omecodes/store/oms"
+	"github.com/omecodes/store/pb"
 
 	"github.com/google/cel-go/cel"
 	"github.com/omecodes/bome"

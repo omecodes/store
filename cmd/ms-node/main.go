@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/omecodes/common/utils/prompt"
-	oms "github.com/omecodes/omestore"
+	oms "github.com/omecodes/store"
 	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"

@@ -2,8 +2,8 @@ package router
 
 import (
 	"context"
-	"github.com/omecodes/omestore/oms"
-	"github.com/omecodes/omestore/pb"
+	"github.com/omecodes/store/oms"
+	"github.com/omecodes/store/pb"
 )
 
 type BaseHandler struct {

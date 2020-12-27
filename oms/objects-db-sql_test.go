@@ -7,7 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/omecodes/bome"
-	"github.com/omecodes/omestore/pb"
+	"github.com/omecodes/store/pb"
 	"io/ioutil"
 	"os"
 	"strings"

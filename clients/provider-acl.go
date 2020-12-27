@@ -2,9 +2,9 @@ package clients
 
 import (
 	"context"
-	"github.com/omecodes/omestore/common"
-	"github.com/omecodes/omestore/pb"
 	"github.com/omecodes/service"
+	"github.com/omecodes/store/common"
+	"github.com/omecodes/store/pb"
 )
 
 type DefaultACLGrpcProvider struct{}

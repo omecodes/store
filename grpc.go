@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/omecodes/omestore/oms"
-	"github.com/omecodes/omestore/pb"
-	"github.com/omecodes/omestore/router"
+	"github.com/omecodes/store/oms"
+	"github.com/omecodes/store/pb"
+	"github.com/omecodes/store/router"
 	"google.golang.org/grpc/metadata"
 	"io/ioutil"
 )

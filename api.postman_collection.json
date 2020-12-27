@@ -98,7 +98,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"id\": \"{{user}}\",\r\n    \"email\": \"{{user}}@omestoreio.com\",\r\n    \"password\": \"{{userpwd}}\"\r\n}",
+          "raw": "{\r\n    \"id\": \"{{user}}\",\r\n    \"email\": \"{{user}}@storeio.com\",\r\n    \"password\": \"{{userpwd}}\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -153,7 +153,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"id\": \"{{user}}\",\r\n    \"email\": \"{{user}}@omestoreio.com\",\r\n    \"password\": \"{{userpwd}}\"\r\n}",
+          "raw": "{\r\n    \"id\": \"{{user}}\",\r\n    \"email\": \"{{user}}@storeio.com\",\r\n    \"password\": \"{{userpwd}}\"\r\n}",
           "options": {
             "raw": {
               "language": "json"

@@ -4,9 +4,9 @@ import (
 	"context"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
-	"github.com/omecodes/omestore/acl"
-	"github.com/omecodes/omestore/auth"
-	"github.com/omecodes/omestore/pb"
+	"github.com/omecodes/store/acl"
+	"github.com/omecodes/store/auth"
+	"github.com/omecodes/store/pb"
 	"strings"
 	"time"
 )

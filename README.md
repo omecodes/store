@@ -1,14 +1,14 @@
-[![Build Status](https://travis-ci.com/omecodes/omestore.svg?token=QUyy7EoZqdBaaAXPQDKS&branch=master)](https://travis-ci.com/omecodes/omestore.svg?token=QUyy7EoZqdBaaAXPQDKS&branch=master)
+[![Build Status](https://travis-ci.com/omecodes/store.svg?token=QUyy7EoZqdBaaAXPQDKS&branch=master)](https://travis-ci.com/omecodes/store.svg?token=QUyy7EoZqdBaaAXPQDKS&branch=master)
 # Omestore 
 
 Omestore is a real time database backend service designed for fast mobile and web apps development. 
 
-On top of an API to C.R.U.D json documents from a MySQL database omestore uses a CEL based security rules layer to manage access to documents.
+On top of an API to C.R.U.D json documents from a MySQL database store uses a CEL based security rules layer to manage access to documents.
 
 ## Install and run
 
 ``` sh
-go get github.com/omecodes/omestore
+go get github.com/omecodes/store
 ```
 
 ### requirements
@@ -17,12 +17,12 @@ Omestore only a need a MySQL database installed to run.
 
 ### Run
 
-Executing just `./omestore` command will start a server that listens to the port 80 and assumes you have a MySQL database running on `127.0.0.1:3306` accessible with `omestore:omestore` credentials.
+Executing just `./store` command will start a server that listens to the port 80 and assumes you have a MySQL database running on `127.0.0.1:3306` accessible with `store:store` credentials.
 
 To run it using non default port and database, excute it with `--p` and `--dsn` arguments as follow:
 
 ``` sh
-./omestore --p=8080 --dsn=ome:code@(loclahost:3306)/omestore?charset=utf8
+./store --p=8080 --dsn=ome:code@(loclahost:3306)/store?charset=utf8
 ```
 
 
@@ -97,4 +97,4 @@ curl --location --request POST 'http://127.0.0.1/.settings/security/rules/access
 
 ## API with swagger
 
-Go to [Swagger online editor](https://editor.swagger.io/) and paste the content of the [omestore API specification](https://github.com/omecodes/omestore/blob/master/api.swagger.yml) to learn more about the Omestore or generate a client code of the language you are working with.
+Go to [Swagger online editor](https://editor.swagger.io/) and paste the content of the [store API specification](https://github.com/omecodes/store/blob/master/api.swagger.yml) to learn more about the Omestore or generate a client code of the language you are working with.
