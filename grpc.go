@@ -27,7 +27,7 @@ func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (
 
 	object := oms.NewObject()
 	object.SetHeader(request.Header)
-	object.SetContent(bytes.NewBuffer(request.Data))
+	object.SetContent(bytes.NewBufferString(request.Data))
 
 	if request.AccessSecurityRules == nil {
 		request.AccessSecurityRules = &pb.PathAccessRules{}
@@ -36,7 +36,9 @@ func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (
 		request.AccessSecurityRules.AccessRules = map[string]*pb.AccessRules{}
 	}
 
-	id, err := route.PutObject(ctx, object, request.AccessSecurityRules, oms.PutDataOptions{})
+	id, err := route.PutObject(ctx, object, request.AccessSecurityRules, oms.PutDataOptions{
+		Indexes: request.Indexes,
+	})
 	if err != nil {
 		return nil, err
 	}

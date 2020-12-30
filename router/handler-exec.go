@@ -43,7 +43,7 @@ func (e *ExecHandler) PutObject(ctx context.Context, object *oms.Object, securit
 		return "", errors.Internal
 	}
 
-	err = storage.Save(ctx, object)
+	err = storage.Save(ctx, object, opts.Indexes...)
 	if err != nil {
 		if err2 := accessStore.Delete(ctx, object.ID()); err2 != nil {
 			log.Error("exec-handler.PutObject: failed to clear access rules", log.Err(err2))

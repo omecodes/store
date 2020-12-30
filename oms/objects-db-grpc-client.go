@@ -22,7 +22,7 @@ type dbClient struct {
 	pb.UnimplementedHandlerUnitServer
 }
 
-func (d *dbClient) Save(ctx context.Context, object *Object) error {
+func (d *dbClient) Save(ctx context.Context, object *Object, index ...*pb.Index) error {
 	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return err
@@ -34,8 +34,9 @@ func (d *dbClient) Save(ctx context.Context, object *Object) error {
 	}
 
 	_, err = objects.PutObject(ctx, &pb.PutObjectRequest{
-		Header: object.Header(),
-		Data:   data,
+		Header:  object.Header(),
+		Data:    string(data),
+		Indexes: index,
 	})
 	return err
 }

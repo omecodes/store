@@ -41,7 +41,8 @@ func (g *gRPCClientHandler) PutObject(ctx context.Context, object *oms.Object, s
 	rsp, err := client.PutObject(auth.SetMetaWithExisting(ctx), &pb.PutObjectRequest{
 		AccessSecurityRules: security,
 		Header:              object.Header(),
-		Data:                data,
+		Data:                string(data),
+		Indexes:             opts.Indexes,
 	})
 	if err != nil {
 		return "", err

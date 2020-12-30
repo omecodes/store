@@ -22,7 +22,7 @@ type handler struct {
 func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (*pb.PutObjectResponse, error) {
 	object := NewObject()
 	object.SetHeader(request.Header)
-	object.SetContent(bytes.NewBuffer(request.Data))
+	object.SetContent(bytes.NewBufferString(request.Data))
 
 	storage := Get(ctx)
 	if storage == nil {
@@ -30,7 +30,7 @@ func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (
 		return nil, errors.Internal
 	}
 
-	err := storage.Save(ctx, object)
+	err := storage.Save(ctx, object, request.Indexes...)
 	if err != nil {
 		return nil, err
 	}

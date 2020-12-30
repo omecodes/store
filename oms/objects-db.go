@@ -7,7 +7,7 @@ import (
 
 type Objects interface {
 	// Save saves object content as JSON in database
-	Save(ctx context.Context, object *Object) error
+	Save(ctx context.Context, object *Object, index ...*pb.Index) error
 
 	// Update applies patch to object with id equals patch.ID()
 	Patch(ctx context.Context, patch *Patch) error
@@ -47,9 +47,13 @@ type GraftInfo struct {
 	Size       int64  `json:"size"`
 }
 
-type PutDataOptions struct{}
+type PutDataOptions struct {
+	Indexes []*pb.Index
+}
 
-type PatchOptions struct{}
+type PatchOptions struct {
+	Indexes []*pb.Index
+}
 
 type DeleteOptions struct {
 	Path string `json:"path"`
@@ -67,6 +71,7 @@ type ListOptions struct {
 }
 
 type SearchParams struct {
+	Collection        string `json:"collection"`
 	MatchedExpression string `json:"matched_expression"`
 }
 

@@ -51,6 +51,16 @@ message DataObject {
   bytes data = 2;
 }
 
+message Item {
+  string name = 1;
+  string path = 2;
+}
+
+message Index {
+  string collection = 1;
+  repeated Item fields = 2;
+}
+
 service HandlerUnit {
   rpc PutObject(PutObjectRequest) returns (PutObjectResponse);
   rpc UpdateObject(UpdateObjectRequest) returns (UpdateObjectResponse);
@@ -64,7 +74,8 @@ service HandlerUnit {
 message PutObjectRequest {
   Header header = 1;
   PathAccessRules access_security_rules = 2;
-  bytes data = 3;
+  repeated Index indexes = 3;
+  string data = 4;
 }
 message PutObjectResponse {
   string object_id = 1;
@@ -108,9 +119,10 @@ message ListObjectsResponse {
 }
 
 message SearchObjectsRequest {
-  int64 before = 1;
-  uint32 count = 2;
-  string match_expression = 3;
+  string collection = 1;
+  string match_expression = 2;
+  int64 before = 3;
+  uint32 count = 4;
 }
 message SearchObjectsResponse {
   uint64 offset = 1;

@@ -1,13 +1,16 @@
 package oms
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/gorilla/mux"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/oms"
+	"github.com/omecodes/store/pb"
 	"github.com/omecodes/store/router"
 	"io/ioutil"
 	"net/http"
@@ -32,7 +35,7 @@ func (s *HTTPUnit) MuxRouter() *mux.Router {
 	settingsSubRouter.Name("SetSettings").Methods(http.MethodPost).Handler(http.HandlerFunc(s.setSettings))
 	settingsSubRouter.Name("GetSettings").Methods(http.MethodGet).Handler(http.HandlerFunc(s.getSettings))
 
-	r.Name("Put").Methods(http.MethodPut).Path("/objects/{id}").Handler(http.HandlerFunc(s.put))
+	r.Name("Put").Methods(http.MethodPut).Path("/objects").Handler(http.HandlerFunc(s.put))
 	r.Name("Patch").Methods(http.MethodPatch).Path("/objects/{id}").Handler(http.HandlerFunc(s.patch))
 	r.Name("Get").Methods(http.MethodGet).Path("/objects/{id}").Handler(http.HandlerFunc(s.get))
 	r.Name("Del").Methods(http.MethodDelete).Path("/objects/{id}").Handler(http.HandlerFunc(s.del))
@@ -51,11 +54,15 @@ func (s *HTTPUnit) put(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var putRequest pb.PutObjectRequest
+	err := jsonpb.Unmarshal(r.Body, &putRequest)
+
 	var opts oms.PutDataOptions
+	opts.Indexes = putRequest.Indexes
 
 	object := oms.NewObject()
-	object.SetContent(r.Body)
-	object.SetSize(r.ContentLength)
+	object.SetContent(bytes.NewBufferString(putRequest.Data))
+	object.SetSize(int64(len(putRequest.Data)))
 
 	route, err := router.NewRoute(ctx)
 	if err != nil {
@@ -63,7 +70,7 @@ func (s *HTTPUnit) put(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = route.PutObject(ctx, object, nil, opts)
+	_, err = route.PutObject(ctx, object, putRequest.AccessSecurityRules, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return

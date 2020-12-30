@@ -5,42 +5,161 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"github.com/google/cel-go/cel"
+	"io/ioutil"
+	"strings"
+	"time"
+
+	"github.com/iancoleman/strcase"
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/pb"
-	"io/ioutil"
-	"time"
+	"github.com/tidwall/gjson"
 )
 
 func NewSQLObjects(db *sql.DB, dialect string, tableName string) (Objects, error) {
-	m, err := bome.NewJSONMap(db, dialect, tableName)
+	objects, err := bome.NewJSONMap(db, dialect, tableName)
 	if err != nil {
 		return nil, err
 	}
 
-	h, err := bome.NewJSONMap(db, dialect, tableName+"_headers")
+	headers, err := bome.NewJSONMap(db, dialect, tableName+"_headers")
 	if err != nil {
 		return nil, err
 	}
 
-	s := &mysqlStore{
-		objects: m,
-		headers: h,
+	datedRefs, err := bome.NewList(db, dialect, tableName+"_dated_refs")
+	if err != nil {
+		return nil, err
+	}
+
+	col, err := bome.NewJSONMap(db, dialect, tableName+"_collections")
+	if err != nil {
+		return nil, err
+	}
+
+	fk := &bome.ForeignKey{
+		Name: "fk_objects_header_id",
+		Table: &bome.Keys{
+			Table:  headers.Table(),
+			Fields: headers.Keys(),
+		},
+		References: &bome.Keys{
+			Table:  objects.Table(),
+			Fields: objects.Keys(),
+		},
+		OnDeleteCascade: true,
+	}
+	err = objects.AddForeignKey(fk)
+	if err != nil {
+		return nil, err
+	}
+
+	s := &sqlStore{
+		db:          db,
+		dialect:     dialect,
+		objects:     objects,
+		headers:     headers,
+		datedRefs:   datedRefs,
+		collections: col,
 	}
 	return s, nil
 }
 
-type mysqlStore struct {
-	objects *bome.JSONMap
-	headers *bome.JSONMap
-	cEnv    *cel.Env
+type sqlStore struct {
+	db          *sql.DB
+	dialect     string
+	objects     *bome.JSONMap
+	datedRefs   *bome.List
+	headers     *bome.JSONMap
+	collections *bome.JSONMap
 }
 
-func (ms *mysqlStore) Save(ctx context.Context, object *Object) error {
+func (ms *sqlStore) GetCollectionForWrite(ctx context.Context, name string) (Collection, error) {
+	tableName := strcase.ToSnake(name)
+	col, err := NewSQLCollection(ms.db, ms.dialect, tableName)
+	if err != nil {
+		return nil, err
+	}
+
+	contains, err := ms.collections.Contains(name)
+	if err != nil {
+		return nil, err
+	}
+
+	if !contains {
+		_, tx, err := ms.collections.Transaction(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		err = tx.Save(&bome.MapEntry{
+			Key:   name,
+			Value: "{\"count\": 0}",
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		datedRefs := col.DatedRefs()
+		client := tx.TX()
+
+		fk := &bome.ForeignKey{
+			Name: "fk_col_objects_dated_refs_keys",
+			Table: &bome.Keys{
+				Table:  datedRefs.Table(),
+				Fields: datedRefs.Keys(),
+			},
+			References: &bome.Keys{
+				Table:  ms.datedRefs.Table(),
+				Fields: ms.datedRefs.Keys(),
+			},
+			OnDeleteCascade: true,
+		}
+		err = client.SQLExec(fk.AlterTableAddQuery())
+		if err != nil {
+			return nil, err
+		}
+
+		objects := col.Objects()
+		fk = &bome.ForeignKey{
+			Name: "fk_col_objects_keys",
+			Table: &bome.Keys{
+				Table:  objects.Table(),
+				Fields: objects.Keys(),
+			},
+			References: &bome.Keys{
+				Table:  ms.objects.Table(),
+				Fields: ms.objects.Keys(),
+			},
+			OnDeleteCascade: true,
+		}
+		err = client.SQLExec(fk.AlterTableAddQuery())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return col, nil
+}
+
+func (ms *sqlStore) GetCollectionForRead(ctx context.Context, name string) (Collection, error) {
+	contains, err := ms.collections.Contains(name)
+	if err != nil {
+		return nil, err
+	}
+
+	if !contains {
+		return nil, errors.NotFound
+	}
+
+	tableName := strcase.ToSnake(name)
+	return NewSQLCollection(ms.db, ms.dialect, tableName)
+}
+
+func (ms *sqlStore) Save(ctx context.Context, object *Object, indexes ...*pb.Index) error {
 	if object.CreatedAt() == 0 {
-		d := time.Now().UnixNano() / 1e6
+		d := time.Now().UnixNano()
 		object.SetCreatedAt(d)
 	}
 
@@ -50,12 +169,13 @@ func (ms *mysqlStore) Save(ctx context.Context, object *Object) error {
 		return errors.BadInput
 	}
 
-	tx, err := ms.objects.BeginTransaction()
+	txCtx, tx, err := ms.objects.Transaction(ctx)
 	if err != nil {
 		log.Error("Save: could not start objects DB transaction", log.Err(err))
 		return errors.Internal
 	}
 
+	// Save object
 	err = tx.Save(&bome.MapEntry{
 		Key:   object.ID(),
 		Value: string(contentData),
@@ -68,6 +188,7 @@ func (ms *mysqlStore) Save(ctx context.Context, object *Object) error {
 		return errors.Internal
 	}
 
+	// Then retrieve saved size
 	size, err := tx.Size(object.ID())
 	if err != nil {
 		log.Error("Patch: failed to get object size", log.Field("id", object.ID()), log.Err(err))
@@ -77,13 +198,18 @@ func (ms *mysqlStore) Save(ctx context.Context, object *Object) error {
 		return err
 	}
 
+	// Update object header size
 	object.Header().Size = size
 	headersData, err := json.Marshal(object.Header())
 	if err != nil {
 		log.Error("Save: could not get object header", log.Err(err))
+		if err2 := tx.Rollback(); err2 != nil {
+			log.Error("Save: rollback failed", log.Err(err2))
+		}
 		return errors.BadInput
 	}
 
+	// Save object header
 	htx := ms.headers.ContinueTransaction(tx.TX())
 	err = htx.Save(&bome.MapEntry{
 		Key:   object.ID(),
@@ -91,10 +217,72 @@ func (ms *mysqlStore) Save(ctx context.Context, object *Object) error {
 	})
 	if err != nil {
 		log.Error("Save: failed to save object headers", log.Err(err))
-		if err := tx.Rollback(); err != nil {
-			log.Error("Save: rollback failed", log.Err(err))
+		if err2 := tx.Rollback(); err2 != nil {
+			log.Error("Save: rollback failed", log.Err(err2))
 		}
-		return errors.Internal
+		return err
+	}
+
+	dTx := ms.datedRefs.ContinueTransaction(tx.TX())
+	err = dTx.Save(&bome.ListEntry{
+		Index: object.CreatedAt(),
+		Value: object.ID(),
+	})
+	if err != nil {
+		log.Error("Save: failed to save dated reference", log.Err(err))
+		if err2 := tx.Rollback(); err2 != nil {
+			log.Error("Save: rollback failed", log.Err(err2))
+		}
+		return err
+	}
+
+	// Creating index
+	if len(indexes) > 0 {
+		for _, ind := range indexes {
+			col, err := ms.GetCollectionForWrite(txCtx, ind.Collection)
+			if err != nil {
+				log.Error("Save: failed to get collection", log.Err(err))
+				if err2 := tx.Rollback(); err2 != nil {
+					log.Error("Save: rollback failed", log.Err(err2))
+				}
+				return err
+			}
+
+			js := map[string]interface{}{}
+			for _, item := range ind.Fields {
+				result := gjson.Get(string(contentData), strings.TrimPrefix(item.Path, "$."))
+				if !result.Exists() {
+					log.Error("Save: index references path that does not exists", log.Err(err))
+					if err2 := tx.Rollback(); err2 != nil {
+						log.Error("Save: rollback failed", log.Err(err2))
+					}
+					return errors.BadInput
+				}
+				js[item.Name] = result.Value()
+			}
+
+			jsonEncoded, err := json.Marshal(js)
+			if err != nil {
+				log.Error("Save: failed to create index", log.Err(err))
+				if err2 := tx.Rollback(); err2 != nil {
+					log.Error("Save: rollback failed", log.Err(err2))
+				}
+				return err
+			}
+
+			err = col.Save(txCtx, &CollectionItem{
+				Id:   object.ID(),
+				Date: object.header.CreatedAt,
+				Data: string(jsonEncoded),
+			})
+			if err != nil {
+				log.Error("Save: failed to save object headers", log.Err(err))
+				if err2 := tx.Rollback(); err2 != nil {
+					log.Error("Save: rollback failed", log.Err(err2))
+				}
+				return err
+			}
+		}
 	}
 
 	err = tx.Commit()
@@ -102,22 +290,21 @@ func (ms *mysqlStore) Save(ctx context.Context, object *Object) error {
 		log.Error("Save: operations commit failed", log.Err(err))
 		return errors.Internal
 	}
-
 	log.Debug("Save: object saved", log.Field("id", object.ID()))
 	return nil
 }
 
-func (ms *mysqlStore) Patch(ctx context.Context, patch *Patch) error {
-	tx, err := ms.objects.BeginTransaction()
-	if err != nil {
-		log.Error("Patch: could not start objects DB transaction", log.Err(err))
-		return errors.Internal
-	}
-
+func (ms *sqlStore) Patch(ctx context.Context, patch *Patch) error {
 	content, err := ioutil.ReadAll(patch.GetContent())
 	if err != nil {
 		log.Error("Patch: could not get patch content", log.Err(err))
 		return errors.BadInput
+	}
+
+	_, tx, err := ms.objects.Transaction(ctx)
+	if err != nil {
+		log.Error("Patch: could not start objects DB transaction", log.Err(err))
+		return errors.Internal
 	}
 
 	err = tx.EditAt(patch.GetObjectID(), patch.Path(), bome.StringExpr(string(content)))
@@ -155,7 +342,7 @@ func (ms *mysqlStore) Patch(ctx context.Context, patch *Patch) error {
 	return nil
 }
 
-func (ms *mysqlStore) Delete(ctx context.Context, objectID string) error {
+func (ms *sqlStore) Delete(ctx context.Context, objectID string) error {
 	tx, err := ms.objects.BeginTransaction()
 	if err != nil {
 		log.Error("Delete: could not start objects DB transaction", log.Err(err))
@@ -185,7 +372,7 @@ func (ms *mysqlStore) Delete(ctx context.Context, objectID string) error {
 	return nil
 }
 
-func (ms *mysqlStore) List(ctx context.Context, before int64, count int, filter ObjectFilter) (*ObjectList, error) {
+func (ms *sqlStore) List(ctx context.Context, before int64, count int, filter ObjectFilter) (*ObjectList, error) {
 	cursor, err := ms.headers.List()
 	if err != nil {
 		log.Error("List: failed to get headers",
@@ -246,7 +433,7 @@ func (ms *mysqlStore) List(ctx context.Context, before int64, count int, filter 
 	return &result, nil
 }
 
-func (ms *mysqlStore) ListAt(ctx context.Context, partPath string, before int64, count int, filter ObjectFilter) (*ObjectList, error) {
+func (ms *sqlStore) ListAt(ctx context.Context, partPath string, before int64, count int, filter ObjectFilter) (*ObjectList, error) {
 	cursor, err := ms.headers.ExtractAll("$.id", bome.JsonAtLe("$.created_at", bome.IntExpr(before)), bome.StringScanner)
 	if err != nil {
 		log.Error("ListAt: failed to get objects",
@@ -291,7 +478,7 @@ func (ms *mysqlStore) ListAt(ctx context.Context, partPath string, before int64,
 	return &result, nil
 }
 
-func (ms *mysqlStore) Get(ctx context.Context, objectID string) (*Object, error) {
+func (ms *sqlStore) Get(ctx context.Context, objectID string) (*Object, error) {
 	hv, err := ms.headers.Get(objectID)
 	if err != nil {
 		log.Error("Get: could not get object header", log.Field("id", objectID), log.Err(err))
@@ -324,7 +511,7 @@ func (ms *mysqlStore) Get(ctx context.Context, objectID string) (*Object, error)
 	return o, nil
 }
 
-func (ms *mysqlStore) GetAt(ctx context.Context, objectID string, path string) (*Object, error) {
+func (ms *sqlStore) GetAt(ctx context.Context, objectID string, path string) (*Object, error) {
 	hv, err := ms.headers.Get(objectID)
 	if err != nil {
 		log.Error("GetAt: could not get object header", log.Field("id", objectID), log.Err(err))
@@ -353,7 +540,7 @@ func (ms *mysqlStore) GetAt(ctx context.Context, objectID string, path string) (
 	return o, nil
 }
 
-func (ms *mysqlStore) Info(ctx context.Context, id string) (*pb.Header, error) {
+func (ms *sqlStore) Info(ctx context.Context, id string) (*pb.Header, error) {
 	value, err := ms.headers.Get(id)
 	if err != nil {
 		return nil, err
@@ -368,7 +555,7 @@ func (ms *mysqlStore) Info(ctx context.Context, id string) (*pb.Header, error) {
 	return &info, nil
 }
 
-func (ms *mysqlStore) Clear() error {
+func (ms *sqlStore) Clear() error {
 	tx, err := ms.objects.BeginTransaction()
 	if err != nil {
 		log.Error("Clear: could not start transaction in objects DB", log.Err(err))
