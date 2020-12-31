@@ -33,6 +33,11 @@ func NewSQLObjects(db *sql.DB, dialect string, tableName string) (Objects, error
 		return nil, err
 	}
 
+	indexes, err := bome.NewJSONMap(db, dialect, tableName+"_indexes")
+	if err != nil {
+		return nil, err
+	}
+
 	col, err := bome.NewJSONMap(db, dialect, tableName+"_collections")
 	if err != nil {
 		return nil, err
@@ -61,6 +66,7 @@ func NewSQLObjects(db *sql.DB, dialect string, tableName string) (Objects, error
 		objects:     objects,
 		headers:     headers,
 		datedRefs:   datedRefs,
+		indexes:     indexes,
 		collections: col,
 	}
 	return s, nil
@@ -73,6 +79,7 @@ type sqlStore struct {
 	datedRefs   *bome.List
 	headers     *bome.JSONMap
 	collections *bome.JSONMap
+	indexes     *bome.JSONMap
 }
 
 func (ms *sqlStore) GetCollectionForWrite(ctx context.Context, name string) (Collection, error) {
@@ -282,6 +289,29 @@ func (ms *sqlStore) Save(ctx context.Context, object *Object, indexes ...*pb.Ind
 				}
 				return err
 			}
+		}
+
+		encodedIndexes, err := json.Marshal(indexes)
+		if err != nil {
+			log.Error("Save: failed to encode object indexes", log.Err(err))
+			if err2 := tx.Rollback(); err2 != nil {
+				log.Error("Save: rollback failed", log.Err(err2))
+			}
+			return err
+		}
+
+		indexesTx := ms.indexes.ContinueTransaction(tx.TX())
+		entry := &bome.MapEntry{
+			Key:   object.ID(),
+			Value: string(encodedIndexes),
+		}
+		err = indexesTx.Save(entry)
+		if err != nil {
+			log.Error("Save: failed to save object indexes", log.Err(err))
+			if err2 := tx.Rollback(); err2 != nil {
+				log.Error("Save: rollback failed", log.Err(err2))
+			}
+			return err
 		}
 	}
 
