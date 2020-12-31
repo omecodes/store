@@ -60,6 +60,23 @@ func NewSQLObjects(db *sql.DB, dialect string, tableName string) (Objects, error
 		return nil, err
 	}
 
+	fk = &bome.ForeignKey{
+		Name: "fk_objects_indexes_id",
+		Table: &bome.Keys{
+			Table:  indexes.Table(),
+			Fields: indexes.Keys(),
+		},
+		References: &bome.Keys{
+			Table:  objects.Table(),
+			Fields: objects.Keys(),
+		},
+		OnDeleteCascade: true,
+	}
+	err = objects.AddForeignKey(fk)
+	if err != nil {
+		return nil, err
+	}
+
 	s := &sqlStore{
 		db:          db,
 		dialect:     dialect,
