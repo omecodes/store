@@ -73,12 +73,12 @@ func (s *MSServer) init() error {
 	}
 
 	err = s.settings.Set(oms.SettingsDataMaxSizePath, oms.DefaultSettings[oms.SettingsDataMaxSizePath])
-	if err != nil && !errors.IsNotFound(err) {
+	if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
 		return err
 	}
 
 	err = s.settings.Set(oms.SettingsCreateDataSecurityRule, oms.DefaultSettings[oms.SettingsCreateDataSecurityRule])
-	if err != nil && !errors.IsNotFound(err) {
+	if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
 		return err
 	}
 
