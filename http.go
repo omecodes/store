@@ -70,11 +70,14 @@ func (s *HTTPUnit) put(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = route.PutObject(ctx, object, putRequest.AccessSecurityRules, opts)
+	id, err := route.PutObject(ctx, object, putRequest.AccessSecurityRules, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
 	}
+
+	w.Header().Add("Content-Type", "application/json")
+	_, _ = w.Write([]byte(fmt.Sprintf("{\"id\": \"%s\"}", id)))
 }
 
 func (s *HTTPUnit) patch(w http.ResponseWriter, r *http.Request) {
