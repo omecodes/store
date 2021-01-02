@@ -66,7 +66,7 @@ func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (
 		return nil, err
 	}
 
-	object, err := route.GetObject(ctx, "", oms.GetObjectOptions{})
+	object, err := route.GetObject(ctx, request.ObjectId, oms.GetObjectOptions{Path: request.Path})
 	if err != nil {
 		return nil, err
 	}
@@ -90,8 +90,8 @@ func (h *handler) DeleteObject(ctx context.Context, request *pb.DeleteObjectRequ
 	if err != nil {
 		return nil, err
 	}
-
-	return &pb.DeleteObjectResponse{}, route.DeleteObject(ctx, request.ObjectId)
+	err = route.DeleteObject(ctx, request.ObjectId)
+	return &pb.DeleteObjectResponse{}, err
 }
 
 func (h *handler) ObjectInfo(ctx context.Context, request *pb.ObjectInfoRequest) (*pb.ObjectInfoResponse, error) {
