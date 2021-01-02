@@ -55,7 +55,7 @@ func (h *handler) UpdateObject(ctx context.Context, request *pb.UpdateObjectRequ
 	}
 
 	patch := oms.NewPatch(request.ObjectId, request.Path)
-	patch.SetContent(bytes.NewBuffer(request.Data))
+	patch.SetContent(bytes.NewBufferString(request.Data))
 
 	return &pb.UpdateObjectResponse{}, route.PatchObject(ctx, patch, oms.PatchOptions{})
 }

@@ -46,7 +46,7 @@ func (h *handler) UpdateObject(ctx context.Context, request *pb.UpdateObjectRequ
 	}
 
 	patch := NewPatch(request.ObjectId, request.Path)
-	patch.SetContent(bytes.NewBuffer(request.Data))
+	patch.SetContent(bytes.NewBufferString(request.Data))
 
 	err := storage.Patch(ctx, patch)
 	if err != nil {

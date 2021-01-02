@@ -54,7 +54,8 @@ func (d *dbClient) Patch(ctx context.Context, patch *Patch) error {
 
 	_, err = objects.UpdateObject(ctx, &pb.UpdateObjectRequest{
 		ObjectId: patch.GetObjectID(),
-		Data:     data,
+		Data:     string(data),
+		Path:     patch.Path(),
 	})
 	return err
 }

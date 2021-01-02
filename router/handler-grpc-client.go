@@ -66,7 +66,7 @@ func (g *gRPCClientHandler) PatchObject(ctx context.Context, patch *oms.Patch, o
 	_, err = client.UpdateObject(auth.SetMetaWithExisting(ctx), &pb.UpdateObjectRequest{
 		ObjectId: patch.GetObjectID(),
 		Path:     patch.Path(),
-		Data:     data,
+		Data:     string(data),
 	})
 	return err
 }

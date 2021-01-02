@@ -117,7 +117,7 @@ func (f *failureDummyAccessStore) Delete(ctx context.Context, objectID string) e
 
 type failureDummyStorage struct{}
 
-func (f *failureDummyStorage) Save(ctx context.Context, object *oms.Object) error {
+func (f *failureDummyStorage) Save(ctx context.Context, object *oms.Object, indexes ...*pb.Index) error {
 	return errors.New("failure")
 }
 

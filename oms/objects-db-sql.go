@@ -354,7 +354,7 @@ func (ms *sqlStore) Patch(ctx context.Context, patch *Patch) error {
 		return errors.Internal
 	}
 
-	err = tx.EditAt(patch.GetObjectID(), patch.Path(), bome.StringExpr(string(content)))
+	err = tx.EditAt(patch.GetObjectID(), patch.Path(), bome.RawExpr(string(content)))
 	if err != nil {
 		log.Error("Update: object patch failed", log.Field("id", patch.GetObjectID()), log.Err(err))
 		return errors.Internal
@@ -390,15 +390,26 @@ func (ms *sqlStore) Patch(ctx context.Context, patch *Patch) error {
 }
 
 func (ms *sqlStore) Delete(ctx context.Context, objectID string) error {
+	info, err := ms.Info(ctx, objectID)
+	if err != nil {
+		return err
+	}
+
 	tx, err := ms.objects.BeginTransaction()
 	if err != nil {
 		log.Error("Delete: could not start objects DB transaction", log.Err(err))
+		if err2 := tx.Rollback(); err2 != nil {
+			log.Error("Delete: rollback failed", log.Err(err2))
+		}
 		return errors.Internal
 	}
 
 	err = tx.Delete(objectID)
 	if err != nil {
 		log.Error("Delete: object deletion failed", log.Err(err))
+		if err2 := tx.Rollback(); err2 != nil {
+			log.Error("Delete: rollback failed", log.Err(err2))
+		}
 		return errors.Internal
 	}
 
@@ -406,6 +417,19 @@ func (ms *sqlStore) Delete(ctx context.Context, objectID string) error {
 	err = htx.Delete(objectID)
 	if err != nil {
 		log.Error("Delete: failed to delete header", log.Err(err))
+		if err2 := tx.Rollback(); err2 != nil {
+			log.Error("Delete: rollback failed", log.Err(err2))
+		}
+		return errors.Internal
+	}
+
+	dtx := ms.datedRefs.ContinueTransaction(tx.TX())
+	err = dtx.Delete(info.CreatedAt)
+	if err != nil {
+		log.Error("Delete: failed to delete dated references", log.Err(err))
+		if err2 := tx.Rollback(); err2 != nil {
+			log.Error("Delete: rollback failed", log.Err(err2))
+		}
 		return errors.Internal
 	}
 

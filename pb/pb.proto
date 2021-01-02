@@ -84,7 +84,7 @@ message PutObjectResponse {
 message UpdateObjectRequest{
   string object_id = 1;
   string path = 2;
-  bytes data = 3;
+  string data = 3;
 }
 message UpdateObjectResponse{}
 

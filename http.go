@@ -15,7 +15,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -56,6 +55,11 @@ func (s *HTTPUnit) put(w http.ResponseWriter, r *http.Request) {
 
 	var putRequest pb.PutObjectRequest
 	err := jsonpb.Unmarshal(r.Body, &putRequest)
+	if err != nil {
+		log.Error("failed to decode request body", log.Err(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	var opts oms.PutDataOptions
 	opts.Indexes = putRequest.Indexes
@@ -89,13 +93,21 @@ func (s *HTTPUnit) patch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var patchRequest pb.UpdateObjectRequest
+	err := jsonpb.Unmarshal(r.Body, &patchRequest)
+	if err != nil {
+		log.Error("failed to decode request body", log.Err(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	vars := mux.Vars(r)
 	id := vars["id"]
-	p := strings.Replace(r.RequestURI, fmt.Sprintf("/%s", id), "", 1)
 
-	patch := oms.NewPatch(id, p)
-	patch.SetContent(r.Body)
-	patch.SetSize(r.ContentLength)
+	patch := oms.NewPatch(id, patchRequest.Path)
+	patch.SetContent(bytes.NewBufferString(patchRequest.Data))
+	patch.SetSize(int64(len(patchRequest.Data)))
+
 	route, err := router.NewRoute(ctx)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -135,7 +147,6 @@ func (s *HTTPUnit) get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write(data)
 	if err != nil {
