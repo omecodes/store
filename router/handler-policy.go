@@ -102,6 +102,13 @@ func (p *PolicyHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (
 }
 
 func (p *PolicyHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*pb.ObjectList, error) {
+	lOpts := oms.ListOptions{
+		Path:   opts.Path,
+		Before: opts.Before,
+		After:  opts.After,
+		Count:  opts.Count,
+	}
+
 	if params.Condition == "false" {
 		return &pb.ObjectList{
 			Before: opts.Before,
@@ -109,11 +116,7 @@ func (p *PolicyHandler) SearchObjects(ctx context.Context, params oms.SearchPara
 	}
 
 	if params.Condition == "true" {
-		return p.ListObjects(ctx, oms.ListOptions{
-			Path:   opts.Path,
-			Before: opts.Before,
-			Count:  opts.Count,
-		})
+		return p.ListObjects(ctx, lOpts)
 	}
 
 	program, err := LoadProgramForSearch(&ctx, params.Condition)
@@ -122,11 +125,6 @@ func (p *PolicyHandler) SearchObjects(ctx context.Context, params oms.SearchPara
 		return nil, err
 	}
 
-	lOpts := oms.ListOptions{
-		Path:   opts.Path,
-		Before: opts.Before,
-		Count:  opts.Count,
-	}
 	lOpts.Filter = oms.FilterObjectFunc(func(o *pb.Object) (bool, error) {
 		err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, o.Header.Id, opts.Path)
 		if err != nil {

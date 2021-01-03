@@ -9,6 +9,7 @@ import (
 	"github.com/omecodes/store/meta"
 	"github.com/omecodes/store/pb"
 	"google.golang.org/grpc/metadata"
+	"io"
 	"io/ioutil"
 	"strconv"
 )
@@ -107,8 +108,25 @@ func (d *dbClient) List(ctx context.Context, filter ObjectFilter, opts ListOptio
 	for len(result.Objects) < count {
 		object, err := stream.Recv()
 		if err != nil {
+			if io.EOF == err {
+				break
+			}
 			log.Error("Objects client • stream › could not get remaining objects", log.Err(err))
 			return nil, errors.Internal
+		}
+
+		if filter != nil {
+			allowed, err := filter.Filter(object)
+			if err != nil {
+				if errors.IsForbidden(err) {
+					continue
+				}
+				return nil, err
+			}
+
+			if !allowed {
+				continue
+			}
 		}
 		result.Objects = append(result.Objects, object)
 	}

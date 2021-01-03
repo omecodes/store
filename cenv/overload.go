@@ -21,6 +21,9 @@ func stringsMatchOverload() *functions.Overload {
 			for _, patternItem := range patternParts {
 				foundMatch := false
 				for _, candidateItem := range candidateParts {
+					patternItem = strings.ToLower(patternItem)
+					candidateItem = strings.ToLower(candidateItem)
+
 					if patternItem == candidateItem || strings.Contains(candidateItem, patternItem) {
 						foundMatch = true
 					}
