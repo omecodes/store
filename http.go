@@ -217,17 +217,33 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resultBytes, err := json.Marshal(result)
+	w.Header().Add("Content-Type", "application/json")
+	_, err = w.Write([]byte(fmt.Sprintf("{\"count\": %d, \"total\": %d, \"before\": %d, \"after\": %d, \"objects\": {",
+		len(result.Objects),
+		result.Total,
+		result.Before,
+		result.After)))
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		log.Error("GetObjects: failed to write response")
 		return
 	}
 
-	w.Header().Add("Content-Type", "application/json")
-	_, err = w.Write(resultBytes)
-	if err != nil {
-		log.Error("GetObjects: failed to write response")
+	position := 0
+	for _, object := range result.Objects {
+		var item string
+		if position == 0 {
+			position++
+		} else {
+			item = ","
+		}
+		item = item + fmt.Sprintf("\"%s\": %s", object.Header.Id, object.Data)
+		_, err = w.Write([]byte(item))
+		if err != nil {
+			log.Error("GetObjects: failed to write result item", log.Err(err))
+			return
+		}
 	}
+	_, err = w.Write([]byte("}}"))
 }
 
 func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
@@ -272,17 +288,33 @@ func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resultBytes, err := json.Marshal(result)
+	w.Header().Add("Content-Type", "application/json")
+	_, err = w.Write([]byte(fmt.Sprintf("{\"count\": %d, \"total\": %d, \"before\": %d, \"after\": %d, \"objects\": {",
+		len(result.Objects),
+		result.Total,
+		result.Before,
+		result.After)))
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		log.Error("GetObjects: failed to write response")
 		return
 	}
 
-	w.Header().Add("Content-Type", "application/json")
-	_, err = w.Write(resultBytes)
-	if err != nil {
-		log.Error("GetObjects: failed to write response")
+	position := 0
+	for _, object := range result.Objects {
+		var item string
+		if position == 0 {
+			position++
+		} else {
+			item = ","
+		}
+		item = item + fmt.Sprintf("\"%s\": %s", object.Header.Id, object.Data)
+		_, err = w.Write([]byte(item))
+		if err != nil {
+			log.Error("GetObjects: failed to write result item", log.Err(err))
+			return
+		}
 	}
+	_, err = w.Write([]byte("}}"))
 }
 
 func (s *HTTPUnit) setSettings(w http.ResponseWriter, r *http.Request) {
