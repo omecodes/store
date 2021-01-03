@@ -9,10 +9,10 @@ import (
 	"github.com/foomo/simplecert"
 	"github.com/foomo/tlsconfig"
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
 	"github.com/gorilla/mux"
 	"github.com/omecodes/store/acl"
 	"github.com/omecodes/store/auth"
+	"github.com/omecodes/store/cenv"
 	"github.com/sethvargo/go-password/password"
 	"io/ioutil"
 	"net"
@@ -21,7 +21,6 @@ import (
 	"path/filepath"
 
 	"github.com/omecodes/bome"
-	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/httpx"
 	"github.com/omecodes/common/netx"
 	"github.com/omecodes/common/utils/log"
@@ -97,18 +96,12 @@ func (s *MNServer) init() error {
 		return err
 	}
 
-	s.celPolicyEnv, err = cel.NewEnv(
-		cel.Declarations(
-			decls.NewVar("auth", decls.NewMapType(decls.String, decls.Dyn)),
-			decls.NewVar("data", decls.NewMapType(decls.String, decls.Dyn)),
-		),
-	)
+	s.celPolicyEnv, err = cenv.ACLEnv()
 	if err != nil {
 		return err
 	}
 
-	s.celSearchEnv, err = cel.NewEnv(
-		cel.Declarations(decls.NewVar("o", decls.NewMapType(decls.String, decls.Dyn))))
+	s.celSearchEnv, err = cenv.SearchEnv()
 	if err != nil {
 		return err
 	}
@@ -136,11 +129,12 @@ func (s *MNServer) init() error {
 	}
 
 	err = s.settings.Set(oms.SettingsDataMaxSizePath, oms.DefaultSettings[oms.SettingsDataMaxSizePath])
-	if err != nil && !errors.IsNotFound(err) {
+	if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
 		return err
 	}
+
 	err = s.settings.Set(oms.SettingsCreateDataSecurityRule, oms.DefaultSettings[oms.SettingsCreateDataSecurityRule])
-	if err != nil && !errors.IsNotFound(err) {
+	if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
 		return err
 	}
 	return nil

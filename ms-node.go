@@ -3,11 +3,11 @@ package oms
 import (
 	"context"
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
 	ome "github.com/omecodes/libome"
 	"github.com/omecodes/service"
 	"github.com/omecodes/store/acl"
 	"github.com/omecodes/store/auth"
+	"github.com/omecodes/store/cenv"
 	"github.com/omecodes/store/clients"
 	"github.com/omecodes/store/common"
 	context2 "github.com/omecodes/store/context"
@@ -49,18 +49,12 @@ func (n *MSNode) init() error {
 	n.accessStore = acl.NewStoreClient()
 	n.objects = oms.NewStoreGrpcClient()
 
-	n.celPolicyEnv, err = cel.NewEnv(
-		cel.Declarations(
-			decls.NewVar("auth", decls.NewMapType(decls.String, decls.Dyn)),
-			decls.NewVar("data", decls.NewMapType(decls.String, decls.Dyn)),
-		),
-	)
+	n.celPolicyEnv, err = cenv.ACLEnv()
 	if err != nil {
 		return err
 	}
 
-	n.celSearchEnv, err = cel.NewEnv(
-		cel.Declarations(decls.NewVar("o", decls.NewMapType(decls.String, decls.Dyn))))
+	n.celSearchEnv, err = cenv.SearchEnv()
 	if err != nil {
 		return err
 	}
