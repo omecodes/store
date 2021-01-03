@@ -6,8 +6,8 @@ import (
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/oms"
 	"github.com/omecodes/store/pb"
+	"github.com/omecodes/store/utime"
 	"strconv"
-	"time"
 )
 
 type ParamsHandler struct {
@@ -97,27 +97,37 @@ func (p *ParamsHandler) DeleteObject(ctx context.Context, id string) error {
 }
 
 func (p *ParamsHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*pb.ObjectList, error) {
-	if opts.Count == 0 {
-		opts.Count = 100
+	if opts.Before == 0 {
+		opts.Before = utime.Now()
 	}
 
-	if opts.Before == 0 {
-		opts.Before = time.Now().UnixNano() / 1e6
+	if opts.After == 0 {
+		opts.After = 1
 	}
+
+	if opts.Count > 5 || opts.Count == 0 {
+		opts.Count = 5
+	}
+
 	return p.BaseHandler.ListObjects(ctx, opts)
 }
 
 func (p *ParamsHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*pb.ObjectList, error) {
-	if params.MatchedExpression == "" {
+	if params.Condition == "" {
 		return nil, errors.BadInput
 	}
 
 	if opts.Before == 0 {
-		opts.Before = time.Now().UnixNano() / 1e6
+		opts.Before = utime.Now()
 	}
 
-	if opts.Count == 0 {
-		opts.Count = 100
+	if opts.After == 0 {
+		opts.After = 1
 	}
+
+	if opts.Count > 5 || opts.Count == 0 {
+		opts.Count = 5
+	}
+
 	return p.BaseHandler.SearchObjects(ctx, params, opts)
 }

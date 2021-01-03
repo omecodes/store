@@ -125,24 +125,23 @@ message ObjectInfoResponse {
 
 message ListObjectsRequest {
   int64 before = 1;
-  uint32 count = 2;
+  int64 after = 2;
+  uint32 count = 3;
+  string path = 4;
 }
 message ListObjectsResponse {
-  uint64 offset = 1;
-  int64 total = 2;
-  repeated Object objects = 3;
+  ObjectList result = 1;
 }
 
 message SearchObjectsRequest {
   string collection = 1;
-  string match_expression = 2;
+  string condition = 2;
   int64 before = 3;
-  uint32 count = 4;
+  int64 after = 4;
+  uint32 count = 5;
 }
 message SearchObjectsResponse {
-  uint64 offset = 1;
-  int64 total = 2;
-  repeated Object objects = 3;
+  ObjectList result = 1;
 }
 
 

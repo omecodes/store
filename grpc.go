@@ -100,7 +100,9 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 	}
 
 	opts := oms.ListOptions{
+		Path:   request.Path,
 		Before: request.Before,
+		After:  request.After,
 		Count:  int(request.Count),
 	}
 
@@ -136,7 +138,7 @@ func (h *handler) SearchObjects(request *pb.SearchObjectsRequest, stream pb.Hand
 	}
 
 	params := oms.SearchParams{
-		MatchedExpression: request.MatchExpression,
+		Condition: request.Condition,
 	}
 
 	opts := oms.SearchOptions{

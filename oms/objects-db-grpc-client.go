@@ -73,7 +73,9 @@ func (d *dbClient) List(ctx context.Context, filter ObjectFilter, opts ListOptio
 
 	stream, err := objects.ListObjects(ctx, &pb.ListObjectsRequest{
 		Before: opts.Before,
+		After:  opts.After,
 		Count:  uint32(opts.Count),
+		Path:   opts.Path,
 	})
 
 	defer func() {

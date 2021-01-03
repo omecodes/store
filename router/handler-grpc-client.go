@@ -115,7 +115,9 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts oms.ListOption
 
 	stream, err := client.ListObjects(auth.SetMetaWithExisting(ctx), &pb.ListObjectsRequest{
 		Before: opts.Before,
+		After:  opts.After,
 		Count:  uint32(opts.Count),
+		Path:   opts.Path,
 	})
 	if err != nil {
 		return nil, err
@@ -129,7 +131,7 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts oms.ListOption
 
 	var objects []*pb.Object
 
-	for {
+	for len(objects) < opts.Count {
 		object, err := stream.Recv()
 		if err != nil {
 			if err == io.EOF {
@@ -146,19 +148,16 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts oms.ListOption
 				}
 				return nil, err
 			}
-
 			if !allowed {
 				continue
 			}
 		}
 		objects = append(objects, object)
-		if len(objects) == opts.Count {
-			break
-		}
 	}
 
 	return &pb.ObjectList{
 		Before:  opts.Before,
+		After:   opts.After,
 		Objects: objects,
 	}, nil
 }
@@ -170,9 +169,9 @@ func (g *gRPCClientHandler) SearchObjects(ctx context.Context, params oms.Search
 	}
 
 	stream, err := client.SearchObjects(auth.SetMetaWithExisting(ctx), &pb.SearchObjectsRequest{
-		Before:          opts.Before,
-		Count:           uint32(opts.Count),
-		MatchExpression: params.MatchedExpression,
+		Before:    opts.Before,
+		Count:     uint32(opts.Count),
+		Condition: params.Condition,
 	})
 	if err != nil {
 		return nil, err

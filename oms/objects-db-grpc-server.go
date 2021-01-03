@@ -105,14 +105,14 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 		return errors.Internal
 	}
 
-	items, err := storage.List(ctx, nil, ListOptions{
-		Filter:     nil,
-		Collection: "",
-		Path:       "",
-		Before:     0,
-		After:      0,
-		Count:      0,
-	})
+	opts := ListOptions{
+		Path:   request.Path,
+		Before: request.Before,
+		After:  request.After,
+		Count:  int(request.Count),
+	}
+
+	items, err := storage.List(ctx, nil, opts)
 	if err != nil {
 		return err
 	}
@@ -131,6 +131,5 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 			return err
 		}
 	}
-
 	return nil
 }

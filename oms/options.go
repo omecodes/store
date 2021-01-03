@@ -31,8 +31,8 @@ type ListOptions struct {
 }
 
 type SearchParams struct {
-	Collection        string `json:"collection"`
-	MatchedExpression string `json:"matched_expression"`
+	Collection string `json:"collection"`
+	Condition  string `json:"condition"`
 }
 
 type SearchOptions struct {

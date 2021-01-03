@@ -694,7 +694,7 @@ func Test_Patch3(t *testing.T) {
 func Test_SearchObjects(t *testing.T) {
 	Convey("Cannot perform search with empty expression parameters", t, func() {
 		route := getRoute(SkipExec(), SkipPoliciesCheck())
-		objects, err := route.SearchObjects(fullConfiguredContext(), oms.SearchParams{MatchedExpression: ""}, oms.SearchOptions{})
+		objects, err := route.SearchObjects(fullConfiguredContext(), oms.SearchParams{Condition: ""}, oms.SearchOptions{})
 		So(err, ShouldEqual, errors.BadInput)
 		So(objects, ShouldBeNil)
 
@@ -704,7 +704,7 @@ func Test_SearchObjects(t *testing.T) {
 func Test_SearchObjects0(t *testing.T) {
 	Convey("Searching with 'false' expression returns empty object list", t, func() {
 		route := getRoute(SkipExec())
-		objects, err := route.SearchObjects(fullConfiguredContext(), oms.SearchParams{MatchedExpression: "false"}, oms.SearchOptions{})
+		objects, err := route.SearchObjects(fullConfiguredContext(), oms.SearchParams{Condition: "false"}, oms.SearchOptions{})
 		So(err, ShouldBeNil)
 		So(objects.Objects, ShouldHaveLength, 0)
 	})
@@ -714,7 +714,7 @@ func Test_SearchObjects1(t *testing.T) {
 	Convey("Searching with 'true' expression returns the same result as list", t, func() {
 		route := getRoute()
 		userACtx := auth.Context(fullConfiguredContext(), userA)
-		objects, err := route.SearchObjects(userACtx, oms.SearchParams{MatchedExpression: "true"}, oms.SearchOptions{})
+		objects, err := route.SearchObjects(userACtx, oms.SearchParams{Condition: "true"}, oms.SearchOptions{})
 		So(err, ShouldBeNil)
 		So(objects.Objects, ShouldNotBeEmpty)
 	})
@@ -724,7 +724,7 @@ func Test_SearchObjects2(t *testing.T) {
 	Convey("User can search on objects he created", t, func() {
 		route := getRoute()
 		userACtx := auth.Context(fullConfiguredContext(), userA)
-		objects, err := route.SearchObjects(userACtx, oms.SearchParams{MatchedExpression: "o.private"}, oms.SearchOptions{})
+		objects, err := route.SearchObjects(userACtx, oms.SearchParams{Condition: "o.private"}, oms.SearchOptions{})
 		So(err, ShouldBeNil)
 		So(objects.Objects, ShouldNotBeEmpty)
 
@@ -748,7 +748,7 @@ func Test_SearchObjects3(t *testing.T) {
 	Convey("Cannot perform search on broken store", t, func() {
 		route := getRoute()
 		userACtx := auth.Context(contextWithFailureDummyStore(), userA)
-		objects, err := route.SearchObjects(userACtx, oms.SearchParams{MatchedExpression: "o.private "}, oms.SearchOptions{})
+		objects, err := route.SearchObjects(userACtx, oms.SearchParams{Condition: "o.private "}, oms.SearchOptions{})
 		So(err, ShouldNotBeNil)
 		So(err.Error(), ShouldEqual, "failure")
 		So(objects, ShouldBeNil)
@@ -759,7 +759,7 @@ func Test_SearchObjects4(t *testing.T) {
 	Convey("Cannot perform search on wrong syntax cel-expression", t, func() {
 		route := getRoute()
 		userACtx := auth.Context(contextWithFailureDummyStore(), userA)
-		objects, err := route.SearchObjects(userACtx, oms.SearchParams{MatchedExpression: "o.private && a.public"}, oms.SearchOptions{})
+		objects, err := route.SearchObjects(userACtx, oms.SearchParams{Condition: "o.private && a.public"}, oms.SearchOptions{})
 		So(err, ShouldEqual, errors.BadInput)
 		So(objects, ShouldBeNil)
 	})

@@ -102,13 +102,13 @@ func (p *PolicyHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (
 }
 
 func (p *PolicyHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*pb.ObjectList, error) {
-	if params.MatchedExpression == "false" {
+	if params.Condition == "false" {
 		return &pb.ObjectList{
 			Before: opts.Before,
 		}, nil
 	}
 
-	if params.MatchedExpression == "true" {
+	if params.Condition == "true" {
 		return p.ListObjects(ctx, oms.ListOptions{
 			Path:   opts.Path,
 			Before: opts.Before,
@@ -116,7 +116,7 @@ func (p *PolicyHandler) SearchObjects(ctx context.Context, params oms.SearchPara
 		})
 	}
 
-	program, err := LoadProgramForSearch(&ctx, params.MatchedExpression)
+	program, err := LoadProgramForSearch(&ctx, params.Condition)
 	if err != nil {
 		log.Error("Handler-policy.Search: failed to load CEL program", log.Err(err))
 		return nil, err

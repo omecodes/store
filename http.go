@@ -12,7 +12,6 @@ import (
 	"github.com/omecodes/store/oms"
 	"github.com/omecodes/store/pb"
 	"github.com/omecodes/store/router"
-	"github.com/omecodes/store/utime"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -69,6 +68,11 @@ func (s *HTTPUnit) put(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	if putRequest.Object.Header == nil {
+		putRequest.Object.Header = &pb.Header{}
+	}
+	putRequest.Object.Header.Size = int64(len(putRequest.Object.Data))
 
 	var opts oms.PutDataOptions
 	opts.Indexes = putRequest.Indexes
@@ -177,21 +181,21 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 		opts oms.ListOptions
 	)
 
-	opts.Before, err = Int64QueryParam(r, queryBefore, 0)
+	opts.Before, err = Int64QueryParam(r, queryBefore)
 	if err != nil {
 		log.Error("could not parse param 'before'")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	opts.After, err = Int64QueryParam(r, queryAfter, utime.Now())
+	opts.After, err = Int64QueryParam(r, queryAfter)
 	if err != nil {
 		log.Error("could not parse param 'after'")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	count, err := Int64QueryParam(r, queryCount, 0)
+	count, err := Int64QueryParam(r, queryCount)
 	if err != nil {
 		log.Error("could not parse param 'count'")
 		w.WriteHeader(http.StatusBadRequest)
@@ -348,11 +352,11 @@ func (s *HTTPUnit) getSettings(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(value))
 }
 
-func Int64QueryParam(r *http.Request, name string, defaultValue int64) (int64, error) {
+func Int64QueryParam(r *http.Request, name string) (int64, error) {
 	beforeParam := r.URL.Query().Get(name)
 	if beforeParam != "" {
 		return strconv.ParseInt(beforeParam, 10, 64)
 	} else {
-		return defaultValue, nil
+		return 0, nil
 	}
 }
