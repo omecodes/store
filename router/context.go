@@ -2,8 +2,8 @@ package router
 
 import (
 	"context"
-	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/acl"
+	"github.com/omecodes/store/cenv"
 	"github.com/omecodes/store/oms"
 	"github.com/omecodes/store/pb"
 
@@ -133,7 +133,7 @@ func GetObjectHeader(ctx *context.Context, objectID string) (*pb.Header, error) 
 	return header, nil
 }
 
-func LoadProgramForAccessValidation(ctx *context.Context, expression string) (cel.Program, error) {
+func LoadProgramForACLValidation(ctx *context.Context, expression string) (cel.Program, error) {
 	var m map[string]cel.Program
 
 	o := (*ctx).Value(ctxCELAclPrograms{})
@@ -156,12 +156,7 @@ func LoadProgramForAccessValidation(ctx *context.Context, expression string) (ce
 		return nil, errors.Internal
 	}
 
-	ast, issues := env.Compile(expression)
-	if issues != nil && issues.Err() != nil {
-		return nil, issues.Err()
-	}
-
-	prg, err := env.Program(ast)
+	prg, err := cenv.GetProgram(env, expression)
 	if err != nil {
 		return nil, err
 	}
@@ -194,13 +189,7 @@ func LoadProgramForSearch(ctx *context.Context, expression string) (cel.Program,
 		return nil, errors.Internal
 	}
 
-	ast, issues := env.Compile(expression)
-	if issues != nil && issues.Err() != nil {
-		log.Error("failed to compile expression", log.Err(issues.Err()))
-		return nil, errors.BadInput
-	}
-
-	prg, err := env.Program(ast)
+	prg, err := cenv.GetProgram(env, expression)
 	if err != nil {
 		return nil, err
 	}
