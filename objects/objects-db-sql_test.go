@@ -1,4 +1,4 @@
-package oms
+package objects
 
 import (
 	"bytes"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/omecodes/store/acl"
 	"github.com/omecodes/store/cenv"
-	"github.com/omecodes/store/oms"
+	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/pb"
 
 	"github.com/google/cel-go/cel"
@@ -45,7 +45,7 @@ func WithACL(store acl.Store) ContextUpdaterFunc {
 }
 
 // WithSettings creates a context updater that adds permissions to a context
-func WithSettings(settings oms.SettingsManager) ContextUpdaterFunc {
+func WithSettings(settings objects.SettingsManager) ContextUpdaterFunc {
 	return func(parent context.Context) context.Context {
 		return context.WithValue(parent, ctxSettingsDB{}, settings)
 	}
@@ -93,12 +93,12 @@ func CELSearchEnv(ctx context.Context) *cel.Env {
 	return o.(*cel.Env)
 }
 
-func Settings(ctx context.Context) oms.SettingsManager {
+func Settings(ctx context.Context) objects.SettingsManager {
 	o := ctx.Value(ctxSettingsDB{})
 	if o == nil {
 		return nil
 	}
-	return o.(oms.SettingsManager)
+	return o.(objects.SettingsManager)
 }
 
 func GetObjectHeader(ctx *context.Context, objectID string) (*pb.Header, error) {

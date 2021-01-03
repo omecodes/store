@@ -1,4 +1,4 @@
-package oms
+package objects
 
 import (
 	"context"
@@ -10,7 +10,6 @@ import (
 	"github.com/omecodes/store/pb"
 	"google.golang.org/grpc/metadata"
 	"io"
-	"io/ioutil"
 	"strconv"
 )
 
@@ -35,21 +34,14 @@ func (d *dbClient) Save(ctx context.Context, object *pb.Object, index ...*pb.Ind
 	return err
 }
 
-func (d *dbClient) Patch(ctx context.Context, patch *Patch) error {
+func (d *dbClient) Patch(ctx context.Context, patch *pb.Patch) error {
 	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return err
 	}
 
-	data, err := ioutil.ReadAll(patch.GetContent())
-	if err != nil {
-		return err
-	}
-
 	_, err = objects.UpdateObject(ctx, &pb.UpdateObjectRequest{
-		ObjectId: patch.GetObjectID(),
-		Data:     string(data),
-		Path:     patch.Path(),
+		Patch: patch,
 	})
 	return err
 }

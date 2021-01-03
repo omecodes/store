@@ -6,7 +6,7 @@ import (
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/acl"
-	"github.com/omecodes/store/oms"
+	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/pb"
 )
 
@@ -14,7 +14,7 @@ type ExecHandler struct {
 	BaseHandler
 }
 
-func (e *ExecHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
+func (e *ExecHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, opts objects.PutDataOptions) (string, error) {
 	if object.Header.Id == "" {
 		object.Header.Id = uuid.New().String()
 	}
@@ -31,7 +31,7 @@ func (e *ExecHandler) PutObject(ctx context.Context, object *pb.Object, security
 		return "", errors.Internal
 	}
 
-	storage := oms.Get(ctx)
+	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Error("exec-handler.PutObject: missing storage in context")
 		if err2 := accessStore.Delete(ctx, object.Header.Id); err2 != nil {
@@ -51,8 +51,8 @@ func (e *ExecHandler) PutObject(ctx context.Context, object *pb.Object, security
 	return object.Header.Id, nil
 }
 
-func (e *ExecHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
-	storage := oms.Get(ctx)
+func (e *ExecHandler) PatchObject(ctx context.Context, patch *pb.Patch, opts objects.PatchOptions) error {
+	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Info("missing storage in context")
 		return errors.Internal
@@ -60,8 +60,8 @@ func (e *ExecHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts om
 	return storage.Patch(ctx, patch)
 }
 
-func (e *ExecHandler) GetObject(ctx context.Context, objectID string, opts oms.GetObjectOptions) (*pb.Object, error) {
-	storage := oms.Get(ctx)
+func (e *ExecHandler) GetObject(ctx context.Context, objectID string, opts objects.GetObjectOptions) (*pb.Object, error) {
+	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
 		return nil, errors.Internal
@@ -75,7 +75,7 @@ func (e *ExecHandler) GetObject(ctx context.Context, objectID string, opts oms.G
 }
 
 func (e *ExecHandler) GetObjectHeader(ctx context.Context, objectID string) (*pb.Header, error) {
-	storage := oms.Get(ctx)
+	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
 		return nil, errors.Internal
@@ -84,7 +84,7 @@ func (e *ExecHandler) GetObjectHeader(ctx context.Context, objectID string) (*pb
 }
 
 func (e *ExecHandler) DeleteObject(ctx context.Context, objectID string) error {
-	storage := oms.Get(ctx)
+	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Info("exec-handler.DeleteObjet: missing DB in context")
 		return errors.Internal
@@ -105,8 +105,8 @@ func (e *ExecHandler) DeleteObject(ctx context.Context, objectID string) error {
 	return accessStore.Delete(ctx, objectID)
 }
 
-func (e *ExecHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*pb.ObjectList, error) {
-	storage := oms.Get(ctx)
+func (e *ExecHandler) ListObjects(ctx context.Context, opts objects.ListOptions) (*pb.ObjectList, error) {
+	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
 		return nil, errors.Internal

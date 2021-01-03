@@ -1,11 +1,10 @@
-package oms
+package objects
 
 import (
 	"context"
 	"database/sql"
 	"encoding/json"
 	"github.com/omecodes/store/utime"
-	"io/ioutil"
 	"strings"
 
 	"github.com/iancoleman/strcase"
@@ -333,13 +332,9 @@ func (ms *sqlStore) Save(ctx context.Context, object *pb.Object, indexes ...*pb.
 	return nil
 }
 
-func (ms *sqlStore) Patch(ctx context.Context, patch *Patch) error {
-	content, err := ioutil.ReadAll(patch.GetContent())
-	if err != nil {
-		log.Error("Patch: could not get patch content", log.Err(err))
-		return errors.BadInput
-	}
-	value := sqlJSONSetValue(string(content))
+func (ms *sqlStore) Patch(ctx context.Context, patch *pb.Patch) error {
+
+	value := sqlJSONSetValue(patch.Data)
 
 	_, tx, err := ms.objects.Transaction(ctx)
 	if err != nil {
@@ -347,15 +342,15 @@ func (ms *sqlStore) Patch(ctx context.Context, patch *Patch) error {
 		return errors.Internal
 	}
 
-	err = tx.EditAt(patch.GetObjectID(), patch.Path(), bome.RawExpr(value))
+	err = tx.EditAt(patch.ObjectId, patch.At, bome.RawExpr(value))
 	if err != nil {
-		log.Error("Update: object patch failed", log.Field("id", patch.GetObjectID()), log.Err(err))
+		log.Error("Update: object patch failed", log.Field("id", patch.ObjectId), log.Err(err))
 		return errors.Internal
 	}
 
-	size, err := tx.Size(patch.GetObjectID())
+	size, err := tx.Size(patch.ObjectId)
 	if err != nil {
-		log.Error("Patch: failed to get object size", log.Field("id", patch.GetObjectID()), log.Err(err))
+		log.Error("Patch: failed to get object size", log.Field("id", patch.ObjectId), log.Err(err))
 		if err := tx.Rollback(); err != nil {
 			log.Error("Patch: rollback failed", log.Err(err))
 		}
@@ -363,7 +358,7 @@ func (ms *sqlStore) Patch(ctx context.Context, patch *Patch) error {
 	}
 
 	htx := ms.headers.ContinueTransaction(tx.TX())
-	err = htx.EditAt(patch.GetObjectID(), "$.size", bome.IntExpr(size))
+	err = htx.EditAt(patch.ObjectId, "$.size", bome.IntExpr(size))
 	if err != nil {
 		log.Error("Patch: failed to save object headers", log.Err(err))
 		if err := tx.Rollback(); err != nil {
@@ -378,7 +373,7 @@ func (ms *sqlStore) Patch(ctx context.Context, patch *Patch) error {
 		return errors.Internal
 	}
 
-	log.Debug("Patch: object updated", log.Field("id", patch.GetObjectID()))
+	log.Debug("Patch: object updated", log.Field("id", patch.ObjectId))
 	return nil
 }
 

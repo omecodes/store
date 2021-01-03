@@ -1,7 +1,6 @@
-package oms
+package objects
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"github.com/omecodes/common/errors"
@@ -40,10 +39,7 @@ func (h *handler) UpdateObject(ctx context.Context, request *pb.UpdateObjectRequ
 		return nil, errors.Internal
 	}
 
-	patch := NewPatch(request.ObjectId, request.Path)
-	patch.SetContent(bytes.NewBufferString(request.Data))
-
-	err := storage.Patch(ctx, patch)
+	err := storage.Patch(ctx, request.Patch)
 	if err != nil {
 		return nil, err
 	}

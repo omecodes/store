@@ -1,4 +1,4 @@
-package oms
+package objects
 
 import (
 	"context"
@@ -10,7 +10,7 @@ type Objects interface {
 	Save(ctx context.Context, object *pb.Object, index ...*pb.Index) error
 
 	// Update applies patch to object with id equals patch.ID()
-	Patch(ctx context.Context, patch *Patch) error
+	Patch(ctx context.Context, patch *pb.Patch) error
 
 	// Delete removes all content associated with objectID
 	Delete(ctx context.Context, objectID string) error

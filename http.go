@@ -1,7 +1,6 @@
 package oms
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/golang/protobuf/jsonpb"
@@ -9,7 +8,7 @@ import (
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/auth"
-	"github.com/omecodes/store/oms"
+	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/pb"
 	"github.com/omecodes/store/router"
 	"io/ioutil"
@@ -74,7 +73,7 @@ func (s *HTTPUnit) put(w http.ResponseWriter, r *http.Request) {
 	}
 	putRequest.Object.Header.Size = int64(len(putRequest.Object.Data))
 
-	var opts oms.PutDataOptions
+	var opts objects.PutDataOptions
 	opts.Indexes = putRequest.Indexes
 
 	route, err := router.NewRoute(ctx)
@@ -102,8 +101,8 @@ func (s *HTTPUnit) patch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var patchRequest pb.UpdateObjectRequest
-	err := jsonpb.Unmarshal(r.Body, &patchRequest)
+	var patch pb.Patch
+	err := jsonpb.Unmarshal(r.Body, &patch)
 	if err != nil {
 		log.Error("failed to decode request body", log.Err(err))
 		w.WriteHeader(http.StatusBadRequest)
@@ -111,11 +110,7 @@ func (s *HTTPUnit) patch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	id := vars["id"]
-
-	patch := oms.NewPatch(id, patchRequest.Path)
-	patch.SetContent(bytes.NewBufferString(patchRequest.Data))
-	patch.SetSize(int64(len(patchRequest.Data)))
+	patch.ObjectId = vars["id"]
 
 	route, err := router.NewRoute(ctx)
 	if err != nil {
@@ -123,7 +118,7 @@ func (s *HTTPUnit) patch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = route.PatchObject(ctx, patch, oms.PatchOptions{})
+	err = route.PatchObject(ctx, &patch, objects.PatchOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -143,7 +138,7 @@ func (s *HTTPUnit) get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	object, err := route.GetObject(ctx, id, oms.GetObjectOptions{Info: onlyInfo == "true"})
+	object, err := route.GetObject(ctx, id, objects.GetObjectOptions{Info: onlyInfo == "true"})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -178,7 +173,7 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 
 	var (
 		err  error
-		opts oms.ListOptions
+		opts objects.ListOptions
 	)
 
 	opts.Before, err = Int64QueryParam(r, queryBefore)
@@ -264,12 +259,12 @@ func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 		before = time.Now().UnixNano() / 1e6
 	}
 
-	opts := oms.SearchOptions{
+	opts := objects.SearchOptions{
 		Path:   r.URL.Query().Get("path"),
 		Before: before,
 	}
 
-	var params oms.SearchParams
+	var params objects.SearchParams
 	err = json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		log.Error("Search: wrong query", log.Err(err))

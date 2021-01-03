@@ -7,10 +7,9 @@ import (
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/clients"
 	"github.com/omecodes/store/common"
-	"github.com/omecodes/store/oms"
+	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/pb"
 	"io"
-	"io/ioutil"
 )
 
 // NewGRPCClientHandler creates a router Handler that embed that calls a gRPC service to perform final actions
@@ -25,7 +24,7 @@ type gRPCClientHandler struct {
 	BaseHandler
 }
 
-func (g *gRPCClientHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
+func (g *gRPCClientHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, opts objects.PutDataOptions) (string, error) {
 	client, err := clients.RouterGrpc(ctx, g.nodeType)
 	if err != nil {
 		return "", err
@@ -43,27 +42,19 @@ func (g *gRPCClientHandler) PutObject(ctx context.Context, object *pb.Object, se
 	return rsp.ObjectId, nil
 }
 
-func (g *gRPCClientHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts oms.PatchOptions) error {
+func (g *gRPCClientHandler) PatchObject(ctx context.Context, patch *pb.Patch, opts objects.PatchOptions) error {
 	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return err
 	}
 
-	data, err := ioutil.ReadAll(patch.GetContent())
-	if err != nil {
-		log.Error("could not read object content", log.Err(err))
-		return errors.BadInput
-	}
-
 	_, err = client.UpdateObject(auth.SetMetaWithExisting(ctx), &pb.UpdateObjectRequest{
-		ObjectId: patch.GetObjectID(),
-		Path:     patch.Path(),
-		Data:     string(data),
+		Patch: patch,
 	})
 	return err
 }
 
-func (g *gRPCClientHandler) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*pb.Object, error) {
+func (g *gRPCClientHandler) GetObject(ctx context.Context, id string, opts objects.GetObjectOptions) (*pb.Object, error) {
 	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return nil, err
@@ -107,7 +98,7 @@ func (g *gRPCClientHandler) DeleteObject(ctx context.Context, id string) error {
 	return err
 }
 
-func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*pb.ObjectList, error) {
+func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts objects.ListOptions) (*pb.ObjectList, error) {
 	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return nil, err
@@ -162,7 +153,7 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts oms.ListOption
 	}, nil
 }
 
-func (g *gRPCClientHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*pb.ObjectList, error) {
+func (g *gRPCClientHandler) SearchObjects(ctx context.Context, params objects.SearchParams, opts objects.SearchOptions) (*pb.ObjectList, error) {
 	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return nil, err

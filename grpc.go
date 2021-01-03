@@ -1,10 +1,9 @@
 package oms
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"github.com/omecodes/store/oms"
+	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/pb"
 	"github.com/omecodes/store/router"
 	"google.golang.org/grpc/metadata"
@@ -31,7 +30,7 @@ func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (
 		request.AccessSecurityRules.AccessRules = map[string]*pb.AccessRules{}
 	}
 
-	id, err := route.PutObject(ctx, request.Object, request.AccessSecurityRules, oms.PutDataOptions{
+	id, err := route.PutObject(ctx, request.Object, request.AccessSecurityRules, objects.PutDataOptions{
 		Indexes: request.Indexes,
 	})
 	if err != nil {
@@ -49,10 +48,7 @@ func (h *handler) UpdateObject(ctx context.Context, request *pb.UpdateObjectRequ
 		return nil, err
 	}
 
-	patch := oms.NewPatch(request.ObjectId, request.Path)
-	patch.SetContent(bytes.NewBufferString(request.Data))
-
-	return &pb.UpdateObjectResponse{}, route.PatchObject(ctx, patch, oms.PatchOptions{})
+	return &pb.UpdateObjectResponse{}, route.PatchObject(ctx, request.Patch, objects.PatchOptions{})
 }
 
 func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (*pb.GetObjectResponse, error) {
@@ -61,7 +57,7 @@ func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (
 		return nil, err
 	}
 
-	object, err := route.GetObject(ctx, request.ObjectId, oms.GetObjectOptions{Path: request.Path})
+	object, err := route.GetObject(ctx, request.ObjectId, objects.GetObjectOptions{Path: request.Path})
 
 	return &pb.GetObjectResponse{
 		Object: object,
@@ -99,7 +95,7 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 		return err
 	}
 
-	opts := oms.ListOptions{
+	opts := objects.ListOptions{
 		Path:   request.Path,
 		Before: request.Before,
 		After:  request.After,
@@ -137,11 +133,11 @@ func (h *handler) SearchObjects(request *pb.SearchObjectsRequest, stream pb.Hand
 		return err
 	}
 
-	params := oms.SearchParams{
+	params := objects.SearchParams{
 		Condition: request.Condition,
 	}
 
-	opts := oms.SearchOptions{
+	opts := objects.SearchOptions{
 		Before: request.Before,
 		Count:  int(request.Count),
 	}

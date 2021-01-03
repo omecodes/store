@@ -11,7 +11,7 @@ import (
 	"github.com/omecodes/store/clients"
 	"github.com/omecodes/store/common"
 	context2 "github.com/omecodes/store/context"
-	"github.com/omecodes/store/oms"
+	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/pb"
 	"github.com/omecodes/store/router"
 	"google.golang.org/grpc"
@@ -40,14 +40,14 @@ type MSNode struct {
 	celPolicyEnv *cel.Env
 	celSearchEnv *cel.Env
 	accessStore  acl.Store
-	objects      oms.Objects
+	objects      objects.Objects
 	reg          ome.Registry
 }
 
 func (n *MSNode) init() error {
 	var err error
 	n.accessStore = acl.NewStoreClient()
-	n.objects = oms.NewStoreGrpcClient()
+	n.objects = objects.NewStoreGrpcClient()
 
 	n.celPolicyEnv, err = cenv.ACLEnv()
 	if err != nil {
@@ -80,7 +80,7 @@ func (n *MSNode) updateGrpcContext(ctx context.Context) (context.Context, error)
 	ctx = acl.ContextWithStore(ctx, n.accessStore)
 	ctx = router.WithCelPolicyEnv(n.celPolicyEnv)(ctx)
 	ctx = router.WithCelSearchEnv(n.celSearchEnv)(ctx)
-	ctx = oms.ContextWithStore(ctx, n.objects)
+	ctx = objects.ContextWithStore(ctx, n.objects)
 	ctx = service.ContextWithBox(ctx, n.box)
 	ctx = router.WithRouterProvider(ctx, n)
 	ctx = clients.WithACLGrpcClientProvider(ctx, &clients.DefaultACLGrpcProvider{})

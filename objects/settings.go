@@ -1,4 +1,4 @@
-package oms
+package objects
 
 const (
 	SettingsDataMaxSizePath        = "data_max_size"

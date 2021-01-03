@@ -13,6 +13,7 @@ import (
 	"github.com/omecodes/store/acl"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/cenv"
+	"github.com/omecodes/store/objects"
 	"github.com/sethvargo/go-password/password"
 	"io/ioutil"
 	"net"
@@ -25,7 +26,6 @@ import (
 	"github.com/omecodes/common/netx"
 	"github.com/omecodes/common/utils/log"
 	errors2 "github.com/omecodes/libome/errors"
-	"github.com/omecodes/store/oms"
 	"github.com/omecodes/store/router"
 )
 
@@ -56,9 +56,9 @@ type MNServer struct {
 	celPolicyEnv  *cel.Env
 	celSearchEnv  *cel.Env
 
-	objects     oms.Objects
+	objects     objects.Objects
 	workers     *bome.JSONMap
-	settings    oms.SettingsManager
+	settings    objects.SettingsManager
 	accessStore acl.Store
 	listener    net.Listener
 	Errors      chan error
@@ -86,12 +86,12 @@ func (s *MNServer) init() error {
 		return err
 	}
 
-	s.settings, err = oms.NewSQLSettings(db, bome.MySQL, "settings")
+	s.settings, err = objects.NewSQLSettings(db, bome.MySQL, "settings")
 	if err != nil {
 		return err
 	}
 
-	s.objects, err = oms.NewSQLObjects(db, bome.MySQL, "objects")
+	s.objects, err = objects.NewSQLObjects(db, bome.MySQL, "objects")
 	if err != nil {
 		return err
 	}
@@ -128,12 +128,12 @@ func (s *MNServer) init() error {
 		return err
 	}
 
-	err = s.settings.Set(oms.SettingsDataMaxSizePath, oms.DefaultSettings[oms.SettingsDataMaxSizePath])
+	err = s.settings.Set(objects.SettingsDataMaxSizePath, objects.DefaultSettings[objects.SettingsDataMaxSizePath])
 	if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
 		return err
 	}
 
-	err = s.settings.Set(oms.SettingsCreateDataSecurityRule, oms.DefaultSettings[oms.SettingsCreateDataSecurityRule])
+	err = s.settings.Set(objects.SettingsCreateDataSecurityRule, objects.DefaultSettings[objects.SettingsCreateDataSecurityRule])
 	if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
 		return err
 	}
@@ -281,7 +281,7 @@ func (s *MNServer) enrichContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		ctx = acl.ContextWithStore(ctx, s.accessStore)
-		ctx = oms.ContextWithStore(ctx, s.objects)
+		ctx = objects.ContextWithStore(ctx, s.objects)
 		ctx = router.WithCelPolicyEnv(s.celPolicyEnv)(ctx)
 		ctx = router.WithCelSearchEnv(s.celSearchEnv)(ctx)
 		ctx = router.WithSettings(s.settings)(ctx)

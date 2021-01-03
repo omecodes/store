@@ -12,7 +12,7 @@ import (
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/service"
 	"github.com/omecodes/store/auth"
-	"github.com/omecodes/store/oms"
+	"github.com/omecodes/store/objects"
 	"net"
 	"net/http"
 	"os"
@@ -49,7 +49,7 @@ func NewMSServer(cfg MsConfig) *MSServer {
 
 type MSServer struct {
 	config         MsConfig
-	settings       oms.SettingsManager
+	settings       objects.SettingsManager
 	listener       net.Listener
 	adminPassword  string
 	workerPassword string
@@ -67,17 +67,17 @@ func (s *MSServer) init() error {
 		return err
 	}
 
-	s.settings, err = oms.NewSQLSettings(db, bome.MySQL, "objects_settings")
+	s.settings, err = objects.NewSQLSettings(db, bome.MySQL, "objects_settings")
 	if err != nil {
 		return err
 	}
 
-	err = s.settings.Set(oms.SettingsDataMaxSizePath, oms.DefaultSettings[oms.SettingsDataMaxSizePath])
+	err = s.settings.Set(objects.SettingsDataMaxSizePath, objects.DefaultSettings[objects.SettingsDataMaxSizePath])
 	if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
 		return err
 	}
 
-	err = s.settings.Set(oms.SettingsCreateDataSecurityRule, oms.DefaultSettings[oms.SettingsCreateDataSecurityRule])
+	err = s.settings.Set(objects.SettingsCreateDataSecurityRule, objects.DefaultSettings[objects.SettingsCreateDataSecurityRule])
 	if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
 		return err
 	}

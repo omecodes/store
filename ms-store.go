@@ -9,7 +9,7 @@ import (
 	"github.com/omecodes/store/acl"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/common"
-	"github.com/omecodes/store/oms"
+	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/pb"
 	"github.com/omecodes/store/router"
 	"google.golang.org/grpc"
@@ -38,7 +38,7 @@ type MSStore struct {
 	config      *StoreConfig
 	box         *service.Box
 	accessStore acl.Store
-	objects     oms.Objects
+	objects     objects.Objects
 }
 
 func (s *MSStore) init() error {
@@ -49,7 +49,7 @@ func (s *MSStore) init() error {
 		return err
 	}
 
-	s.objects, err = oms.NewSQLObjects(db, bome.MySQL, "objects")
+	s.objects, err = objects.NewSQLObjects(db, bome.MySQL, "objects")
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (s *MSStore) init() error {
 func (s *MSStore) updateGrpcContext(ctx context.Context) (context.Context, error) {
 	ctx = service.ContextWithBox(ctx, s.box)
 	ctx = acl.ContextWithStore(ctx, s.accessStore)
-	ctx = oms.ContextWithStore(ctx, s.objects)
+	ctx = objects.ContextWithStore(ctx, s.objects)
 	ctx = router.WithRouterProvider(ctx, router.ProviderFunc(
 		func(ctx context.Context) router.Router {
 			return router.NewCustomRouter(&router.ExecHandler{})
@@ -110,7 +110,7 @@ func (s *MSStore) startACLService() error {
 func (s *MSStore) startObjectsService() error {
 	params := &service.NodeParams{
 		RegisterHandlerFunc: func(server *grpc.Server) {
-			pb.RegisterHandlerUnitServer(server, oms.NewStoreGrpcHandler())
+			pb.RegisterHandlerUnitServer(server, objects.NewStoreGrpcHandler())
 		},
 		ServiceType: common.ServiceTypeObjects,
 		ServiceID:   s.config.Name + "-objects",
