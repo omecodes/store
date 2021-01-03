@@ -95,7 +95,7 @@ func (c *handlerUnitClient) ListObjects(ctx context.Context, in *ListObjectsRequ
 }
 
 type HandlerUnit_ListObjectsClient interface {
-	Recv() (*DataObject, error)
+	Recv() (*Object, error)
 	grpc.ClientStream
 }
 
@@ -103,8 +103,8 @@ type handlerUnitListObjectsClient struct {
 	grpc.ClientStream
 }
 
-func (x *handlerUnitListObjectsClient) Recv() (*DataObject, error) {
-	m := new(DataObject)
+func (x *handlerUnitListObjectsClient) Recv() (*Object, error) {
+	m := new(Object)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func (c *handlerUnitClient) SearchObjects(ctx context.Context, in *SearchObjects
 }
 
 type HandlerUnit_SearchObjectsClient interface {
-	Recv() (*DataObject, error)
+	Recv() (*Object, error)
 	grpc.ClientStream
 }
 
@@ -135,8 +135,8 @@ type handlerUnitSearchObjectsClient struct {
 	grpc.ClientStream
 }
 
-func (x *handlerUnitSearchObjectsClient) Recv() (*DataObject, error) {
-	m := new(DataObject)
+func (x *handlerUnitSearchObjectsClient) Recv() (*Object, error) {
+	m := new(Object)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -294,7 +294,7 @@ func _HandlerUnit_ListObjects_Handler(srv interface{}, stream grpc.ServerStream)
 }
 
 type HandlerUnit_ListObjectsServer interface {
-	Send(*DataObject) error
+	Send(*Object) error
 	grpc.ServerStream
 }
 
@@ -302,7 +302,7 @@ type handlerUnitListObjectsServer struct {
 	grpc.ServerStream
 }
 
-func (x *handlerUnitListObjectsServer) Send(m *DataObject) error {
+func (x *handlerUnitListObjectsServer) Send(m *Object) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -315,7 +315,7 @@ func _HandlerUnit_SearchObjects_Handler(srv interface{}, stream grpc.ServerStrea
 }
 
 type HandlerUnit_SearchObjectsServer interface {
-	Send(*DataObject) error
+	Send(*Object) error
 	grpc.ServerStream
 }
 
@@ -323,7 +323,7 @@ type handlerUnitSearchObjectsServer struct {
 	grpc.ServerStream
 }
 
-func (x *handlerUnitSearchObjectsServer) Send(m *DataObject) error {
+func (x *handlerUnitSearchObjectsServer) Send(m *Object) error {
 	return x.ServerStream.SendMsg(m)
 }
 

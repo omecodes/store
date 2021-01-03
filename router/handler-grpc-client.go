@@ -1,7 +1,6 @@
 package router
 
 import (
-	"bytes"
 	"context"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
@@ -26,22 +25,15 @@ type gRPCClientHandler struct {
 	BaseHandler
 }
 
-func (g *gRPCClientHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
+func (g *gRPCClientHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
 	client, err := clients.RouterGrpc(ctx, g.nodeType)
 	if err != nil {
 		return "", err
 	}
 
-	data, err := ioutil.ReadAll(object.GetContent())
-	if err != nil {
-		log.Error("could not read object content", log.Err(err))
-		return "", errors.BadInput
-	}
-
 	rsp, err := client.PutObject(auth.SetMetaWithExisting(ctx), &pb.PutObjectRequest{
 		AccessSecurityRules: security,
-		Header:              object.Header(),
-		Data:                string(data),
+		Object:              object,
 		Indexes:             opts.Indexes,
 	})
 	if err != nil {
@@ -71,7 +63,7 @@ func (g *gRPCClientHandler) PatchObject(ctx context.Context, patch *oms.Patch, o
 	return err
 }
 
-func (g *gRPCClientHandler) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*oms.Object, error) {
+func (g *gRPCClientHandler) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*pb.Object, error) {
 	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return nil, err
@@ -85,11 +77,7 @@ func (g *gRPCClientHandler) GetObject(ctx context.Context, id string, opts oms.G
 		return nil, err
 	}
 
-	o := oms.NewObject()
-	o.SetHeader(rsp.Data.Header)
-	o.SetContent(bytes.NewBuffer(rsp.Data.Data))
-
-	return o, nil
+	return rsp.Object, nil
 }
 
 func (g *gRPCClientHandler) GetObjectHeader(ctx context.Context, id string) (*pb.Header, error) {
@@ -119,7 +107,7 @@ func (g *gRPCClientHandler) DeleteObject(ctx context.Context, id string) error {
 	return err
 }
 
-func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
+func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*pb.ObjectList, error) {
 	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return nil, err
@@ -139,10 +127,10 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts oms.ListOption
 		}
 	}()
 
-	var objects []*oms.Object
+	var objects []*pb.Object
 
 	for {
-		dataObject, err := stream.Recv()
+		object, err := stream.Recv()
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -150,12 +138,8 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts oms.ListOption
 			return nil, err
 		}
 
-		o := oms.NewObject()
-		o.SetHeader(dataObject.Header)
-		o.SetContent(bytes.NewBuffer(dataObject.Data))
-
 		if opts.Filter != nil {
-			allowed, err := opts.Filter.Filter(o)
+			allowed, err := opts.Filter.Filter(object)
 			if err != nil {
 				if err == errors.Unauthorized || err == errors.Forbidden {
 					continue
@@ -166,23 +150,20 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts oms.ListOption
 			if !allowed {
 				continue
 			}
-			// this is repeated in case the object content is consumed during filtering
-			o.SetContent(bytes.NewBuffer(dataObject.Data))
 		}
-		objects = append(objects, o)
+		objects = append(objects, object)
 		if len(objects) == opts.Count {
 			break
 		}
 	}
 
-	return &oms.ObjectList{
+	return &pb.ObjectList{
 		Before:  opts.Before,
-		Count:   len(objects),
 		Objects: objects,
 	}, nil
 }
 
-func (g *gRPCClientHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
+func (g *gRPCClientHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*pb.ObjectList, error) {
 	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return nil, err
@@ -203,10 +184,10 @@ func (g *gRPCClientHandler) SearchObjects(ctx context.Context, params oms.Search
 		}
 	}()
 
-	var objects []*oms.Object
+	var objects []*pb.Object
 
 	for {
-		dataObject, err := stream.Recv()
+		object, err := stream.Recv()
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -214,18 +195,14 @@ func (g *gRPCClientHandler) SearchObjects(ctx context.Context, params oms.Search
 			return nil, err
 		}
 
-		o := oms.NewObject()
-		o.SetHeader(dataObject.Header)
-		o.SetContent(bytes.NewBuffer(dataObject.Data))
-		objects = append(objects, o)
+		objects = append(objects, object)
 		if len(objects) == opts.Count {
 			break
 		}
 	}
 
-	return &oms.ObjectList{
+	return &pb.ObjectList{
 		Before:  opts.Before,
-		Count:   len(objects),
 		Objects: objects,
 	}, nil
 }

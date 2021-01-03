@@ -8,7 +8,6 @@ import (
 	"github.com/omecodes/store/pb"
 	"github.com/omecodes/store/router"
 	"google.golang.org/grpc/metadata"
-	"io/ioutil"
 )
 
 func NewHandler() pb.HandlerUnitServer {
@@ -25,10 +24,6 @@ func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (
 		return nil, err
 	}
 
-	object := oms.NewObject()
-	object.SetHeader(request.Header)
-	object.SetContent(bytes.NewBufferString(request.Data))
-
 	if request.AccessSecurityRules == nil {
 		request.AccessSecurityRules = &pb.PathAccessRules{}
 	}
@@ -36,7 +31,7 @@ func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (
 		request.AccessSecurityRules.AccessRules = map[string]*pb.AccessRules{}
 	}
 
-	id, err := route.PutObject(ctx, object, request.AccessSecurityRules, oms.PutDataOptions{
+	id, err := route.PutObject(ctx, request.Object, request.AccessSecurityRules, oms.PutDataOptions{
 		Indexes: request.Indexes,
 	})
 	if err != nil {
@@ -67,22 +62,10 @@ func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (
 	}
 
 	object, err := route.GetObject(ctx, request.ObjectId, oms.GetObjectOptions{Path: request.Path})
-	if err != nil {
-		return nil, err
-	}
 
-	data, err := ioutil.ReadAll(object.GetContent())
-	if err != nil {
-		return nil, err
-	}
-
-	rsp := &pb.GetObjectResponse{
-		Data: &pb.DataObject{
-			Header: object.Header(),
-			Data:   data,
-		},
-	}
-	return rsp, nil
+	return &pb.GetObjectResponse{
+		Object: object,
+	}, err
 }
 
 func (h *handler) DeleteObject(ctx context.Context, request *pb.DeleteObjectRequest) (*pb.DeleteObjectResponse, error) {
@@ -128,22 +111,14 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 
 	md := metadata.MD{}
 	md.Set("before", fmt.Sprintf("%d", items.Before))
-	md.Set("count", fmt.Sprintf("%d", items.Count))
+	md.Set("count", fmt.Sprintf("%d", len(items.Objects)))
 	err = stream.SetHeader(md)
 	if err != nil {
 		return err
 	}
 
 	for _, object := range items.Objects {
-		data, err := ioutil.ReadAll(object.GetContent())
-		if err != nil {
-			return err
-		}
-
-		err = stream.Send(&pb.DataObject{
-			Header: object.Header(),
-			Data:   data,
-		})
+		err = stream.Send(object)
 		if err != nil {
 			return err
 		}
@@ -176,22 +151,14 @@ func (h *handler) SearchObjects(request *pb.SearchObjectsRequest, stream pb.Hand
 
 	md := metadata.MD{}
 	md.Set("before", fmt.Sprintf("%d", items.Before))
-	md.Set("count", fmt.Sprintf("%d", items.Count))
+	md.Set("count", fmt.Sprintf("%d", len(items.Objects)))
 	err = stream.SetHeader(md)
 	if err != nil {
 		return err
 	}
 
 	for _, object := range items.Objects {
-		data, err := ioutil.ReadAll(object.GetContent())
-		if err != nil {
-			return err
-		}
-
-		err = stream.Send(&pb.DataObject{
-			Header: object.Header(),
-			Data:   data,
-		})
+		err = stream.Send(object)
 		if err != nil {
 			return err
 		}

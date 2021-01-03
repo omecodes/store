@@ -12,10 +12,19 @@ import (
 	"github.com/omecodes/store/oms"
 	"github.com/omecodes/store/pb"
 	"github.com/omecodes/store/router"
+	"github.com/omecodes/store/utime"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
+)
+
+const (
+	queryBefore    = "before"
+	queryAfter     = "after"
+	queryCount     = "count"
+	queryCondition = "condition"
+	queryAt        = "at"
 )
 
 func NewHttpUnit() *HTTPUnit {
@@ -64,17 +73,13 @@ func (s *HTTPUnit) put(w http.ResponseWriter, r *http.Request) {
 	var opts oms.PutDataOptions
 	opts.Indexes = putRequest.Indexes
 
-	object := oms.NewObject()
-	object.SetContent(bytes.NewBufferString(putRequest.Data))
-	object.SetSize(int64(len(putRequest.Data)))
-
 	route, err := router.NewRoute(ctx)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	id, err := route.PutObject(ctx, object, putRequest.AccessSecurityRules, opts)
+	id, err := route.PutObject(ctx, putRequest.Object, putRequest.AccessSecurityRules, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -140,15 +145,8 @@ func (s *HTTPUnit) get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := ioutil.ReadAll(object.GetContent())
-	if err != nil {
-		log.Error("Get: failed to encoded object", log.Err(err))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
 	w.Header().Add("Content-Type", "application/json")
-	_, err = w.Write(data)
+	_, err = w.Write([]byte(object.Data))
 	if err != nil {
 		log.Error("failed to write response", log.Err(err))
 	}
@@ -174,25 +172,34 @@ func (s *HTTPUnit) del(w http.ResponseWriter, r *http.Request) {
 func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var before int64
-	var err error
+	var (
+		err  error
+		opts oms.ListOptions
+	)
 
-	beforeParam := r.URL.Query().Get("before")
-	if beforeParam != "" {
-		before, err = strconv.ParseInt(beforeParam, 10, 64)
-		if err != nil {
-			log.Error("could not parse param 'before'")
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-	} else {
-		before = time.Now().UnixNano() / 1e6
+	opts.Before, err = Int64QueryParam(r, queryBefore, 0)
+	if err != nil {
+		log.Error("could not parse param 'before'")
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
-	opts := oms.ListOptions{
-		Path:   r.URL.Query().Get("path"),
-		Before: before,
+	opts.After, err = Int64QueryParam(r, queryAfter, utime.Now())
+	if err != nil {
+		log.Error("could not parse param 'after'")
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
+
+	count, err := Int64QueryParam(r, queryCount, 0)
+	if err != nil {
+		log.Error("could not parse param 'count'")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	opts.Count = int(count)
+
+	opts.Path = r.URL.Query().Get(queryAt)
 
 	route, err := router.NewRoute(ctx)
 	if err != nil {
@@ -206,36 +213,14 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Add("Content-Type", "application/json")
-	_, err = w.Write([]byte(fmt.Sprintf("{\"count\": %d, \"before\": %d, \"objects\": {", result.Count, result.Before)))
+	resultBytes, err := json.Marshal(result)
 	if err != nil {
-		log.Error("GetObjects: failed to write response")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	position := 0
-	for _, object := range result.Objects {
-		var item string
-		if position == 0 {
-			position++
-		} else {
-			item = ","
-		}
-
-		data, err := ioutil.ReadAll(object.GetContent())
-		if err != nil {
-			log.Error("GetObjects: failed to encode object", log.Err(err))
-			return
-		}
-
-		item = item + fmt.Sprintf("\"%s\": %s", object.ID(), string(data))
-		_, err = w.Write([]byte(item))
-		if err != nil {
-			log.Error("GetObjects: failed to write result item", log.Err(err))
-			return
-		}
-	}
-	_, err = w.Write([]byte("}}"))
+	w.Header().Add("Content-Type", "application/json")
+	_, err = w.Write(resultBytes)
 	if err != nil {
 		log.Error("GetObjects: failed to write response")
 	}
@@ -283,37 +268,16 @@ func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Add("Content-Type", "application/json")
-	_, err = w.Write([]byte(fmt.Sprintf("{\"count\": %d, \"before\": %d, \"objects\": {", result.Count, result.Before)))
+	resultBytes, err := json.Marshal(result)
 	if err != nil {
-		log.Error("Search: failed to write response")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	position := 0
-	for _, object := range result.Objects {
-		var item string
-		if position == 0 {
-			position++
-		} else {
-			item = ","
-		}
 
-		data, err := ioutil.ReadAll(object.GetContent())
-		if err != nil {
-			log.Error("GetObjects: failed to encode object", log.Err(err))
-			return
-		}
-
-		item = item + fmt.Sprintf("\"%s\": %s", object.ID(), string(data))
-		_, err = w.Write([]byte(item))
-		if err != nil {
-			log.Error("Search: failed to write result item", log.Err(err))
-			return
-		}
-	}
-	_, err = w.Write([]byte("}}"))
+	w.Header().Add("Content-Type", "application/json")
+	_, err = w.Write(resultBytes)
 	if err != nil {
-		log.Error("Search: failed to write response")
+		log.Error("GetObjects: failed to write response")
 	}
 }
 
@@ -382,4 +346,13 @@ func (s *HTTPUnit) getSettings(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "text/plain")
 	_, _ = w.Write([]byte(value))
+}
+
+func Int64QueryParam(r *http.Request, name string, defaultValue int64) (int64, error) {
+	beforeParam := r.URL.Query().Get(name)
+	if beforeParam != "" {
+		return strconv.ParseInt(beforeParam, 10, 64)
+	} else {
+		return defaultValue, nil
+	}
 }

@@ -16,7 +16,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.0.1
 	github.com/iancoleman/strcase v0.1.2
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
-	github.com/omecodes/bome v0.0.0-20210102120806-b0f9e3b3edd2
+	github.com/omecodes/bome v0.0.0-20210103165328-ac4317eca050
 	github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08
 	github.com/omecodes/discover v0.0.0-20210102120945-d33e5fc92877
 	github.com/omecodes/libome v0.0.0-20201225162725-c89c7a20a215
@@ -27,6 +27,7 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/tidwall/gjson v1.6.7
 	github.com/tidwall/sjson v1.1.4
+	google.golang.org/genproto v0.0.0-20201214200347-8c77b98c765d
 	google.golang.org/grpc v1.34.0
 	google.golang.org/protobuf v1.25.0
 )

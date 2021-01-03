@@ -8,7 +8,7 @@ import (
 
 type dummyHandler struct{}
 
-func (d *dummyHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
+func (d *dummyHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
 	return "", nil
 }
 
@@ -16,7 +16,7 @@ func (d *dummyHandler) PatchObject(ctx context.Context, patch *oms.Patch, opts o
 	return nil
 }
 
-func (d *dummyHandler) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*oms.Object, error) {
+func (d *dummyHandler) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*pb.Object, error) {
 	return nil, nil
 }
 
@@ -28,10 +28,10 @@ func (d *dummyHandler) DeleteObject(ctx context.Context, id string) error {
 	return nil
 }
 
-func (d *dummyHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
+func (d *dummyHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*pb.ObjectList, error) {
 	return nil, nil
 }
 
-func (d *dummyHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
+func (d *dummyHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*pb.ObjectList, error) {
 	return nil, nil
 }

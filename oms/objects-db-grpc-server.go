@@ -8,7 +8,6 @@ import (
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/pb"
 	"google.golang.org/grpc/metadata"
-	"io/ioutil"
 )
 
 func NewStoreGrpcHandler() pb.HandlerUnitServer {
@@ -20,17 +19,13 @@ type handler struct {
 }
 
 func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (*pb.PutObjectResponse, error) {
-	object := NewObject()
-	object.SetHeader(request.Header)
-	object.SetContent(bytes.NewBufferString(request.Data))
-
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
 		return nil, errors.Internal
 	}
 
-	err := storage.Save(ctx, object, request.Indexes...)
+	err := storage.Save(ctx, request.Object, request.Indexes...)
 	if err != nil {
 		return nil, err
 	}
@@ -68,16 +63,8 @@ func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (
 		return nil, err
 	}
 
-	data, err := ioutil.ReadAll(o.GetContent())
-	if err != nil {
-		return nil, err
-	}
-
 	return &pb.GetObjectResponse{
-		Data: &pb.DataObject{
-			Header: o.Header(),
-			Data:   data,
-		}}, err
+		Object: o}, err
 }
 
 func (h *handler) DeleteObject(ctx context.Context, request *pb.DeleteObjectRequest) (*pb.DeleteObjectResponse, error) {
@@ -118,29 +105,28 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 		return errors.Internal
 	}
 
-	items, err := storage.List(ctx, request.Before, int(request.Count), nil)
+	items, err := storage.List(ctx, nil, ListOptions{
+		Filter:     nil,
+		Collection: "",
+		Path:       "",
+		Before:     0,
+		After:      0,
+		Count:      0,
+	})
 	if err != nil {
 		return err
 	}
 
 	md := metadata.MD{}
 	md.Set("before", fmt.Sprintf("%d", items.Before))
-	md.Set("count", fmt.Sprintf("%d", items.Count))
+	md.Set("count", fmt.Sprintf("%d", len(items.Objects)))
 	err = stream.SetHeader(md)
 	if err != nil {
 		return err
 	}
 
 	for _, object := range items.Objects {
-		data, err := ioutil.ReadAll(object.GetContent())
-		if err != nil {
-			return err
-		}
-
-		err = stream.Send(&pb.DataObject{
-			Header: object.Header(),
-			Data:   data,
-		})
+		err = stream.Send(object)
 		if err != nil {
 			return err
 		}

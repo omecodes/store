@@ -1,13 +1,12 @@
 package oms
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
+	"github.com/omecodes/store/utime"
 	"io/ioutil"
 	"strings"
-	"time"
 
 	"github.com/iancoleman/strcase"
 	"github.com/omecodes/bome"
@@ -99,7 +98,7 @@ type sqlStore struct {
 	indexes     *bome.JSONMap
 }
 
-func (ms *sqlStore) GetCollectionForWrite(ctx context.Context, name string) (Collection, error) {
+func (ms *sqlStore) GetOrCreateCollection(ctx context.Context, name string) (Collection, error) {
 	tableName := strcase.ToSnake(name)
 	col, err := NewSQLCollection(ms.db, ms.dialect, tableName)
 	if err != nil {
@@ -167,7 +166,7 @@ func (ms *sqlStore) GetCollectionForWrite(ctx context.Context, name string) (Col
 	return col, nil
 }
 
-func (ms *sqlStore) GetCollectionForRead(ctx context.Context, name string) (Collection, error) {
+func (ms *sqlStore) GetCollection(ctx context.Context, name string) (Collection, error) {
 	contains, err := ms.collections.Contains(name)
 	if err != nil {
 		return nil, err
@@ -181,16 +180,9 @@ func (ms *sqlStore) GetCollectionForRead(ctx context.Context, name string) (Coll
 	return NewSQLCollection(ms.db, ms.dialect, tableName)
 }
 
-func (ms *sqlStore) Save(ctx context.Context, object *Object, indexes ...*pb.Index) error {
-	if object.CreatedAt() == 0 {
-		d := time.Now().UnixNano()
-		object.SetCreatedAt(d)
-	}
-
-	contentData, err := ioutil.ReadAll(object.GetContent())
-	if err != nil {
-		log.Error("Save: could not get object content", log.Err(err))
-		return errors.BadInput
+func (ms *sqlStore) Save(ctx context.Context, object *pb.Object, indexes ...*pb.Index) error {
+	if object.Header.CreatedAt == 0 {
+		object.Header.CreatedAt = utime.Now()
 	}
 
 	txCtx, tx, err := ms.objects.Transaction(ctx)
@@ -201,8 +193,8 @@ func (ms *sqlStore) Save(ctx context.Context, object *Object, indexes ...*pb.Ind
 
 	// Save object
 	err = tx.Save(&bome.MapEntry{
-		Key:   object.ID(),
-		Value: string(contentData),
+		Key:   object.Header.Id,
+		Value: object.Data,
 	})
 	if err != nil {
 		log.Error("Save: failed to save object data", log.Err(err))
@@ -213,9 +205,9 @@ func (ms *sqlStore) Save(ctx context.Context, object *Object, indexes ...*pb.Ind
 	}
 
 	// Then retrieve saved size
-	size, err := tx.Size(object.ID())
+	size, err := tx.Size(object.Header.Id)
 	if err != nil {
-		log.Error("Patch: failed to get object size", log.Field("id", object.ID()), log.Err(err))
+		log.Error("Patch: failed to get object size", log.Field("id", object.Header.Id), log.Err(err))
 		if err := tx.Rollback(); err != nil {
 			log.Error("Patch: rollback failed", log.Err(err))
 		}
@@ -223,8 +215,8 @@ func (ms *sqlStore) Save(ctx context.Context, object *Object, indexes ...*pb.Ind
 	}
 
 	// Update object header size
-	object.Header().Size = size
-	headersData, err := json.Marshal(object.Header())
+	object.Header.Size = size
+	headersData, err := json.Marshal(object.Header)
 	if err != nil {
 		log.Error("Save: could not get object header", log.Err(err))
 		if err2 := tx.Rollback(); err2 != nil {
@@ -236,7 +228,7 @@ func (ms *sqlStore) Save(ctx context.Context, object *Object, indexes ...*pb.Ind
 	// Save object header
 	htx := ms.headers.ContinueTransaction(tx.TX())
 	err = htx.Save(&bome.MapEntry{
-		Key:   object.ID(),
+		Key:   object.Header.Id,
 		Value: string(headersData),
 	})
 	if err != nil {
@@ -249,8 +241,8 @@ func (ms *sqlStore) Save(ctx context.Context, object *Object, indexes ...*pb.Ind
 
 	dTx := ms.datedRefs.ContinueTransaction(tx.TX())
 	err = dTx.Save(&bome.ListEntry{
-		Index: object.CreatedAt(),
-		Value: object.ID(),
+		Index: object.Header.CreatedAt,
+		Value: object.Header.Id,
 	})
 	if err != nil {
 		log.Error("Save: failed to save dated reference", log.Err(err))
@@ -263,7 +255,7 @@ func (ms *sqlStore) Save(ctx context.Context, object *Object, indexes ...*pb.Ind
 	// Creating index
 	if len(indexes) > 0 {
 		for _, ind := range indexes {
-			col, err := ms.GetCollectionForWrite(txCtx, ind.Collection)
+			col, err := ms.GetOrCreateCollection(txCtx, ind.Collection)
 			if err != nil {
 				log.Error("Save: failed to get collection", log.Err(err))
 				if err2 := tx.Rollback(); err2 != nil {
@@ -274,7 +266,7 @@ func (ms *sqlStore) Save(ctx context.Context, object *Object, indexes ...*pb.Ind
 
 			js := map[string]interface{}{}
 			for _, item := range ind.Fields {
-				result := gjson.Get(string(contentData), strings.TrimPrefix(item.Path, "$."))
+				result := gjson.Get(object.Data, strings.TrimPrefix(item.Path, "$."))
 				if !result.Exists() {
 					log.Error("Save: index references path that does not exists", log.Err(err))
 					if err2 := tx.Rollback(); err2 != nil {
@@ -295,8 +287,8 @@ func (ms *sqlStore) Save(ctx context.Context, object *Object, indexes ...*pb.Ind
 			}
 
 			err = col.Save(txCtx, &CollectionItem{
-				Id:   object.ID(),
-				Date: object.header.CreatedAt,
+				Id:   object.Header.Id,
+				Date: object.Header.CreatedAt,
 				Data: string(jsonEncoded),
 			})
 			if err != nil {
@@ -319,7 +311,7 @@ func (ms *sqlStore) Save(ctx context.Context, object *Object, indexes ...*pb.Ind
 
 		indexesTx := ms.indexes.ContinueTransaction(tx.TX())
 		entry := &bome.MapEntry{
-			Key:   object.ID(),
+			Key:   object.Header.Id,
 			Value: string(encodedIndexes),
 		}
 		err = indexesTx.Save(entry)
@@ -337,7 +329,7 @@ func (ms *sqlStore) Save(ctx context.Context, object *Object, indexes ...*pb.Ind
 		log.Error("Save: operations commit failed", log.Err(err))
 		return errors.Internal
 	}
-	log.Debug("Save: object saved", log.Field("id", object.ID()))
+	log.Debug("Save: object saved", log.Field("id", object.Header.Id))
 	return nil
 }
 
@@ -444,12 +436,12 @@ func (ms *sqlStore) Delete(ctx context.Context, objectID string) error {
 	return nil
 }
 
-func (ms *sqlStore) List(ctx context.Context, before int64, count int, filter ObjectFilter) (*ObjectList, error) {
+func (ms *sqlStore) List(ctx context.Context, filter ObjectFilter, opts ListOptions) (*pb.ObjectList, error) {
 	cursor, err := ms.headers.List()
 	if err != nil {
 		log.Error("List: failed to get headers",
-			log.Field("created before", before),
-			log.Field("count", count), log.Err(err))
+			log.Field("created before", opts.Before),
+			log.Field("count", opts.Count), log.Err(err))
 		return nil, errors.Internal
 	}
 
@@ -459,30 +451,31 @@ func (ms *sqlStore) List(ctx context.Context, before int64, count int, filter Ob
 		}
 	}()
 
-	var result ObjectList
-	for cursor.HasNext() && len(result.Objects) < count {
+	var result pb.ObjectList
+	for cursor.HasNext() && len(result.Objects) < opts.Count {
 		item, err := cursor.Next()
 		if err != nil {
 			return nil, err
 		}
 
+		o := &pb.Object{
+			Header: &pb.Header{},
+			Data:   "",
+		}
+
 		entry := item.(*bome.MapEntry)
-		var header pb.Header
-		err = json.Unmarshal([]byte(entry.Value), &header)
+		err = json.Unmarshal([]byte(entry.Value), o.Header)
 		if err != nil {
 			log.Error("List: failed to decode object", log.Err(err))
 			return nil, errors.Internal
 		}
 
-		value, err := ms.objects.Get(header.Id)
+		o.Data, err = ms.objects.Get(o.Header.Id)
 		if err != nil {
 			return nil, err
 		}
 
-		o := NewObject()
-		o.SetHeader(&header)
 		if filter != nil {
-			o.SetContent(bytes.NewBufferString(value))
 			allowed, err := filter.Filter(o)
 			if err != nil {
 				if err == errors.Unauthorized || err == errors.Forbidden {
@@ -495,22 +488,19 @@ func (ms *sqlStore) List(ctx context.Context, before int64, count int, filter Ob
 				continue
 			}
 		}
-		result.Count++
-		o.SetContent(bytes.NewBufferString(value))
 		result.Objects = append(result.Objects, o)
 	}
 
-	result.Before = before
-	result.Count = len(result.Objects)
+	result.Before = opts.Before
 	return &result, nil
 }
 
-func (ms *sqlStore) ListAt(ctx context.Context, partPath string, before int64, count int, filter ObjectFilter) (*ObjectList, error) {
-	cursor, err := ms.headers.ExtractAll("$.id", bome.JsonAtLe("$.created_at", bome.IntExpr(before)), bome.StringScanner)
+func (ms *sqlStore) ListAt(ctx context.Context, partPath string, filter ObjectFilter, opts ListOptions) (*pb.ObjectList, error) {
+	cursor, err := ms.headers.ExtractAll("$.id", bome.JsonAtLe("$.created_at", bome.IntExpr(opts.Before)), bome.StringScanner)
 	if err != nil {
 		log.Error("ListAt: failed to get objects",
-			log.Field("created before", before),
-			log.Field("count", count), log.Err(err))
+			log.Field("created before", opts.Before),
+			log.Field("count", opts.Count), log.Err(err))
 		return nil, errors.Internal
 	}
 
@@ -520,8 +510,8 @@ func (ms *sqlStore) ListAt(ctx context.Context, partPath string, before int64, c
 		}
 	}()
 
-	var result ObjectList
-	for cursor.HasNext() && len(result.Objects) < count {
+	var result pb.ObjectList
+	for cursor.HasNext() && len(result.Objects) < opts.Count {
 		item, err := cursor.Next()
 		if err != nil {
 			log.Error("ListAt: failed to get object from curosr", log.Err(err))
@@ -544,13 +534,12 @@ func (ms *sqlStore) ListAt(ctx context.Context, partPath string, before int64, c
 				continue
 			}
 		}
-		result.Count++
 		result.Objects = append(result.Objects, o)
 	}
 	return &result, nil
 }
 
-func (ms *sqlStore) Get(ctx context.Context, objectID string) (*Object, error) {
+func (ms *sqlStore) Get(ctx context.Context, objectID string) (*pb.Object, error) {
 	hv, err := ms.headers.Get(objectID)
 	if err != nil {
 		log.Error("Get: could not get object header", log.Field("id", objectID), log.Err(err))
@@ -560,30 +549,27 @@ func (ms *sqlStore) Get(ctx context.Context, objectID string) (*Object, error) {
 		return nil, errors.Internal
 	}
 
-	var info pb.Header
-	err = json.Unmarshal([]byte(hv), &info)
+	o := &pb.Object{
+		Header: &pb.Header{},
+		Data:   "",
+	}
+
+	err = json.Unmarshal([]byte(hv), o.Header)
 	if err != nil {
 		log.Error("Get: could not decode object header", log.Err(err))
 		return nil, errors.Internal
 	}
 
-	value, err := ms.objects.Get(objectID)
+	o.Data, err = ms.objects.Get(objectID)
 	if err != nil {
 		return nil, err
 	}
 
-	o, err := DecodeObject(value)
-	if err != nil {
-		log.Error("List: failed to decode item", log.Field("encoded", value), log.Err(err))
-		return nil, errors.Internal
-	}
-
-	o.header = &info
 	log.Debug("Get: loaded object", log.Field("id", objectID))
 	return o, nil
 }
 
-func (ms *sqlStore) GetAt(ctx context.Context, objectID string, path string) (*Object, error) {
+func (ms *sqlStore) GetAt(ctx context.Context, objectID string, path string) (*pb.Object, error) {
 	hv, err := ms.headers.Get(objectID)
 	if err != nil {
 		log.Error("GetAt: could not get object header", log.Field("id", objectID), log.Err(err))
@@ -593,21 +579,22 @@ func (ms *sqlStore) GetAt(ctx context.Context, objectID string, path string) (*O
 		return nil, errors.Internal
 	}
 
-	var info pb.Header
-	err = json.Unmarshal([]byte(hv), &info)
+	o := &pb.Object{
+		Header: &pb.Header{},
+		Data:   "",
+	}
+
+	err = json.Unmarshal([]byte(hv), o.Header)
 	if err != nil {
 		log.Error("Get: could not decode object header", log.Err(err))
 		return nil, errors.Internal
 	}
 
-	value, err := ms.objects.ExtractAt(objectID, path)
+	o.Data, err = ms.objects.ExtractAt(objectID, path)
 	if err != nil {
 		return nil, err
 	}
 
-	o := new(Object)
-	o.SetHeader(&info)
-	o.SetContent(bytes.NewBuffer([]byte(value)))
 	log.Debug("GetAt: content loaded", log.Field("id", objectID), log.Field("at", path))
 	return o, nil
 }

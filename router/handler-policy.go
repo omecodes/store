@@ -1,6 +1,7 @@
 package router
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -23,7 +24,7 @@ func (p *PolicyHandler) isAdmin(ctx context.Context) bool {
 	return authCEL.Uid == "admin"
 }
 
-func (p *PolicyHandler) PutObject(ctx context.Context, object *oms.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
+func (p *PolicyHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, opts oms.PutDataOptions) (string, error) {
 	ai := auth.Get(ctx)
 	if ai == nil {
 		return "", errors.Forbidden
@@ -52,11 +53,11 @@ func (p *PolicyHandler) PutObject(ctx context.Context, object *oms.Object, secur
 		docRules.Delete = append(docRules.Delete, userDefaultRule)
 	}
 
-	object.SetCreatedBy(ai.Uid)
+	object.Header.CreatedBy = ai.Uid
 	return p.BaseHandler.PutObject(ctx, object, security, opts)
 }
 
-func (p *PolicyHandler) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*oms.Object, error) {
+func (p *PolicyHandler) GetObject(ctx context.Context, id string, opts oms.GetObjectOptions) (*pb.Object, error) {
 	err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, id, opts.Path)
 	if err != nil {
 		return nil, err
@@ -89,9 +90,9 @@ func (p *PolicyHandler) DeleteObject(ctx context.Context, id string) error {
 	return p.BaseHandler.DeleteObject(ctx, id)
 }
 
-func (p *PolicyHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*oms.ObjectList, error) {
-	opts.Filter = oms.FilterObjectFunc(func(o *oms.Object) (bool, error) {
-		err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, o.ID(), opts.Path)
+func (p *PolicyHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (*pb.ObjectList, error) {
+	opts.Filter = oms.FilterObjectFunc(func(o *pb.Object) (bool, error) {
+		err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, o.Header.Id, opts.Path)
 		if err != nil {
 			return false, err
 		}
@@ -100,11 +101,10 @@ func (p *PolicyHandler) ListObjects(ctx context.Context, opts oms.ListOptions) (
 	return p.BaseHandler.ListObjects(ctx, opts)
 }
 
-func (p *PolicyHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*oms.ObjectList, error) {
+func (p *PolicyHandler) SearchObjects(ctx context.Context, params oms.SearchParams, opts oms.SearchOptions) (*pb.ObjectList, error) {
 	if params.MatchedExpression == "false" {
-		return &oms.ObjectList{
+		return &pb.ObjectList{
 			Before: opts.Before,
-			Count:  0,
 		}, nil
 	}
 
@@ -127,14 +127,14 @@ func (p *PolicyHandler) SearchObjects(ctx context.Context, params oms.SearchPara
 		Before: opts.Before,
 		Count:  opts.Count,
 	}
-	lOpts.Filter = oms.FilterObjectFunc(func(o *oms.Object) (bool, error) {
-		err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, o.ID(), opts.Path)
+	lOpts.Filter = oms.FilterObjectFunc(func(o *pb.Object) (bool, error) {
+		err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, o.Header.Id, opts.Path)
 		if err != nil {
 			return false, err
 		}
 
 		var object = map[string]interface{}{}
-		err = json.NewDecoder(o.GetContent()).Decode(&object)
+		err = json.NewDecoder(bytes.NewBufferString(o.Data)).Decode(&object)
 		if err != nil {
 			return false, err
 		}
