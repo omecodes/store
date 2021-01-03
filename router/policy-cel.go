@@ -25,7 +25,7 @@ func evaluate(ctx *context.Context, state *celParams, rule string) (bool, error)
 		return true, nil
 	}
 
-	prg, err := LoadProgramForAccessValidation(ctx, rule)
+	prg, err := LoadProgramForACLValidation(ctx, rule)
 	if err != nil {
 		return false, err
 	}
