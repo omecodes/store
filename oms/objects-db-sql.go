@@ -347,6 +347,7 @@ func (ms *sqlStore) Patch(ctx context.Context, patch *Patch) error {
 		log.Error("Patch: could not get patch content", log.Err(err))
 		return errors.BadInput
 	}
+	value := sqlJSONSetValue(string(content))
 
 	_, tx, err := ms.objects.Transaction(ctx)
 	if err != nil {
@@ -354,7 +355,7 @@ func (ms *sqlStore) Patch(ctx context.Context, patch *Patch) error {
 		return errors.Internal
 	}
 
-	err = tx.EditAt(patch.GetObjectID(), patch.Path(), bome.RawExpr(string(content)))
+	err = tx.EditAt(patch.GetObjectID(), patch.Path(), bome.RawExpr(value))
 	if err != nil {
 		log.Error("Update: object patch failed", log.Field("id", patch.GetObjectID()), log.Err(err))
 		return errors.Internal
@@ -658,4 +659,16 @@ func (ms *sqlStore) Clear() error {
 
 	log.Debug("Clear: objects store has been cleared")
 	return nil
+}
+
+func sqlJSONSetValue(value string) string {
+	var o interface{}
+	err := json.Unmarshal([]byte(value), &o)
+	if err != nil {
+		val := strings.Replace(value, "'", `\'`, -1)
+		return "'" + val + "'"
+	}
+
+	val := strings.Replace(value, "'", `\'`, -1)
+	return "CAST('" + val + "' AS JSON)"
 }
