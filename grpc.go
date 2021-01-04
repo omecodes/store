@@ -2,11 +2,10 @@ package oms
 
 import (
 	"context"
-	"fmt"
-	"github.com/omecodes/store/objects"
+	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/pb"
 	"github.com/omecodes/store/router"
-	"google.golang.org/grpc/metadata"
+	"io"
 )
 
 func NewHandler() pb.HandlerUnitServer {
@@ -30,9 +29,7 @@ func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (
 		request.AccessSecurityRules.AccessRules = map[string]*pb.AccessRules{}
 	}
 
-	id, err := route.PutObject(ctx, request.Object, request.AccessSecurityRules, objects.PutDataOptions{
-		Indexes: request.Indexes,
-	})
+	id, err := route.PutObject(ctx, request.Object, request.AccessSecurityRules, request.Indexes, pb.PutOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -42,13 +39,13 @@ func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (
 	}, nil
 }
 
-func (h *handler) UpdateObject(ctx context.Context, request *pb.UpdateObjectRequest) (*pb.UpdateObjectResponse, error) {
+func (h *handler) PatchObject(ctx context.Context, request *pb.PatchObjectRequest) (*pb.PatchObjectResponse, error) {
 	route, err := router.NewRoute(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.UpdateObjectResponse{}, route.PatchObject(ctx, request.Patch, objects.PatchOptions{})
+	return &pb.PatchObjectResponse{}, route.PatchObject(ctx, request.Patch, pb.PatchOptions{})
 }
 
 func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (*pb.GetObjectResponse, error) {
@@ -57,9 +54,9 @@ func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (
 		return nil, err
 	}
 
-	object, err := route.GetObject(ctx, request.ObjectId, objects.GetObjectOptions{
-		At:     request.At,
-		Header: request.HeaderOnly,
+	object, err := route.GetObject(ctx, request.ObjectId, pb.GetOptions{
+		At:   request.At,
+		Info: request.InfoOnly,
 	})
 
 	return &pb.GetObjectResponse{
@@ -98,74 +95,42 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 		return err
 	}
 
-	opts := objects.ListOptions{
-		Collection: request.Collection,
-		FullObject: request.FullObject,
-		At:         request.At,
-		Before:     request.Before,
-		After:      request.After,
-		Count:      int(request.Count),
-	}
-
-	items, err := route.ListObjects(ctx, opts)
-	if err != nil {
-		return err
-	}
-
-	md := metadata.MD{}
-	md.Set("before", fmt.Sprintf("%d", items.Before))
-	md.Set("count", fmt.Sprintf("%d", len(items.Objects)))
-	err = stream.SetHeader(md)
-	if err != nil {
-		return err
-	}
-
-	for _, object := range items.Objects {
-		err = stream.Send(object)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (h *handler) SearchObjects(request *pb.SearchObjectsRequest, stream pb.HandlerUnit_SearchObjectsServer) error {
-	ctx := stream.Context()
-
-	route, err := router.NewRoute(ctx)
-	if err != nil {
-		return err
-	}
-
-	params := objects.SearchParams{
+	opts := pb.ListOptions{
+		CollectionOptions: pb.CollectionOptions{
+			Name:       request.Collection,
+			FullObject: request.FullObject,
+		},
 		Condition: request.Condition,
+		At:        request.At,
+		DateOptions: pb.DateRangeOptions{
+			Before: request.Before,
+			After:  request.After,
+		},
 	}
 
-	opts := objects.SearchOptions{
-		Before: request.Before,
-		Count:  int(request.Count),
-	}
-
-	items, err := route.SearchObjects(ctx, params, opts)
+	cursor, err := route.ListObjects(ctx, opts)
 	if err != nil {
 		return err
 	}
 
-	md := metadata.MD{}
-	md.Set("before", fmt.Sprintf("%d", items.Before))
-	md.Set("count", fmt.Sprintf("%d", len(items.Objects)))
-	err = stream.SetHeader(md)
-	if err != nil {
-		return err
-	}
+	defer func() {
+		if ce := cursor.Close(); ce != nil {
+			logs.Error("closed cursor with error", logs.Err(err))
+		}
+	}()
 
-	for _, object := range items.Objects {
-		err = stream.Send(object)
+	for {
+		o, err := cursor.Browse()
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return err
+		}
+
+		err = stream.Send(o)
 		if err != nil {
 			return err
 		}
 	}
-
-	return nil
 }

@@ -427,113 +427,89 @@ func (ms *sqlStore) Delete(ctx context.Context, objectID string) error {
 	return nil
 }
 
-func (ms *sqlStore) List(ctx context.Context, filter ObjectFilter, opts ListOptions) (*pb.ObjectList, error) {
-	if opts.Collection != "" {
-		return ms.collectionList(ctx, filter, opts)
+func (ms *sqlStore) List(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
+	if opts.CollectionOptions.Name != "" {
+		return ms.collectionList(ctx, opts)
+	}
+
+	if opts.DateOptions.After > 0 && opts.DateOptions.Before > 0 {
+		return ms.listInRange(ctx, opts)
 	}
 
 	cursor, err := ms.headers.List()
 	if err != nil {
-		log.Error("List: failed to get headers",
-			log.Field("created before", opts.Before),
-			log.Field("count", opts.Count), log.Err(err))
-		return nil, errors.Internal
+		return nil, err
 	}
 
-	defer func() {
-		if err := cursor.Close(); err != nil {
-			log.Error("List: cursor close failed", log.Err(err))
-		}
-	}()
-
-	var result pb.ObjectList
-	for cursor.HasNext() && len(result.Objects) < opts.Count {
-		item, err := cursor.Next()
+	closer := pb.CloseFunc(func() error {
+		return cursor.Close()
+	})
+	browser := pb.BrowseFunc(func() (*pb.Object, error) {
+		next, err := cursor.Next()
 		if err != nil {
 			return nil, err
 		}
 
 		o := &pb.Object{
 			Header: &pb.Header{},
-			Data:   "",
 		}
 
-		entry := item.(*bome.MapEntry)
+		entry := next.(*bome.MapEntry)
 		err = json.Unmarshal([]byte(entry.Value), o.Header)
 		if err != nil {
-			log.Error("List: failed to decode object", log.Err(err))
-			return nil, errors.Internal
+			return nil, err
 		}
-
-		if opts.At != "" {
-			o.Data, err = ms.objects.ExtractAt(o.Header.Id, opts.At)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			o.Data, err = ms.objects.Get(o.Header.Id)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		if filter != nil {
-			allowed, err := filter.Filter(o)
-			if err != nil {
-				if err == errors.Unauthorized || err == errors.Forbidden {
-					continue
-				}
-				return nil, err
-			}
-
-			if !allowed {
-				continue
-			}
-		}
-		result.Objects = append(result.Objects, o)
-	}
-
-	result.Before = opts.Before
-	return &result, nil
+		o.Data, err = ms.objects.Get(entry.Key)
+		return o, err
+	})
+	return pb.NewCursor(browser, closer), nil
 }
 
-func (ms *sqlStore) collectionList(ctx context.Context, filter ObjectFilter, opts ListOptions) (*pb.ObjectList, error) {
-	col, err := ms.GetCollection(ctx, opts.Collection)
+func (ms *sqlStore) listInRange(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
+	c, _, err := ms.datedRefs.AllInRange(opts.DateOptions.After, opts.DateOptions.Before, 100)
 	if err != nil {
 		return nil, err
 	}
 
-	var (
-		objects  []*pb.Object
-		total    uint32
-		resolver ObjectResolver
-	)
+	closer := pb.CloseFunc(func() error {
+		return c.Close()
+	})
+	browser := pb.BrowseFunc(func() (*pb.Object, error) {
+		next, err := c.Next()
+		if err != nil {
+			return nil, err
+		}
+		entry := next.(*bome.ListEntry)
+		id := entry.Value
+		return ms.Get(context.Background(), id, pb.GetOptions{
+			At: opts.At,
+		})
+	})
 
-	if opts.FullObject {
-		resolver = ms
+	return pb.NewCursor(browser, closer), nil
+}
+
+func (ms *sqlStore) collectionList(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
+	col, err := ms.GetCollection(ctx, opts.CollectionOptions.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	var dataResolver DataResolver
+	if opts.CollectionOptions.FullObject {
+		dataResolver = ms
 	} else if opts.At != "" {
-		resolver = ms.ResolveAtFunc(opts.At)
+		dataResolver = ms.ResolveAtFunc(opts.At)
 	}
 
-	if opts.Before > 0 || opts.After > 0 {
-		objects, total, err = col.RangeSelect(ctx, opts.After, opts.Before, opts.Count, filter, resolver)
+	if opts.DateOptions.Before > 0 && opts.DateOptions.After > 0 {
+		return col.RangeSelect(ctx, opts.DateOptions.After, opts.DateOptions.Before, ResolverHeaderFunc(ms.ResolveHeader), dataResolver)
 	} else {
-		objects, total, err = col.Select(ctx, opts.Count, filter, resolver)
+		return col.Select(ctx, ResolverHeaderFunc(ms.ResolveHeader), dataResolver)
 	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.ObjectList{
-		Before:  opts.Before,
-		After:   opts.After,
-		Total:   total,
-		Objects: objects,
-	}, nil
 }
 
-func (ms *sqlStore) Get(ctx context.Context, objectID string, opts GetObjectOptions) (*pb.Object, error) {
+func (ms *sqlStore) Get(ctx context.Context, objectID string, opts pb.GetOptions) (*pb.Object, error) {
 	hv, err := ms.headers.Get(objectID)
 	if err != nil {
 		log.Error("Get: could not get object header", log.Field("id", objectID), log.Err(err))
@@ -618,60 +594,18 @@ func (ms *sqlStore) Clear() error {
 	return nil
 }
 
-func (ms *sqlStore) ResolveObject(id string) (*pb.Object, error) {
-	hv, err := ms.headers.Get(id)
-	if err != nil {
-		log.Error("Get: could not get object header", log.Field("id", id), log.Err(err))
-		if bome.IsNotFound(err) {
-			return nil, err
-		}
-		return nil, errors.Internal
-	}
-
-	o := &pb.Object{
-		Header: &pb.Header{},
-	}
-
-	err = json.Unmarshal([]byte(hv), o.Header)
-	if err != nil {
-		log.Error("Get: could not decode object header", log.Err(err))
-		return nil, errors.Internal
-	}
-
-	o.Data, err = ms.objects.Get(id)
-	if err != nil {
-		return nil, err
-	}
-
-	return o, nil
+func (ms *sqlStore) ResolveData(id string) (string, error) {
+	return ms.objects.Get(id)
 }
 
-func (ms *sqlStore) ResolveAtFunc(at string) ObjectResolver {
-	return ObjectResolveFunc(func(objectID string) (*pb.Object, error) {
-		hv, err := ms.headers.Get(objectID)
-		if err != nil {
-			log.Error("GetAt: could not get object header", log.Field("id", objectID), log.Err(err))
-			if bome.IsNotFound(err) {
-				return nil, err
-			}
-			return nil, errors.Internal
-		}
-
-		o := &pb.Object{Header: &pb.Header{}}
-
-		err = json.Unmarshal([]byte(hv), o.Header)
-		if err != nil {
-			log.Error("Get: could not decode object header", log.Err(err))
-			return nil, errors.Internal
-		}
-
-		o.Data, err = ms.objects.ExtractAt(objectID, at)
-		if err != nil {
-			return nil, err
-		}
-
-		return o, nil
+func (ms *sqlStore) ResolveAtFunc(at string) DataResolver {
+	return ResolveDataFunc(func(objectID string) (string, error) {
+		return ms.objects.ExtractAt(objectID, at)
 	})
+}
+
+func (ms *sqlStore) ResolveHeader(id string) (*pb.Header, error) {
+	return ms.Info(context.Background(), id)
 }
 
 func sqlJSONSetValue(value string) string {

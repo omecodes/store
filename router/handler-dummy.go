@@ -2,21 +2,20 @@ package router
 
 import (
 	"context"
-	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/pb"
 )
 
 type dummyHandler struct{}
 
-func (d *dummyHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, opts objects.PutDataOptions) (string, error) {
+func (d *dummyHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
 	return "", nil
 }
 
-func (d *dummyHandler) PatchObject(ctx context.Context, patch *pb.Patch, opts objects.PatchOptions) error {
+func (d *dummyHandler) PatchObject(ctx context.Context, patch *pb.Patch, opts pb.PatchOptions) error {
 	return nil
 }
 
-func (d *dummyHandler) GetObject(ctx context.Context, id string, opts objects.GetObjectOptions) (*pb.Object, error) {
+func (d *dummyHandler) GetObject(ctx context.Context, id string, opts pb.GetOptions) (*pb.Object, error) {
 	return nil, nil
 }
 
@@ -28,10 +27,6 @@ func (d *dummyHandler) DeleteObject(ctx context.Context, id string) error {
 	return nil
 }
 
-func (d *dummyHandler) ListObjects(ctx context.Context, opts objects.ListOptions) (*pb.ObjectList, error) {
-	return nil, nil
-}
-
-func (d *dummyHandler) SearchObjects(ctx context.Context, params objects.SearchParams, opts objects.SearchOptions) (*pb.ObjectList, error) {
+func (d *dummyHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
 	return nil, nil
 }

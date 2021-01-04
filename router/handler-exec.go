@@ -14,7 +14,7 @@ type ExecHandler struct {
 	BaseHandler
 }
 
-func (e *ExecHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, opts objects.PutDataOptions) (string, error) {
+func (e *ExecHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
 	if object.Header.Id == "" {
 		object.Header.Id = uuid.New().String()
 	}
@@ -40,7 +40,7 @@ func (e *ExecHandler) PutObject(ctx context.Context, object *pb.Object, security
 		return "", errors.Internal
 	}
 
-	err = storage.Save(ctx, object, opts.Indexes...)
+	err = storage.Save(ctx, object, indexes...)
 	if err != nil {
 		if err2 := accessStore.Delete(ctx, object.Header.Id); err2 != nil {
 			log.Error("exec-handler.PutObject: failed to clear access rules", log.Err(err2))
@@ -51,7 +51,7 @@ func (e *ExecHandler) PutObject(ctx context.Context, object *pb.Object, security
 	return object.Header.Id, nil
 }
 
-func (e *ExecHandler) PatchObject(ctx context.Context, patch *pb.Patch, opts objects.PatchOptions) error {
+func (e *ExecHandler) PatchObject(ctx context.Context, patch *pb.Patch, opts pb.PatchOptions) error {
 	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Info("missing storage in context")
@@ -60,7 +60,7 @@ func (e *ExecHandler) PatchObject(ctx context.Context, patch *pb.Patch, opts obj
 	return storage.Patch(ctx, patch)
 }
 
-func (e *ExecHandler) GetObject(ctx context.Context, objectID string, opts objects.GetObjectOptions) (*pb.Object, error) {
+func (e *ExecHandler) GetObject(ctx context.Context, objectID string, opts pb.GetOptions) (*pb.Object, error) {
 	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
@@ -101,12 +101,12 @@ func (e *ExecHandler) DeleteObject(ctx context.Context, objectID string) error {
 	return accessStore.Delete(ctx, objectID)
 }
 
-func (e *ExecHandler) ListObjects(ctx context.Context, opts objects.ListOptions) (*pb.ObjectList, error) {
+func (e *ExecHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
 	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
 		return nil, errors.Internal
 	}
 
-	return storage.List(ctx, opts.Filter, opts)
+	return storage.List(ctx, opts)
 }

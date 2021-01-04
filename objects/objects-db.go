@@ -16,12 +16,10 @@ type Objects interface {
 	Delete(ctx context.Context, objectID string) error
 
 	// List returns a list of at most 'opts.Count' objects
-	// pass filter and
-	// have CreatedAt property lower than before
-	List(ctx context.Context, filter ObjectFilter, opts ListOptions) (*pb.ObjectList, error)
+	List(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error)
 
 	// Get gets the object associated with objectID
-	Get(ctx context.Context, objectID string, opts GetObjectOptions) (*pb.Object, error)
+	Get(ctx context.Context, objectID string, opts pb.GetOptions) (*pb.Object, error)
 
 	// Info gets header of the object associated with objectID
 	Info(ctx context.Context, objectID string) (*pb.Header, error)
@@ -30,22 +28,22 @@ type Objects interface {
 	Clear() error
 }
 
-type ObjectFilter interface {
-	Filter(o *pb.Object) (bool, error)
+type DataResolver interface {
+	ResolveData(string) (string, error)
 }
 
-type FilterObjectFunc func(o *pb.Object) (bool, error)
+type ResolveDataFunc func(string) (string, error)
 
-func (f FilterObjectFunc) Filter(o *pb.Object) (bool, error) {
-	return f(o)
+func (f ResolveDataFunc) ResolveData(id string) (string, error) {
+	return f(id)
 }
 
-type ObjectResolver interface {
-	ResolveObject(string) (*pb.Object, error)
+type HeaderResolver interface {
+	ResolveHeader(string) (*pb.Header, error)
 }
 
-type ObjectResolveFunc func(string) (*pb.Object, error)
+type ResolverHeaderFunc func(string) (*pb.Header, error)
 
-func (f ObjectResolveFunc) ResolveObject(id string) (*pb.Object, error) {
+func (f ResolverHeaderFunc) ResolveHeader(id string) (*pb.Header, error) {
 	return f(id)
 }

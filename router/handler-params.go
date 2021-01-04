@@ -14,7 +14,7 @@ type ParamsHandler struct {
 	BaseHandler
 }
 
-func (p *ParamsHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, opts objects.PutDataOptions) (string, error) {
+func (p *ParamsHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
 	if object == nil || object.Header == nil || object.Header.Size == 0 {
 		return "", errors.BadInput
 	}
@@ -46,10 +46,10 @@ func (p *ParamsHandler) PutObject(ctx context.Context, object *pb.Object, securi
 		return "", errors.BadInput
 	}
 
-	return p.next.PutObject(ctx, object, security, opts)
+	return p.next.PutObject(ctx, object, security, indexes, opts)
 }
 
-func (p *ParamsHandler) PatchObject(ctx context.Context, patch *pb.Patch, opts objects.PatchOptions) error {
+func (p *ParamsHandler) PatchObject(ctx context.Context, patch *pb.Patch, opts pb.PatchOptions) error {
 	if patch == nil || patch.ObjectId == "" || len(patch.Data) == 0 || patch.At == "" {
 		return errors.BadInput
 	}
@@ -75,7 +75,7 @@ func (p *ParamsHandler) PatchObject(ctx context.Context, patch *pb.Patch, opts o
 	return p.next.PatchObject(ctx, patch, opts)
 }
 
-func (p *ParamsHandler) GetObject(ctx context.Context, id string, opts objects.GetObjectOptions) (*pb.Object, error) {
+func (p *ParamsHandler) GetObject(ctx context.Context, id string, opts pb.GetOptions) (*pb.Object, error) {
 	if id == "" {
 		return nil, errors.BadInput
 	}
@@ -96,38 +96,18 @@ func (p *ParamsHandler) DeleteObject(ctx context.Context, id string) error {
 	return p.next.DeleteObject(ctx, id)
 }
 
-func (p *ParamsHandler) ListObjects(ctx context.Context, opts objects.ListOptions) (*pb.ObjectList, error) {
-	if opts.Before == 0 {
-		opts.Before = utime.Now()
+func (p *ParamsHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
+	if opts.DateOptions.Before == 0 {
+		opts.DateOptions.Before = utime.Now()
 	}
 
-	if opts.After == 0 {
-		opts.After = 1
+	if opts.DateOptions.After == 0 {
+		opts.DateOptions.After = 1
 	}
 
-	if opts.Count > 5 || opts.Count == 0 {
+	/*if opts.Count > 5 || opts.Count == 0 {
 		opts.Count = 5
-	}
+	} */
 
 	return p.BaseHandler.ListObjects(ctx, opts)
-}
-
-func (p *ParamsHandler) SearchObjects(ctx context.Context, params objects.SearchParams, opts objects.SearchOptions) (*pb.ObjectList, error) {
-	if params.Condition == "" {
-		return nil, errors.BadInput
-	}
-
-	if opts.Before == 0 {
-		opts.Before = utime.Now()
-	}
-
-	if opts.After == 0 {
-		opts.After = 1
-	}
-
-	if opts.Count > 5 || opts.Count == 0 {
-		opts.Count = 5
-	}
-
-	return p.BaseHandler.SearchObjects(ctx, params, opts)
 }

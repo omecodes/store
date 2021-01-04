@@ -2,11 +2,10 @@ package objects
 
 import (
 	"context"
-	"fmt"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/pb"
-	"google.golang.org/grpc/metadata"
+	"io"
 )
 
 func NewStoreGrpcHandler() pb.HandlerUnitServer {
@@ -32,7 +31,7 @@ func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (
 	return &pb.PutObjectResponse{}, nil
 }
 
-func (h *handler) UpdateObject(ctx context.Context, request *pb.UpdateObjectRequest) (*pb.UpdateObjectResponse, error) {
+func (h *handler) PatchObject(ctx context.Context, request *pb.PatchObjectRequest) (*pb.PatchObjectResponse, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
@@ -44,7 +43,7 @@ func (h *handler) UpdateObject(ctx context.Context, request *pb.UpdateObjectRequ
 		return nil, err
 	}
 
-	return &pb.UpdateObjectResponse{}, nil
+	return &pb.PatchObjectResponse{}, nil
 }
 
 func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (*pb.GetObjectResponse, error) {
@@ -54,9 +53,9 @@ func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (
 		return nil, errors.Internal
 	}
 
-	o, err := storage.Get(ctx, request.ObjectId, GetObjectOptions{
-		At:     request.At,
-		Header: request.HeaderOnly,
+	o, err := storage.Get(ctx, request.ObjectId, pb.GetOptions{
+		At:   request.At,
+		Info: request.InfoOnly,
 	})
 	if err != nil {
 		return nil, err
@@ -104,33 +103,39 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 		return errors.Internal
 	}
 
-	opts := ListOptions{
-		Collection: request.Collection,
-		FullObject: request.FullObject,
-		At:         request.At,
-		Before:     request.Before,
-		After:      request.After,
-		Count:      int(request.Count),
+	opts := pb.ListOptions{
+		CollectionOptions: pb.CollectionOptions{
+			Name:       request.Collection,
+			FullObject: false,
+		},
+		Condition:   request.Condition,
+		At:          request.At,
+		DateOptions: pb.DateRangeOptions{},
 	}
 
-	items, err := storage.List(ctx, nil, opts)
+	cursor, err := storage.List(ctx, opts)
 	if err != nil {
 		return err
 	}
 
-	md := metadata.MD{}
-	md.Set("before", fmt.Sprintf("%d", items.Before))
-	md.Set("count", fmt.Sprintf("%d", len(items.Objects)))
-	err = stream.SetHeader(md)
-	if err != nil {
-		return err
-	}
+	defer func() {
+		if ce := cursor.Close(); ce != nil {
+			logs.Error("closed cursor with error", logs.Err(err))
+		}
+	}()
 
-	for _, object := range items.Objects {
-		err = stream.Send(object)
+	for {
+		o, err := cursor.Browse()
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return err
+		}
+
+		err = stream.Send(o)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
 }

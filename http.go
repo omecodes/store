@@ -1,20 +1,18 @@
 package oms
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/gorilla/mux"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/auth"
-	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/pb"
 	"github.com/omecodes/store/router"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 const (
@@ -48,7 +46,7 @@ func (s *HTTPUnit) MuxRouter() *mux.Router {
 	r.Name("Get").Methods(http.MethodGet).Path("/objects/{id}").Handler(http.HandlerFunc(s.get))
 	r.Name("Del").Methods(http.MethodDelete).Path("/objects/{id}").Handler(http.HandlerFunc(s.del))
 	r.Name("GetObjects").Methods(http.MethodGet).Path("/objects").Handler(http.HandlerFunc(s.list))
-	r.Name("Search").Methods(http.MethodPost).Path("/objects").Handler(http.HandlerFunc(s.search))
+	// r.Name("Search").Methods(http.MethodPost).Path("/objects").Handler(http.HandlerFunc(s.search))
 
 	return r
 }
@@ -75,16 +73,13 @@ func (s *HTTPUnit) put(w http.ResponseWriter, r *http.Request) {
 	}
 	putRequest.Object.Header.Size = int64(len(putRequest.Object.Data))
 
-	var opts objects.PutDataOptions
-	opts.Indexes = putRequest.Indexes
-
 	route, err := router.NewRoute(ctx)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	id, err := route.PutObject(ctx, putRequest.Object, putRequest.AccessSecurityRules, opts)
+	id, err := route.PutObject(ctx, putRequest.Object, putRequest.AccessSecurityRules, putRequest.Indexes, pb.PutOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -120,7 +115,7 @@ func (s *HTTPUnit) patch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = route.PatchObject(ctx, &patch, objects.PatchOptions{})
+	err = route.PatchObject(ctx, &patch, pb.PatchOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -141,9 +136,9 @@ func (s *HTTPUnit) get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	object, err := route.GetObject(ctx, id, objects.GetObjectOptions{
-		At:     at,
-		Header: header == "true",
+	object, err := route.GetObject(ctx, id, pb.GetOptions{
+		At:   at,
+		Info: header == "true",
 	})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
@@ -179,31 +174,31 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 
 	var (
 		err  error
-		opts objects.ListOptions
+		opts pb.ListOptions
 	)
 
-	opts.Before, err = Int64QueryParam(r, queryBefore)
+	opts.DateOptions.Before, err = Int64QueryParam(r, queryBefore)
 	if err != nil {
 		log.Error("could not parse param 'before'")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	opts.After, err = Int64QueryParam(r, queryAfter)
+	opts.DateOptions.After, err = Int64QueryParam(r, queryAfter)
 	if err != nil {
 		log.Error("could not parse param 'after'")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	count, err := Int64QueryParam(r, queryCount)
+	/*count, err := Int64QueryParam(r, queryCount)
 	if err != nil {
 		log.Error("could not parse param 'count'")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	opts.Count = int(count)
+	opts.Count = int(count) */
 	opts.At = r.URL.Query().Get(queryAt)
-	opts.FullObject = r.URL.Query().Get(queryFullObject) == "true"
-	opts.Collection = r.URL.Query().Get(queryCollection)
+	opts.CollectionOptions.FullObject = r.URL.Query().Get(queryFullObject) == "true"
+	opts.CollectionOptions.Name = r.URL.Query().Get(queryCollection)
 
 	route, err := router.NewRoute(ctx)
 	if err != nil {
@@ -211,31 +206,37 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := route.ListObjects(ctx, opts)
+	cursor, err := route.ListObjects(ctx, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
 	}
 
+	defer func() {
+		if cErr := cursor.Close(); cErr != nil {
+			log.Error("cursor closed with an error", log.Err(cErr))
+		}
+	}()
 	w.Header().Add("Content-Type", "application/json")
-	_, err = w.Write([]byte(fmt.Sprintf("{\"count\": %d, \"total\": %d, \"before\": %d, \"after\": %d, \"objects\": {",
-		len(result.Objects),
-		result.Total,
-		result.Before,
-		result.After)))
-	if err != nil {
-		log.Error("GetObjects: failed to write response")
-		return
-	}
 
+	_, err = w.Write([]byte("{"))
 	position := 0
-	for _, object := range result.Objects {
+	for {
+		object, err := cursor.Browse()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			w.WriteHeader(errors.HttpStatus(err))
+		}
+
 		var item string
 		if position == 0 {
 			position++
 		} else {
 			item = ","
 		}
+
 		item = item + fmt.Sprintf("\"%s\": %s", object.Header.Id, object.Data)
 		_, err = w.Write([]byte(item))
 		if err != nil {
@@ -243,10 +244,10 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	_, err = w.Write([]byte("}}"))
+	_, err = w.Write([]byte("}"))
 }
 
-func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
+/* func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var before int64
@@ -315,7 +316,7 @@ func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	_, err = w.Write([]byte("}}"))
-}
+} */
 
 func (s *HTTPUnit) setSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

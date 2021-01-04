@@ -65,8 +65,8 @@ func local_request_HandlerUnit_PutObject_0(ctx context.Context, marshaler runtim
 
 }
 
-func request_HandlerUnit_UpdateObject_0(ctx context.Context, marshaler runtime.Marshaler, client HandlerUnitClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq UpdateObjectRequest
+func request_HandlerUnit_PatchObject_0(ctx context.Context, marshaler runtime.Marshaler, client HandlerUnitClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq PatchObjectRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -77,13 +77,13 @@ func request_HandlerUnit_UpdateObject_0(ctx context.Context, marshaler runtime.M
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.UpdateObject(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.PatchObject(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_HandlerUnit_UpdateObject_0(ctx context.Context, marshaler runtime.Marshaler, server HandlerUnitServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq UpdateObjectRequest
+func local_request_HandlerUnit_PatchObject_0(ctx context.Context, marshaler runtime.Marshaler, server HandlerUnitServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq PatchObjectRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -94,7 +94,7 @@ func local_request_HandlerUnit_UpdateObject_0(ctx context.Context, marshaler run
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.UpdateObject(ctx, &protoReq)
+	msg, err := server.PatchObject(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -214,31 +214,6 @@ func request_HandlerUnit_ListObjects_0(ctx context.Context, marshaler runtime.Ma
 	}
 
 	stream, err := client.ListObjects(ctx, &protoReq)
-	if err != nil {
-		return nil, metadata, err
-	}
-	header, err := stream.Header()
-	if err != nil {
-		return nil, metadata, err
-	}
-	metadata.HeaderMD = header
-	return stream, metadata, nil
-
-}
-
-func request_HandlerUnit_SearchObjects_0(ctx context.Context, marshaler runtime.Marshaler, client HandlerUnitClient, req *http.Request, pathParams map[string]string) (HandlerUnit_SearchObjectsClient, runtime.ServerMetadata, error) {
-	var protoReq SearchObjectsRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	stream, err := client.SearchObjects(ctx, &protoReq)
 	if err != nil {
 		return nil, metadata, err
 	}
@@ -450,18 +425,18 @@ func RegisterHandlerUnitHandlerServer(ctx context.Context, mux *runtime.ServeMux
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_UpdateObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_HandlerUnit_PatchObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.HandlerUnit/UpdateObject")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.HandlerUnit/PatchObject")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HandlerUnit_UpdateObject_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_HandlerUnit_PatchObject_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -469,7 +444,7 @@ func RegisterHandlerUnitHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 
-		forward_HandlerUnit_UpdateObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_HandlerUnit_PatchObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -543,13 +518,6 @@ func RegisterHandlerUnitHandlerServer(ctx context.Context, mux *runtime.ServeMux
 	})
 
 	mux.Handle("POST", pattern_HandlerUnit_ListObjects_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
-		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-		return
-	})
-
-	mux.Handle("POST", pattern_HandlerUnit_SearchObjects_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
 		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -741,23 +709,23 @@ func RegisterHandlerUnitHandlerClient(ctx context.Context, mux *runtime.ServeMux
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_UpdateObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_HandlerUnit_PatchObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.HandlerUnit/UpdateObject")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.HandlerUnit/PatchObject")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HandlerUnit_UpdateObject_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_HandlerUnit_PatchObject_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_HandlerUnit_UpdateObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_HandlerUnit_PatchObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -841,33 +809,13 @@ func RegisterHandlerUnitHandlerClient(ctx context.Context, mux *runtime.ServeMux
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_SearchObjects_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.HandlerUnit/SearchObjects")
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_HandlerUnit_SearchObjects_0(rctx, inboundMarshaler, client, req, pathParams)
-		ctx = runtime.NewServerMetadataContext(ctx, md)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_HandlerUnit_SearchObjects_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
-
-	})
-
 	return nil
 }
 
 var (
 	pattern_HandlerUnit_PutObject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "PutObject"}, ""))
 
-	pattern_HandlerUnit_UpdateObject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "UpdateObject"}, ""))
+	pattern_HandlerUnit_PatchObject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "PatchObject"}, ""))
 
 	pattern_HandlerUnit_GetObject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "GetObject"}, ""))
 
@@ -876,14 +824,12 @@ var (
 	pattern_HandlerUnit_ObjectInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "ObjectInfo"}, ""))
 
 	pattern_HandlerUnit_ListObjects_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "ListObjects"}, ""))
-
-	pattern_HandlerUnit_SearchObjects_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "SearchObjects"}, ""))
 )
 
 var (
 	forward_HandlerUnit_PutObject_0 = runtime.ForwardResponseMessage
 
-	forward_HandlerUnit_UpdateObject_0 = runtime.ForwardResponseMessage
+	forward_HandlerUnit_PatchObject_0 = runtime.ForwardResponseMessage
 
 	forward_HandlerUnit_GetObject_0 = runtime.ForwardResponseMessage
 
@@ -892,8 +838,6 @@ var (
 	forward_HandlerUnit_ObjectInfo_0 = runtime.ForwardResponseMessage
 
 	forward_HandlerUnit_ListObjects_0 = runtime.ForwardResponseStream
-
-	forward_HandlerUnit_SearchObjects_0 = runtime.ForwardResponseStream
 )
 
 // RegisterACLHandlerFromEndpoint is same as RegisterACLHandler but

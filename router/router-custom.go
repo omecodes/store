@@ -68,7 +68,6 @@ func (r *CustomRouter) GetRoute(opts ...RouteOption) Handler {
 			next: handler,
 		}
 	}
-
 	return handler
 }
 

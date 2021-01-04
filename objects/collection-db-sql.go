@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"github.com/omecodes/bome"
-	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/pb"
 )
 
@@ -67,111 +66,76 @@ func (s *sqlCollection) Save(ctx context.Context, createdAt int64, id string, da
 	return err
 }
 
-func (s *sqlCollection) Select(ctx context.Context, count int, filter ObjectFilter, resolver ObjectResolver) ([]*pb.Object, uint32, error) {
-	total, err := s.objects.Count()
-	if err != nil {
-		return nil, 0, err
-	}
-
+func (s *sqlCollection) Select(ctx context.Context, headerResolver HeaderResolver, dataResolver DataResolver) (*pb.Cursor, error) {
 	c, err := s.objects.List()
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	defer func() {
-		if err := c.Close(); err != nil {
-			logs.Error("closing cursor caused error", logs.Err(err))
-		}
-	}()
+	closer := pb.CloseFunc(func() error {
+		return c.Close()
+	})
 
-	var items []*pb.Object
-	for c.HasNext() && len(items) < count {
-		o, err := c.Next()
+	browser := pb.BrowseFunc(func() (*pb.Object, error) {
+		next, err := c.Next()
 		if err != nil {
-			return nil, 0, err
+			return nil, err
 		}
 
-		entry := o.(*bome.MapEntry)
-
-		object := &pb.Object{
-			Header: &pb.Header{
-				Id: entry.Key,
-			},
-			Data: entry.Value,
-		}
-		if filter != nil {
-			selected, err := filter.Filter(object)
-			if err != nil {
-				return nil, 0, err
-			}
-			if !selected {
-				continue
-			}
+		entry := next.(*bome.MapEntry)
+		o := &pb.Object{
+			Header: &pb.Header{Id: entry.Key},
+			Data:   entry.Value,
 		}
 
-		if resolver != nil {
-			object, err = resolver.ResolveObject(entry.Key)
-			if err != nil {
-				return nil, 0, err
-			}
+		o.Header, err = headerResolver.ResolveHeader(entry.Key)
+		if err != nil {
+			return nil, err
 		}
 
-		items = append(items, object)
-	}
-
-	return items, uint32(total), nil
+		if dataResolver != nil {
+			o.Data, err = dataResolver.ResolveData(entry.Key)
+		}
+		return o, nil
+	})
+	return pb.NewCursor(browser, closer), nil
 }
 
-func (s *sqlCollection) RangeSelect(ctx context.Context, after int64, before int64, count int, filter ObjectFilter, resolver ObjectResolver) ([]*pb.Object, uint32, error) {
-	c, total, err := s.datedRef.IndexRange(after, before, count)
+func (s *sqlCollection) RangeSelect(ctx context.Context, after int64, before int64, headerResolver HeaderResolver, dataResolver DataResolver) (*pb.Cursor, error) {
+	c, _, err := s.datedRef.AllInRange(after, before, 100)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	defer func() {
-		if err := c.Close(); err != nil {
-			logs.Error("closing cursor caused error", logs.Err(err))
-		}
-	}()
+	closer := pb.CloseFunc(func() error {
+		return c.Close()
+	})
 
-	var items []*pb.Object
-	for c.HasNext() && len(items) < count {
-		o, err := c.Next()
+	browser := pb.BrowseFunc(func() (*pb.Object, error) {
+		next, err := c.Next()
 		if err != nil {
-			return nil, 0, err
+			return nil, err
 		}
 
-		listEntry := o.(*bome.ListEntry)
-		value, err := s.objects.Get(listEntry.Value)
+		entry := next.(*bome.ListEntry)
+		id := entry.Value
+
+		o := &pb.Object{Header: &pb.Header{}}
+
+		o.Header, err = headerResolver.ResolveHeader(id)
 		if err != nil {
-			return nil, 0, err
+			return nil, err
 		}
 
-		object := &pb.Object{
-			Header: &pb.Header{
-				Id:        listEntry.Value,
-				CreatedAt: listEntry.Index,
-			},
-			Data: value,
-		}
-		if filter != nil {
-			selected, err := filter.Filter(object)
+		if dataResolver != nil {
+			o.Data, err = dataResolver.ResolveData(o.Header.Id)
+		} else {
+			o.Data, err = s.objects.Get(entry.Value)
 			if err != nil {
-				return nil, 0, err
-			}
-			if !selected {
-				continue
+				return nil, err
 			}
 		}
-
-		if resolver != nil {
-			object, err = resolver.ResolveObject(object.Header.Id)
-			if err != nil {
-				return nil, 0, err
-			}
-		}
-		items = append(items, object)
-	}
-
-	return items, uint32(total), nil
+		return o, nil
+	})
+	return pb.NewCursor(browser, closer), nil
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/store/acl"
 	"github.com/omecodes/store/auth"
-	"github.com/omecodes/store/oms"
+	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/pb"
 	. "github.com/smartystreets/goconvey/convey"
 	"io/ioutil"
@@ -28,7 +28,7 @@ var (
 
 	xPolicyEnv *cel.Env
 	xSearchEnv *cel.Env
-	objectsDB  objects.Objects
+	objectsDB  pb.Objects
 	workersDB  *bome.JSONMap
 	settingsDB objects.SettingsManager
 	aclDB      acl.Store
@@ -64,8 +64,8 @@ var (
 		Email: "admin@ome.ci",
 	}
 
-	userAObjects []*objects.Object
-	userBObjects []*objects.Object
+	userAObjects []*pb.Object
+	userBObjects []*pb.Object
 
 	object1 = `{
 	"project": "ome",
@@ -117,11 +117,11 @@ func (f *failureDummyAccessStore) Delete(ctx context.Context, objectID string) e
 
 type failureDummyStorage struct{}
 
-func (f *failureDummyStorage) Save(ctx context.Context, object *objects.Object, indexes ...*pb.Index) error {
+func (f *failureDummyStorage) Save(ctx context.Context, object *pb.Object, indexes ...*pb.Index) error {
 	return errors.New("failure")
 }
 
-func (f *failureDummyStorage) Patch(ctx context.Context, patch *objects.Patch) error {
+func (f *failureDummyStorage) Patch(ctx context.Context, patch *pb.Patch) error {
 	return errors.New("failure")
 }
 
@@ -129,19 +129,15 @@ func (f *failureDummyStorage) Delete(ctx context.Context, objectID string) error
 	return errors.New("failure")
 }
 
-func (f *failureDummyStorage) List(ctx context.Context, before int64, count int, filter objects.ObjectFilter) (*objects.ObjectList, error) {
+func (f *failureDummyStorage) List(ctx context.Context, before int64, count int) (*pb.Cursor, error) {
 	return nil, errors.New("failure")
 }
 
-func (f *failureDummyStorage) ListAt(ctx context.Context, path string, before int64, count int, filter objects.ObjectFilter) (*objects.ObjectList, error) {
+func (f *failureDummyStorage) Get(ctx context.Context, objectID string) (*pb.Object, error) {
 	return nil, errors.New("failure")
 }
 
-func (f *failureDummyStorage) Get(ctx context.Context, objectID string) (*objects.Object, error) {
-	return nil, errors.New("failure")
-}
-
-func (f *failureDummyStorage) GetAt(ctx context.Context, objectID string, path string) (*objects.Object, error) {
+func (f *failureDummyStorage) GetAt(ctx context.Context, objectID string, path string) (*pb.Object, error) {
 	return nil, errors.New("failure")
 }
 
@@ -308,24 +304,24 @@ func Test_PutObject(t *testing.T) {
 		ctx := fullConfiguredContext()
 		settings := Settings(ctx)
 
-		o := new(objects.Object)
+		o := new(pb.Object)
 		o.SetHeader(&pb.Header{
 			CreatedBy: "ome",
 			Size:      int64(len(object1)),
 		})
 		o.SetContent(bytes.NewBufferString(object1))
 
-		id, err := route.PutObject(ctx, nil, nil, objects.PutDataOptions{})
+		id, err := route.PutObject(ctx, nil, nil, nil, objects.PutDataOptions{})
 		So(err, ShouldEqual, errors.BadInput)
 		So(id, ShouldEqual, "")
 
 		o.SetSize(0)
-		id, err = route.PutObject(ctx, o, nil, objects.PutDataOptions{})
+		id, err = route.PutObject(ctx, o, nil, nil, objects.PutDataOptions{})
 		So(err, ShouldEqual, errors.BadInput)
 		So(id, ShouldEqual, "")
 
 		o.SetSize(1220)
-		id, err = route.PutObject(ctx, o, nil, objects.PutDataOptions{})
+		id, err = route.PutObject(ctx, o, nil, nil, objects.PutDataOptions{})
 		So(err, ShouldEqual, errors.BadInput)
 		So(id, ShouldEqual, "")
 
@@ -333,14 +329,14 @@ func Test_PutObject(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		o.SetSize(int64(len(object1)))
-		id, err = route.PutObject(ctx, o, nil, objects.PutDataOptions{})
+		id, err = route.PutObject(ctx, o, nil, nil, objects.PutDataOptions{})
 		So(err, ShouldEqual, errors.Internal)
 		So(id, ShouldEqual, "")
 
 		err = settings.Set(objects.SettingsDataMaxSizePath, "ekhfs")
 		So(err, ShouldBeNil)
 
-		id, err = route.PutObject(ctx, o, nil, objects.PutDataOptions{})
+		id, err = route.PutObject(ctx, o, nil, nil, objects.PutDataOptions{})
 		So(err, ShouldEqual, errors.Internal)
 		So(id, ShouldEqual, "")
 
@@ -354,19 +350,19 @@ func Test_PutObject0(t *testing.T) {
 
 		route := getRoute()
 
-		o := new(objects.Object)
+		o := new(pb.Object)
 		o.SetHeader(&pb.Header{
 			CreatedBy: "ome",
 			Size:      int64(len(object1)),
 		})
 		o.SetContent(bytes.NewBufferString(object1))
 
-		id, err := route.PutObject(fullConfiguredContext(), nil, nil, objects.PutDataOptions{})
+		id, err := route.PutObject(fullConfiguredContext(), nil, nil, nil, objects.PutDataOptions{})
 		So(err, ShouldEqual, errors.BadInput)
 		So(id, ShouldEqual, "")
 
 		o.SetSize(0)
-		id, err = route.PutObject(fullConfiguredContext(), o, nil, objects.PutDataOptions{})
+		id, err = route.PutObject(fullConfiguredContext(), o, nil, nil, objects.PutDataOptions{})
 		So(err, ShouldEqual, errors.BadInput)
 		So(id, ShouldEqual, "")
 
@@ -377,14 +373,14 @@ func Test_PutObject1(t *testing.T) {
 	Convey("Non authenticated user cannot put object", t, func() {
 		route := getRoute()
 
-		o := new(objects.Object)
+		o := new(pb.Object)
 		o.SetHeader(&pb.Header{
 			CreatedBy: "ome",
 			Size:      int64(len(object1)),
 		})
 		o.SetContent(bytes.NewBufferString(object1))
 
-		id, err := route.PutObject(fullConfiguredContext(), o, nil, objects.PutDataOptions{})
+		id, err := route.PutObject(fullConfiguredContext(), o, nil, nil, objects.PutDataOptions{})
 		So(err, ShouldEqual, errors.Forbidden)
 		So(id, ShouldEqual, "")
 	})
@@ -394,7 +390,7 @@ func Test_PutObject2(t *testing.T) {
 	Convey("Non complete context cannot put object", t, func() {
 		route := getRoute()
 
-		o := new(objects.Object)
+		o := new(pb.Object)
 		o.SetHeader(&pb.Header{
 			CreatedBy: "ome",
 			Size:      int64(len(object1)),
@@ -402,12 +398,12 @@ func Test_PutObject2(t *testing.T) {
 		o.SetContent(bytes.NewBufferString(object1))
 
 		userACtx := auth.Context(contextWithoutStore(), userA)
-		id, err := route.PutObject(userACtx, o, nil, objects.PutDataOptions{})
+		id, err := route.PutObject(userACtx, o, nil, nil, objects.PutDataOptions{})
 		So(err, ShouldEqual, errors.Internal)
 		So(id, ShouldEqual, "")
 
 		userACtx = auth.Context(contextWithoutACLStore(), userA)
-		id, err = route.PutObject(userACtx, o, nil, objects.PutDataOptions{})
+		id, err = route.PutObject(userACtx, o, nil, nil, objects.PutDataOptions{})
 		So(err, ShouldEqual, errors.Internal)
 		So(id, ShouldEqual, "")
 	})
@@ -417,29 +413,29 @@ func Test_PutObject4(t *testing.T) {
 	Convey("Authenticated and validated user can put object in a well configured context", t, func() {
 		route := getRoute()
 
-		o := new(objects.Object)
+		o := new(pb.Object)
 		o.SetHeader(&pb.Header{
 			CreatedBy: "ome",
 			Size:      int64(len(object1)),
 		})
 		o.SetContent(bytes.NewBufferString(object1))
 		userACtx := auth.Context(fullConfiguredContext(), userA)
-		id, err := route.PutObject(userACtx, o, nil, objects.PutDataOptions{})
+		id, err := route.PutObject(userACtx, o, nil, nil, objects.PutDataOptions{})
 		So(err, ShouldBeNil)
 		So(id, ShouldNotBeNil)
 
-		o2 := new(objects.Object)
+		o2 := new(pb.Object)
 		o2.SetHeader(&pb.Header{
 			CreatedBy: "ome",
 			Size:      int64(len(object1)),
 		})
 		o2.SetContent(bytes.NewBufferString(object2))
 		userBCtx := auth.Context(fullConfiguredContext(), userB)
-		id, err = route.PutObject(userBCtx, o2, nil, objects.PutDataOptions{})
+		id, err = route.PutObject(userBCtx, o2, nil, nil, objects.PutDataOptions{})
 		So(err, ShouldBeNil)
 		So(id, ShouldNotEqual, "")
 
-		o3 := new(objects.Object)
+		o3 := new(pb.Object)
 		o3.SetHeader(&pb.Header{
 			CreatedBy: "ome",
 			Size:      int64(len(object1)),
@@ -451,7 +447,7 @@ func Test_PutObject4(t *testing.T) {
 				Write: []string{"auth.uid=='b'"},
 			},
 		}}
-		id, err = route.PutObject(userBCtx, o3, security, objects.PutDataOptions{})
+		id, err = route.PutObject(userBCtx, o3, security, nil, objects.PutDataOptions{})
 		So(err, ShouldBeNil)
 		So(id, ShouldNotEqual, "")
 	})
@@ -461,7 +457,7 @@ func Test_PutObject5(t *testing.T) {
 	Convey("Cannot save object with broken access store", t, func() {
 		route := getRoute()
 
-		o := new(objects.Object)
+		o := new(pb.Object)
 		o.SetHeader(&pb.Header{
 			CreatedBy: "ome",
 			Size:      int64(len(object1)),
@@ -469,7 +465,7 @@ func Test_PutObject5(t *testing.T) {
 		o.SetContent(bytes.NewBufferString(object1))
 
 		userACtx := auth.Context(contextFailureDummyACLStore(), userA)
-		id, err := route.PutObject(userACtx, o, nil, objects.PutDataOptions{})
+		id, err := route.PutObject(userACtx, o, nil, nil, objects.PutDataOptions{})
 		So(err, ShouldEqual, errors.Internal)
 		So(id, ShouldEqual, "")
 	})
@@ -493,12 +489,12 @@ func Test_ListObjects0(t *testing.T) {
 		userACtx := auth.Context(fullConfiguredContext(), userA)
 		objects, err := route.ListObjects(userACtx, objects.ListOptions{})
 		So(err, ShouldBeNil)
-		userAObjects = objects.Objects
+		userAObjects = pb.Objects
 
 		userBCtx := auth.Context(fullConfiguredContext(), userB)
 		objects, err = route.ListObjects(userBCtx, objects.ListOptions{})
 		So(err, ShouldBeNil)
-		userBObjects = objects.Objects
+		userBObjects = pb.Objects
 	})
 }
 
@@ -605,7 +601,7 @@ func Test_Patch(t *testing.T) {
 		p := objects.NewPatch("", "")
 		ctx := context.Background()
 		route := getRoute()
-		err := route.PatchObject(ctx, p, objects.PatchOptions{})
+		err := route.PatchObject(ctx, p, pb.PatchOptions{})
 		So(err, ShouldEqual, errors.BadInput)
 	})
 }
@@ -624,14 +620,14 @@ func Test_Patch0(t *testing.T) {
 		p.SetContent(bytes.NewBufferString("What are you doing?"))
 		p.SetSize(42)
 
-		err = route.PatchObject(ctx, p, objects.PatchOptions{})
+		err = route.PatchObject(ctx, p, pb.PatchOptions{})
 		So(err, ShouldEqual, errors.Internal)
 
 		err = settings.Set(objects.SettingsDataMaxSizePath, "1024")
 		So(err, ShouldBeNil)
 
 		p.SetSize(1025)
-		err = route.PatchObject(ctx, p, objects.PatchOptions{})
+		err = route.PatchObject(ctx, p, pb.PatchOptions{})
 		So(err, ShouldEqual, errors.BadInput)
 
 		err = settings.Set(objects.SettingsDataMaxSizePath, "1024")
@@ -641,7 +637,7 @@ func Test_Patch0(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		p.SetSize(100)
-		err = route.PatchObject(ctx, p, objects.PatchOptions{})
+		err = route.PatchObject(ctx, p, pb.PatchOptions{})
 		So(err, ShouldEqual, errors.Internal)
 
 		err = settings.Set(objects.SettingsDataMaxSizePath, "1024")
@@ -658,7 +654,7 @@ func Test_Patch1(t *testing.T) {
 
 		userBCtx := auth.Context(fullConfiguredContext(), userB)
 		route := getRoute()
-		err := route.PatchObject(userBCtx, p, objects.PatchOptions{})
+		err := route.PatchObject(userBCtx, p, pb.PatchOptions{})
 		So(err, ShouldEqual, errors.Unauthorized)
 	})
 }
@@ -672,7 +668,7 @@ func Test_Patch2(t *testing.T) {
 
 		userBCtx := auth.Context(contextWithoutStore(), userB)
 		route := getRoute(SkipPoliciesCheck())
-		err := route.PatchObject(userBCtx, p, objects.PatchOptions{})
+		err := route.PatchObject(userBCtx, p, pb.PatchOptions{})
 		So(err, ShouldEqual, errors.Internal)
 	})
 }
@@ -686,7 +682,7 @@ func Test_Patch3(t *testing.T) {
 
 		userBCtx := auth.Context(fullConfiguredContext(), userB)
 		route := getRoute()
-		err := route.PatchObject(userBCtx, p, objects.PatchOptions{})
+		err := route.PatchObject(userBCtx, p, pb.PatchOptions{})
 		So(err, ShouldBeNil)
 	})
 }
@@ -706,7 +702,7 @@ func Test_SearchObjects0(t *testing.T) {
 		route := getRoute(SkipExec())
 		objects, err := route.SearchObjects(fullConfiguredContext(), objects.SearchParams{Condition: "false"}, objects.SearchOptions{})
 		So(err, ShouldBeNil)
-		So(objects.Objects, ShouldHaveLength, 0)
+		So(pb.Objects, ShouldHaveLength, 0)
 	})
 }
 
@@ -716,7 +712,7 @@ func Test_SearchObjects1(t *testing.T) {
 		userACtx := auth.Context(fullConfiguredContext(), userA)
 		objects, err := route.SearchObjects(userACtx, objects.SearchParams{Condition: "true"}, objects.SearchOptions{})
 		So(err, ShouldBeNil)
-		So(objects.Objects, ShouldNotBeEmpty)
+		So(pb.Objects, ShouldNotBeEmpty)
 	})
 }
 
@@ -726,9 +722,9 @@ func Test_SearchObjects2(t *testing.T) {
 		userACtx := auth.Context(fullConfiguredContext(), userA)
 		objects, err := route.SearchObjects(userACtx, objects.SearchParams{Condition: "o.private"}, objects.SearchOptions{})
 		So(err, ShouldBeNil)
-		So(objects.Objects, ShouldNotBeEmpty)
+		So(pb.Objects, ShouldNotBeEmpty)
 
-		for _, o := range objects.Objects {
+		for _, o := range pb.Objects {
 			data, err := ioutil.ReadAll(o.GetContent())
 			So(err, ShouldBeNil)
 

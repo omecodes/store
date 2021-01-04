@@ -1,14 +1,10 @@
 package router
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/omecodes/common/errors"
-	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/auth"
-	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/pb"
 )
 
@@ -24,7 +20,7 @@ func (p *PolicyHandler) isAdmin(ctx context.Context) bool {
 	return authCEL.Uid == "admin"
 }
 
-func (p *PolicyHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, opts objects.PutDataOptions) (string, error) {
+func (p *PolicyHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
 	ai := auth.Get(ctx)
 	if ai == nil {
 		return "", errors.Forbidden
@@ -54,10 +50,10 @@ func (p *PolicyHandler) PutObject(ctx context.Context, object *pb.Object, securi
 	}
 
 	object.Header.CreatedBy = ai.Uid
-	return p.BaseHandler.PutObject(ctx, object, security, opts)
+	return p.BaseHandler.PutObject(ctx, object, security, indexes, opts)
 }
 
-func (p *PolicyHandler) GetObject(ctx context.Context, id string, opts objects.GetObjectOptions) (*pb.Object, error) {
+func (p *PolicyHandler) GetObject(ctx context.Context, id string, opts pb.GetOptions) (*pb.Object, error) {
 	err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, id, opts.At)
 	if err != nil {
 		return nil, err
@@ -65,7 +61,7 @@ func (p *PolicyHandler) GetObject(ctx context.Context, id string, opts objects.G
 	return p.BaseHandler.GetObject(ctx, id, opts)
 }
 
-func (p *PolicyHandler) PatchObject(ctx context.Context, patch *pb.Patch, opts objects.PatchOptions) error {
+func (p *PolicyHandler) PatchObject(ctx context.Context, patch *pb.Patch, opts pb.PatchOptions) error {
 	err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_delete, patch.ObjectId, "")
 	if err != nil {
 		return err
@@ -90,62 +86,31 @@ func (p *PolicyHandler) DeleteObject(ctx context.Context, id string) error {
 	return p.BaseHandler.DeleteObject(ctx, id)
 }
 
-func (p *PolicyHandler) ListObjects(ctx context.Context, opts objects.ListOptions) (*pb.ObjectList, error) {
-	opts.Filter = objects.FilterObjectFunc(func(o *pb.Object) (bool, error) {
-		err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, o.Header.Id, opts.At)
-		if err != nil {
-			return false, err
-		}
-		return true, nil
-	})
-	return p.BaseHandler.ListObjects(ctx, opts)
-}
-
-func (p *PolicyHandler) SearchObjects(ctx context.Context, params objects.SearchParams, opts objects.SearchOptions) (*pb.ObjectList, error) {
-	lOpts := objects.ListOptions{
-		Filter:     nil,
-		Collection: params.Collection,
-		FullObject: true,
-		Before:     opts.Before,
-		After:      opts.After,
-		Count:      opts.Count,
-	}
-
-	if params.Condition == "false" {
-		return &pb.ObjectList{
-			Before: opts.Before,
-		}, nil
-	}
-
-	if params.Condition == "true" {
-		return p.ListObjects(ctx, lOpts)
-	}
-
-	program, err := LoadProgramForSearch(&ctx, params.Condition)
+func (p *PolicyHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
+	cursor, err := p.BaseHandler.ListObjects(ctx, opts)
 	if err != nil {
-		log.Error("Handler-policy.Search: failed to load CEL program", log.Err(err))
 		return nil, err
 	}
 
-	lOpts.Filter = objects.FilterObjectFunc(func(o *pb.Object) (bool, error) {
-		err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, o.Header.Id, opts.Path)
-		if err != nil {
-			return false, err
-		}
+	browser := cursor.GetBrowser()
+	browser = pb.BrowseFunc(func() (*pb.Object, error) {
+		for {
+			o, err := browser.Browse()
+			if err != nil {
+				return nil, err
+			}
 
-		var object = map[string]interface{}{}
-		err = json.NewDecoder(bytes.NewBufferString(o.Data)).Decode(&object)
-		if err != nil {
-			return false, err
+			err = assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, o.Header.Id, opts.At)
+			if err != nil {
+				if errors.IsForbidden(err) {
+					continue
+				}
+				return nil, err
+			}
+			return o, nil
 		}
-
-		vars := map[string]interface{}{"o": object}
-		out, details, err := program.Eval(vars)
-		if err != nil {
-			log.Error("cel execution", log.Field("details", details))
-			return false, err
-		}
-		return out.Value().(bool), nil
 	})
-	return p.BaseHandler.ListObjects(ctx, lOpts)
+
+	cursor.SetBrowser(browser)
+	return cursor, err
 }

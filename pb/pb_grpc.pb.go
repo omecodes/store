@@ -18,12 +18,11 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type HandlerUnitClient interface {
 	PutObject(ctx context.Context, in *PutObjectRequest, opts ...grpc.CallOption) (*PutObjectResponse, error)
-	UpdateObject(ctx context.Context, in *UpdateObjectRequest, opts ...grpc.CallOption) (*UpdateObjectResponse, error)
+	PatchObject(ctx context.Context, in *PatchObjectRequest, opts ...grpc.CallOption) (*PatchObjectResponse, error)
 	GetObject(ctx context.Context, in *GetObjectRequest, opts ...grpc.CallOption) (*GetObjectResponse, error)
 	DeleteObject(ctx context.Context, in *DeleteObjectRequest, opts ...grpc.CallOption) (*DeleteObjectResponse, error)
 	ObjectInfo(ctx context.Context, in *ObjectInfoRequest, opts ...grpc.CallOption) (*ObjectInfoResponse, error)
 	ListObjects(ctx context.Context, in *ListObjectsRequest, opts ...grpc.CallOption) (HandlerUnit_ListObjectsClient, error)
-	SearchObjects(ctx context.Context, in *SearchObjectsRequest, opts ...grpc.CallOption) (HandlerUnit_SearchObjectsClient, error)
 }
 
 type handlerUnitClient struct {
@@ -43,9 +42,9 @@ func (c *handlerUnitClient) PutObject(ctx context.Context, in *PutObjectRequest,
 	return out, nil
 }
 
-func (c *handlerUnitClient) UpdateObject(ctx context.Context, in *UpdateObjectRequest, opts ...grpc.CallOption) (*UpdateObjectResponse, error) {
-	out := new(UpdateObjectResponse)
-	err := c.cc.Invoke(ctx, "/HandlerUnit/UpdateObject", in, out, opts...)
+func (c *handlerUnitClient) PatchObject(ctx context.Context, in *PatchObjectRequest, opts ...grpc.CallOption) (*PatchObjectResponse, error) {
+	out := new(PatchObjectResponse)
+	err := c.cc.Invoke(ctx, "/HandlerUnit/PatchObject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -111,49 +110,16 @@ func (x *handlerUnitListObjectsClient) Recv() (*Object, error) {
 	return m, nil
 }
 
-func (c *handlerUnitClient) SearchObjects(ctx context.Context, in *SearchObjectsRequest, opts ...grpc.CallOption) (HandlerUnit_SearchObjectsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_HandlerUnit_serviceDesc.Streams[1], "/HandlerUnit/SearchObjects", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &handlerUnitSearchObjectsClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type HandlerUnit_SearchObjectsClient interface {
-	Recv() (*Object, error)
-	grpc.ClientStream
-}
-
-type handlerUnitSearchObjectsClient struct {
-	grpc.ClientStream
-}
-
-func (x *handlerUnitSearchObjectsClient) Recv() (*Object, error) {
-	m := new(Object)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 // HandlerUnitServer is the server API for HandlerUnit service.
 // All implementations must embed UnimplementedHandlerUnitServer
 // for forward compatibility
 type HandlerUnitServer interface {
 	PutObject(context.Context, *PutObjectRequest) (*PutObjectResponse, error)
-	UpdateObject(context.Context, *UpdateObjectRequest) (*UpdateObjectResponse, error)
+	PatchObject(context.Context, *PatchObjectRequest) (*PatchObjectResponse, error)
 	GetObject(context.Context, *GetObjectRequest) (*GetObjectResponse, error)
 	DeleteObject(context.Context, *DeleteObjectRequest) (*DeleteObjectResponse, error)
 	ObjectInfo(context.Context, *ObjectInfoRequest) (*ObjectInfoResponse, error)
 	ListObjects(*ListObjectsRequest, HandlerUnit_ListObjectsServer) error
-	SearchObjects(*SearchObjectsRequest, HandlerUnit_SearchObjectsServer) error
 	mustEmbedUnimplementedHandlerUnitServer()
 }
 
@@ -164,8 +130,8 @@ type UnimplementedHandlerUnitServer struct {
 func (UnimplementedHandlerUnitServer) PutObject(context.Context, *PutObjectRequest) (*PutObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PutObject not implemented")
 }
-func (UnimplementedHandlerUnitServer) UpdateObject(context.Context, *UpdateObjectRequest) (*UpdateObjectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateObject not implemented")
+func (UnimplementedHandlerUnitServer) PatchObject(context.Context, *PatchObjectRequest) (*PatchObjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PatchObject not implemented")
 }
 func (UnimplementedHandlerUnitServer) GetObject(context.Context, *GetObjectRequest) (*GetObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetObject not implemented")
@@ -178,9 +144,6 @@ func (UnimplementedHandlerUnitServer) ObjectInfo(context.Context, *ObjectInfoReq
 }
 func (UnimplementedHandlerUnitServer) ListObjects(*ListObjectsRequest, HandlerUnit_ListObjectsServer) error {
 	return status.Errorf(codes.Unimplemented, "method ListObjects not implemented")
-}
-func (UnimplementedHandlerUnitServer) SearchObjects(*SearchObjectsRequest, HandlerUnit_SearchObjectsServer) error {
-	return status.Errorf(codes.Unimplemented, "method SearchObjects not implemented")
 }
 func (UnimplementedHandlerUnitServer) mustEmbedUnimplementedHandlerUnitServer() {}
 
@@ -213,20 +176,20 @@ func _HandlerUnit_PutObject_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HandlerUnit_UpdateObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateObjectRequest)
+func _HandlerUnit_PatchObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PatchObjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlerUnitServer).UpdateObject(ctx, in)
+		return srv.(HandlerUnitServer).PatchObject(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/HandlerUnit/UpdateObject",
+		FullMethod: "/HandlerUnit/PatchObject",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlerUnitServer).UpdateObject(ctx, req.(*UpdateObjectRequest))
+		return srv.(HandlerUnitServer).PatchObject(ctx, req.(*PatchObjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -306,27 +269,6 @@ func (x *handlerUnitListObjectsServer) Send(m *Object) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _HandlerUnit_SearchObjects_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(SearchObjectsRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(HandlerUnitServer).SearchObjects(m, &handlerUnitSearchObjectsServer{stream})
-}
-
-type HandlerUnit_SearchObjectsServer interface {
-	Send(*Object) error
-	grpc.ServerStream
-}
-
-type handlerUnitSearchObjectsServer struct {
-	grpc.ServerStream
-}
-
-func (x *handlerUnitSearchObjectsServer) Send(m *Object) error {
-	return x.ServerStream.SendMsg(m)
-}
-
 var _HandlerUnit_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "HandlerUnit",
 	HandlerType: (*HandlerUnitServer)(nil),
@@ -336,8 +278,8 @@ var _HandlerUnit_serviceDesc = grpc.ServiceDesc{
 			Handler:    _HandlerUnit_PutObject_Handler,
 		},
 		{
-			MethodName: "UpdateObject",
-			Handler:    _HandlerUnit_UpdateObject_Handler,
+			MethodName: "PatchObject",
+			Handler:    _HandlerUnit_PatchObject_Handler,
 		},
 		{
 			MethodName: "GetObject",
@@ -356,11 +298,6 @@ var _HandlerUnit_serviceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "ListObjects",
 			Handler:       _HandlerUnit_ListObjects_Handler,
-			ServerStreams: true,
-		},
-		{
-			StreamName:    "SearchObjects",
-			Handler:       _HandlerUnit_SearchObjects_Handler,
 			ServerStreams: true,
 		},
 	},
