@@ -58,7 +58,7 @@ func (p *PolicyHandler) PutObject(ctx context.Context, object *pb.Object, securi
 }
 
 func (p *PolicyHandler) GetObject(ctx context.Context, id string, opts objects.GetObjectOptions) (*pb.Object, error) {
-	err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, id, opts.Path)
+	err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, id, opts.At)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (p *PolicyHandler) DeleteObject(ctx context.Context, id string) error {
 
 func (p *PolicyHandler) ListObjects(ctx context.Context, opts objects.ListOptions) (*pb.ObjectList, error) {
 	opts.Filter = objects.FilterObjectFunc(func(o *pb.Object) (bool, error) {
-		err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, o.Header.Id, opts.Path)
+		err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, o.Header.Id, opts.At)
 		if err != nil {
 			return false, err
 		}
@@ -103,10 +103,12 @@ func (p *PolicyHandler) ListObjects(ctx context.Context, opts objects.ListOption
 
 func (p *PolicyHandler) SearchObjects(ctx context.Context, params objects.SearchParams, opts objects.SearchOptions) (*pb.ObjectList, error) {
 	lOpts := objects.ListOptions{
-		Path:   opts.Path,
-		Before: opts.Before,
-		After:  opts.After,
-		Count:  opts.Count,
+		Filter:     nil,
+		Collection: params.Collection,
+		FullObject: true,
+		Before:     opts.Before,
+		After:      opts.After,
+		Count:      opts.Count,
 	}
 
 	if params.Condition == "false" {

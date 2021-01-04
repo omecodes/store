@@ -109,7 +109,8 @@ message UpdateObjectResponse{}
 
 message GetObjectRequest {
   string object_id = 1;
-  string path = 2;
+  string at = 2;
+  bool header_only = 3;
 }
 message GetObjectResponse {
   Object object = 1;
@@ -131,7 +132,9 @@ message ListObjectsRequest {
   int64 before = 1;
   int64 after = 2;
   uint32 count = 3;
-  string path = 4;
+  string at = 4;
+  string collection = 5;
+  bool full_object = 6;
 }
 message ListObjectsResponse {
   ObjectList result = 1;

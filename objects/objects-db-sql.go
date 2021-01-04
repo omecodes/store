@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"github.com/omecodes/store/utime"
 	"strings"
 
 	"github.com/iancoleman/strcase"
@@ -12,6 +11,7 @@ import (
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/pb"
+	"github.com/omecodes/store/utime"
 	"github.com/tidwall/gjson"
 )
 
@@ -285,11 +285,7 @@ func (ms *sqlStore) Save(ctx context.Context, object *pb.Object, indexes ...*pb.
 				return err
 			}
 
-			err = col.Save(txCtx, &CollectionItem{
-				Id:   object.Header.Id,
-				Date: object.Header.CreatedAt,
-				Data: string(jsonEncoded),
-			})
+			err = col.Save(txCtx, object.Header.CreatedAt, object.Header.Id, string(jsonEncoded))
 			if err != nil {
 				log.Error("Save: failed to save object headers", log.Err(err))
 				if err2 := tx.Rollback(); err2 != nil {
@@ -432,6 +428,10 @@ func (ms *sqlStore) Delete(ctx context.Context, objectID string) error {
 }
 
 func (ms *sqlStore) List(ctx context.Context, filter ObjectFilter, opts ListOptions) (*pb.ObjectList, error) {
+	if opts.Collection != "" {
+		return ms.collectionList(ctx, filter, opts)
+	}
+
 	cursor, err := ms.headers.List()
 	if err != nil {
 		log.Error("List: failed to get headers",
@@ -465,9 +465,16 @@ func (ms *sqlStore) List(ctx context.Context, filter ObjectFilter, opts ListOpti
 			return nil, errors.Internal
 		}
 
-		o.Data, err = ms.objects.Get(o.Header.Id)
-		if err != nil {
-			return nil, err
+		if opts.At != "" {
+			o.Data, err = ms.objects.ExtractAt(o.Header.Id, opts.At)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			o.Data, err = ms.objects.Get(o.Header.Id)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		if filter != nil {
@@ -490,51 +497,43 @@ func (ms *sqlStore) List(ctx context.Context, filter ObjectFilter, opts ListOpti
 	return &result, nil
 }
 
-func (ms *sqlStore) ListAt(ctx context.Context, partPath string, filter ObjectFilter, opts ListOptions) (*pb.ObjectList, error) {
-	cursor, err := ms.headers.ExtractAll("$.id", bome.JsonAtLe("$.created_at", bome.IntExpr(opts.Before)), bome.StringScanner)
+func (ms *sqlStore) collectionList(ctx context.Context, filter ObjectFilter, opts ListOptions) (*pb.ObjectList, error) {
+	col, err := ms.GetCollection(ctx, opts.Collection)
 	if err != nil {
-		log.Error("ListAt: failed to get objects",
-			log.Field("created before", opts.Before),
-			log.Field("count", opts.Count), log.Err(err))
-		return nil, errors.Internal
+		return nil, err
 	}
 
-	defer func() {
-		if err := cursor.Close(); err != nil {
-			log.Error("ListAt: cursor close failed", log.Err(err))
-		}
-	}()
+	var (
+		objects  []*pb.Object
+		total    uint32
+		resolver ObjectResolver
+	)
 
-	var result pb.ObjectList
-	for cursor.HasNext() && len(result.Objects) < opts.Count {
-		item, err := cursor.Next()
-		if err != nil {
-			log.Error("ListAt: failed to get object from curosr", log.Err(err))
-			return nil, errors.Internal
-		}
-
-		id := item.(string)
-		o, err := ms.GetAt(ctx, id, partPath)
-		if err != nil {
-			return nil, err
-		}
-
-		if filter != nil {
-			allowed, err := filter.Filter(o)
-			if err != nil {
-				return nil, err
-			}
-
-			if !allowed {
-				continue
-			}
-		}
-		result.Objects = append(result.Objects, o)
+	if opts.FullObject {
+		resolver = ms
+	} else if opts.At != "" {
+		resolver = ms.ResolveAtFunc(opts.At)
 	}
-	return &result, nil
+
+	if opts.Before > 0 || opts.After > 0 {
+		objects, total, err = col.RangeSelect(ctx, opts.After, opts.Before, opts.Count, filter, resolver)
+	} else {
+		objects, total, err = col.Select(ctx, opts.Count, filter, resolver)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.ObjectList{
+		Before:  opts.Before,
+		After:   opts.After,
+		Total:   total,
+		Objects: objects,
+	}, nil
 }
 
-func (ms *sqlStore) Get(ctx context.Context, objectID string) (*pb.Object, error) {
+func (ms *sqlStore) Get(ctx context.Context, objectID string, opts GetObjectOptions) (*pb.Object, error) {
 	hv, err := ms.headers.Get(objectID)
 	if err != nil {
 		log.Error("Get: could not get object header", log.Field("id", objectID), log.Err(err))
@@ -546,7 +545,6 @@ func (ms *sqlStore) Get(ctx context.Context, objectID string) (*pb.Object, error
 
 	o := &pb.Object{
 		Header: &pb.Header{},
-		Data:   "",
 	}
 
 	err = json.Unmarshal([]byte(hv), o.Header)
@@ -555,42 +553,19 @@ func (ms *sqlStore) Get(ctx context.Context, objectID string) (*pb.Object, error
 		return nil, errors.Internal
 	}
 
-	o.Data, err = ms.objects.Get(objectID)
-	if err != nil {
-		return nil, err
+	if opts.At != "" {
+		o.Data, err = ms.objects.ExtractAt(objectID, opts.At)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		o.Data, err = ms.objects.Get(objectID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	log.Debug("Get: loaded object", log.Field("id", objectID))
-	return o, nil
-}
-
-func (ms *sqlStore) GetAt(ctx context.Context, objectID string, path string) (*pb.Object, error) {
-	hv, err := ms.headers.Get(objectID)
-	if err != nil {
-		log.Error("GetAt: could not get object header", log.Field("id", objectID), log.Err(err))
-		if bome.IsNotFound(err) {
-			return nil, err
-		}
-		return nil, errors.Internal
-	}
-
-	o := &pb.Object{
-		Header: &pb.Header{},
-		Data:   "",
-	}
-
-	err = json.Unmarshal([]byte(hv), o.Header)
-	if err != nil {
-		log.Error("Get: could not decode object header", log.Err(err))
-		return nil, errors.Internal
-	}
-
-	o.Data, err = ms.objects.ExtractAt(objectID, path)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Debug("GetAt: content loaded", log.Field("id", objectID), log.Field("at", path))
 	return o, nil
 }
 
@@ -641,6 +616,62 @@ func (ms *sqlStore) Clear() error {
 
 	log.Debug("Clear: objects store has been cleared")
 	return nil
+}
+
+func (ms *sqlStore) ResolveObject(id string) (*pb.Object, error) {
+	hv, err := ms.headers.Get(id)
+	if err != nil {
+		log.Error("Get: could not get object header", log.Field("id", id), log.Err(err))
+		if bome.IsNotFound(err) {
+			return nil, err
+		}
+		return nil, errors.Internal
+	}
+
+	o := &pb.Object{
+		Header: &pb.Header{},
+	}
+
+	err = json.Unmarshal([]byte(hv), o.Header)
+	if err != nil {
+		log.Error("Get: could not decode object header", log.Err(err))
+		return nil, errors.Internal
+	}
+
+	o.Data, err = ms.objects.Get(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return o, nil
+}
+
+func (ms *sqlStore) ResolveAtFunc(at string) ObjectResolver {
+	return ObjectResolveFunc(func(objectID string) (*pb.Object, error) {
+		hv, err := ms.headers.Get(objectID)
+		if err != nil {
+			log.Error("GetAt: could not get object header", log.Field("id", objectID), log.Err(err))
+			if bome.IsNotFound(err) {
+				return nil, err
+			}
+			return nil, errors.Internal
+		}
+
+		o := &pb.Object{Header: &pb.Header{}}
+
+		err = json.Unmarshal([]byte(hv), o.Header)
+		if err != nil {
+			log.Error("Get: could not decode object header", log.Err(err))
+			return nil, errors.Internal
+		}
+
+		o.Data, err = ms.objects.ExtractAt(objectID, at)
+		if err != nil {
+			return nil, err
+		}
+
+		return o, nil
+	})
 }
 
 func sqlJSONSetValue(value string) string {

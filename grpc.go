@@ -57,7 +57,10 @@ func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (
 		return nil, err
 	}
 
-	object, err := route.GetObject(ctx, request.ObjectId, objects.GetObjectOptions{Path: request.Path})
+	object, err := route.GetObject(ctx, request.ObjectId, objects.GetObjectOptions{
+		At:     request.At,
+		Header: request.HeaderOnly,
+	})
 
 	return &pb.GetObjectResponse{
 		Object: object,
@@ -96,10 +99,12 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 	}
 
 	opts := objects.ListOptions{
-		Path:   request.Path,
-		Before: request.Before,
-		After:  request.After,
-		Count:  int(request.Count),
+		Collection: request.Collection,
+		FullObject: request.FullObject,
+		At:         request.At,
+		Before:     request.Before,
+		After:      request.After,
+		Count:      int(request.Count),
 	}
 
 	items, err := route.ListObjects(ctx, opts)

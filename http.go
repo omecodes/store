@@ -18,11 +18,13 @@ import (
 )
 
 const (
-	queryBefore    = "before"
-	queryAfter     = "after"
-	queryCount     = "count"
-	queryCondition = "condition"
-	queryAt        = "at"
+	queryBefore     = "before"
+	queryAfter      = "after"
+	queryCount      = "count"
+	queryAt         = "at"
+	queryHeader     = "header"
+	queryFullObject = "full_object"
+	queryCollection = "collection"
 )
 
 func NewHttpUnit() *HTTPUnit {
@@ -130,7 +132,8 @@ func (s *HTTPUnit) get(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	id := vars["id"]
-	onlyInfo := r.URL.Query().Get("info")
+	header := r.URL.Query().Get(queryHeader)
+	at := r.URL.Query().Get(queryAt)
 
 	route, err := router.NewRoute(ctx)
 	if err != nil {
@@ -138,7 +141,10 @@ func (s *HTTPUnit) get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	object, err := route.GetObject(ctx, id, objects.GetObjectOptions{Info: onlyInfo == "true"})
+	object, err := route.GetObject(ctx, id, objects.GetObjectOptions{
+		At:     at,
+		Header: header == "true",
+	})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -182,14 +188,12 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
 	opts.After, err = Int64QueryParam(r, queryAfter)
 	if err != nil {
 		log.Error("could not parse param 'after'")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
 	count, err := Int64QueryParam(r, queryCount)
 	if err != nil {
 		log.Error("could not parse param 'count'")
@@ -197,8 +201,9 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	opts.Count = int(count)
-
-	opts.Path = r.URL.Query().Get(queryAt)
+	opts.At = r.URL.Query().Get(queryAt)
+	opts.FullObject = r.URL.Query().Get(queryFullObject) == "true"
+	opts.Collection = r.URL.Query().Get(queryCollection)
 
 	route, err := router.NewRoute(ctx)
 	if err != nil {

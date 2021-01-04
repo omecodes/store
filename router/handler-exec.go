@@ -67,11 +67,7 @@ func (e *ExecHandler) GetObject(ctx context.Context, objectID string, opts objec
 		return nil, errors.Internal
 	}
 
-	if opts.Path == "" {
-		return storage.Get(ctx, objectID)
-	} else {
-		return storage.GetAt(ctx, objectID, opts.Path)
-	}
+	return storage.Get(ctx, objectID, opts)
 }
 
 func (e *ExecHandler) GetObjectHeader(ctx context.Context, objectID string) (*pb.Header, error) {

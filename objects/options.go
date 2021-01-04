@@ -24,7 +24,8 @@ type DataOptions struct {
 type ListOptions struct {
 	Filter     ObjectFilter
 	Collection string `json:"collection"`
-	Path       string `json:"path"`
+	FullObject bool   `json:"full_object"`
+	At         string `json:"at"`
 	Before     int64  `json:"before"`
 	After      int64  `json:"after"`
 	Count      int    `json:"count"`
@@ -53,8 +54,8 @@ type UserOptions struct {
 }
 
 type GetObjectOptions struct {
-	Path string `json:"path"`
-	Info bool   `json:"header"`
+	At     string `json:"path"`
+	Header bool   `json:"header"`
 }
 
 type DatedRef struct {

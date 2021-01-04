@@ -8,7 +8,6 @@ import (
 	"github.com/omecodes/store/common"
 	"github.com/omecodes/store/meta"
 	"github.com/omecodes/store/pb"
-	"google.golang.org/grpc/metadata"
 	"io"
 	"strconv"
 )
@@ -68,7 +67,7 @@ func (d *dbClient) List(ctx context.Context, filter ObjectFilter, opts ListOptio
 		Before: opts.Before,
 		After:  opts.After,
 		Count:  uint32(opts.Count),
-		Path:   opts.Path,
+		At:     opts.At,
 	})
 
 	defer func() {
@@ -126,59 +125,7 @@ func (d *dbClient) List(ctx context.Context, filter ObjectFilter, opts ListOptio
 	return result, nil
 }
 
-func (d *dbClient) ListAt(ctx context.Context, path string, filter ObjectFilter, opts ListOptions) (*pb.ObjectList, error) {
-	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
-	if err != nil {
-		return nil, err
-	}
-
-	outMD := metadata.MD{}
-	outMD.Set(meta.At, path)
-	newCtx := metadata.NewOutgoingContext(ctx, outMD)
-
-	stream, err := objects.ListObjects(newCtx, &pb.ListObjectsRequest{
-		Before: opts.Before,
-		Count:  uint32(opts.Count),
-	})
-	defer func() {
-		if err := stream.CloseSend(); err != nil {
-			log.Error("Objects client • close gRPC stream with error", log.Err(err))
-		}
-	}()
-
-	result := &pb.ObjectList{}
-
-	md, err := stream.Header()
-	if err != nil {
-		log.Error("Objects client • stream › could not get metadata", log.Err(err))
-		return nil, errors.Internal
-	}
-
-	count, err := strconv.Atoi(md.Get(meta.Count)[0])
-	if err != nil {
-		log.Error("Objects client • stream › unreadable metadata 'count'", log.Err(err))
-		return nil, errors.Internal
-	}
-
-	result.Before, err = strconv.ParseInt(md.Get(meta.Before)[0], 10, 64)
-	if err != nil {
-		log.Error("Objects client • stream › unreadable metadata 'count'", log.Err(err))
-		return nil, errors.Internal
-	}
-
-	for len(result.Objects) < count {
-		object, err := stream.Recv()
-		if err != nil {
-			log.Error("Objects client • stream › could not get remaining objects", log.Err(err))
-			return nil, errors.Internal
-		}
-		result.Objects = append(result.Objects, object)
-	}
-
-	return result, nil
-}
-
-func (d *dbClient) Get(ctx context.Context, objectID string) (*pb.Object, error) {
+func (d *dbClient) Get(ctx context.Context, objectID string, opts GetObjectOptions) (*pb.Object, error) {
 	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return nil, err
@@ -189,22 +136,6 @@ func (d *dbClient) Get(ctx context.Context, objectID string) (*pb.Object, error)
 		return nil, err
 	}
 
-	return rsp.Object, nil
-}
-
-func (d *dbClient) GetAt(ctx context.Context, objectID string, path string) (*pb.Object, error) {
-	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
-	if err != nil {
-		return nil, err
-	}
-
-	md := metadata.MD{}
-	md.Set(meta.At, path)
-	newCtx := metadata.NewOutgoingContext(ctx, md)
-	rsp, err := objects.GetObject(newCtx, &pb.GetObjectRequest{ObjectId: objectID})
-	if err != nil {
-		return nil, err
-	}
 	return rsp.Object, nil
 }
 

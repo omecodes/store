@@ -3,9 +3,9 @@ package objects
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"github.com/omecodes/bome"
 	"github.com/omecodes/libome/logs"
+	"github.com/omecodes/store/pb"
 )
 
 func NewSQLCollection(db *sql.DB, dialect string, tableName string) (*sqlCollection, error) {
@@ -33,7 +33,7 @@ func (s *sqlCollection) DatedRefs() *bome.List {
 	return s.datedRef
 }
 
-func (s *sqlCollection) Save(ctx context.Context, item *CollectionItem) error {
+func (s *sqlCollection) Save(ctx context.Context, createdAt int64, id string, data string) error {
 	if bome.IsTransactionContext(ctx) {
 		_, tx, err := s.objects.Transaction(ctx)
 		if err != nil {
@@ -41,36 +41,41 @@ func (s *sqlCollection) Save(ctx context.Context, item *CollectionItem) error {
 		}
 
 		err = tx.Save(&bome.MapEntry{
-			Key:   item.Id,
-			Value: item.Data,
+			Key:   id,
+			Value: data,
 		})
 		if err == nil {
 			dtx := s.datedRef.ContinueTransaction(tx.TX())
 			err = dtx.Save(&bome.ListEntry{
-				Index: item.Date,
-				Value: item.Id,
+				Index: createdAt,
+				Value: id,
 			})
 		}
 		return err
 	}
 
 	err := s.objects.Save(&bome.MapEntry{
-		Key:   item.Id,
-		Value: item.Data,
+		Key:   id,
+		Value: data,
 	})
 	if err == nil {
 		err = s.datedRef.Save(&bome.ListEntry{
-			Index: item.Date,
-			Value: item.Id,
+			Index: createdAt,
+			Value: id,
 		})
 	}
 	return err
 }
 
-func (s *sqlCollection) Select(ctx context.Context, before int64, count int, selector Selector) ([]*CollectionItem, error) {
+func (s *sqlCollection) Select(ctx context.Context, count int, filter ObjectFilter, resolver ObjectResolver) ([]*pb.Object, uint32, error) {
+	total, err := s.objects.Count()
+	if err != nil {
+		return nil, 0, err
+	}
+
 	c, err := s.objects.List()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	defer func() {
@@ -79,37 +84,94 @@ func (s *sqlCollection) Select(ctx context.Context, before int64, count int, sel
 		}
 	}()
 
-	var items []*CollectionItem
+	var items []*pb.Object
 	for c.HasNext() && len(items) < count {
 		o, err := c.Next()
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
-		itemData := JSON{}
 		entry := o.(*bome.MapEntry)
-		err = json.Unmarshal([]byte(entry.Value), &itemData)
-		if err != nil {
-			return nil, err
+
+		object := &pb.Object{
+			Header: &pb.Header{
+				Id: entry.Key,
+			},
+			Data: entry.Value,
 		}
-
-		if selector != nil {
-			selected, err := selector.Select(itemData)
+		if filter != nil {
+			selected, err := filter.Filter(object)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
-
 			if !selected {
 				continue
 			}
 		}
 
-		item := &CollectionItem{
-			Id:   entry.Key,
-			Data: entry.Value,
+		if resolver != nil {
+			object, err = resolver.ResolveObject(entry.Key)
+			if err != nil {
+				return nil, 0, err
+			}
 		}
-		items = append(items, item)
+
+		items = append(items, object)
 	}
 
-	return items, nil
+	return items, uint32(total), nil
+}
+
+func (s *sqlCollection) RangeSelect(ctx context.Context, after int64, before int64, count int, filter ObjectFilter, resolver ObjectResolver) ([]*pb.Object, uint32, error) {
+	c, total, err := s.datedRef.IndexRange(after, before, count)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	defer func() {
+		if err := c.Close(); err != nil {
+			logs.Error("closing cursor caused error", logs.Err(err))
+		}
+	}()
+
+	var items []*pb.Object
+	for c.HasNext() && len(items) < count {
+		o, err := c.Next()
+		if err != nil {
+			return nil, 0, err
+		}
+
+		listEntry := o.(*bome.ListEntry)
+		value, err := s.objects.Get(listEntry.Value)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		object := &pb.Object{
+			Header: &pb.Header{
+				Id:        listEntry.Value,
+				CreatedAt: listEntry.Index,
+			},
+			Data: value,
+		}
+		if filter != nil {
+			selected, err := filter.Filter(object)
+			if err != nil {
+				return nil, 0, err
+			}
+			if !selected {
+				continue
+			}
+		}
+
+		if resolver != nil {
+			object, err = resolver.ResolveObject(object.Header.Id)
+			if err != nil {
+				return nil, 0, err
+			}
+		}
+		items = append(items, object)
+	}
+
+	return items, uint32(total), nil
 }

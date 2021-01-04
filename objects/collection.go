@@ -2,23 +2,13 @@ package objects
 
 import (
 	"context"
+	"github.com/omecodes/store/pb"
 )
 
-type JSON map[string]interface{}
-
-type Selector interface {
-	Select(j JSON) (bool, error)
-}
-
-type SelectorFunc func(JSON) (bool, error)
-
-func (f SelectorFunc) Select(j JSON) (bool, error) {
-	return f(j)
-}
-
 type Collection interface {
-	Save(ctx context.Context, item *CollectionItem) error
-	Select(ctx context.Context, before int64, count int, selector Selector) ([]*CollectionItem, error)
+	Save(ctx context.Context, createdAt int64, id string, data string) error
+	Select(ctx context.Context, count int, filter ObjectFilter, resolver ObjectResolver) ([]*pb.Object, uint32, error)
+	RangeSelect(ctx context.Context, after int64, before int64, count int, filter ObjectFilter, resolver ObjectResolver) ([]*pb.Object, uint32, error)
 }
 
 type CollectionItem struct {

@@ -54,7 +54,10 @@ func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (
 		return nil, errors.Internal
 	}
 
-	o, err := storage.Get(ctx, request.ObjectId)
+	o, err := storage.Get(ctx, request.ObjectId, GetObjectOptions{
+		At:     request.At,
+		Header: request.HeaderOnly,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -102,10 +105,12 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 	}
 
 	opts := ListOptions{
-		Path:   request.Path,
-		Before: request.Before,
-		After:  request.After,
-		Count:  int(request.Count),
+		Collection: request.Collection,
+		FullObject: request.FullObject,
+		At:         request.At,
+		Before:     request.Before,
+		After:      request.After,
+		Count:      int(request.Count),
 	}
 
 	items, err := storage.List(ctx, nil, opts)

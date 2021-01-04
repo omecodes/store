@@ -61,8 +61,9 @@ func (g *gRPCClientHandler) GetObject(ctx context.Context, id string, opts objec
 	}
 
 	rsp, err := client.GetObject(auth.SetMetaWithExisting(ctx), &pb.GetObjectRequest{
-		ObjectId: id,
-		Path:     opts.Path,
+		ObjectId:   id,
+		At:         opts.At,
+		HeaderOnly: opts.Header,
 	})
 	if err != nil {
 		return nil, err
@@ -105,10 +106,12 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts objects.ListOp
 	}
 
 	stream, err := client.ListObjects(auth.SetMetaWithExisting(ctx), &pb.ListObjectsRequest{
-		Before: opts.Before,
-		After:  opts.After,
-		Count:  uint32(opts.Count),
-		Path:   opts.Path,
+		Before:     opts.Before,
+		After:      opts.After,
+		Count:      uint32(opts.Count),
+		At:         opts.At,
+		Collection: opts.Collection,
+		FullObject: opts.FullObject,
 	})
 	if err != nil {
 		return nil, err
