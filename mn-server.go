@@ -310,6 +310,7 @@ func (s *MNServer) enrichContext(next http.Handler) http.Handler {
 		ctx = router.WithCelSearchEnv(s.celSearchEnv)(ctx)
 		ctx = router.WithSettings(s.settings)(ctx)
 		ctx = router.WithWorkers(s.workers)(ctx)
+		ctx = router.WithRouterProvider(ctx, s)
 
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
