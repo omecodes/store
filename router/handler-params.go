@@ -128,12 +128,13 @@ func (p *ParamsHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*
 		return nil, err
 	}
 
+	browser := cursor.GetBrowser()
 	count := 0
 	limitedBrowser := pb.BrowseFunc(func() (*pb.Object, error) {
 		if count == maxLength {
 			return nil, io.EOF
 		}
-		o, err := cursor.Browse()
+		o, err := browser.Browse()
 		if err == nil {
 			count++
 		}
