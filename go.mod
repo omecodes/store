@@ -27,7 +27,8 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/tidwall/gjson v1.6.7
 	github.com/tidwall/sjson v1.1.4
-	google.golang.org/genproto v0.0.0-20201214200347-8c77b98c765d
+	golang.org/x/sys v0.0.0-20210104204734-6f8348627aad // indirect
+	google.golang.org/genproto v0.0.0-20210105202744-fe13368bc0e1
 	google.golang.org/grpc v1.34.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/ns1/ns1-go.v2 v2.4.2
