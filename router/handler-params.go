@@ -7,6 +7,7 @@ import (
 	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/pb"
 	"github.com/omecodes/store/utime"
+	"io"
 	"strconv"
 )
 
@@ -105,9 +106,40 @@ func (p *ParamsHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*
 		opts.DateOptions.After = 1
 	}
 
-	/*if opts.Count > 5 || opts.Count == 0 {
-		opts.Count = 5
-	} */
+	settings := Settings(ctx)
+	if settings == nil {
+		return nil, errors.Internal
+	}
 
-	return p.BaseHandler.ListObjects(ctx, opts)
+	s, err := settings.Get(objects.SettingsObjectListMaxCount)
+	if err != nil {
+		log.Error("could not get data max length from settings", log.Err(err))
+		return nil, errors.Internal
+	}
+
+	maxLength, err := strconv.Atoi(s)
+	if err != nil {
+		log.Error("could not get data max length from settings", log.Err(err))
+		return nil, errors.Internal
+	}
+
+	cursor, err := p.BaseHandler.ListObjects(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	count := 0
+	limitedBrowser := pb.BrowseFunc(func() (*pb.Object, error) {
+		if count == maxLength {
+			return nil, io.EOF
+		}
+		o, err := cursor.Browse()
+		if err == nil {
+			count++
+		}
+		return o, err
+	})
+
+	cursor.SetBrowser(limitedBrowser)
+	return cursor, nil
 }
