@@ -106,11 +106,14 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 	opts := pb.ListOptions{
 		CollectionOptions: pb.CollectionOptions{
 			Name:       request.Collection,
-			FullObject: false,
+			FullObject: request.FullObject,
 		},
-		Condition:   request.Condition,
-		At:          request.At,
-		DateOptions: pb.DateRangeOptions{},
+		Condition: request.Condition,
+		At:        request.At,
+		DateOptions: pb.DateRangeOptions{
+			Before: request.Before,
+			After:  request.After,
+		},
 	}
 
 	cursor, err := storage.List(ctx, opts)

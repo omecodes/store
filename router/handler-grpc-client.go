@@ -107,6 +107,7 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts pb.ListOptions
 		At:         opts.At,
 		Collection: opts.CollectionOptions.Name,
 		FullObject: opts.CollectionOptions.FullObject,
+		Condition:  opts.Condition,
 	})
 	if err != nil {
 		return nil, err
