@@ -2,8 +2,11 @@ package router
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/google/cel-go/cel"
 	"github.com/omecodes/common/errors"
+	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/pb"
 )
@@ -87,6 +90,25 @@ func (p *PolicyHandler) DeleteObject(ctx context.Context, id string) error {
 }
 
 func (p *PolicyHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
+	var (
+		err           error
+		searchProgram cel.Program
+	)
+
+	if opts.Condition != "" {
+		if opts.Condition == "false" {
+			return nil, errors.Forbidden
+		}
+
+		if opts.Condition != "true" {
+			searchProgram, err = LoadProgramForSearch(&ctx, opts.Condition)
+			if err != nil {
+				log.Error("Expression compiling failure", log.Field("expression", opts.Condition), log.Err(err))
+				return nil, errors.BadInput
+			}
+		}
+	}
+
 	cursor, err := p.BaseHandler.ListObjects(ctx, opts)
 	if err != nil {
 		return nil, err
@@ -106,6 +128,25 @@ func (p *PolicyHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*
 					continue
 				}
 				return nil, err
+			}
+
+			if searchProgram != nil {
+				object := map[string]interface{}{}
+				err = json.Unmarshal([]byte(o.Data), &object)
+				if err != nil {
+					return nil, err
+				}
+
+				vars := map[string]interface{}{"o": object}
+				out, details, err := searchProgram.Eval(vars)
+				if err != nil {
+					log.Error("cel execution", log.Field("details", details))
+					return nil, err
+				}
+
+				if !out.Value().(bool) {
+					continue
+				}
 			}
 			return o, nil
 		}
