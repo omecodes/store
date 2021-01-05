@@ -3,8 +3,10 @@ package oms
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha512"
 	"database/sql"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"github.com/foomo/simplecert"
 	"github.com/foomo/tlsconfig"
@@ -214,7 +216,13 @@ func (s *MNServer) startDefaultAPIServer() error {
 	middlewareList := []mux.MiddlewareFunc{
 		auth.DetectBasicMiddleware(auth.CredentialsMangerFunc(func(user string) (string, error) {
 			if user == "admin" {
-				return s.adminPassword, nil
+				sh := sha512.New()
+				_, err = sh.Write([]byte(s.adminPassword))
+				if err != nil {
+					return "", err
+				}
+				hashed := sh.Sum(nil)
+				return hex.EncodeToString(hashed), nil
 			}
 			return "", errors2.New(errors2.CodeForbidden, "authentication failed")
 		})),
@@ -278,7 +286,7 @@ func (s *MNServer) startAutoCertAPIServer() error {
 		})),
 		auth.DetectOauth2Middleware(s.config.JwtSecret),
 		s.enrichContext,
-		httpx.Logger("omestore").Handle,
+		httpx.Logger("store").Handle,
 	}
 	var handler http.Handler
 	handler = NewHttpUnit().MuxRouter()
