@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"github.com/omecodes/bome"
 	"github.com/omecodes/store/pb"
+	"io"
 )
 
 func NewSQLCollection(db *sql.DB, dialect string, tableName string) (*sqlCollection, error) {
@@ -77,6 +78,10 @@ func (s *sqlCollection) Select(ctx context.Context, headerResolver HeaderResolve
 	})
 
 	browser := pb.BrowseFunc(func() (*pb.Object, error) {
+		if !c.HasNext() {
+			return nil, io.EOF
+		}
+
 		next, err := c.Next()
 		if err != nil {
 			return nil, err
@@ -112,6 +117,10 @@ func (s *sqlCollection) RangeSelect(ctx context.Context, after int64, before int
 	})
 
 	browser := pb.BrowseFunc(func() (*pb.Object, error) {
+		if !c.HasNext() {
+			return nil, io.EOF
+		}
+
 		next, err := c.Next()
 		if err != nil {
 			return nil, err

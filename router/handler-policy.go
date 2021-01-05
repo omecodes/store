@@ -92,10 +92,10 @@ func (p *PolicyHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*
 		return nil, err
 	}
 
-	browser := cursor.GetBrowser()
-	browser = pb.BrowseFunc(func() (*pb.Object, error) {
+	cursorBrowser := cursor.GetBrowser()
+	browser := pb.BrowseFunc(func() (*pb.Object, error) {
 		for {
-			o, err := browser.Browse()
+			o, err := cursorBrowser.Browse()
 			if err != nil {
 				return nil, err
 			}
@@ -112,5 +112,5 @@ func (p *PolicyHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*
 	})
 
 	cursor.SetBrowser(browser)
-	return cursor, err
+	return cursor, nil
 }

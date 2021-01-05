@@ -222,12 +222,12 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write([]byte("{"))
 	position := 0
 	for {
-		object, err := cursor.Browse()
-		if err != nil {
-			if err == io.EOF {
+		object, err2 := cursor.Browse()
+		if err2 != nil {
+			if err2 == io.EOF {
 				break
 			}
-			w.WriteHeader(errors.HttpStatus(err))
+			w.WriteHeader(errors.HttpStatus(err2))
 		}
 
 		var item string

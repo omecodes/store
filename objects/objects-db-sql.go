@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"io"
 	"strings"
 
 	"github.com/iancoleman/strcase"
@@ -445,6 +446,10 @@ func (ms *sqlStore) List(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, 
 		return cursor.Close()
 	})
 	browser := pb.BrowseFunc(func() (*pb.Object, error) {
+		if !cursor.HasNext() {
+			return nil, io.EOF
+		}
+
 		next, err := cursor.Next()
 		if err != nil {
 			return nil, err
@@ -466,16 +471,19 @@ func (ms *sqlStore) List(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, 
 }
 
 func (ms *sqlStore) listInRange(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
-	c, _, err := ms.datedRefs.AllInRange(opts.DateOptions.After, opts.DateOptions.Before, 100)
+	cursor, _, err := ms.datedRefs.AllInRange(opts.DateOptions.After, opts.DateOptions.Before, 100)
 	if err != nil {
 		return nil, err
 	}
 
 	closer := pb.CloseFunc(func() error {
-		return c.Close()
+		return cursor.Close()
 	})
 	browser := pb.BrowseFunc(func() (*pb.Object, error) {
-		next, err := c.Next()
+		if !cursor.HasNext() {
+			return nil, io.EOF
+		}
+		next, err := cursor.Next()
 		if err != nil {
 			return nil, err
 		}
