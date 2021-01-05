@@ -40,7 +40,7 @@ type MsConfig struct {
 	DBUri        string
 	JWTSecret    string
 	WorkingDir   string
-	Production   bool
+	Development  bool
 }
 
 func NewMSServer(cfg MsConfig) *MSServer {
@@ -148,7 +148,7 @@ func (s *MSServer) startRegistry() (err error) {
 }
 
 func (s *MSServer) startAPIServer() error {
-	if s.config.Production {
+	if !s.config.Development {
 		return s.startProductionAPIServer()
 	}
 

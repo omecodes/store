@@ -14,7 +14,7 @@ import (
 
 var (
 	jwtSecret string
-	prod      bool
+	dev       bool
 	regPort   int
 	caPort    int
 	apiPort   int
@@ -49,7 +49,7 @@ func init() {
 	}
 
 	flags := startCMD.PersistentFlags()
-	flags.BoolVar(&prod, "prod", false, "Run in production mode when the flag is set")
+	flags.BoolVar(&dev, "dev", false, "Runs in development mode when the flag is set")
 	flags.IntVar(&regPort, "reg", 9090, "Registry server port")
 	flags.IntVar(&caPort, "ca", 9092, "CA server port")
 	flags.IntVar(&apiPort, "api", 8080, "API server port")
@@ -99,7 +99,7 @@ func run(cmd *cobra.Command, args []string) {
 		DBUri:        dbURI,
 		WorkingDir:   wDir,
 		JWTSecret:    jwtSecret,
-		Production:   prod,
+		Development:  dev,
 	}
 
 	server := oms.NewMSServer(config)
