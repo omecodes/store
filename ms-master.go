@@ -72,14 +72,37 @@ func (s *MSServer) init() error {
 		return err
 	}
 
-	err = s.settings.Set(objects.SettingsDataMaxSizePath, objects.DefaultSettings[objects.SettingsDataMaxSizePath])
-	if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
-		return err
+	_, err = s.settings.Get(objects.SettingsDataMaxSizePath)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+		err = s.settings.Set(objects.SettingsDataMaxSizePath, objects.DefaultSettings[objects.SettingsDataMaxSizePath])
+		if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
+			return err
+		}
 	}
 
-	err = s.settings.Set(objects.SettingsCreateDataSecurityRule, objects.DefaultSettings[objects.SettingsCreateDataSecurityRule])
-	if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
-		return err
+	_, err = s.settings.Get(objects.SettingsDataMaxSizePath)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+		err = s.settings.Set(objects.SettingsCreateDataSecurityRule, objects.DefaultSettings[objects.SettingsCreateDataSecurityRule])
+		if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
+			return err
+		}
+	}
+
+	_, err = s.settings.Get(objects.SettingsObjectListMaxCount)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+		err = s.settings.Set(objects.SettingsObjectListMaxCount, objects.DefaultSettings[objects.SettingsObjectListMaxCount])
+		if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
+			return err
+		}
 	}
 
 	return nil

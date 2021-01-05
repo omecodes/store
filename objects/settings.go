@@ -3,20 +3,13 @@ package objects
 const (
 	SettingsDataMaxSizePath        = "data_max_size"
 	SettingsCreateDataSecurityRule = "create_security_rule"
+	SettingsObjectListMaxCount     = "object_list_max_count"
 )
-
-var SettingsPathFormats = map[string]string{
-	SettingsDataMaxSizePath:        "%d",
-	SettingsCreateDataSecurityRule: "%s",
-}
-
-var SettingsPathValueMimes = map[string]string{
-	SettingsDataMaxSizePath: "text/plain",
-}
 
 var DefaultSettings = map[string]string{
 	SettingsDataMaxSizePath:        "5242880",
 	SettingsCreateDataSecurityRule: "auth.worker",
+	SettingsObjectListMaxCount:     "5",
 }
 
 type SettingsManager interface {
