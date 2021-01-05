@@ -1,6 +1,7 @@
 package oms
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/gorilla/mux"
@@ -46,7 +47,7 @@ func (s *HTTPUnit) MuxRouter() *mux.Router {
 	r.Name("Get").Methods(http.MethodGet).Path("/objects/{id}").Handler(http.HandlerFunc(s.get))
 	r.Name("Del").Methods(http.MethodDelete).Path("/objects/{id}").Handler(http.HandlerFunc(s.del))
 	r.Name("GetObjects").Methods(http.MethodGet).Path("/objects").Handler(http.HandlerFunc(s.list))
-	// r.Name("Search").Methods(http.MethodPost).Path("/objects").Handler(http.HandlerFunc(s.search))
+	r.Name("Search").Methods(http.MethodPost).Path("/objects").Handler(http.HandlerFunc(s.search))
 
 	return r
 }
@@ -247,67 +248,53 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write([]byte("}"))
 }
 
-/* func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	var opts pb.ListOptions
 
-	var before int64
-	var err error
-
-	beforeParam := r.URL.Query().Get("before")
-	if beforeParam != "" {
-		before, err = strconv.ParseInt(beforeParam, 10, 64)
-		if err != nil {
-			log.Error("could not parse param 'before'")
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-	} else {
-		before = time.Now().UnixNano() / 1e6
-	}
-
-	opts := objects.SearchOptions{
-		Path:   r.URL.Query().Get("path"),
-		Before: before,
-	}
-
-	var params objects.SearchParams
-	err = json.NewDecoder(r.Body).Decode(&params)
+	err := json.NewDecoder(r.Body).Decode(&opts)
 	if err != nil {
-		log.Error("Search: wrong query", log.Err(err))
+		log.Error("could not parse param 'before'")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
 	route, err := router.NewRoute(ctx)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	result, err := route.SearchObjects(ctx, params, opts)
+	cursor, err := route.ListObjects(ctx, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
 	}
-
+	defer func() {
+		if cErr := cursor.Close(); cErr != nil {
+			log.Error("cursor closed with an error", log.Err(cErr))
+		}
+	}()
 	w.Header().Add("Content-Type", "application/json")
-	_, err = w.Write([]byte(fmt.Sprintf("{\"count\": %d, \"total\": %d, \"before\": %d, \"after\": %d, \"objects\": {",
-		len(result.Objects),
-		result.Total,
-		result.Before,
-		result.After)))
-	if err != nil {
-		log.Error("GetObjects: failed to write response")
-		return
-	}
 
+	_, err = w.Write([]byte("{"))
 	position := 0
-	for _, object := range result.Objects {
+	for {
+		object, err2 := cursor.Browse()
+		if err2 != nil {
+			if err2 == io.EOF {
+				break
+			}
+			w.WriteHeader(errors.HttpStatus(err2))
+		}
+
 		var item string
 		if position == 0 {
 			position++
 		} else {
 			item = ","
 		}
+
 		item = item + fmt.Sprintf("\"%s\": %s", object.Header.Id, object.Data)
 		_, err = w.Write([]byte(item))
 		if err != nil {
@@ -315,8 +302,8 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	_, err = w.Write([]byte("}}"))
-} */
+	_, err = w.Write([]byte("}"))
+}
 
 func (s *HTTPUnit) setSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
