@@ -10,6 +10,7 @@ import (
 	"github.com/foomo/tlsconfig"
 	"github.com/google/cel-go/cel"
 	"github.com/gorilla/mux"
+	"github.com/omecodes/common/errors"
 	"github.com/omecodes/store/acl"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/cenv"
@@ -31,9 +32,9 @@ import (
 
 // Config contains info to configure an instance of Server
 type MNConfig struct {
+	Dev        bool
 	Domains    []string
 	WorkingDir string
-	AutoCert   bool
 	JwtSecret  string
 	DSN        string
 }
@@ -128,14 +129,37 @@ func (s *MNServer) init() error {
 		return err
 	}
 
-	err = s.settings.Set(objects.SettingsDataMaxSizePath, objects.DefaultSettings[objects.SettingsDataMaxSizePath])
-	if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
-		return err
+	_, err = s.settings.Get(objects.SettingsDataMaxSizePath)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+		err = s.settings.Set(objects.SettingsDataMaxSizePath, objects.DefaultSettings[objects.SettingsDataMaxSizePath])
+		if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
+			return err
+		}
 	}
 
-	err = s.settings.Set(objects.SettingsCreateDataSecurityRule, objects.DefaultSettings[objects.SettingsCreateDataSecurityRule])
-	if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
-		return err
+	_, err = s.settings.Get(objects.SettingsDataMaxSizePath)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+		err = s.settings.Set(objects.SettingsCreateDataSecurityRule, objects.DefaultSettings[objects.SettingsCreateDataSecurityRule])
+		if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
+			return err
+		}
+	}
+
+	_, err = s.settings.Get(objects.SettingsObjectListMaxCount)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+		err = s.settings.Set(objects.SettingsObjectListMaxCount, objects.DefaultSettings[objects.SettingsObjectListMaxCount])
+		if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
+			return err
+		}
 	}
 	return nil
 }
@@ -170,7 +194,7 @@ func (s *MNServer) Start() error {
 		return err
 	}
 
-	if s.config.AutoCert {
+	if !s.config.Dev {
 		return s.startAutoCertAPIServer()
 	}
 
@@ -179,7 +203,7 @@ func (s *MNServer) Start() error {
 
 func (s *MNServer) startDefaultAPIServer() error {
 	var err error
-	s.listener, err = net.Listen("tcp", ":")
+	s.listener, err = net.Listen("tcp", ":8080")
 	if err != nil {
 		return err
 	}
@@ -196,7 +220,7 @@ func (s *MNServer) startDefaultAPIServer() error {
 		})),
 		auth.DetectOauth2Middleware(s.config.JwtSecret),
 		s.enrichContext,
-		httpx.Logger("omestore").Handle,
+		httpx.Logger("store").Handle,
 	}
 	var handler http.Handler
 	handler = NewHttpUnit().MuxRouter()

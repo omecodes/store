@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	autoCert   bool
+	dev        bool
 	jwtSecret  string
 	workingDir string
 	dsn        string
@@ -33,7 +33,7 @@ func init() {
 		Use:   "run",
 		Short: "Runs a objects backend application",
 		Run: func(cmd *cobra.Command, args []string) {
-			if autoCert && len(domains) == 0 {
+			if !dev && len(domains) == 0 {
 				fmt.Println("Flag --domains is required when --auto-cert is set")
 				os.Exit(-1)
 			}
@@ -50,7 +50,7 @@ func init() {
 			s := oms.NewMNServer(oms.MNConfig{
 				WorkingDir: workingDir,
 				Domains:    domains,
-				AutoCert:   autoCert,
+				Dev:        dev,
 				JwtSecret:  jwtSecret,
 				DSN:        dsn,
 			})
@@ -71,11 +71,11 @@ func init() {
 	}
 
 	flags := runCMD.PersistentFlags()
-	flags.BoolVar(&autoCert, "auto-cert", false, "Secure listen using LetsEncrypt certificate")
+	flags.BoolVar(&dev, "dev", false, "Enable development mode")
 	flags.StringArrayVar(&domains, "domains", nil, "Domains name for auto cert")
 	flags.StringVar(&workingDir, "dir", "", "Data directory")
 	flags.StringVar(&jwtSecret, "jwt-secret", "", "Secret used to verify JWT hmac based signature")
-	flags.StringVar(&dsn, "dsn", "oms:oms@(127.0.0.1:3306)/oms?charset=utf8", "MySQL database uri")
+	flags.StringVar(&dsn, "dsn", "bome:bome@(127.0.0.1:3306)/bome?charset=utf8", "MySQL database uri")
 	if err := cobra.MarkFlagRequired(flags, "jwt-secret"); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
