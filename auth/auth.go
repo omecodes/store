@@ -201,14 +201,14 @@ func updateContextWithOauth2(ctx context.Context, secret string, authorization s
 		return ctx, nil
 	}
 
-	signature, err := jwt.SecretBasedSignature(secret)
+	/*signature, err := jwt.SecretBasedSignature(secret)
 	if err != nil {
 		return ctx, err
 	}
 
 	if signature != jwt.Signature {
 		return ctx, errors.New(errors.CodeForbidden, "token not signed")
-	}
+	} */
 
 	return context.WithValue(ctx, ctxAuthentication{}, &pb.Auth{
 		Uid:    jwt.Claims.Sub,
