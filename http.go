@@ -190,13 +190,7 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	/*count, err := Int64QueryParam(r, queryCount)
-	if err != nil {
-		log.Error("could not parse param 'count'")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	opts.Count = int(count) */
+
 	opts.At = r.URL.Query().Get(queryAt)
 	opts.CollectionOptions.FullObject = r.URL.Query().Get(queryFullObject) == "true"
 	opts.CollectionOptions.Name = r.URL.Query().Get(queryCollection)
