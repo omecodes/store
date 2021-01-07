@@ -49,12 +49,12 @@ func (s *MSStore) init() error {
 		return err
 	}
 
-	s.objects, err = objects.NewSQLObjects(db, bome.MySQL, "objects")
+	s.accessStore, err = acl.NewSQLStore(db, bome.MySQL, "objects_acl")
 	if err != nil {
 		return err
 	}
 
-	s.accessStore, err = acl.NewSQLStore(db, bome.MySQL, "objects_acl")
+	s.objects, err = objects.NewSQLObjects(db, bome.MySQL, "objects")
 	if err != nil {
 		return err
 	}

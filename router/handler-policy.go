@@ -39,7 +39,7 @@ func (p *PolicyHandler) PutObject(ctx context.Context, object *pb.Object, securi
 	if len(docRules.Read) == 0 {
 		docRules.Read = append(docRules.Read, userDefaultRule, "auth.worker", "auth.uid=='admin'")
 	} else {
-		docRules.Read = append(docRules.Write, "auth.worker", "auth.uid=='admin'")
+		docRules.Read = append(docRules.Read, "auth.worker", "auth.uid=='admin'")
 	}
 
 	if len(docRules.Write) == 0 {
@@ -124,7 +124,7 @@ func (p *PolicyHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*
 
 			err = assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, o.Header.Id, opts.At)
 			if err != nil {
-				if errors.IsForbidden(err) {
+				if err == errors.Unauthorized {
 					continue
 				}
 				return nil, err
@@ -140,8 +140,8 @@ func (p *PolicyHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*
 				vars := map[string]interface{}{"o": object}
 				out, details, err := searchProgram.Eval(vars)
 				if err != nil {
-					log.Error("cel execution", log.Field("details", details))
-					return nil, err
+					log.Error("cel execution", log.Field("details", details), log.Err(err))
+					return nil, errors.BadInput
 				}
 
 				if !out.Value().(bool) {

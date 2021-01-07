@@ -25,7 +25,7 @@ func (p *sqlPermStore) SaveRules(ctx context.Context, objectID string, rules *pb
 		Key:   objectID,
 		Value: string(rulesBytes),
 	}
-	return p.store.Save(entry)
+	return p.store.Upsert(entry)
 }
 
 func (p *sqlPermStore) GetRules(ctx context.Context, objectID string) (*pb.PathAccessRules, error) {

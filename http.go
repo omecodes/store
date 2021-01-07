@@ -223,6 +223,7 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			w.WriteHeader(errors.HttpStatus(err2))
+			return
 		}
 
 		var item string
@@ -280,6 +281,8 @@ func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			w.WriteHeader(errors.HttpStatus(err2))
+			_, err = w.Write([]byte("}"))
+			return
 		}
 
 		var item string
@@ -292,6 +295,7 @@ func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 		item = item + fmt.Sprintf("\"%s\": %s", object.Header.Id, object.Data)
 		_, err = w.Write([]byte(item))
 		if err != nil {
+			_, err = w.Write([]byte("}"))
 			log.Error("GetObjects: failed to write result item", log.Err(err))
 			return
 		}

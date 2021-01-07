@@ -471,7 +471,7 @@ func (ms *sqlStore) List(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, 
 }
 
 func (ms *sqlStore) listInRange(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
-	cursor, _, err := ms.datedRefs.AllInRange(opts.DateOptions.After, opts.DateOptions.Before, 100)
+	cursor, _, err := ms.datedRefs.IndexInRange(opts.DateOptions.After, opts.DateOptions.Before)
 	if err != nil {
 		return nil, err
 	}

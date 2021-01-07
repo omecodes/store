@@ -107,7 +107,7 @@ func (s *sqlCollection) Select(ctx context.Context, headerResolver HeaderResolve
 }
 
 func (s *sqlCollection) RangeSelect(ctx context.Context, after int64, before int64, headerResolver HeaderResolver, dataResolver DataResolver) (*pb.Cursor, error) {
-	c, _, err := s.datedRef.AllInRange(after, before, 100)
+	c, _, err := s.datedRef.IndexInRange(after, before)
 	if err != nil {
 		return nil, err
 	}

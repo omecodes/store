@@ -60,7 +60,6 @@ type MNServer struct {
 	celSearchEnv  *cel.Env
 
 	objects     objects.Objects
-	workers     *bome.JSONMap
 	settings    objects.SettingsManager
 	accessStore acl.Store
 	listener    net.Listener
@@ -79,17 +78,12 @@ func (s *MNServer) init() error {
 		return err
 	}
 
-	s.workers, err = bome.NewJSONMap(db, bome.MySQL, "users")
+	s.accessStore, err = acl.NewSQLStore(db, bome.MySQL, "objects_acl")
 	if err != nil {
 		return err
 	}
 
-	s.accessStore, err = acl.NewSQLStore(db, bome.MySQL, "accesses")
-	if err != nil {
-		return err
-	}
-
-	s.settings, err = objects.NewSQLSettings(db, bome.MySQL, "settings")
+	s.settings, err = objects.NewSQLSettings(db, bome.MySQL, "objects_settings")
 	if err != nil {
 		return err
 	}
@@ -317,7 +311,6 @@ func (s *MNServer) enrichContext(next http.Handler) http.Handler {
 		ctx = router.WithCelPolicyEnv(s.celPolicyEnv)(ctx)
 		ctx = router.WithCelSearchEnv(s.celSearchEnv)(ctx)
 		ctx = router.WithSettings(s.settings)(ctx)
-		ctx = router.WithWorkers(s.workers)(ctx)
 		ctx = router.WithRouterProvider(ctx, s)
 
 		r = r.WithContext(ctx)
