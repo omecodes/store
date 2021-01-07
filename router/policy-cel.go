@@ -56,8 +56,8 @@ func evaluate(ctx *context.Context, state *celParams, rule string) (bool, error)
 	return out.Value().(bool), nil
 }
 
-func assetActionAllowedOnObject(ctx *context.Context, action pb.AllowedTo, objectID string, path string) error {
-	header, err := GetObjectHeader(ctx, objectID)
+func assetActionAllowedOnObject(ctx *context.Context, collection string, objectID string, action pb.AllowedTo, path string) error {
+	header, err := GetObjectHeader(ctx, collection, objectID)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func assetActionAllowedOnObject(ctx *context.Context, action pb.AllowedTo, objec
 		auth: authCEL,
 	}
 
-	rule, err := getAccessRule(*ctx, action, objectID, path)
+	rule, err := getAccessRule(*ctx, collection, objectID, action, path)
 	if err != nil {
 		return err
 	}
@@ -90,14 +90,14 @@ func assetActionAllowedOnObject(ctx *context.Context, action pb.AllowedTo, objec
 	return nil
 }
 
-func getAccessRule(ctx context.Context, action pb.AllowedTo, objectID string, path string) (string, error) {
+func getAccessRule(ctx context.Context, collection string, objectID string, action pb.AllowedTo, path string) (string, error) {
 	accessStore := acl.GetStore(ctx)
 	if accessStore == nil {
 		log.Error("ACL-Read-Check: missing access store in context")
 		return "", errors.Internal
 	}
 
-	ruleCollection, err := accessStore.GetRules(ctx, objectID)
+	ruleCollection, err := accessStore.GetRules(ctx, collection, objectID)
 	if err != nil {
 		return "", err
 	}

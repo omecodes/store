@@ -16,6 +16,46 @@ type handler struct {
 	pb.UnimplementedHandlerUnitServer
 }
 
+func (h *handler) CreateCollection(ctx context.Context, request *pb.CreateCollectionRequest) (*pb.CreateCollectionResponse, error) {
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = route.CreateCollection(ctx, request.Collection)
+	return &pb.CreateCollectionResponse{}, err
+}
+
+func (h *handler) GetCollection(ctx context.Context, request *pb.GetCollectionRequest) (*pb.GetCollectionResponse, error) {
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	collection, err := route.GetCollection(ctx, request.Id)
+	return &pb.GetCollectionResponse{Collection: collection}, err
+}
+
+func (h *handler) ListCollections(ctx context.Context, request *pb.ListCollectionsRequest) (*pb.ListCollectionsResponse, error) {
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	collections, err := route.ListCollections(ctx)
+	return &pb.ListCollectionsResponse{Collections: collections}, err
+}
+
+func (h *handler) DeleteCollection(ctx context.Context, request *pb.DeleteCollectionRequest) (*pb.DeleteCollectionResponse, error) {
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = route.DeleteCollection(ctx, request.Id)
+	return &pb.DeleteCollectionResponse{}, err
+}
+
 func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (*pb.PutObjectResponse, error) {
 	route, err := router.NewRoute(ctx)
 	if err != nil {
@@ -29,7 +69,7 @@ func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (
 		request.AccessSecurityRules.AccessRules = map[string]*pb.AccessRules{}
 	}
 
-	id, err := route.PutObject(ctx, request.Object, request.AccessSecurityRules, request.Indexes, pb.PutOptions{})
+	id, err := route.PutObject(ctx, "", request.Object, request.AccessSecurityRules, request.Indexes, pb.PutOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +85,7 @@ func (h *handler) PatchObject(ctx context.Context, request *pb.PatchObjectReques
 		return nil, err
 	}
 
-	return &pb.PatchObjectResponse{}, route.PatchObject(ctx, request.Patch, pb.PatchOptions{})
+	return &pb.PatchObjectResponse{}, route.PatchObject(ctx, "", request.Patch, pb.PatchOptions{})
 }
 
 func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (*pb.GetObjectResponse, error) {
@@ -54,7 +94,7 @@ func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (
 		return nil, err
 	}
 
-	object, err := route.GetObject(ctx, request.ObjectId, pb.GetOptions{
+	object, err := route.GetObject(ctx, "", request.ObjectId, pb.GetOptions{
 		At:   request.At,
 		Info: request.InfoOnly,
 	})
@@ -69,7 +109,7 @@ func (h *handler) DeleteObject(ctx context.Context, request *pb.DeleteObjectRequ
 	if err != nil {
 		return nil, err
 	}
-	err = route.DeleteObject(ctx, request.ObjectId)
+	err = route.DeleteObject(ctx, "", request.ObjectId)
 	return &pb.DeleteObjectResponse{}, err
 }
 
@@ -79,7 +119,7 @@ func (h *handler) ObjectInfo(ctx context.Context, request *pb.ObjectInfoRequest)
 		return nil, err
 	}
 
-	header, err := route.GetObjectHeader(ctx, request.ObjectId)
+	header, err := route.GetObjectHeader(ctx, "", request.ObjectId)
 	if err != nil {
 		return nil, err
 	}
@@ -96,10 +136,6 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 	}
 
 	opts := pb.ListOptions{
-		CollectionOptions: pb.CollectionOptions{
-			Name:       request.Collection,
-			FullObject: request.FullObject,
-		},
 		Condition: request.Condition,
 		At:        request.At,
 		DateOptions: pb.DateRangeOptions{
@@ -108,7 +144,7 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 		},
 	}
 
-	cursor, err := route.ListObjects(ctx, opts)
+	cursor, err := route.ListObjects(ctx, request.Collection, opts)
 	if err != nil {
 		return err
 	}

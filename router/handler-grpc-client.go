@@ -20,7 +20,53 @@ type gRPCClientHandler struct {
 	BaseHandler
 }
 
-func (g *gRPCClientHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
+func (g *gRPCClientHandler) CreateCollection(ctx context.Context, collection *pb.Collection) error {
+	client, err := clients.RouterGrpc(ctx, g.nodeType)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.CreateCollection(ctx, &pb.CreateCollectionRequest{Collection: collection})
+	return err
+}
+
+func (g *gRPCClientHandler) GetCollection(ctx context.Context, id string) (*pb.Collection, error) {
+	client, err := clients.RouterGrpc(ctx, g.nodeType)
+	if err != nil {
+		return nil, err
+	}
+
+	rsp, err := client.GetCollection(ctx, &pb.GetCollectionRequest{Id: id})
+	if err != nil {
+		return nil, err
+	}
+	return rsp.Collection, err
+}
+
+func (g *gRPCClientHandler) ListCollections(ctx context.Context) ([]*pb.Collection, error) {
+	client, err := clients.RouterGrpc(ctx, g.nodeType)
+	if err != nil {
+		return nil, err
+	}
+
+	rsp, err := client.ListCollections(ctx, &pb.ListCollectionsRequest{})
+	if err != nil {
+		return nil, err
+	}
+	return rsp.Collections, err
+}
+
+func (g *gRPCClientHandler) DeleteCollection(ctx context.Context, id string) error {
+	client, err := clients.RouterGrpc(ctx, g.nodeType)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.DeleteCollection(ctx, &pb.DeleteCollectionRequest{Id: id})
+	return err
+}
+
+func (g *gRPCClientHandler) PutObject(ctx context.Context, collection string, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
 	client, err := clients.RouterGrpc(ctx, g.nodeType)
 	if err != nil {
 		return "", err
@@ -38,7 +84,7 @@ func (g *gRPCClientHandler) PutObject(ctx context.Context, object *pb.Object, se
 	return rsp.ObjectId, nil
 }
 
-func (g *gRPCClientHandler) PatchObject(ctx context.Context, patch *pb.Patch, opts pb.PatchOptions) error {
+func (g *gRPCClientHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts pb.PatchOptions) error {
 	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return err
@@ -50,7 +96,7 @@ func (g *gRPCClientHandler) PatchObject(ctx context.Context, patch *pb.Patch, op
 	return err
 }
 
-func (g *gRPCClientHandler) GetObject(ctx context.Context, id string, opts pb.GetOptions) (*pb.Object, error) {
+func (g *gRPCClientHandler) GetObject(ctx context.Context, collection string, id string, opts pb.GetOptions) (*pb.Object, error) {
 	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return nil, err
@@ -68,7 +114,7 @@ func (g *gRPCClientHandler) GetObject(ctx context.Context, id string, opts pb.Ge
 	return rsp.Object, nil
 }
 
-func (g *gRPCClientHandler) GetObjectHeader(ctx context.Context, id string) (*pb.Header, error) {
+func (g *gRPCClientHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*pb.Header, error) {
 	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return nil, err
@@ -83,7 +129,7 @@ func (g *gRPCClientHandler) GetObjectHeader(ctx context.Context, id string) (*pb
 	return rsp.Header, nil
 }
 
-func (g *gRPCClientHandler) DeleteObject(ctx context.Context, id string) error {
+func (g *gRPCClientHandler) DeleteObject(ctx context.Context, collection string, id string) error {
 	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return err
@@ -95,7 +141,7 @@ func (g *gRPCClientHandler) DeleteObject(ctx context.Context, id string) error {
 	return err
 }
 
-func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
+func (g *gRPCClientHandler) ListObjects(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
 	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return nil, err
@@ -105,8 +151,7 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, opts pb.ListOptions
 		Before:     opts.DateOptions.Before,
 		After:      opts.DateOptions.After,
 		At:         opts.At,
-		Collection: opts.CollectionOptions.Name,
-		FullObject: opts.CollectionOptions.FullObject,
+		Collection: collection,
 		Condition:  opts.Condition,
 	})
 	if err != nil {

@@ -15,8 +15,8 @@ type ParamsHandler struct {
 	BaseHandler
 }
 
-func (p *ParamsHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
-	if object == nil || object.Header == nil || object.Header.Size == 0 {
+func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
+	if collection == "" || object == nil || object.Header == nil || object.Header.Size == 0 {
 		return "", errors.BadInput
 	}
 
@@ -47,11 +47,11 @@ func (p *ParamsHandler) PutObject(ctx context.Context, object *pb.Object, securi
 		return "", errors.BadInput
 	}
 
-	return p.next.PutObject(ctx, object, security, indexes, opts)
+	return p.next.PutObject(ctx, collection, object, security, indexes, opts)
 }
 
-func (p *ParamsHandler) PatchObject(ctx context.Context, patch *pb.Patch, opts pb.PatchOptions) error {
-	if patch == nil || patch.ObjectId == "" || len(patch.Data) == 0 || patch.At == "" {
+func (p *ParamsHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts pb.PatchOptions) error {
+	if collection == "" || patch == nil || patch.ObjectId == "" || len(patch.Data) == 0 || patch.At == "" {
 		return errors.BadInput
 	}
 
@@ -73,31 +73,35 @@ func (p *ParamsHandler) PatchObject(ctx context.Context, patch *pb.Patch, opts p
 		return errors.BadInput
 	}
 
-	return p.next.PatchObject(ctx, patch, opts)
+	return p.next.PatchObject(ctx, collection, patch, opts)
 }
 
-func (p *ParamsHandler) GetObject(ctx context.Context, id string, opts pb.GetOptions) (*pb.Object, error) {
-	if id == "" {
+func (p *ParamsHandler) GetObject(ctx context.Context, collection string, id string, opts pb.GetOptions) (*pb.Object, error) {
+	if collection == "" || id == "" {
 		return nil, errors.BadInput
 	}
-	return p.BaseHandler.GetObject(ctx, id, opts)
+	return p.BaseHandler.GetObject(ctx, collection, id, opts)
 }
 
-func (p *ParamsHandler) GetObjectHeader(ctx context.Context, id string) (*pb.Header, error) {
-	if id == "" {
+func (p *ParamsHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*pb.Header, error) {
+	if collection == "" || id == "" {
 		return nil, errors.BadInput
 	}
-	return p.BaseHandler.GetObjectHeader(ctx, id)
+	return p.BaseHandler.GetObjectHeader(ctx, collection, id)
 }
 
-func (p *ParamsHandler) DeleteObject(ctx context.Context, id string) error {
-	if id == "" {
+func (p *ParamsHandler) DeleteObject(ctx context.Context, collection string, id string) error {
+	if collection == "" || id == "" {
 		return errors.BadInput
 	}
-	return p.next.DeleteObject(ctx, id)
+	return p.next.DeleteObject(ctx, collection, id)
 }
 
-func (p *ParamsHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
+func (p *ParamsHandler) ListObjects(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
+	if collection == "" {
+		return nil, errors.BadInput
+	}
+
 	if opts.DateOptions.Before == 0 {
 		opts.DateOptions.Before = utime.Now()
 	}
@@ -123,7 +127,7 @@ func (p *ParamsHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*
 		return nil, errors.Internal
 	}
 
-	cursor, err := p.BaseHandler.ListObjects(ctx, opts)
+	cursor, err := p.BaseHandler.ListObjects(ctx, collection, opts)
 	if err != nil {
 		return nil, err
 	}

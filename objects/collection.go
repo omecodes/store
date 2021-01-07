@@ -6,9 +6,27 @@ import (
 )
 
 type Collection interface {
-	Save(ctx context.Context, createdAt int64, id string, data string) error
-	Select(ctx context.Context, headerResolver HeaderResolver, dataResolver DataResolver) (*pb.Cursor, error)
-	RangeSelect(ctx context.Context, after int64, before int64, headerResolver HeaderResolver, dataResolver DataResolver) (*pb.Cursor, error)
+
+	// Save saves object content as JSON in database
+	Save(ctx context.Context, object *pb.Object, index ...*pb.Index) error
+
+	// Update applies patch to object with id equals patch.ID()
+	Patch(ctx context.Context, patch *pb.Patch) error
+
+	// Delete removes all content associated with objectID
+	Delete(ctx context.Context, objectID string) error
+
+	// List returns a list of at most 'opts.Count' objects
+	List(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error)
+
+	// Get gets the object associated with objectID
+	Get(ctx context.Context, objectID string, opts pb.GetOptions) (*pb.Object, error)
+
+	// Info gets header of the object associated with objectID
+	Info(ctx context.Context, objectID string) (*pb.Header, error)
+
+	// Clear removes all objects store
+	Clear() error
 }
 
 type CollectionItem struct {

@@ -54,7 +54,7 @@ func (s *MSStore) init() error {
 		return err
 	}
 
-	s.objects, err = objects.NewSQLObjects(db, bome.MySQL, "objects")
+	s.objects, err = objects.NewSQLStore(db, bome.MySQL, "objects")
 	if err != nil {
 		return err
 	}

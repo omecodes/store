@@ -12,53 +12,53 @@ func NewStoreClient() *gRPCClient {
 
 type gRPCClient struct{}
 
-func (g *gRPCClient) SaveRules(ctx context.Context, objectID string, rules *pb.PathAccessRules) error {
+func (g *gRPCClient) SaveRules(ctx context.Context, collection string, objectID string, rules *pb.PathAccessRules) error {
 	client, err := clients.ACLGrpc(ctx)
 	if err != nil {
 		return err
 	}
-	_, err = client.PutRules(ctx, &pb.PutRulesRequest{ObjectId: objectID, Rules: rules})
+	_, err = client.PutRules(ctx, &pb.PutRulesRequest{Collection: collection, ObjectId: objectID, Rules: rules})
 	return err
 }
 
-func (g *gRPCClient) GetRules(ctx context.Context, objectID string) (*pb.PathAccessRules, error) {
+func (g *gRPCClient) GetRules(ctx context.Context, collection string, objectID string) (*pb.PathAccessRules, error) {
 	client, err := clients.ACLGrpc(ctx)
 	if err != nil {
 		return nil, err
 	}
-	rsp, err := client.GetRules(ctx, &pb.GetRulesRequest{ObjectId: objectID})
+	rsp, err := client.GetRules(ctx, &pb.GetRulesRequest{Collection: collection, ObjectId: objectID})
 	if err != nil {
 		return nil, err
 	}
 	return rsp.GetRules(), nil
 }
 
-func (g *gRPCClient) GetForPath(ctx context.Context, objectID string, path string) (*pb.AccessRules, error) {
+func (g *gRPCClient) GetForPath(ctx context.Context, collection string, objectID string, path string) (*pb.AccessRules, error) {
 	client, err := clients.ACLGrpc(ctx)
 	if err != nil {
 		return nil, err
 	}
-	rsp, err := client.GetRulesForPath(ctx, &pb.GetRulesForPathRequest{ObjectId: objectID, Paths: []string{path}})
+	rsp, err := client.GetRulesForPath(ctx, &pb.GetRulesForPathRequest{Collection: collection, ObjectId: objectID, Paths: []string{path}})
 	if err != nil {
 		return nil, err
 	}
 	return rsp.Rules.AccessRules[path], nil
 }
 
-func (g *gRPCClient) Delete(ctx context.Context, objectID string) error {
+func (g *gRPCClient) Delete(ctx context.Context, collection string, objectID string) error {
 	client, err := clients.ACLGrpc(ctx)
 	if err != nil {
 		return err
 	}
-	_, err = client.DeleteRules(ctx, &pb.DeleteRulesRequest{ObjectId: objectID})
+	_, err = client.DeleteRules(ctx, &pb.DeleteRulesRequest{Collection: collection, ObjectId: objectID})
 	return err
 }
 
-func (g *gRPCClient) DeleteForPath(ctx context.Context, objectID string, path string) error {
+func (g *gRPCClient) DeleteForPath(ctx context.Context, collection string, objectID string, path string) error {
 	client, err := clients.ACLGrpc(ctx)
 	if err != nil {
 		return err
 	}
-	_, err = client.DeleteRulesForPath(ctx, &pb.DeleteRulesForPathRequest{ObjectId: objectID, Paths: []string{path}})
+	_, err = client.DeleteRulesForPath(ctx, &pb.DeleteRulesForPathRequest{Collection: collection, ObjectId: objectID, Paths: []string{path}})
 	return err
 }

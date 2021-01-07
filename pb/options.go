@@ -12,10 +12,9 @@ type DateRangeOptions struct {
 }
 
 type ListOptions struct {
-	CollectionOptions CollectionOptions `protobuf:"bytes,1,opt,name=collection_options,json=collectionOptions,proto3" json:"collection_options,omitempty"`
-	Condition         string            `protobuf:"bytes,2,opt,name=condition,proto3" json:"condition,omitempty"`
-	At                string            `protobuf:"bytes,3,opt,name=at,proto3" json:"at,omitempty"`
-	DateOptions       DateRangeOptions  `protobuf:"bytes,5,opt,name=date_options,json=dateOptions,proto3" json:"date_options,omitempty"`
+	Condition   string           `protobuf:"bytes,2,opt,name=condition,proto3" json:"condition,omitempty"`
+	At          string           `protobuf:"bytes,3,opt,name=at,proto3" json:"at,omitempty"`
+	DateOptions DateRangeOptions `protobuf:"bytes,5,opt,name=date_options,json=dateOptions,proto3" json:"date_options,omitempty"`
 }
 
 type PutOptions struct{}

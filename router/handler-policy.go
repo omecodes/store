@@ -23,7 +23,7 @@ func (p *PolicyHandler) isAdmin(ctx context.Context) bool {
 	return authCEL.Uid == "admin"
 }
 
-func (p *PolicyHandler) PutObject(ctx context.Context, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
+func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
 	ai := auth.Get(ctx)
 	if ai == nil {
 		return "", errors.Forbidden
@@ -53,43 +53,43 @@ func (p *PolicyHandler) PutObject(ctx context.Context, object *pb.Object, securi
 	}
 
 	object.Header.CreatedBy = ai.Uid
-	return p.BaseHandler.PutObject(ctx, object, security, indexes, opts)
+	return p.BaseHandler.PutObject(ctx, collection, object, security, indexes, opts)
 }
 
-func (p *PolicyHandler) GetObject(ctx context.Context, id string, opts pb.GetOptions) (*pb.Object, error) {
-	err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, id, opts.At)
+func (p *PolicyHandler) GetObject(ctx context.Context, collection string, id string, opts pb.GetOptions) (*pb.Object, error) {
+	err := assetActionAllowedOnObject(&ctx, collection, id, pb.AllowedTo_read, opts.At)
 	if err != nil {
 		return nil, err
 	}
-	return p.BaseHandler.GetObject(ctx, id, opts)
+	return p.BaseHandler.GetObject(ctx, collection, id, opts)
 }
 
-func (p *PolicyHandler) PatchObject(ctx context.Context, patch *pb.Patch, opts pb.PatchOptions) error {
-	err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_delete, patch.ObjectId, "")
+func (p *PolicyHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts pb.PatchOptions) error {
+	err := assetActionAllowedOnObject(&ctx, collection, patch.ObjectId, pb.AllowedTo_delete, "")
 	if err != nil {
 		return err
 	}
 
-	return p.BaseHandler.PatchObject(ctx, patch, opts)
+	return p.BaseHandler.PatchObject(ctx, collection, patch, opts)
 }
 
-func (p *PolicyHandler) GetObjectHeader(ctx context.Context, id string) (*pb.Header, error) {
-	err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, id, "")
+func (p *PolicyHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*pb.Header, error) {
+	err := assetActionAllowedOnObject(&ctx, collection, id, pb.AllowedTo_read, "")
 	if err != nil {
 		return nil, err
 	}
-	return p.BaseHandler.GetObjectHeader(ctx, id)
+	return p.BaseHandler.GetObjectHeader(ctx, collection, id)
 }
 
-func (p *PolicyHandler) DeleteObject(ctx context.Context, id string) error {
-	err := assetActionAllowedOnObject(&ctx, pb.AllowedTo_delete, id, "")
+func (p *PolicyHandler) DeleteObject(ctx context.Context, collection string, id string) error {
+	err := assetActionAllowedOnObject(&ctx, collection, id, pb.AllowedTo_delete, "")
 	if err != nil {
 		return err
 	}
-	return p.BaseHandler.DeleteObject(ctx, id)
+	return p.BaseHandler.DeleteObject(ctx, collection, id)
 }
 
-func (p *PolicyHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
+func (p *PolicyHandler) ListObjects(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
 	var (
 		err           error
 		searchProgram cel.Program
@@ -109,7 +109,7 @@ func (p *PolicyHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*
 		}
 	}
 
-	cursor, err := p.BaseHandler.ListObjects(ctx, opts)
+	cursor, err := p.BaseHandler.ListObjects(ctx, collection, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (p *PolicyHandler) ListObjects(ctx context.Context, opts pb.ListOptions) (*
 				return nil, err
 			}
 
-			err = assetActionAllowedOnObject(&ctx, pb.AllowedTo_read, o.Header.Id, opts.At)
+			err = assetActionAllowedOnObject(&ctx, collection, o.Header.Id, pb.AllowedTo_read, opts.At)
 			if err != nil {
 				if err == errors.Unauthorized {
 					continue

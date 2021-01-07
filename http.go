@@ -17,13 +17,12 @@ import (
 )
 
 const (
-	queryBefore     = "before"
-	queryAfter      = "after"
-	queryCount      = "count"
-	queryAt         = "at"
-	queryHeader     = "header"
-	queryFullObject = "full_object"
-	queryCollection = "collection"
+	queryBefore = "before"
+	queryAfter  = "after"
+	queryCount  = "count"
+	queryAt     = "at"
+	queryHeader = "header"
+	pathItemId  = "id"
 )
 
 func NewHttpUnit() *HTTPUnit {
@@ -42,12 +41,17 @@ func (s *HTTPUnit) MuxRouter() *mux.Router {
 	settingsSubRouter.Name("SetSettings").Methods(http.MethodPost).Handler(http.HandlerFunc(s.setSettings))
 	settingsSubRouter.Name("GetSettings").Methods(http.MethodGet).Handler(http.HandlerFunc(s.getSettings))
 
-	r.Name("Put").Methods(http.MethodPut).Path("/objects").Handler(http.HandlerFunc(s.put))
-	r.Name("Patch").Methods(http.MethodPatch).Path("/objects/{id}").Handler(http.HandlerFunc(s.patch))
-	r.Name("Get").Methods(http.MethodGet).Path("/objects/{id}").Handler(http.HandlerFunc(s.get))
-	r.Name("Del").Methods(http.MethodDelete).Path("/objects/{id}").Handler(http.HandlerFunc(s.del))
-	r.Name("GetObjects").Methods(http.MethodGet).Path("/objects").Handler(http.HandlerFunc(s.list))
-	r.Name("Search").Methods(http.MethodPost).Path("/objects").Handler(http.HandlerFunc(s.search))
+	r.Name("CreateCollection").Methods(http.MethodPut).Path("/collections").Handler(http.HandlerFunc(s.createCollection))
+	r.Name("ListCollections").Methods(http.MethodGet).Path("/collections").Handler(http.HandlerFunc(s.listCollections))
+	r.Name("DeleteCollection").Methods(http.MethodGet).Path("/collections/{id}").Handler(http.HandlerFunc(s.deleteCollection))
+	r.Name("GetCollection").Methods(http.MethodGet).Path("/collections/{id}").Handler(http.HandlerFunc(s.getCollection))
+
+	r.Name("Put").Methods(http.MethodPut).Path("/objects/{collection}").Handler(http.HandlerFunc(s.put))
+	r.Name("Patch").Methods(http.MethodPatch).Path("/objects/{collection}/{id}").Handler(http.HandlerFunc(s.patch))
+	r.Name("Get").Methods(http.MethodGet).Path("/objects/{collection}/{id}").Handler(http.HandlerFunc(s.get))
+	r.Name("Del").Methods(http.MethodDelete).Path("/objects/{collection}/{id}").Handler(http.HandlerFunc(s.del))
+	r.Name("GetObjects").Methods(http.MethodGet).Path("/objects/{collection}").Handler(http.HandlerFunc(s.list))
+	r.Name("Search").Methods(http.MethodPost).Path("/objects/{collection}").Handler(http.HandlerFunc(s.search))
 
 	return r
 }
@@ -80,7 +84,7 @@ func (s *HTTPUnit) put(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := route.PutObject(ctx, putRequest.Object, putRequest.AccessSecurityRules, putRequest.Indexes, pb.PutOptions{})
+	id, err := route.PutObject(ctx, "", putRequest.Object, putRequest.AccessSecurityRules, putRequest.Indexes, pb.PutOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -116,7 +120,7 @@ func (s *HTTPUnit) patch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = route.PatchObject(ctx, &patch, pb.PatchOptions{})
+	err = route.PatchObject(ctx, "", &patch, pb.PatchOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -137,7 +141,7 @@ func (s *HTTPUnit) get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	object, err := route.GetObject(ctx, id, pb.GetOptions{
+	object, err := route.GetObject(ctx, "", id, pb.GetOptions{
 		At:   at,
 		Info: header == "true",
 	})
@@ -163,7 +167,7 @@ func (s *HTTPUnit) del(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = route.DeleteObject(ctx, vars["id"])
+	err = route.DeleteObject(ctx, "", vars["id"])
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -192,8 +196,6 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 	}
 
 	opts.At = r.URL.Query().Get(queryAt)
-	opts.CollectionOptions.FullObject = r.URL.Query().Get(queryFullObject) == "true"
-	opts.CollectionOptions.Name = r.URL.Query().Get(queryCollection)
 
 	route, err := router.NewRoute(ctx)
 	if err != nil {
@@ -201,7 +203,7 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cursor, err := route.ListObjects(ctx, opts)
+	cursor, err := route.ListObjects(ctx, "", opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -260,7 +262,7 @@ func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cursor, err := route.ListObjects(ctx, opts)
+	cursor, err := route.ListObjects(ctx, "", opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -368,6 +370,105 @@ func (s *HTTPUnit) getSettings(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "text/plain")
 	_, _ = w.Write([]byte(value))
+}
+
+func (s *HTTPUnit) createCollection(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var collection pb.Collection
+	err := json.NewDecoder(r.Body).Decode(&collection)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = route.CreateCollection(ctx, &collection)
+	if err != nil {
+		w.WriteHeader(errors.HttpStatus(err))
+		return
+	}
+}
+
+func (s *HTTPUnit) listCollections(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	collections, err := route.ListCollections(ctx)
+	if err != nil {
+		w.WriteHeader(errors.HttpStatus(err))
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	if collections == nil {
+		_, _ = w.Write([]byte("[]"))
+		return
+	}
+
+	data, err := json.Marshal(collections)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	_, _ = w.Write(data)
+}
+
+func (s *HTTPUnit) getCollection(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id := vars[pathItemId]
+
+	collection, err := route.GetCollection(ctx, id)
+	if err != nil {
+		w.WriteHeader(errors.HttpStatus(err))
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+
+	data, err := json.Marshal(collection)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	_, _ = w.Write(data)
+}
+
+func (s *HTTPUnit) deleteCollection(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id := vars[pathItemId]
+
+	err = route.DeleteCollection(ctx, id)
+	if err != nil {
+		w.WriteHeader(errors.HttpStatus(err))
+		return
+	}
 }
 
 func Int64QueryParam(r *http.Request, name string) (int64, error) {

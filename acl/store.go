@@ -6,9 +6,9 @@ import (
 )
 
 type Store interface {
-	SaveRules(ctx context.Context, objectID string, rules *pb.PathAccessRules) error
-	GetRules(ctx context.Context, objectID string) (*pb.PathAccessRules, error)
-	GetForPath(ctx context.Context, objectID string, path string) (*pb.AccessRules, error)
-	Delete(ctx context.Context, objectID string) error
-	DeleteForPath(ctx context.Context, objectID string, path string) error
+	SaveRules(ctx context.Context, collection string, objectID string, rules *pb.PathAccessRules) error
+	GetRules(ctx context.Context, collection string, objectID string) (*pb.PathAccessRules, error)
+	GetForPath(ctx context.Context, collection string, objectID string, path string) (*pb.AccessRules, error)
+	Delete(ctx context.Context, collection string, objectID string) error
+	DeleteForPath(ctx context.Context, collection string, objectID string, path string) error
 }

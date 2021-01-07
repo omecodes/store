@@ -101,7 +101,7 @@ func Settings(ctx context.Context) objects.SettingsManager {
 	return o.(objects.SettingsManager)
 }
 
-func GetObjectHeader(ctx *context.Context, objectID string) (*pb.Header, error) {
+func GetObjectHeader(ctx *context.Context, collection string, objectID string) (*pb.Header, error) {
 	var m map[string]*pb.Header
 	o := (*ctx).Value(ctxObjectHeader{})
 	if o != nil {
@@ -123,7 +123,7 @@ func GetObjectHeader(ctx *context.Context, objectID string) (*pb.Header, error) 
 		return nil, err
 	}
 
-	header, err := route.GetObjectHeader(*ctx, objectID)
+	header, err := route.GetObjectHeader(*ctx, collection, objectID)
 	if err != nil {
 		return nil, err
 	}

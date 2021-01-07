@@ -17,6 +17,10 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type HandlerUnitClient interface {
+	CreateCollection(ctx context.Context, in *CreateCollectionRequest, opts ...grpc.CallOption) (*CreateCollectionResponse, error)
+	GetCollection(ctx context.Context, in *GetCollectionRequest, opts ...grpc.CallOption) (*GetCollectionResponse, error)
+	ListCollections(ctx context.Context, in *ListCollectionsRequest, opts ...grpc.CallOption) (*ListCollectionsResponse, error)
+	DeleteCollection(ctx context.Context, in *DeleteCollectionRequest, opts ...grpc.CallOption) (*DeleteCollectionResponse, error)
 	PutObject(ctx context.Context, in *PutObjectRequest, opts ...grpc.CallOption) (*PutObjectResponse, error)
 	PatchObject(ctx context.Context, in *PatchObjectRequest, opts ...grpc.CallOption) (*PatchObjectResponse, error)
 	GetObject(ctx context.Context, in *GetObjectRequest, opts ...grpc.CallOption) (*GetObjectResponse, error)
@@ -31,6 +35,42 @@ type handlerUnitClient struct {
 
 func NewHandlerUnitClient(cc grpc.ClientConnInterface) HandlerUnitClient {
 	return &handlerUnitClient{cc}
+}
+
+func (c *handlerUnitClient) CreateCollection(ctx context.Context, in *CreateCollectionRequest, opts ...grpc.CallOption) (*CreateCollectionResponse, error) {
+	out := new(CreateCollectionResponse)
+	err := c.cc.Invoke(ctx, "/HandlerUnit/CreateCollection", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *handlerUnitClient) GetCollection(ctx context.Context, in *GetCollectionRequest, opts ...grpc.CallOption) (*GetCollectionResponse, error) {
+	out := new(GetCollectionResponse)
+	err := c.cc.Invoke(ctx, "/HandlerUnit/GetCollection", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *handlerUnitClient) ListCollections(ctx context.Context, in *ListCollectionsRequest, opts ...grpc.CallOption) (*ListCollectionsResponse, error) {
+	out := new(ListCollectionsResponse)
+	err := c.cc.Invoke(ctx, "/HandlerUnit/ListCollections", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *handlerUnitClient) DeleteCollection(ctx context.Context, in *DeleteCollectionRequest, opts ...grpc.CallOption) (*DeleteCollectionResponse, error) {
+	out := new(DeleteCollectionResponse)
+	err := c.cc.Invoke(ctx, "/HandlerUnit/DeleteCollection", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *handlerUnitClient) PutObject(ctx context.Context, in *PutObjectRequest, opts ...grpc.CallOption) (*PutObjectResponse, error) {
@@ -114,6 +154,10 @@ func (x *handlerUnitListObjectsClient) Recv() (*Object, error) {
 // All implementations must embed UnimplementedHandlerUnitServer
 // for forward compatibility
 type HandlerUnitServer interface {
+	CreateCollection(context.Context, *CreateCollectionRequest) (*CreateCollectionResponse, error)
+	GetCollection(context.Context, *GetCollectionRequest) (*GetCollectionResponse, error)
+	ListCollections(context.Context, *ListCollectionsRequest) (*ListCollectionsResponse, error)
+	DeleteCollection(context.Context, *DeleteCollectionRequest) (*DeleteCollectionResponse, error)
 	PutObject(context.Context, *PutObjectRequest) (*PutObjectResponse, error)
 	PatchObject(context.Context, *PatchObjectRequest) (*PatchObjectResponse, error)
 	GetObject(context.Context, *GetObjectRequest) (*GetObjectResponse, error)
@@ -127,6 +171,18 @@ type HandlerUnitServer interface {
 type UnimplementedHandlerUnitServer struct {
 }
 
+func (UnimplementedHandlerUnitServer) CreateCollection(context.Context, *CreateCollectionRequest) (*CreateCollectionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateCollection not implemented")
+}
+func (UnimplementedHandlerUnitServer) GetCollection(context.Context, *GetCollectionRequest) (*GetCollectionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCollection not implemented")
+}
+func (UnimplementedHandlerUnitServer) ListCollections(context.Context, *ListCollectionsRequest) (*ListCollectionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListCollections not implemented")
+}
+func (UnimplementedHandlerUnitServer) DeleteCollection(context.Context, *DeleteCollectionRequest) (*DeleteCollectionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteCollection not implemented")
+}
 func (UnimplementedHandlerUnitServer) PutObject(context.Context, *PutObjectRequest) (*PutObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PutObject not implemented")
 }
@@ -156,6 +212,78 @@ type UnsafeHandlerUnitServer interface {
 
 func RegisterHandlerUnitServer(s grpc.ServiceRegistrar, srv HandlerUnitServer) {
 	s.RegisterService(&_HandlerUnit_serviceDesc, srv)
+}
+
+func _HandlerUnit_CreateCollection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateCollectionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HandlerUnitServer).CreateCollection(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/HandlerUnit/CreateCollection",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HandlerUnitServer).CreateCollection(ctx, req.(*CreateCollectionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HandlerUnit_GetCollection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCollectionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HandlerUnitServer).GetCollection(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/HandlerUnit/GetCollection",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HandlerUnitServer).GetCollection(ctx, req.(*GetCollectionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HandlerUnit_ListCollections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCollectionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HandlerUnitServer).ListCollections(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/HandlerUnit/ListCollections",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HandlerUnitServer).ListCollections(ctx, req.(*ListCollectionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HandlerUnit_DeleteCollection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteCollectionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HandlerUnitServer).DeleteCollection(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/HandlerUnit/DeleteCollection",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HandlerUnitServer).DeleteCollection(ctx, req.(*DeleteCollectionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _HandlerUnit_PutObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -273,6 +401,22 @@ var _HandlerUnit_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "HandlerUnit",
 	HandlerType: (*HandlerUnitServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateCollection",
+			Handler:    _HandlerUnit_CreateCollection_Handler,
+		},
+		{
+			MethodName: "GetCollection",
+			Handler:    _HandlerUnit_GetCollection_Handler,
+		},
+		{
+			MethodName: "ListCollections",
+			Handler:    _HandlerUnit_ListCollections_Handler,
+		},
+		{
+			MethodName: "DeleteCollection",
+			Handler:    _HandlerUnit_DeleteCollection_Handler,
+		},
 		{
 			MethodName: "PutObject",
 			Handler:    _HandlerUnit_PutObject_Handler,
@@ -528,5 +672,152 @@ var _ACL_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
+	Metadata: "pb.proto",
+}
+
+// SearchEngineClient is the client API for SearchEngine service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type SearchEngineClient interface {
+	CreateEntry(ctx context.Context, in *CreateSearchableRequest, opts ...grpc.CallOption) (*CreateSearchableResponse, error)
+	Search(ctx context.Context, in *ResearchRequest, opts ...grpc.CallOption) (SearchEngine_SearchClient, error)
+}
+
+type searchEngineClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewSearchEngineClient(cc grpc.ClientConnInterface) SearchEngineClient {
+	return &searchEngineClient{cc}
+}
+
+func (c *searchEngineClient) CreateEntry(ctx context.Context, in *CreateSearchableRequest, opts ...grpc.CallOption) (*CreateSearchableResponse, error) {
+	out := new(CreateSearchableResponse)
+	err := c.cc.Invoke(ctx, "/SearchEngine/CreateEntry", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *searchEngineClient) Search(ctx context.Context, in *ResearchRequest, opts ...grpc.CallOption) (SearchEngine_SearchClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_SearchEngine_serviceDesc.Streams[0], "/SearchEngine/Search", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &searchEngineSearchClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type SearchEngine_SearchClient interface {
+	Recv() (*SearchResult, error)
+	grpc.ClientStream
+}
+
+type searchEngineSearchClient struct {
+	grpc.ClientStream
+}
+
+func (x *searchEngineSearchClient) Recv() (*SearchResult, error) {
+	m := new(SearchResult)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// SearchEngineServer is the server API for SearchEngine service.
+// All implementations must embed UnimplementedSearchEngineServer
+// for forward compatibility
+type SearchEngineServer interface {
+	CreateEntry(context.Context, *CreateSearchableRequest) (*CreateSearchableResponse, error)
+	Search(*ResearchRequest, SearchEngine_SearchServer) error
+	mustEmbedUnimplementedSearchEngineServer()
+}
+
+// UnimplementedSearchEngineServer must be embedded to have forward compatible implementations.
+type UnimplementedSearchEngineServer struct {
+}
+
+func (UnimplementedSearchEngineServer) CreateEntry(context.Context, *CreateSearchableRequest) (*CreateSearchableResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateEntry not implemented")
+}
+func (UnimplementedSearchEngineServer) Search(*ResearchRequest, SearchEngine_SearchServer) error {
+	return status.Errorf(codes.Unimplemented, "method Search not implemented")
+}
+func (UnimplementedSearchEngineServer) mustEmbedUnimplementedSearchEngineServer() {}
+
+// UnsafeSearchEngineServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to SearchEngineServer will
+// result in compilation errors.
+type UnsafeSearchEngineServer interface {
+	mustEmbedUnimplementedSearchEngineServer()
+}
+
+func RegisterSearchEngineServer(s grpc.ServiceRegistrar, srv SearchEngineServer) {
+	s.RegisterService(&_SearchEngine_serviceDesc, srv)
+}
+
+func _SearchEngine_CreateEntry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateSearchableRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SearchEngineServer).CreateEntry(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/SearchEngine/CreateEntry",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SearchEngineServer).CreateEntry(ctx, req.(*CreateSearchableRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SearchEngine_Search_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ResearchRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(SearchEngineServer).Search(m, &searchEngineSearchServer{stream})
+}
+
+type SearchEngine_SearchServer interface {
+	Send(*SearchResult) error
+	grpc.ServerStream
+}
+
+type searchEngineSearchServer struct {
+	grpc.ServerStream
+}
+
+func (x *searchEngineSearchServer) Send(m *SearchResult) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+var _SearchEngine_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "SearchEngine",
+	HandlerType: (*SearchEngineServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateEntry",
+			Handler:    _SearchEngine_CreateEntry_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Search",
+			Handler:       _SearchEngine_Search_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "pb.proto",
 }

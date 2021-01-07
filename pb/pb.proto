@@ -2,7 +2,6 @@ syntax = "proto3";
 
 option go_package = "github.com/omecodes/store/pb/pb.proto;pb";
 
-
 //
 enum AllowedTo {
   doNothing = 0;
@@ -15,9 +14,10 @@ enum AllowedTo {
   doAnything = 63;
 }
 
-message RelationDef {
-  string name = 1;
-  bool equivalence = 2;
+message Collection {
+  string id = 1;
+  string label = 2;
+  string description = 3;
 }
 
 message AccessRules {
@@ -77,6 +77,10 @@ message Index {
 }
 
 service HandlerUnit {
+  rpc CreateCollection(CreateCollectionRequest) returns (CreateCollectionResponse);
+  rpc GetCollection(GetCollectionRequest) returns (GetCollectionResponse);
+  rpc ListCollections(ListCollectionsRequest) returns (ListCollectionsResponse);
+  rpc DeleteCollection(DeleteCollectionRequest) returns (DeleteCollectionResponse);
   rpc PutObject(PutObjectRequest) returns (PutObjectResponse);
   rpc PatchObject(PatchObjectRequest) returns (PatchObjectResponse);
   rpc GetObject(GetObjectRequest) returns (GetObjectResponse);
@@ -85,49 +89,74 @@ service HandlerUnit {
   rpc ListObjects(ListObjectsRequest) returns (stream Object);
 }
 
+message CreateCollectionRequest {
+  Collection collection = 1;
+}
+message CreateCollectionResponse {}
+
+message GetCollectionRequest {
+  string id = 1;
+}
+message GetCollectionResponse {
+  Collection collection = 1;
+}
+
+message ListCollectionsRequest {}
+message ListCollectionsResponse {
+  repeated Collection collections = 1;
+}
+
+message DeleteCollectionRequest {
+  string id = 1;
+}
+message DeleteCollectionResponse {}
+
 message PutObjectRequest {
-  Object object = 1;
-  PathAccessRules access_security_rules = 2;
-  repeated Index indexes = 3;
+  string Collection = 1;
+  Object object = 2;
+  PathAccessRules access_security_rules = 3;
+  repeated Index indexes = 4;
 }
 message PutObjectResponse {
   string object_id = 1;
 }
 
 message PatchObjectRequest{
-  Patch patch = 1;
+  string Collection = 1;
+  Patch patch = 2;
 }
 message PatchObjectResponse{}
 
 message GetObjectRequest {
-  string object_id = 1;
-  string at = 2;
-  bool info_only = 3;
+  string Collection = 1;
+  string object_id = 2;
+  string at = 3;
+  bool info_only = 4;
 }
 message GetObjectResponse {
   Object object = 1;
 }
 
 message DeleteObjectRequest {
-  string object_id = 1;
+  string Collection = 1;
+  string object_id = 2;
 }
 message DeleteObjectResponse {}
 
 message ObjectInfoRequest {
-  string object_id = 1;
+  string Collection = 1;
+  string object_id = 2;
 }
 message ObjectInfoResponse {
   Header header = 1;
 }
 
 message ListObjectsRequest {
-  int64 before = 1;
-  int64 after = 2;
-  uint32 count = 3;
+  string collection = 1;
+  int64 before = 2;
+  int64 after = 3;
   string at = 4;
-  string collection = 5;
-  bool full_object = 6;
-  string condition = 7;
+  string condition = 5;
 }
 message ListObjectsResponse {
   ObjectList result = 1;
@@ -143,33 +172,59 @@ service ACL {
 }
 
 message PutRulesRequest {
-  string object_id = 1;
-  PathAccessRules rules = 2;
+  string collection = 1;
+  string object_id = 2;
+  PathAccessRules rules = 3;
 }
 message PutRulesResponse {}
 
 message GetRulesRequest {
-  string object_id = 1;
+  string collection = 1;
+  string object_id = 2;
 }
 message GetRulesResponse {
   PathAccessRules rules = 1;
 }
 
 message GetRulesForPathRequest {
-  string object_id = 1;
-  repeated string paths = 2;
+  string collection = 1;
+  string object_id = 2;
+  repeated string paths = 3;
 }
 message GetRulesForPathResponse {
   PathAccessRules rules = 1;
 }
 
 message DeleteRulesRequest {
-  string object_id = 1;
+  string collection = 1;
+  string object_id = 2;
 }
 message DeleteRulesResponse {}
 
 message DeleteRulesForPathRequest {
-  string object_id = 1;
-  repeated string paths = 2;
+  string collection = 1;
+  string object_id = 2;
+  repeated string paths = 3;
 }
 message DeleteRulesForPathResponse {}
+
+service SearchEngine {
+  rpc CreateEntry(CreateSearchableRequest) returns (CreateSearchableResponse);
+  rpc Search(ResearchRequest) returns (stream SearchResult);
+}
+
+message Searchable {
+  string word = 1;
+  map<string, string> info = 2;
+}
+message SearchResult {}
+
+message CreateSearchableRequest {}
+message CreateSearchableResponse {}
+
+message ResearchRequest {
+  string pattern = 1;
+}
+message ResearchResponse {
+  repeated string matches = 1;
+}

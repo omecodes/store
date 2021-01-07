@@ -22,7 +22,7 @@ func (h *handler) PutRules(ctx context.Context, request *pb.PutRulesRequest) (*p
 		return nil, errors.Internal
 	}
 
-	err := store.SaveRules(ctx, request.ObjectId, request.Rules)
+	err := store.SaveRules(ctx, request.Collection, request.ObjectId, request.Rules)
 	if err != nil {
 		log.Error("ACL Service • could not save rules", log.Err(err))
 		return nil, errors.Internal
@@ -38,7 +38,7 @@ func (h *handler) GetRules(ctx context.Context, request *pb.GetRulesRequest) (*p
 		return nil, errors.Internal
 	}
 
-	rules, err := store.GetRules(ctx, request.ObjectId)
+	rules, err := store.GetRules(ctx, request.Collection, request.ObjectId)
 	return &pb.GetRulesResponse{Rules: rules}, err
 }
 
@@ -56,7 +56,7 @@ func (h *handler) GetRulesForPath(ctx context.Context, request *pb.GetRulesForPa
 	}
 
 	for _, path := range request.Paths {
-		accessRules, err := store.GetForPath(ctx, request.ObjectId, path)
+		accessRules, err := store.GetForPath(ctx, request.Collection, request.ObjectId, path)
 		if err != nil {
 			return nil, err
 		}
@@ -73,7 +73,7 @@ func (h *handler) DeleteRules(ctx context.Context, request *pb.DeleteRulesReques
 		return nil, errors.Internal
 	}
 
-	err := store.Delete(ctx, request.ObjectId)
+	err := store.Delete(ctx, request.Collection, request.ObjectId)
 	return &pb.DeleteRulesResponse{}, err
 }
 
@@ -84,7 +84,7 @@ func (h *handler) DeleteRulesForPath(ctx context.Context, request *pb.DeleteRule
 		return nil, errors.Internal
 	}
 
-	rules, err := store.GetRules(ctx, request.ObjectId)
+	rules, err := store.GetRules(ctx, request.Collection, request.ObjectId)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (h *handler) DeleteRulesForPath(ctx context.Context, request *pb.DeleteRule
 		delete(rules.AccessRules, requestPath)
 	}
 
-	err = store.SaveRules(ctx, request.ObjectId, rules)
+	err = store.SaveRules(ctx, request.Collection, request.ObjectId, rules)
 	if err != nil {
 		log.Error("ACL Service • could not save update rules", log.Err(err))
 		return nil, err
