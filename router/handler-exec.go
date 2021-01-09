@@ -14,6 +14,46 @@ type ExecHandler struct {
 	BaseHandler
 }
 
+func (e *ExecHandler) CreateCollection(ctx context.Context, collection *pb.Collection) error {
+	storage := objects.Get(ctx)
+	if storage == nil {
+		log.Error("exec-handler.CreateCollection: missing storage in context")
+		return errors.Internal
+	}
+
+	return storage.CreateCollection(ctx, collection)
+}
+
+func (e *ExecHandler) GetCollection(ctx context.Context, id string) (*pb.Collection, error) {
+	storage := objects.Get(ctx)
+	if storage == nil {
+		log.Error("exec-handler.GetCollection: missing storage in context")
+		return nil, errors.Internal
+	}
+
+	return storage.GetCollection(ctx, id)
+}
+
+func (e *ExecHandler) ListCollections(ctx context.Context) ([]*pb.Collection, error) {
+	storage := objects.Get(ctx)
+	if storage == nil {
+		log.Error("exec-handler.ListCollections: missing storage in context")
+		return nil, errors.Internal
+	}
+
+	return storage.ListCollections(ctx)
+}
+
+func (e *ExecHandler) DeleteCollection(ctx context.Context, id string) error {
+	storage := objects.Get(ctx)
+	if storage == nil {
+		log.Error("exec-handler.PutObject: missing storage in context")
+		return errors.Internal
+	}
+
+	return storage.DeleteCollection(ctx, id)
+}
+
 func (e *ExecHandler) PutObject(ctx context.Context, collection string, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
 	if object.Header.Id == "" {
 		object.Header.Id = uuid.New().String()
@@ -109,4 +149,14 @@ func (e *ExecHandler) ListObjects(ctx context.Context, collection string, opts p
 	}
 
 	return storage.List(ctx, collection, opts)
+}
+
+func (e *ExecHandler) SearchObjects(ctx context.Context, collection string, exp *pb.BooleanExp) (*pb.Cursor, error) {
+	storage := objects.Get(ctx)
+	if storage == nil {
+		log.Error("exec-handler.SearchObjects: missing storage in context")
+		return nil, errors.Internal
+	}
+
+	return storage.Search(ctx, collection, exp)
 }

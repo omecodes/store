@@ -17,12 +17,13 @@ import (
 )
 
 const (
-	queryBefore = "before"
-	queryAfter  = "after"
-	queryCount  = "count"
-	queryAt     = "at"
-	queryHeader = "header"
-	pathItemId  = "id"
+	queryBefore        = "before"
+	queryAfter         = "after"
+	queryCount         = "count"
+	queryAt            = "at"
+	queryHeader        = "header"
+	pathItemId         = "id"
+	pathItemCollection = "collection"
 )
 
 func NewHttpUnit() *HTTPUnit {
@@ -59,6 +60,9 @@ func (s *HTTPUnit) MuxRouter() *mux.Router {
 func (s *HTTPUnit) put(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	vars := mux.Vars(r)
+	collection := vars[pathItemCollection]
+
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -84,7 +88,7 @@ func (s *HTTPUnit) put(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := route.PutObject(ctx, "", putRequest.Object, putRequest.AccessSecurityRules, putRequest.Indexes, pb.PutOptions{})
+	id, err := route.PutObject(ctx, collection, putRequest.Object, putRequest.AccessSecurityRules, putRequest.Indexes, pb.PutOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -112,7 +116,8 @@ func (s *HTTPUnit) patch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	patch.ObjectId = vars["id"]
+	collection := vars[pathItemCollection]
+	patch.ObjectId = vars[pathItemId]
 
 	route, err := router.NewRoute(ctx)
 	if err != nil {
@@ -120,7 +125,7 @@ func (s *HTTPUnit) patch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = route.PatchObject(ctx, "", &patch, pb.PatchOptions{})
+	err = route.PatchObject(ctx, collection, &patch, pb.PatchOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -129,9 +134,11 @@ func (s *HTTPUnit) patch(w http.ResponseWriter, r *http.Request) {
 
 func (s *HTTPUnit) get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	vars := mux.Vars(r)
 
-	id := vars["id"]
+	vars := mux.Vars(r)
+	collection := vars[pathItemCollection]
+	id := vars[pathItemId]
+
 	header := r.URL.Query().Get(queryHeader)
 	at := r.URL.Query().Get(queryAt)
 
@@ -141,7 +148,7 @@ func (s *HTTPUnit) get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	object, err := route.GetObject(ctx, "", id, pb.GetOptions{
+	object, err := route.GetObject(ctx, collection, id, pb.GetOptions{
 		At:   at,
 		Info: header == "true",
 	})
@@ -159,7 +166,10 @@ func (s *HTTPUnit) get(w http.ResponseWriter, r *http.Request) {
 
 func (s *HTTPUnit) del(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
 	vars := mux.Vars(r)
+	collection := vars[pathItemCollection]
+	id := vars[pathItemId]
 
 	route, err := router.NewRoute(ctx)
 	if err != nil {
@@ -167,7 +177,7 @@ func (s *HTTPUnit) del(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = route.DeleteObject(ctx, "", vars["id"])
+	err = route.DeleteObject(ctx, collection, id)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -182,6 +192,9 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 		opts pb.ListOptions
 	)
 
+	vars := mux.Vars(r)
+	collection := vars[pathItemCollection]
+
 	opts.DateOptions.Before, err = Int64QueryParam(r, queryBefore)
 	if err != nil {
 		log.Error("could not parse param 'before'")
@@ -194,7 +207,6 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
 	opts.At = r.URL.Query().Get(queryAt)
 
 	route, err := router.NewRoute(ctx)
@@ -203,7 +215,7 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cursor, err := route.ListObjects(ctx, "", opts)
+	cursor, err := route.ListObjects(ctx, collection, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -247,14 +259,17 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 
 func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	var opts pb.ListOptions
 
-	err := json.NewDecoder(r.Body).Decode(&opts)
+	var query pb.BooleanExp
+	err := jsonpb.Unmarshal(r.Body, &query)
 	if err != nil {
 		log.Error("could not parse param 'before'")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	vars := mux.Vars(r)
+	collection := vars[pathItemCollection]
 
 	route, err := router.NewRoute(ctx)
 	if err != nil {
@@ -262,7 +277,7 @@ func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cursor, err := route.ListObjects(ctx, "", opts)
+	cursor, err := route.SearchObjects(ctx, collection, &query)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return

@@ -8,10 +8,12 @@ require (
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.830 // indirect
 	github.com/antlr/antlr4 v0.0.0-20210105212045-464bcbc32de2 // indirect
 	github.com/aws/aws-sdk-go v1.36.21 // indirect
+	github.com/blevesearch/bleve v1.0.14 // indirect
 	github.com/cloudflare/cloudflare-go v0.13.7 // indirect
 	github.com/cpu/goacmedns v0.1.1 // indirect
 	github.com/foomo/simplecert v1.8.1
 	github.com/foomo/tlsconfig v0.0.0-20180418120404-b67861b076c9
+	github.com/go-ego/riot v0.0.0-20201013133145-f4c30acb3704 // indirect
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.4.3
 	github.com/google/cel-go v0.6.0

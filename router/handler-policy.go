@@ -2,11 +2,8 @@ package router
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"github.com/google/cel-go/cel"
 	"github.com/omecodes/common/errors"
-	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/pb"
 )
@@ -21,6 +18,34 @@ func (p *PolicyHandler) isAdmin(ctx context.Context) bool {
 		return false
 	}
 	return authCEL.Uid == "admin"
+}
+
+func (p *PolicyHandler) CreateCollection(ctx context.Context, collection *pb.Collection) error {
+	if !p.isAdmin(ctx) {
+		return errors.Forbidden
+	}
+	return p.BaseHandler.CreateCollection(ctx, collection)
+}
+
+func (p *PolicyHandler) GetCollection(ctx context.Context, id string) (*pb.Collection, error) {
+	if !p.isAdmin(ctx) {
+		return nil, errors.Forbidden
+	}
+	return p.BaseHandler.GetCollection(ctx, id)
+}
+
+func (p *PolicyHandler) ListCollections(ctx context.Context) ([]*pb.Collection, error) {
+	if !p.isAdmin(ctx) {
+		return nil, errors.Forbidden
+	}
+	return p.BaseHandler.ListCollections(ctx)
+}
+
+func (p *PolicyHandler) DeleteCollection(ctx context.Context, id string) error {
+	if !p.isAdmin(ctx) {
+		return errors.Forbidden
+	}
+	return p.BaseHandler.DeleteCollection(ctx, id)
 }
 
 func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
@@ -90,24 +115,7 @@ func (p *PolicyHandler) DeleteObject(ctx context.Context, collection string, id 
 }
 
 func (p *PolicyHandler) ListObjects(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
-	var (
-		err           error
-		searchProgram cel.Program
-	)
-
-	if opts.Condition != "" {
-		if opts.Condition == "false" {
-			return nil, errors.Forbidden
-		}
-
-		if opts.Condition != "true" {
-			searchProgram, err = LoadProgramForSearch(&ctx, opts.Condition)
-			if err != nil {
-				log.Error("Expression compiling failure", log.Field("expression", opts.Condition), log.Err(err))
-				return nil, errors.BadInput
-			}
-		}
-	}
+	var err error
 
 	cursor, err := p.BaseHandler.ListObjects(ctx, collection, opts)
 	if err != nil {
@@ -130,24 +138,40 @@ func (p *PolicyHandler) ListObjects(ctx context.Context, collection string, opts
 				return nil, err
 			}
 
-			if searchProgram != nil {
-				object := map[string]interface{}{}
-				err = json.Unmarshal([]byte(o.Data), &object)
-				if err != nil {
-					return nil, err
-				}
+			return o, nil
+		}
+	})
 
-				vars := map[string]interface{}{"o": object}
-				out, details, err := searchProgram.Eval(vars)
-				if err != nil {
-					log.Error("cel execution", log.Field("details", details), log.Err(err))
-					return nil, errors.BadInput
-				}
+	cursor.SetBrowser(browser)
+	return cursor, nil
+}
 
-				if !out.Value().(bool) {
+func (p *PolicyHandler) SearchObjects(ctx context.Context, collection string, exp *pb.BooleanExp) (*pb.Cursor, error) {
+	if collection == "" || exp == nil {
+		return nil, errors.BadInput
+	}
+
+	cursor, err := p.BaseHandler.SearchObjects(ctx, collection, exp)
+	if err != nil {
+		return nil, err
+	}
+
+	cursorBrowser := cursor.GetBrowser()
+	browser := pb.BrowseFunc(func() (*pb.Object, error) {
+		for {
+			o, err := cursorBrowser.Browse()
+			if err != nil {
+				return nil, err
+			}
+
+			err = assetActionAllowedOnObject(&ctx, collection, o.Header.Id, pb.AllowedTo_read, "")
+			if err != nil {
+				if err == errors.Unauthorized {
 					continue
 				}
+				return nil, err
 			}
+
 			return o, nil
 		}
 	})

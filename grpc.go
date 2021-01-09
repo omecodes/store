@@ -136,8 +136,7 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 	}
 
 	opts := pb.ListOptions{
-		Condition: request.Condition,
-		At:        request.At,
+		At: request.At,
 		DateOptions: pb.DateRangeOptions{
 			Before: request.Before,
 			After:  request.After,
@@ -145,6 +144,41 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 	}
 
 	cursor, err := route.ListObjects(ctx, request.Collection, opts)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if ce := cursor.Close(); ce != nil {
+			logs.Error("closed cursor with error", logs.Err(err))
+		}
+	}()
+
+	for {
+		o, err := cursor.Browse()
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return err
+		}
+
+		err = stream.Send(o)
+		if err != nil {
+			return err
+		}
+	}
+}
+
+func (h *handler) SearchObjects(request *pb.SearchObjectsRequest, stream pb.HandlerUnit_SearchObjectsServer) error {
+	ctx := stream.Context()
+
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		return err
+	}
+
+	cursor, err := route.SearchObjects(ctx, request.Collection, request.Query)
 	if err != nil {
 		return err
 	}

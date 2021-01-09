@@ -27,6 +27,7 @@ type HandlerUnitClient interface {
 	DeleteObject(ctx context.Context, in *DeleteObjectRequest, opts ...grpc.CallOption) (*DeleteObjectResponse, error)
 	ObjectInfo(ctx context.Context, in *ObjectInfoRequest, opts ...grpc.CallOption) (*ObjectInfoResponse, error)
 	ListObjects(ctx context.Context, in *ListObjectsRequest, opts ...grpc.CallOption) (HandlerUnit_ListObjectsClient, error)
+	SearchObjects(ctx context.Context, in *SearchObjectsRequest, opts ...grpc.CallOption) (HandlerUnit_SearchObjectsClient, error)
 }
 
 type handlerUnitClient struct {
@@ -150,6 +151,38 @@ func (x *handlerUnitListObjectsClient) Recv() (*Object, error) {
 	return m, nil
 }
 
+func (c *handlerUnitClient) SearchObjects(ctx context.Context, in *SearchObjectsRequest, opts ...grpc.CallOption) (HandlerUnit_SearchObjectsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_HandlerUnit_serviceDesc.Streams[1], "/HandlerUnit/SearchObjects", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &handlerUnitSearchObjectsClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type HandlerUnit_SearchObjectsClient interface {
+	Recv() (*Object, error)
+	grpc.ClientStream
+}
+
+type handlerUnitSearchObjectsClient struct {
+	grpc.ClientStream
+}
+
+func (x *handlerUnitSearchObjectsClient) Recv() (*Object, error) {
+	m := new(Object)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // HandlerUnitServer is the server API for HandlerUnit service.
 // All implementations must embed UnimplementedHandlerUnitServer
 // for forward compatibility
@@ -164,6 +197,7 @@ type HandlerUnitServer interface {
 	DeleteObject(context.Context, *DeleteObjectRequest) (*DeleteObjectResponse, error)
 	ObjectInfo(context.Context, *ObjectInfoRequest) (*ObjectInfoResponse, error)
 	ListObjects(*ListObjectsRequest, HandlerUnit_ListObjectsServer) error
+	SearchObjects(*SearchObjectsRequest, HandlerUnit_SearchObjectsServer) error
 	mustEmbedUnimplementedHandlerUnitServer()
 }
 
@@ -200,6 +234,9 @@ func (UnimplementedHandlerUnitServer) ObjectInfo(context.Context, *ObjectInfoReq
 }
 func (UnimplementedHandlerUnitServer) ListObjects(*ListObjectsRequest, HandlerUnit_ListObjectsServer) error {
 	return status.Errorf(codes.Unimplemented, "method ListObjects not implemented")
+}
+func (UnimplementedHandlerUnitServer) SearchObjects(*SearchObjectsRequest, HandlerUnit_SearchObjectsServer) error {
+	return status.Errorf(codes.Unimplemented, "method SearchObjects not implemented")
 }
 func (UnimplementedHandlerUnitServer) mustEmbedUnimplementedHandlerUnitServer() {}
 
@@ -397,6 +434,27 @@ func (x *handlerUnitListObjectsServer) Send(m *Object) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _HandlerUnit_SearchObjects_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(SearchObjectsRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(HandlerUnitServer).SearchObjects(m, &handlerUnitSearchObjectsServer{stream})
+}
+
+type HandlerUnit_SearchObjectsServer interface {
+	Send(*Object) error
+	grpc.ServerStream
+}
+
+type handlerUnitSearchObjectsServer struct {
+	grpc.ServerStream
+}
+
+func (x *handlerUnitSearchObjectsServer) Send(m *Object) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 var _HandlerUnit_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "HandlerUnit",
 	HandlerType: (*HandlerUnitServer)(nil),
@@ -442,6 +500,11 @@ var _HandlerUnit_serviceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "ListObjects",
 			Handler:       _HandlerUnit_ListObjects_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "SearchObjects",
+			Handler:       _HandlerUnit_SearchObjects_Handler,
 			ServerStreams: true,
 		},
 	},
@@ -679,7 +742,7 @@ var _ACL_serviceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SearchEngineClient interface {
-	CreateEntry(ctx context.Context, in *CreateSearchableRequest, opts ...grpc.CallOption) (*CreateSearchableResponse, error)
+	Feed(ctx context.Context, opts ...grpc.CallOption) (SearchEngine_FeedClient, error)
 	Search(ctx context.Context, in *ResearchRequest, opts ...grpc.CallOption) (SearchEngine_SearchClient, error)
 }
 
@@ -691,17 +754,42 @@ func NewSearchEngineClient(cc grpc.ClientConnInterface) SearchEngineClient {
 	return &searchEngineClient{cc}
 }
 
-func (c *searchEngineClient) CreateEntry(ctx context.Context, in *CreateSearchableRequest, opts ...grpc.CallOption) (*CreateSearchableResponse, error) {
-	out := new(CreateSearchableResponse)
-	err := c.cc.Invoke(ctx, "/SearchEngine/CreateEntry", in, out, opts...)
+func (c *searchEngineClient) Feed(ctx context.Context, opts ...grpc.CallOption) (SearchEngine_FeedClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_SearchEngine_serviceDesc.Streams[0], "/SearchEngine/Feed", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &searchEngineFeedClient{stream}
+	return x, nil
+}
+
+type SearchEngine_FeedClient interface {
+	Send(*MessageFeed) error
+	CloseAndRecv() (*FeedResponse, error)
+	grpc.ClientStream
+}
+
+type searchEngineFeedClient struct {
+	grpc.ClientStream
+}
+
+func (x *searchEngineFeedClient) Send(m *MessageFeed) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *searchEngineFeedClient) CloseAndRecv() (*FeedResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(FeedResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func (c *searchEngineClient) Search(ctx context.Context, in *ResearchRequest, opts ...grpc.CallOption) (SearchEngine_SearchClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_SearchEngine_serviceDesc.Streams[0], "/SearchEngine/Search", opts...)
+	stream, err := c.cc.NewStream(ctx, &_SearchEngine_serviceDesc.Streams[1], "/SearchEngine/Search", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -736,7 +824,7 @@ func (x *searchEngineSearchClient) Recv() (*SearchResult, error) {
 // All implementations must embed UnimplementedSearchEngineServer
 // for forward compatibility
 type SearchEngineServer interface {
-	CreateEntry(context.Context, *CreateSearchableRequest) (*CreateSearchableResponse, error)
+	Feed(SearchEngine_FeedServer) error
 	Search(*ResearchRequest, SearchEngine_SearchServer) error
 	mustEmbedUnimplementedSearchEngineServer()
 }
@@ -745,8 +833,8 @@ type SearchEngineServer interface {
 type UnimplementedSearchEngineServer struct {
 }
 
-func (UnimplementedSearchEngineServer) CreateEntry(context.Context, *CreateSearchableRequest) (*CreateSearchableResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateEntry not implemented")
+func (UnimplementedSearchEngineServer) Feed(SearchEngine_FeedServer) error {
+	return status.Errorf(codes.Unimplemented, "method Feed not implemented")
 }
 func (UnimplementedSearchEngineServer) Search(*ResearchRequest, SearchEngine_SearchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Search not implemented")
@@ -764,22 +852,30 @@ func RegisterSearchEngineServer(s grpc.ServiceRegistrar, srv SearchEngineServer)
 	s.RegisterService(&_SearchEngine_serviceDesc, srv)
 }
 
-func _SearchEngine_CreateEntry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateSearchableRequest)
-	if err := dec(in); err != nil {
+func _SearchEngine_Feed_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(SearchEngineServer).Feed(&searchEngineFeedServer{stream})
+}
+
+type SearchEngine_FeedServer interface {
+	SendAndClose(*FeedResponse) error
+	Recv() (*MessageFeed, error)
+	grpc.ServerStream
+}
+
+type searchEngineFeedServer struct {
+	grpc.ServerStream
+}
+
+func (x *searchEngineFeedServer) SendAndClose(m *FeedResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *searchEngineFeedServer) Recv() (*MessageFeed, error) {
+	m := new(MessageFeed)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(SearchEngineServer).CreateEntry(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/SearchEngine/CreateEntry",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SearchEngineServer).CreateEntry(ctx, req.(*CreateSearchableRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
 func _SearchEngine_Search_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -806,13 +902,13 @@ func (x *searchEngineSearchServer) Send(m *SearchResult) error {
 var _SearchEngine_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "SearchEngine",
 	HandlerType: (*SearchEngineServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "CreateEntry",
-			Handler:    _SearchEngine_CreateEntry_Handler,
-		},
-	},
+	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Feed",
+			Handler:       _SearchEngine_Feed_Handler,
+			ClientStreams: true,
+		},
 		{
 			StreamName:    "Search",
 			Handler:       _SearchEngine_Search_Handler,

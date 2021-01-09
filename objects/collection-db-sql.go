@@ -8,6 +8,7 @@ import (
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/pb"
+	"github.com/omecodes/store/search"
 	"github.com/omecodes/store/utime"
 	"io"
 	"strings"
@@ -79,9 +80,12 @@ func NewSQLCollection(db *sql.DB, dialect string, tableName string) (*sqlCollect
 }
 
 type sqlCollection struct {
-	db        *sql.DB
-	dialect   string
-	indexes   []*pb.Index
+	dialect string
+	db      *sql.DB
+	engine  *search.Engine
+
+	indexes []*pb.Index
+
 	objects   *bome.JSONMap
 	datedRefs *bome.List
 	headers   *bome.JSONMap
@@ -275,40 +279,6 @@ func (s *sqlCollection) Delete(ctx context.Context, objectID string) error {
 	return nil
 }
 
-func (s *sqlCollection) List(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
-	cursor, err := s.headers.List()
-	if err != nil {
-		return nil, err
-	}
-
-	closer := pb.CloseFunc(func() error {
-		return cursor.Close()
-	})
-	browser := pb.BrowseFunc(func() (*pb.Object, error) {
-		if !cursor.HasNext() {
-			return nil, io.EOF
-		}
-
-		next, err := cursor.Next()
-		if err != nil {
-			return nil, err
-		}
-
-		o := &pb.Object{
-			Header: &pb.Header{},
-		}
-
-		entry := next.(*bome.MapEntry)
-		err = json.Unmarshal([]byte(entry.Value), o.Header)
-		if err != nil {
-			return nil, err
-		}
-		o.Data, err = s.objects.Get(entry.Key)
-		return o, err
-	})
-	return pb.NewCursor(browser, closer), nil
-}
-
 func (s *sqlCollection) listInRange(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
 	cursor, _, err := s.datedRefs.IndexInRange(opts.DateOptions.After, opts.DateOptions.Before)
 	if err != nil {
@@ -385,6 +355,44 @@ func (s *sqlCollection) Info(ctx context.Context, id string) (*pb.Header, error)
 		return nil, errors.Internal
 	}
 	return &info, nil
+}
+
+func (s *sqlCollection) List(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
+	cursor, err := s.headers.List()
+	if err != nil {
+		return nil, err
+	}
+
+	closer := pb.CloseFunc(func() error {
+		return cursor.Close()
+	})
+	browser := pb.BrowseFunc(func() (*pb.Object, error) {
+		if !cursor.HasNext() {
+			return nil, io.EOF
+		}
+
+		next, err := cursor.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		o := &pb.Object{
+			Header: &pb.Header{},
+		}
+
+		entry := next.(*bome.MapEntry)
+		err = json.Unmarshal([]byte(entry.Value), o.Header)
+		if err != nil {
+			return nil, err
+		}
+		o.Data, err = s.objects.Get(entry.Key)
+		return o, err
+	})
+	return pb.NewCursor(browser, closer), nil
+}
+
+func (s *sqlCollection) Search(ctx context.Context, expression *pb.BooleanExp) (*pb.Cursor, error) {
+	return nil, errors.Unavailable
 }
 
 func (s *sqlCollection) Clear() error {

@@ -148,3 +148,10 @@ func (p *ParamsHandler) ListObjects(ctx context.Context, collection string, opts
 	cursor.SetBrowser(limitedBrowser)
 	return cursor, nil
 }
+
+func (p *ParamsHandler) SearchObjects(ctx context.Context, collection string, exp *pb.BooleanExp) (*pb.Cursor, error) {
+	if collection == "" || exp == nil {
+		return nil, errors.BadInput
+	}
+	return p.BaseHandler.SearchObjects(ctx, collection, exp)
+}

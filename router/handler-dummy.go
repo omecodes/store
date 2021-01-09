@@ -46,3 +46,7 @@ func (d *dummyHandler) DeleteObject(ctx context.Context, collection string, id s
 func (d *dummyHandler) ListObjects(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
 	return nil, nil
 }
+
+func (d *dummyHandler) SearchObjects(ctx context.Context, collection string, exp *pb.BooleanExp) (*pb.Cursor, error) {
+	return nil, nil
+}

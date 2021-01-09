@@ -141,14 +141,6 @@ func (ms *sqlStore) Delete(ctx context.Context, collection string, objectID stri
 	return col.Delete(ctx, objectID)
 }
 
-func (ms *sqlStore) List(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
-	col, err := ms.ResolveCollection(ctx, collection)
-	if err != nil {
-		return nil, err
-	}
-	return col.List(ctx, opts)
-}
-
 func (ms *sqlStore) Get(ctx context.Context, collection string, objectID string, opts pb.GetOptions) (*pb.Object, error) {
 	col, err := ms.ResolveCollection(ctx, collection)
 	if err != nil {
@@ -164,4 +156,20 @@ func (ms *sqlStore) Info(ctx context.Context, collection string, id string) (*pb
 	}
 
 	return col.Info(ctx, id)
+}
+
+func (ms *sqlStore) List(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
+	col, err := ms.ResolveCollection(ctx, collection)
+	if err != nil {
+		return nil, err
+	}
+	return col.List(ctx, opts)
+}
+
+func (ms *sqlStore) Search(ctx context.Context, collection string, expr *pb.BooleanExp) (*pb.Cursor, error) {
+	col, err := ms.ResolveCollection(ctx, collection)
+	if err != nil {
+		return nil, err
+	}
+	return col.Search(ctx, expr)
 }

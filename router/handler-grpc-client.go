@@ -152,7 +152,30 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, collection string, 
 		After:      opts.DateOptions.After,
 		At:         opts.At,
 		Collection: collection,
-		Condition:  opts.Condition,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	closer := pb.CloseFunc(func() error {
+		return stream.CloseSend()
+	})
+	browser := pb.BrowseFunc(func() (*pb.Object, error) {
+		return stream.Recv()
+	})
+
+	return pb.NewCursor(browser, closer), nil
+}
+
+func (g *gRPCClientHandler) SearchObjects(ctx context.Context, collection string, query *pb.BooleanExp) (*pb.Cursor, error) {
+	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
+	if err != nil {
+		return nil, err
+	}
+
+	stream, err := client.SearchObjects(auth.SetMetaWithExisting(ctx), &pb.SearchObjectsRequest{
+		Collection: collection,
+		Query:      query,
 	})
 	if err != nil {
 		return nil, err

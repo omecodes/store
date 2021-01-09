@@ -29,6 +29,10 @@ func (b *BaseHandler) PutObject(ctx context.Context, collection string, object *
 	return b.next.PutObject(ctx, collection, object, security, indexes, opts)
 }
 
+func (b *BaseHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts pb.PatchOptions) error {
+	return b.next.PatchObject(ctx, collection, patch, opts)
+}
+
 func (b *BaseHandler) GetObject(ctx context.Context, collection string, id string, opts pb.GetOptions) (*pb.Object, error) {
 	return b.next.GetObject(ctx, collection, id, opts)
 }
@@ -45,6 +49,6 @@ func (b *BaseHandler) ListObjects(ctx context.Context, collection string, opts p
 	return b.next.ListObjects(ctx, collection, opts)
 }
 
-func (b *BaseHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts pb.PatchOptions) error {
-	return b.next.PatchObject(ctx, collection, patch, opts)
+func (b *BaseHandler) SearchObjects(ctx context.Context, collection string, exp *pb.BooleanExp) (*pb.Cursor, error) {
+	return b.next.SearchObjects(ctx, collection, exp)
 }

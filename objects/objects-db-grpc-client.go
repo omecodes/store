@@ -103,30 +103,6 @@ func (d *dbClient) Delete(ctx context.Context, collection string, objectID strin
 	return err
 }
 
-func (d *dbClient) List(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
-	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
-	if err != nil {
-		return nil, err
-	}
-
-	stream, err := objects.ListObjects(ctx, &pb.ListObjectsRequest{
-		Collection: collection,
-		Before:     opts.DateOptions.Before,
-		After:      opts.DateOptions.After,
-		At:         opts.At,
-		Condition:  opts.Condition,
-	})
-
-	closer := pb.CloseFunc(func() error {
-		return stream.CloseSend()
-	})
-	browser := pb.BrowseFunc(func() (*pb.Object, error) {
-		return stream.Recv()
-	})
-
-	return pb.NewCursor(browser, closer), nil
-}
-
 func (d *dbClient) Get(ctx context.Context, collection string, objectID string, opts pb.GetOptions) (*pb.Object, error) {
 	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
 	if err != nil {
@@ -154,6 +130,50 @@ func (d *dbClient) Info(ctx context.Context, collection string, objectID string)
 		return nil, err
 	}
 	return rsp.Header, nil
+}
+
+func (d *dbClient) List(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
+	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
+	if err != nil {
+		return nil, err
+	}
+
+	stream, err := objects.ListObjects(ctx, &pb.ListObjectsRequest{
+		Collection: collection,
+		Before:     opts.DateOptions.Before,
+		After:      opts.DateOptions.After,
+		At:         opts.At,
+	})
+
+	closer := pb.CloseFunc(func() error {
+		return stream.CloseSend()
+	})
+	browser := pb.BrowseFunc(func() (*pb.Object, error) {
+		return stream.Recv()
+	})
+
+	return pb.NewCursor(browser, closer), nil
+}
+
+func (d *dbClient) Search(ctx context.Context, collection string, expr *pb.BooleanExp) (*pb.Cursor, error) {
+	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
+	if err != nil {
+		return nil, err
+	}
+
+	stream, err := objects.SearchObjects(ctx, &pb.SearchObjectsRequest{
+		Collection: collection,
+		Query:      expr,
+	})
+
+	closer := pb.CloseFunc(func() error {
+		return stream.CloseSend()
+	})
+	browser := pb.BrowseFunc(func() (*pb.Object, error) {
+		return stream.Recv()
+	})
+
+	return pb.NewCursor(browser, closer), nil
 }
 
 func (d *dbClient) Clear() error {
