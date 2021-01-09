@@ -217,7 +217,7 @@ message MessageFeed {
   oneof message {
     NumberMapping num_mapping = 1;
     TextMapping text_mapping = 2;
-    ObjectDeletedNotification delete_ = 3;
+    ObjectDeletedNotification delete = 3;
   }
 }
 
