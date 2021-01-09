@@ -7,10 +7,12 @@ import (
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/pb"
+	"io"
 	"strings"
 )
 
 const wordsTableName = "$prefix$_words_mapping"
+
 const numbersTableName = "$prefix$_numbers_mapping"
 
 const wordsTablesDef = `
@@ -65,6 +67,11 @@ func NewSQLIndexStore(db *sql.DB, dialect string, tablePrefix string) (Store, er
 		return nil, err
 	}
 
+	err = s.db.Init()
+	if err != nil {
+		return nil, err
+	}
+
 	s.db.SetTablePrefix(tablePrefix)
 
 	err = s.db.RawExec(wordsTablesDef).Error
@@ -100,51 +107,129 @@ func (s *sqlStore) SaveNumberMapping(num int64, field string, id string) error {
 }
 
 func (s *sqlStore) Search(expression *pb.BooleanExp) (Cursor, error) {
-	query := evaluate(expression)
-	_, err := s.db.RawQuery(query, bome.StringScanner)
+	affectedTables := &tables{}
+	var tableNames []string
+
+	whereClause := evaluate(expression, affectedTables)
+
+	if affectedTables.numberMapping {
+		tableNames = append(tableNames, numbersTableName)
+	}
+
+	if affectedTables.textMapping {
+		tableNames = append(tableNames, wordsTableName)
+	}
+
+	if len(tableNames) == 0 {
+		return nil, errors.New("bad input")
+	}
+
+	var query string
+	if len(tableNames) > 1 {
+		var selection []string
+		for _, tableName := range tableNames {
+			selection = append(selection, tableName+".objects")
+		}
+		query += fmt.Sprintf("select concat(%s) from %s where %s)", strings.Join(selection, "'<>'"), strings.Join(tableNames, ","), whereClause)
+	} else {
+		query += fmt.Sprintf("select objects from %s where %s", tableNames[0], whereClause)
+	}
+
+	cursor, err := s.db.RawQuery(query, bome.StringScanner)
 	if err != nil {
 		return nil, err
 	}
-	return nil, err
+
+	return &sqlSearchCursor{
+		cursor: cursor,
+	}, err
 }
 
-func evaluate(expr *pb.BooleanExp) string {
+type tables struct {
+	numberMapping bool
+	textMapping   bool
+}
+
+func evaluate(expr *pb.BooleanExp, tables *tables) string {
 
 	switch v := expr.Expression.(type) {
 	case *pb.BooleanExp_Or:
 		var evaluatedExpression []string
 		for _, ox := range v.Or.Expressions {
-			evaluatedExpression = append(evaluatedExpression, evaluate(ox))
+			evaluatedExpression = append(evaluatedExpression, evaluate(ox, tables))
 		}
 		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " OR "))
 
 	case *pb.BooleanExp_Contains:
-		return "(word like '%" + v.Contains.Value + "%')"
+		tables.textMapping = true
+		return "($prefix$_words_mapping.token like '%" + v.Contains.Value + "%')"
 
 	case *pb.BooleanExp_StartsWith:
-		return "(word like '" + v.StartsWith.Value + "%')"
+		tables.textMapping = true
+		return "($prefix$_words_mapping.token like '" + v.StartsWith.Value + "%')"
 
 	case *pb.BooleanExp_EndsWith:
-		return "(word like '%" + v.EndsWith.Value + "')"
+		tables.textMapping = true
+		return "($prefix$_words_mapping.token like '%" + v.EndsWith.Value + "')"
 
 	case *pb.BooleanExp_StrEqual:
-		return "(word='" + v.StrEqual.Value + "')"
+		tables.textMapping = true
+		return "($prefix$_words_mapping.token='" + v.StrEqual.Value + "')"
 
 	case *pb.BooleanExp_Lt:
-		return fmt.Sprintf("(number<%d)", v.Lt.Value)
+		tables.numberMapping = true
+		return fmt.Sprintf("($prefix$_numbers_mappingnumber<%d)", v.Lt.Value)
 
 	case *pb.BooleanExp_Lte:
-		return fmt.Sprintf("(number<=%d)", v.Lte.Value)
+		tables.numberMapping = true
+		return fmt.Sprintf("($prefix$_numbers_mappingnumber<=%d)", v.Lte.Value)
 
 	case *pb.BooleanExp_Gt:
-		return fmt.Sprintf("(number>%d)", v.Gt.Value)
+		tables.numberMapping = true
+		return fmt.Sprintf("($prefix$_numbers_mappingnumber>%d)", v.Gt.Value)
 
 	case *pb.BooleanExp_Gte:
-		return fmt.Sprintf("(number>=%d)", v.Gte.Value)
+		tables.numberMapping = true
+		return fmt.Sprintf("($prefix$_numbers_mappingnumber>=%d)", v.Gte.Value)
 
 	case *pb.BooleanExp_NumbEq:
-		return fmt.Sprintf("(number=%d)", v.NumbEq.Value)
+		tables.numberMapping = true
+		return fmt.Sprintf("($prefix$_numbers_mappingnumber=%d)", v.NumbEq.Value)
 	}
 
 	return ""
+}
+
+type sqlSearchCursor struct {
+	cursor      bome.Cursor
+	currentList []string
+}
+
+func (s *sqlSearchCursor) Next() (string, error) {
+	for {
+		if len(s.currentList) == 0 {
+			if !s.cursor.HasNext() {
+				return "", io.EOF
+			}
+
+			o, err := s.cursor.Next()
+			if err != nil {
+				return "", err
+			}
+
+			s.currentList = strings.Split(o.(string), "<>")
+		}
+
+		next := strings.Trim(s.currentList[0], " ")
+		if next == "" {
+			continue
+		}
+
+		s.currentList = s.currentList[1:]
+		return next, nil
+	}
+}
+
+func (s *sqlSearchCursor) Close() error {
+	return nil
 }
