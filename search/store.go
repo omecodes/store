@@ -8,7 +8,7 @@ type Cursor interface {
 }
 
 type Store interface {
-	SaveWordMapping(word string, field string, ids ...string) error
-	SaveNumberMapping(num int64, field string, ids ...string) error
+	SaveWordMapping(word string, field string, id string) error
+	SaveNumberMapping(num int64, field string, id string) error
 	Search(expression *pb.BooleanExp) (Cursor, error)
 }

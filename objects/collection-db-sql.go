@@ -8,7 +8,7 @@ import (
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/pb"
-	"github.com/omecodes/store/se"
+	se "github.com/omecodes/store/search"
 	"github.com/omecodes/store/utime"
 	"github.com/tidwall/gjson"
 	"io"
@@ -31,33 +31,11 @@ func NewSQLCollection(collection *pb.Collection, db *sql.DB, dialect string, tab
 		return nil, err
 	}
 
-	indexes, err := bome.NewJSONMap(db, dialect, tableName+"_indexes")
-	if err != nil {
-		return nil, err
-	}
-
 	fk := &bome.ForeignKey{
 		Name: "fk_objects_header_id",
 		Table: &bome.Keys{
 			Table:  headers.Table(),
 			Fields: headers.Keys(),
-		},
-		References: &bome.Keys{
-			Table:  objects.Table(),
-			Fields: objects.Keys(),
-		},
-		OnDeleteCascade: true,
-	}
-	err = objects.AddForeignKey(fk)
-	if err != nil {
-		return nil, err
-	}
-
-	fk = &bome.ForeignKey{
-		Name: "fk_objects_indexes_id",
-		Table: &bome.Keys{
-			Table:  indexes.Table(),
-			Fields: indexes.Keys(),
 		},
 		References: &bome.Keys{
 			Table:  objects.Table(),

@@ -1,10 +1,10 @@
 package se
 
 import (
+	"fmt"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
-	"regexp"
 	"strings"
 	"unicode"
 )
@@ -15,12 +15,16 @@ type ChainAnalyzer func(analyzer Analyzer) Analyzer
 
 func removePunctuation(analyzer Analyzer) Analyzer {
 	return func(in string) string {
-		reg, err := regexp.Compile("[^a-zA-Z0-9]+")
-		if err != nil {
-			return in
+		var result strings.Builder
+		for i := 0; i < len(in); i++ {
+			b := in[i]
+			if ('a' <= b && b <= 'z') ||
+				('A' <= b && b <= 'Z') ||
+				b == ' ' {
+				result.WriteByte(b)
+			}
 		}
-		out := reg.ReplaceAllString(in, "")
-		return analyzer(out)
+		return analyzer(result.String())
 	}
 }
 
@@ -39,7 +43,7 @@ func removeIgnored(analyzer Analyzer) Analyzer {
 	return func(in string) string {
 		var out = in
 		for _, word := range stopWords {
-			out = strings.Replace(out, word, "", -1)
+			out = strings.Replace(out, fmt.Sprintf(" %s ", word), "", -1)
 		}
 		return analyzer(out)
 	}

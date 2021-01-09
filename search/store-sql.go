@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/omecodes/bome"
+	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/pb"
 	"strings"
 )
@@ -31,15 +32,19 @@ create table if not exists $prefix$_numbers_mapping (
 `
 
 const insertWord = `
-insert into words_mapping values(?, ?, ?);
+insert into $prefix$_words_mapping values(?, ?, ?);
 `
 
 const appendToWord = `
-update words_mapping set field=?, objects=? where token=?;
+update $prefix$_words_mapping set objects=concat(objects, ?) where token=? and field=?;
 `
 
 const insertNumber = `
-insert into numbers_mapping values(?, ?, ?);
+insert into $prefix$_numbers_mapping values(?, ?, ?);
+`
+
+const appendToNumber = `
+update $prefix$_numbers_mapping set objects=concat(objects, ?) where num=? and field=?;
 `
 
 func NewSQLIndexStore(db *sql.DB, dialect string, tablePrefix string) (Store, error) {
@@ -62,9 +67,9 @@ func NewSQLIndexStore(db *sql.DB, dialect string, tablePrefix string) (Store, er
 
 	s.db.SetTablePrefix(tablePrefix)
 
-	_, err = db.Exec(wordsTablesDef)
+	err = s.db.RawExec(wordsTablesDef).Error
 	if err == nil {
-		_, err = db.Exec(numbersTablesDef)
+		err = s.db.RawExec(numbersTablesDef).Error
 	}
 	return s, err
 }
@@ -73,20 +78,23 @@ type sqlStore struct {
 	db *bome.Bome
 }
 
-func (s *sqlStore) SaveWordMapping(word string, field string, ids ...string) error {
-	value := strings.Join(ids, " ")
-	err := s.db.RawExec(insertWord, word, field, value).Error
-	if err != nil && bome.IsPrimaryKeyConstraintError(err) {
-		err = s.db.RawExec(appendToWord, field, value, word).Error
+func (s *sqlStore) SaveWordMapping(word string, field string, id string) error {
+	err := s.db.RawExec(insertWord, word, field, id).Error
+	if err != nil {
+		if bome.IsPrimaryKeyConstraintError(err) {
+			err = s.db.RawExec(appendToWord, " "+id, word, field).Error
+			if err != nil {
+				log.Error("failed to create index mapping", log.Err(err))
+			}
+		}
 	}
 	return err
 }
 
-func (s *sqlStore) SaveNumberMapping(num int64, field string, ids ...string) error {
-	value := strings.Join(ids, " ")
-	err := s.db.RawExec(insertWord, num, field, value).Error
+func (s *sqlStore) SaveNumberMapping(num int64, field string, id string) error {
+	err := s.db.RawExec(insertWord, num, field, id).Error
 	if err != nil && bome.IsPrimaryKeyConstraintError(err) {
-		err = s.db.RawExec(appendToWord, field, value, num).Error
+		err = s.db.RawExec(appendToWord, " "+id, num, field).Error
 	}
 	return err
 }

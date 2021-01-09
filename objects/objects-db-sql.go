@@ -35,7 +35,7 @@ type sqlStore struct {
 
 func (ms *sqlStore) ResolveCollection(ctx context.Context, name string) (Collection, error) {
 	col, found := ms.loadedCollections.Get(name)
-	if found {
+	if !found {
 		encoded, err := ms.collections.Get(name)
 		if err != nil {
 			return nil, err

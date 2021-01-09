@@ -31,7 +31,9 @@ func (stream *tokenStream) Flip() {
 
 func (stream *tokenStream) Next() string {
 	if stream.cursor < len(stream.tokens) {
-		return stream.tokens[stream.cursor]
+		item := stream.tokens[stream.cursor]
+		stream.cursor++
+		return item
 	}
 	return ""
 }
