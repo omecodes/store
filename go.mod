@@ -14,7 +14,6 @@ require (
 	github.com/deepmap/oapi-codegen v1.4.2 // indirect
 	github.com/foomo/simplecert v1.8.1
 	github.com/foomo/tlsconfig v0.0.0-20180418120404-b67861b076c9
-	github.com/go-ego/riot v0.0.0-20201013133145-f4c30acb3704 // indirect
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.4.3
 	github.com/google/cel-go v0.6.0
@@ -34,6 +33,7 @@ require (
 	github.com/sethvargo/go-password v0.2.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.1.1
+	github.com/tidwall/gjson v1.6.7
 	github.com/transip/gotransip/v6 v6.3.1 // indirect
 	golang.org/x/sys v0.0.0-20210108172913-0df2131ae363 // indirect
 	golang.org/x/text v0.3.5

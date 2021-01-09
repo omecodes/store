@@ -3,6 +3,7 @@ package objects
 import (
 	"context"
 	"github.com/omecodes/store/pb"
+	"sync"
 )
 
 type Collection interface {
@@ -32,8 +33,26 @@ type Collection interface {
 	Clear() error
 }
 
-type CollectionItem struct {
-	Id   string `json:"id"`
-	Date int64  `json:"date"`
-	Data string `json:"data"`
+type collectionContainer struct {
+	sync.RWMutex
+	container map[string]Collection
+}
+
+func (c *collectionContainer) Get(name string) (Collection, bool) {
+	c.RLock()
+	defer c.RUnlock()
+	collection, found := c.container[name]
+	return collection, found
+}
+
+func (c *collectionContainer) Save(name string, collection Collection) {
+	c.Lock()
+	defer c.Unlock()
+	c.container[name] = collection
+}
+
+func (c *collectionContainer) Delete(name string) {
+	c.Lock()
+	defer c.Unlock()
+	delete(c.container, name)
 }

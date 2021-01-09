@@ -1,4 +1,4 @@
-package search
+package se
 
 var stopWords = []string{
 	"a", "about", "above", "above", "across", "after", "afterwards", "again", "against", "all", "almost", "alone",

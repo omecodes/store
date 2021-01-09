@@ -1,4 +1,4 @@
-package search
+package se
 
 type scoreSorter struct {
 	scores map[string]int

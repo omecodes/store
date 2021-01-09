@@ -18,31 +18,40 @@ func NewSQLStore(db *sql.DB, dialect string, tableName string) (Objects, error) 
 	}
 
 	s := &sqlStore{
-		db:          db,
-		dialect:     dialect,
-		collections: col,
+		db:                db,
+		dialect:           dialect,
+		collections:       col,
+		loadedCollections: &collectionContainer{container: make(map[string]Collection)},
 	}
 	return s, nil
 }
 
 type sqlStore struct {
-	db          *sql.DB
-	dialect     string
-	collections *bome.JSONMap
+	loadedCollections *collectionContainer
+	db                *sql.DB
+	dialect           string
+	collections       *bome.JSONMap
 }
 
 func (ms *sqlStore) ResolveCollection(ctx context.Context, name string) (Collection, error) {
-	contains, err := ms.collections.Contains(name)
-	if err != nil {
-		return nil, err
-	}
+	col, found := ms.loadedCollections.Get(name)
+	if found {
+		encoded, err := ms.collections.Get(name)
+		if err != nil {
+			return nil, err
+		}
 
-	if !contains {
-		return nil, errors.NotFound
-	}
+		var collection *pb.Collection
+		err = json.Unmarshal([]byte(encoded), &collection)
+		if err != nil {
+			return nil, err
+		}
 
-	tableName := strcase.ToSnake(name)
-	return NewSQLCollection(ms.db, ms.dialect, tableName)
+		tableName := strcase.ToSnake(name)
+		col, err = NewSQLCollection(collection, ms.db, ms.dialect, tableName)
+		ms.loadedCollections.Save(name, col)
+	}
+	return col, nil
 }
 
 func (ms *sqlStore) CreateCollection(ctx context.Context, collection *pb.Collection) error {
@@ -56,10 +65,11 @@ func (ms *sqlStore) CreateCollection(ctx context.Context, collection *pb.Collect
 	}
 
 	tableName := strcase.ToSnake(collection.Id)
-	_, err = NewSQLCollection(ms.db, ms.dialect, tableName)
+	col, err := NewSQLCollection(collection, ms.db, ms.dialect, tableName)
 	if err != nil {
 		return err
 	}
+	ms.loadedCollections.Save(collection.Id, col)
 
 	encodedBytes, err := json.Marshal(collection)
 	if err != nil {

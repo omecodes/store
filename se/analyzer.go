@@ -1,4 +1,4 @@
-package search
+package se
 
 import (
 	"golang.org/x/text/runes"

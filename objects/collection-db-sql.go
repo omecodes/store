@@ -8,13 +8,14 @@ import (
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/pb"
-	"github.com/omecodes/store/search"
+	"github.com/omecodes/store/se"
 	"github.com/omecodes/store/utime"
+	"github.com/tidwall/gjson"
 	"io"
 	"strings"
 )
 
-func NewSQLCollection(db *sql.DB, dialect string, tableName string) (*sqlCollection, error) {
+func NewSQLCollection(collection *pb.Collection, db *sql.DB, dialect string, tableName string) (*sqlCollection, error) {
 	objects, err := bome.NewJSONMap(db, dialect, tableName)
 	if err != nil {
 		return nil, err
@@ -69,20 +70,28 @@ func NewSQLCollection(db *sql.DB, dialect string, tableName string) (*sqlCollect
 		return nil, err
 	}
 
+	indexStore, err := se.NewSQLIndexStore(db, dialect, tableName)
+	if err != nil {
+		return nil, err
+	}
+
 	s := &sqlCollection{
 		db:        db,
 		dialect:   dialect,
 		objects:   objects,
 		headers:   headers,
 		datedRefs: datedRefs,
+		info:      collection,
+		engine:    se.NewEngine(indexStore),
 	}
 	return s, nil
 }
 
 type sqlCollection struct {
+	info    *pb.Collection
 	dialect string
 	db      *sql.DB
-	engine  *search.Engine
+	engine  *se.Engine
 
 	indexes []*pb.Index
 
@@ -169,6 +178,49 @@ func (s *sqlCollection) Save(ctx context.Context, object *pb.Object, indexes ...
 			log.Error("Save: rollback failed", log.Err(err2))
 		}
 		return err
+	}
+
+	allIndexes := append(s.info.DefaultIndexes, indexes...)
+	for _, index := range allIndexes {
+		result := gjson.Get(object.Data, strings.TrimPrefix(index.JsonPath, "$."))
+		if !result.Exists() {
+			log.Error("Save: index references path that does not exists", log.Err(err))
+			if err2 := tx.Rollback(); err2 != nil {
+				log.Error("Save: rollback failed", log.Err(err2))
+			}
+			return errors.BadInput
+		}
+
+		if index.FieldType == 0 {
+			mp := &pb.TextMapping{
+				Text:      result.Str,
+				FieldName: index.MappingName,
+				ObjectId:  object.Header.Id,
+			}
+			err = s.engine.CreateTextMapping(mp)
+			if err != nil {
+				log.Error("Save: index references path that does not exists", log.Err(err))
+				if err2 := tx.Rollback(); err2 != nil {
+					log.Error("Save: rollback failed", log.Err(err2))
+				}
+				return errors.BadInput
+			}
+		} else if index.FieldType == 1 {
+			mp := &pb.NumberMapping{
+				Number:    result.Int(),
+				FieldName: index.MappingName,
+				ObjectId:  object.Header.Id,
+			}
+
+			err = s.engine.CreateNumberMapping(mp)
+			if err != nil {
+				log.Error("Save: index references path that does not exists", log.Err(err))
+				if err2 := tx.Rollback(); err2 != nil {
+					log.Error("Save: rollback failed", log.Err(err2))
+				}
+				return errors.BadInput
+			}
+		}
 	}
 
 	err = tx.Commit()

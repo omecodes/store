@@ -18,6 +18,7 @@ message Collection {
   string id = 1;
   string label = 2;
   string description = 3;
+  repeated Index default_indexes = 4;
 }
 
 message AccessRules {
@@ -88,7 +89,6 @@ service HandlerUnit {
 
 message CreateCollectionRequest {
   Collection collection = 1;
-  repeated Index indexed_fields = 2;
 }
 message CreateCollectionResponse {}
 

@@ -1,4 +1,4 @@
-package search
+package se
 
 import (
 	"database/sql"
@@ -42,7 +42,7 @@ const insertNumber = `
 insert into numbers_mapping values(?, ?, ?);
 `
 
-func NewSQLStore(db *sql.DB, dialect string, tablePrefix string) (Store, error) {
+func NewSQLIndexStore(db *sql.DB, dialect string, tablePrefix string) (Store, error) {
 	s := new(sqlStore)
 	var err error
 
