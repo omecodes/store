@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/omecodes/store/admin"
 	"os"
 	"path/filepath"
 
@@ -13,7 +14,7 @@ import (
 )
 
 var (
-	jwtSecret string
+	adminInfo string
 	dev       bool
 	regPort   int
 	caPort    int
@@ -55,7 +56,7 @@ func init() {
 	flags.IntVar(&apiPort, "api", 8080, "API server port")
 	flags.StringVar(&bindIP, "ip", "", "Http server address")
 	flags.StringArrayVar(&domains, "domain", nil, "Domain names")
-	flags.StringVar(&jwtSecret, "jwt-secret", "", "Secret used to verify JWT hmac based signature")
+	flags.StringVar(&adminInfo, "admin", "", "Admin password info")
 	flags.StringVar(&dbURI, "db-uri", "bome:bome@(127.0.0.1:3306)/bome?charset=utf8", "MySQL database source name")
 
 	if err := cobra.MarkFlagRequired(flags, "ip"); err != nil {
@@ -85,6 +86,7 @@ func init() {
 	}
 
 	cmd.AddCommand(startCMD)
+	cmd.AddCommand(admin.Cmd)
 	cmd.AddCommand(versionCMD)
 }
 
@@ -98,7 +100,7 @@ func run(cmd *cobra.Command, args []string) {
 		APIPort:      apiPort,
 		DBUri:        dbURI,
 		WorkingDir:   wDir,
-		JWTSecret:    jwtSecret,
+		AdminInfo:    adminInfo,
 		Dev:          dev,
 	}
 

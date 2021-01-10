@@ -5,6 +5,7 @@ import (
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/common/utils/prompt"
 	oms "github.com/omecodes/store"
+	"github.com/omecodes/store/admin"
 	"github.com/spf13/cobra"
 	"os"
 	"path"
@@ -13,7 +14,7 @@ import (
 
 var (
 	dev        bool
-	jwtSecret  string
+	adminInfo  string
 	workingDir string
 	dsn        string
 	domains    []string
@@ -51,7 +52,7 @@ func init() {
 				WorkingDir: workingDir,
 				Domains:    domains,
 				Dev:        dev,
-				JwtSecret:  jwtSecret,
+				AdminInfo:  adminInfo,
 				DSN:        dsn,
 			})
 
@@ -74,9 +75,9 @@ func init() {
 	flags.BoolVar(&dev, "dev", false, "Enable development mode")
 	flags.StringArrayVar(&domains, "domains", nil, "Domains name for auto cert")
 	flags.StringVar(&workingDir, "dir", "", "Data directory")
-	flags.StringVar(&jwtSecret, "jwt-secret", "", "Secret used to verify JWT hmac based signature")
-	flags.StringVar(&dsn, "dsn", "bome:bome@(127.0.0.1:3306)/bome?charset=utf8", "MySQL database uri")
-	if err := cobra.MarkFlagRequired(flags, "jwt-secret"); err != nil {
+	flags.StringVar(&adminInfo, "admin", "", "Admin password info")
+	flags.StringVar(&dsn, "dsn", "store:store@(127.0.0.1:3306)/store?charset=utf8", "MySQL database uri")
+	if err := cobra.MarkFlagRequired(flags, "admin"); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
@@ -95,6 +96,7 @@ func init() {
 		},
 	}
 	command.AddCommand(versionCMD)
+	command.AddCommand(admin.Cmd)
 }
 
 func main() {
