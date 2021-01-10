@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/omecodes/discover"
-	errors2 "github.com/omecodes/libome/errors"
 	"github.com/omecodes/service"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/objects"
@@ -37,7 +36,7 @@ type MsConfig struct {
 	CAPort       int
 	APIPort      int
 	DBUri        string
-	JWTSecret    string
+	AdminInfo    string
 	WorkingDir   string
 	Dev          bool
 }
@@ -47,16 +46,18 @@ func NewMSServer(cfg MsConfig) *MSServer {
 }
 
 type MSServer struct {
-	config         MsConfig
-	settings       objects.SettingsManager
-	listener       net.Listener
-	adminPassword  string
-	workerPassword string
-	Errors         chan error
-	loadBalancer   *router.BaseHandler
-	registry       ome.Registry
-	caServer       *sca.Server
-	autoCertDir    string
+	config                  MsConfig
+	authenticationProviders auth.ProviderManager
+	credentialsManager      auth.CredentialsManager
+	settings                objects.SettingsManager
+	listener                net.Listener
+	adminPassword           string
+	workerPassword          string
+	Errors                  chan error
+	loadBalancer            *router.BaseHandler
+	registry                ome.Registry
+	caServer                *sca.Server
+	autoCertDir             string
 }
 
 func (s *MSServer) init() error {
@@ -76,6 +77,16 @@ func (s *MSServer) init() error {
 	}
 
 	s.settings, err = objects.NewSQLSettings(db, bome.MySQL, "objects_settings")
+	if err != nil {
+		return err
+	}
+
+	s.credentialsManager, err = auth.NewCredentialsSQLManager(db, bome.MySQL, "agents", s.config.AdminInfo)
+	if err != nil {
+		return err
+	}
+
+	s.authenticationProviders, err = auth.NewProviderSQLManager(db, bome.MySQL, "auth_providers")
 	if err != nil {
 		return err
 	}
@@ -174,13 +185,8 @@ func (s *MSServer) startAPIServer() error {
 	log.Info("starting HTTP server", log.Field("address", address))
 
 	middlewareList := []mux.MiddlewareFunc{
-		auth.DetectBasicMiddleware(auth.CredentialsMangerFunc(func(user string) (string, error) {
-			if user == "admin" {
-				return s.adminPassword, nil
-			}
-			return "", errors2.New(errors2.CodeForbidden, "authentication failed")
-		})),
-		auth.DetectOauth2Middleware(s.config.JWTSecret),
+		auth.DetectBasicMiddleware,
+		auth.DetectOauth2Middleware,
 		httpx.Logger("OMS").Handle,
 		s.httpEnrichContext,
 	}
@@ -212,13 +218,8 @@ func (s *MSServer) startProductionAPIServer() error {
 	certManager.Cache = autocert.DirCache(s.autoCertDir)
 
 	middlewareList := []mux.MiddlewareFunc{
-		auth.DetectBasicMiddleware(auth.CredentialsMangerFunc(func(user string) (string, error) {
-			if user == "admin" {
-				return s.adminPassword, nil
-			}
-			return "", errors2.New(errors2.CodeForbidden, "authentication failed")
-		})),
-		auth.DetectOauth2Middleware(s.config.JWTSecret),
+		auth.DetectBasicMiddleware,
+		auth.DetectOauth2Middleware,
 		httpx.Logger("OMS").Handle,
 		s.httpEnrichContext,
 	}
@@ -263,6 +264,8 @@ func (s *MSServer) httpEnrichContext(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		ctx = auth.ContextWithCredentialsManager(ctx, s.credentialsManager)
+		ctx = auth.ContextWithProviders(ctx, s.authenticationProviders)
 		ctx = service.ContextWithBox(ctx, box)
 		ctx = router.WithRouterProvider(ctx, router.ProviderFunc(s.GetRouter))
 		ctx = router.WithSettings(s.settings)(ctx)

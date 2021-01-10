@@ -3,11 +3,8 @@ package oms
 import (
 	"context"
 	"crypto/rand"
-	"crypto/sha512"
 	"crypto/tls"
 	"database/sql"
-	"encoding/base64"
-	"encoding/hex"
 	"github.com/google/cel-go/cel"
 	"github.com/gorilla/mux"
 	"github.com/omecodes/common/errors"
@@ -15,7 +12,6 @@ import (
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/cenv"
 	"github.com/omecodes/store/objects"
-	"github.com/sethvargo/go-password/password"
 	"golang.org/x/crypto/acme/autocert"
 	"io/ioutil"
 	"net"
@@ -27,7 +23,6 @@ import (
 	"github.com/omecodes/common/httpx"
 	"github.com/omecodes/common/netx"
 	"github.com/omecodes/common/utils/log"
-	errors2 "github.com/omecodes/libome/errors"
 	"github.com/omecodes/store/router"
 )
 
@@ -36,7 +31,7 @@ type MNConfig struct {
 	Dev        bool
 	Domains    []string
 	WorkingDir string
-	JwtSecret  string
+	AdminInfo  string
 	DSN        string
 }
 
@@ -50,21 +45,23 @@ func NewMNServer(config MNConfig) *MNServer {
 // Server embeds an Ome data store
 // it also exposes an API server
 type MNServer struct {
-	initialized   bool
-	options       []netx.ListenOption
-	config        *MNConfig
-	adminPassword string
-	key           []byte
-	celPolicyEnv  *cel.Env
-	celSearchEnv  *cel.Env
-	autoCertDir   string
+	initialized  bool
+	options      []netx.ListenOption
+	config       *MNConfig
+	key          []byte
+	celPolicyEnv *cel.Env
+	celSearchEnv *cel.Env
+	autoCertDir  string
 
-	objects     objects.Objects
-	settings    objects.SettingsManager
-	accessStore acl.Store
-	listener    net.Listener
-	Errors      chan error
-	server      *http.Server
+	objects                 objects.Objects
+	settings                objects.SettingsManager
+	authenticationProviders auth.ProviderManager
+	credentialsManager      auth.CredentialsManager
+	accessStore             acl.Store
+
+	listener net.Listener
+	Errors   chan error
+	server   *http.Server
 }
 
 func (s *MNServer) init() error {
@@ -101,6 +98,16 @@ func (s *MNServer) init() error {
 		return err
 	}
 
+	s.credentialsManager, err = auth.NewCredentialsSQLManager(db, bome.MySQL, "agents", s.config.AdminInfo)
+	if err != nil {
+		return err
+	}
+
+	s.authenticationProviders, err = auth.NewProviderSQLManager(db, bome.MySQL, "auth_providers")
+	if err != nil {
+		return err
+	}
+
 	s.celPolicyEnv, err = cenv.ACLEnv()
 	if err != nil {
 		return err
@@ -109,23 +116,6 @@ func (s *MNServer) init() error {
 	s.celSearchEnv, err = cenv.SearchEnv()
 	if err != nil {
 		return err
-	}
-
-	adminPwdFilename := filepath.Join(s.config.WorkingDir, "admin-pwd")
-	passwordBytes, err := ioutil.ReadFile(adminPwdFilename)
-	if err != nil {
-		genPassword, err := password.Generate(16, 5, 11, false, false)
-		passwordBytes = []byte(genPassword)
-		if err != nil {
-			return err
-		}
-		s.adminPassword = base64.RawStdEncoding.EncodeToString(passwordBytes)
-		err = ioutil.WriteFile(adminPwdFilename, []byte(s.adminPassword), os.ModePerm)
-		if err != nil {
-			return err
-		}
-	} else {
-		s.adminPassword = string(passwordBytes)
 	}
 
 	s.key, err = s.getStoredKey("token-key", 64)
@@ -216,19 +206,8 @@ func (s *MNServer) startDefaultAPIServer() error {
 	log.Info("starting HTTP server", log.Field("address", address))
 
 	middlewareList := []mux.MiddlewareFunc{
-		auth.DetectBasicMiddleware(auth.CredentialsMangerFunc(func(user string) (string, error) {
-			if user == "admin" {
-				sh := sha512.New()
-				_, err = sh.Write([]byte(s.adminPassword))
-				if err != nil {
-					return "", err
-				}
-				hashed := sh.Sum(nil)
-				return hex.EncodeToString(hashed), nil
-			}
-			return "", errors2.New(errors2.CodeForbidden, "authentication failed")
-		})),
-		auth.DetectOauth2Middleware(s.config.JwtSecret),
+		auth.DetectBasicMiddleware,
+		auth.DetectOauth2Middleware,
 		s.enrichContext,
 		httpx.Logger("store").Handle,
 	}
@@ -260,13 +239,8 @@ func (s *MNServer) startAutoCertAPIServer() error {
 	certManager.Cache = autocert.DirCache(s.autoCertDir)
 
 	middlewareList := []mux.MiddlewareFunc{
-		auth.DetectBasicMiddleware(auth.CredentialsMangerFunc(func(user string) (string, error) {
-			if user == "admin" {
-				return s.adminPassword, nil
-			}
-			return "", errors2.New(errors2.CodeForbidden, "authentication failed")
-		})),
-		auth.DetectOauth2Middleware(s.config.JwtSecret),
+		auth.DetectBasicMiddleware,
+		auth.DetectOauth2Middleware,
 		s.enrichContext,
 		httpx.Logger("store").Handle,
 	}
@@ -304,6 +278,8 @@ func (s *MNServer) startAutoCertAPIServer() error {
 func (s *MNServer) enrichContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		ctx = auth.ContextWithCredentialsManager(ctx, s.credentialsManager)
+		ctx = auth.ContextWithProviders(ctx, s.authenticationProviders)
 		ctx = acl.ContextWithStore(ctx, s.accessStore)
 		ctx = objects.ContextWithStore(ctx, s.objects)
 		ctx = router.WithCelPolicyEnv(s.celPolicyEnv)(ctx)
