@@ -5,6 +5,7 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
+	"github.com/omecodes/common/utils/log"
 	"net/http"
 	"strings"
 
@@ -15,67 +16,49 @@ import (
 	"github.com/omecodes/store/pb"
 )
 
-type ctxAuthentication struct{}
-
-func Get(ctx context.Context) *pb.Auth {
-	o := ctx.Value(ctxAuthentication{})
-	if o == nil {
-		return nil
-	}
-	return o.(*pb.Auth)
-}
-
-func Context(parent context.Context, a *pb.Auth) context.Context {
-	return context.WithValue(parent, ctxAuthentication{}, a)
-}
-
-func BasicContextUpdater(manager CredentialsManager) ome.GrpcContextUpdaterFunc {
-	return func(ctx context.Context) (context.Context, error) {
-		md, ok := metadata.FromIncomingContext(ctx)
-		if !ok {
-			return ctx, nil
-		}
-
-		authorizationParts := strings.SplitN(md.Get("authorization")[0], " ", 2)
-		authType := strings.ToLower(authorizationParts[0])
-		var authorization string
-		if len(authorizationParts) > 1 {
-			authorization = authorizationParts[1]
-		}
-
-		if authType == "basic" {
-			if authorization == "" {
-				return ctx, errors.New(errors.CodeBadRequest, "malformed authorization value")
-			}
-			return updateContextWithBasic(ctx, manager, authorization)
-		}
+func BasicContextUpdater(ctx context.Context) (context.Context, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
 		return ctx, nil
 	}
+
+	authorizationParts := strings.SplitN(md.Get("authorization")[0], " ", 2)
+	authType := strings.ToLower(authorizationParts[0])
+	var authorization string
+	if len(authorizationParts) > 1 {
+		authorization = authorizationParts[1]
+	}
+
+	if authType == "basic" {
+		if authorization == "" {
+			return ctx, errors.New(errors.CodeBadRequest, "malformed authorization value")
+		}
+		return updateContextWithBasic(ctx, authorization)
+	}
+	return ctx, nil
 }
 
-func OAuth2ContextUpdater(secret string) ome.GrpcContextUpdaterFunc {
-	return func(ctx context.Context) (context.Context, error) {
-		md, ok := metadata.FromIncomingContext(ctx)
-		if !ok {
-			return ctx, nil
-		}
-
-		authorizationParts := strings.SplitN(md.Get("authorization")[0], " ", 2)
-		authType := strings.ToLower(authorizationParts[0])
-		var authorization string
-		if len(authorizationParts) > 1 {
-			authorization = authorizationParts[1]
-		}
-
-		if authType == "bearer" {
-			if authorization == "" {
-				return ctx, errors.New(errors.CodeBadRequest, "malformed authorization value")
-			}
-
-			return updateContextWithOauth2(ctx, secret, authorization)
-		}
+func OAuth2ContextUpdater(ctx context.Context) (context.Context, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
 		return ctx, nil
 	}
+
+	authorizationParts := strings.SplitN(md.Get("authorization")[0], " ", 2)
+	authType := strings.ToLower(authorizationParts[0])
+	var authorization string
+	if len(authorizationParts) > 1 {
+		authorization = authorizationParts[1]
+	}
+
+	if authType == "bearer" {
+		if authorization == "" {
+			return ctx, errors.New(errors.CodeBadRequest, "malformed authorization value")
+		}
+
+		return updateContextWithOauth2(ctx, authorization)
+	}
+	return ctx, nil
 }
 
 func UpdateFromMeta(parent context.Context) (context.Context, error) {
@@ -86,77 +69,74 @@ func UpdateFromMeta(parent context.Context) (context.Context, error) {
 	return parent, nil
 }
 
-func DetectBasicMiddleware(manager CredentialsManager) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			authorization := r.Header.Get("Authorization")
+func DetectBasicMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authorization := r.Header.Get("Authorization")
 
-			if authorization != "" {
-				authorizationParts := strings.SplitN(authorization, " ", 2)
-				authType := strings.ToLower(authorizationParts[0])
-				if len(authorizationParts) > 1 {
-					authorization = authorizationParts[1]
-				}
-
-				if authType == "basic" {
-					if authorization == "" {
-						w.WriteHeader(http.StatusBadRequest)
-						return
-					}
-
-					ctx, err := updateContextWithBasic(r.Context(), manager, authorization)
-					if err != nil {
-						if err2, ok := err.(*errors.Error); ok {
-							w.WriteHeader(err2.Code)
-							return
-						}
-						w.WriteHeader(http.StatusForbidden)
-						return
-					}
-					r = r.WithContext(ctx)
-				}
+		if authorization != "" {
+			authorizationParts := strings.SplitN(authorization, " ", 2)
+			authType := strings.ToLower(authorizationParts[0])
+			if len(authorizationParts) > 1 {
+				authorization = authorizationParts[1]
 			}
-			next.ServeHTTP(w, r)
-		})
-	}
+
+			if authType == "basic" {
+				if authorization == "" {
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+
+				ctx := r.Context()
+				ctx, err := updateContextWithBasic(ctx, authorization)
+				if err != nil {
+					if err2, ok := err.(*errors.Error); ok {
+						w.WriteHeader(err2.Code)
+						return
+					}
+					w.WriteHeader(http.StatusForbidden)
+					return
+				}
+				r = r.WithContext(ctx)
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
-func DetectOauth2Middleware(secret string) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			authorization := r.Header.Get("Authorization")
+func DetectOauth2Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authorization := r.Header.Get("Authorization")
 
-			if authorization != "" {
-				authorizationParts := strings.SplitN(authorization, " ", 2)
-				authType := strings.ToLower(authorizationParts[0])
-				if len(authorizationParts) > 1 {
-					authorization = authorizationParts[1]
-				}
-
-				if authType == "bearer" {
-					if authorization == "" {
-						w.WriteHeader(http.StatusBadRequest)
-						return
-					}
-
-					ctx, err := updateContextWithOauth2(r.Context(), secret, authorization)
-					if err != nil {
-						if err2, ok := err.(*errors.Error); ok {
-							w.WriteHeader(err2.Code)
-							return
-						}
-						w.WriteHeader(http.StatusForbidden)
-						return
-					}
-					r = r.WithContext(ctx)
-				}
+		if authorization != "" {
+			authorizationParts := strings.SplitN(authorization, " ", 2)
+			authType := strings.ToLower(authorizationParts[0])
+			if len(authorizationParts) > 1 {
+				authorization = authorizationParts[1]
 			}
-			next.ServeHTTP(w, r)
-		})
-	}
+
+			if authType == "bearer" {
+				if authorization == "" {
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+
+				ctx, err := updateContextWithOauth2(r.Context(), authorization)
+				if err != nil {
+					if err2, ok := err.(*errors.Error); ok {
+						w.WriteHeader(err2.Code)
+						return
+					}
+					w.WriteHeader(http.StatusForbidden)
+					return
+				}
+				r = r.WithContext(ctx)
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
-func updateContextWithBasic(ctx context.Context, manager CredentialsManager, authorization string) (context.Context, error) {
+func updateContextWithBasic(ctx context.Context, authorization string) (context.Context, error) {
 	bytes, err := base64.StdEncoding.DecodeString(authorization)
 	if err != nil {
 		return ctx, errors.New(errors.CodeBadRequest, "authorization value non base64 encoding")
@@ -173,20 +153,34 @@ func updateContextWithBasic(ctx context.Context, manager CredentialsManager, aut
 		pass = parts[1]
 	}
 
-	sh := sha512.New()
-	_, err = sh.Write([]byte(pass))
-	if err != nil {
-		return ctx, errors.New(errors.CodeInternal, "password hashing failed")
-	}
-	hashed := sh.Sum(nil)
-
-	password, err := manager.Get(authUser)
-	if err != nil {
-		return ctx, err
+	manager := GetCredentialsManager(ctx)
+	if manager == nil {
+		return ctx, errors.New(errors.CodeForbidden, "No manager basic authentication is not supported")
 	}
 
-	if password != hex.EncodeToString(hashed) {
-		return ctx, errors.New(errors.CodeForbidden, "authorization value non base64 encoding")
+	if authUser == "admin" {
+		err = manager.VerifyAdminCredentials(pass)
+		if err != nil {
+			log.Error("verifying admin authentication", log.Err(err))
+			return ctx, errors.New(errors.CodeForbidden, "admin authentication failed")
+		}
+
+	} else {
+		sh := sha512.New()
+		_, err = sh.Write([]byte(pass))
+		if err != nil {
+			return ctx, errors.New(errors.CodeInternal, "password hashing failed")
+		}
+		hashed := sh.Sum(nil)
+
+		access, err := manager.GetAccess(authUser)
+		if err != nil {
+			return ctx, err
+		}
+
+		if access.Secret != hex.EncodeToString(hashed) {
+			return ctx, errors.New(errors.CodeForbidden, "authorization value non base64 encoding")
+		}
 	}
 
 	return context.WithValue(ctx, ctxAuthentication{}, &pb.Auth{
@@ -195,20 +189,30 @@ func updateContextWithBasic(ctx context.Context, manager CredentialsManager, aut
 	}), nil
 }
 
-func updateContextWithOauth2(ctx context.Context, secret string, authorization string) (context.Context, error) {
+func updateContextWithOauth2(ctx context.Context, authorization string) (context.Context, error) {
 	jwt, err := ome.ParseJWT(authorization)
 	if err != nil {
 		return ctx, nil
 	}
 
-	/*signature, err := jwt.SecretBasedSignature(secret)
+	providers := GetProviders(ctx)
+	if providers == nil {
+		return ctx, errors.New(errors.CodeForbidden, "token not signed")
+	}
+
+	provider, err := providers.Get(jwt.Claims.Iss)
+	if err != nil {
+		return ctx, err
+	}
+
+	signature, err := jwt.SecretBasedSignature(provider.Config.ClientSecret)
 	if err != nil {
 		return ctx, err
 	}
 
 	if signature != jwt.Signature {
 		return ctx, errors.New(errors.CodeForbidden, "token not signed")
-	} */
+	}
 
 	return context.WithValue(ctx, ctxAuthentication{}, &pb.Auth{
 		Uid:    jwt.Claims.Sub,
