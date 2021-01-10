@@ -256,6 +256,12 @@ func (s *sqlCollection) Patch(ctx context.Context, patch *pb.Patch) error {
 }
 
 func (s *sqlCollection) Delete(ctx context.Context, objectID string) error {
+	go func() {
+		if der := s.engine.DeleteObjectMappings(objectID); der != nil {
+			log.Error("failed to delete object index mappings", log.Err(der))
+		}
+	}()
+
 	info, err := s.Info(ctx, objectID)
 	if err != nil {
 		return err
