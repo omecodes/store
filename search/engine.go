@@ -10,7 +10,7 @@ import (
 func NewEngine(store Store) *Engine {
 	return &Engine{
 		store:     store,
-		analyzer:  getTextAnalyzer(),
+		analyzer:  getMappingTextAnalyzer(),
 		tokenizer: &textTokenizer{},
 	}
 }
@@ -55,6 +55,10 @@ func (e *Engine) CreateTextMapping(mapping *pb.TextMapping) error {
 
 func (e *Engine) CreateNumberMapping(m *pb.NumberMapping) error {
 	return e.store.SaveNumberMapping(m.Number, m.FieldName, m.ObjectId)
+}
+
+func (e *Engine) DeleteObjectMappings(id string) error {
+	return e.store.DeleteObjectMappings(id)
 }
 
 func (e *Engine) Search(expression *pb.BooleanExp) ([]string, error) {

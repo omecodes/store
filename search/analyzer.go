@@ -49,9 +49,16 @@ func removeIgnored(analyzer Analyzer) Analyzer {
 	}
 }
 
-func getTextAnalyzer() Analyzer {
+func getMappingTextAnalyzer() Analyzer {
 	a := strings.ToLower
 	a = removeIgnored(a)
+	a = removePunctuation(a)
+	a = removeAccents(a)
+	return a
+}
+
+func getQueryTextAnalyzer() Analyzer {
+	a := strings.ToLower
 	a = removePunctuation(a)
 	a = removeAccents(a)
 	return a

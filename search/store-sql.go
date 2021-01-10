@@ -40,6 +40,9 @@ insert into $prefix$_words_mapping values(?, ?, ?);
 const appendToWord = `
 update $prefix$_words_mapping set objects=concat(objects, ?) where token=? and field=?;
 `
+const deleteObjectWordMapping = `
+update $prefix$_words_mapping set objects=replace(objects, ?, ' ') where objects like ?;
+`
 
 const insertNumber = `
 insert into $prefix$_numbers_mapping values(?, ?, ?);
@@ -47,6 +50,10 @@ insert into $prefix$_numbers_mapping values(?, ?, ?);
 
 const appendToNumber = `
 update $prefix$_numbers_mapping set objects=concat(objects, ?) where num=? and field=?;
+`
+
+const deleteObjectNumberMapping = `
+update $prefix$_numbers_mapping set objects=replace(objects, ?, ' ') where objects like ?;
 `
 
 func NewSQLIndexStore(db *sql.DB, dialect string, tablePrefix string) (Store, error) {
@@ -86,7 +93,7 @@ type sqlStore struct {
 }
 
 func (s *sqlStore) SaveWordMapping(word string, field string, id string) error {
-	err := s.db.RawExec(insertWord, word, field, id).Error
+	err := s.db.RawExec(insertWord, word, field, " "+id).Error
 	if err != nil {
 		if bome.IsPrimaryKeyConstraintError(err) {
 			err = s.db.RawExec(appendToWord, " "+id, word, field).Error
@@ -99,9 +106,17 @@ func (s *sqlStore) SaveWordMapping(word string, field string, id string) error {
 }
 
 func (s *sqlStore) SaveNumberMapping(num int64, field string, id string) error {
-	err := s.db.RawExec(insertWord, num, field, id).Error
+	err := s.db.RawExec(insertNumber, num, field, " "+id).Error
 	if err != nil && bome.IsPrimaryKeyConstraintError(err) {
-		err = s.db.RawExec(appendToWord, " "+id, num, field).Error
+		err = s.db.RawExec(appendToNumber, " "+id, num, field).Error
+	}
+	return err
+}
+
+func (s *sqlStore) DeleteObjectMappings(id string) error {
+	err := s.db.RawExec(deleteObjectNumberMapping, id, "' %"+id+"%'").Error
+	if err == nil {
+		err = s.db.RawExec(deleteObjectWordMapping, id, "' %"+id+"%'").Error
 	}
 	return err
 }
@@ -151,6 +166,7 @@ type tables struct {
 }
 
 func evaluate(expr *pb.BooleanExp, tables *tables) string {
+	textAnalyzer := getQueryTextAnalyzer()
 
 	switch v := expr.Expression.(type) {
 	case *pb.BooleanExp_Or:
@@ -162,19 +178,19 @@ func evaluate(expr *pb.BooleanExp, tables *tables) string {
 
 	case *pb.BooleanExp_Contains:
 		tables.textMapping = true
-		return "($prefix$_words_mapping.token like '%" + v.Contains.Value + "%')"
+		return "($prefix$_words_mapping.token like '%" + textAnalyzer(v.Contains.Value) + "%')"
 
 	case *pb.BooleanExp_StartsWith:
 		tables.textMapping = true
-		return "($prefix$_words_mapping.token like '" + v.StartsWith.Value + "%')"
+		return "($prefix$_words_mapping.token like '" + textAnalyzer(v.StartsWith.Value) + "%')"
 
 	case *pb.BooleanExp_EndsWith:
 		tables.textMapping = true
-		return "($prefix$_words_mapping.token like '%" + v.EndsWith.Value + "')"
+		return "($prefix$_words_mapping.token like '%" + textAnalyzer(v.EndsWith.Value) + "')"
 
 	case *pb.BooleanExp_StrEqual:
 		tables.textMapping = true
-		return "($prefix$_words_mapping.token='" + v.StrEqual.Value + "')"
+		return "($prefix$_words_mapping.token='" + textAnalyzer(v.StrEqual.Value) + "')"
 
 	case *pb.BooleanExp_Lt:
 		tables.numberMapping = true
