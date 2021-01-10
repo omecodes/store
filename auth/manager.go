@@ -24,7 +24,7 @@ type CredentialsManager interface {
 	DeleteAccess(key string) error
 }
 
-func NewSQLCredentialsManager(db *sql.DB, dialect string, prefix string, adminInfo string) (*sqlCredentialsManager, error) {
+func NewCredentialsSQLManager(db *sql.DB, dialect string, prefix string, adminInfo string) (*crendentialsSQLManager, error) {
 	store, err := bome.NewJSONMap(db, dialect, prefix+"_api_accesses")
 	if err != nil {
 		return nil, err
@@ -44,20 +44,20 @@ func NewSQLCredentialsManager(db *sql.DB, dialect string, prefix string, adminIn
 		return nil, errors.BadInput
 	}
 
-	return &sqlCredentialsManager{store: store, adminInfo: info}, nil
+	return &crendentialsSQLManager{store: store, adminInfo: info}, nil
 }
 
-type sqlCredentialsManager struct {
+type crendentialsSQLManager struct {
 	store     *bome.JSONMap
 	adminInfo *crypt.Info
 }
 
-func (s *sqlCredentialsManager) VerifyAdminCredentials(passPhrase string) error {
+func (s *crendentialsSQLManager) VerifyAdminCredentials(passPhrase string) error {
 	_, err := crypt.Reveal(passPhrase, s.adminInfo)
 	return err
 }
 
-func (s *sqlCredentialsManager) SaveAccess(access *APIAccess) error {
+func (s *crendentialsSQLManager) SaveAccess(access *APIAccess) error {
 	data, err := json.Marshal(access)
 	if err != nil {
 		return err
@@ -69,7 +69,7 @@ func (s *sqlCredentialsManager) SaveAccess(access *APIAccess) error {
 	})
 }
 
-func (s *sqlCredentialsManager) GetAccess(key string) (*APIAccess, error) {
+func (s *crendentialsSQLManager) GetAccess(key string) (*APIAccess, error) {
 	strEncoded, err := s.store.Get(key)
 	if err != nil {
 		return nil, err
@@ -80,6 +80,6 @@ func (s *sqlCredentialsManager) GetAccess(key string) (*APIAccess, error) {
 	return access, err
 }
 
-func (s *sqlCredentialsManager) DeleteAccess(key string) error {
+func (s *crendentialsSQLManager) DeleteAccess(key string) error {
 	return s.store.Delete(key)
 }
