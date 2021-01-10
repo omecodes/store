@@ -4,12 +4,10 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha512"
+	"crypto/tls"
 	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
-	"github.com/foomo/simplecert"
-	"github.com/foomo/tlsconfig"
 	"github.com/google/cel-go/cel"
 	"github.com/gorilla/mux"
 	"github.com/omecodes/common/errors"
@@ -18,6 +16,7 @@ import (
 	"github.com/omecodes/store/cenv"
 	"github.com/omecodes/store/objects"
 	"github.com/sethvargo/go-password/password"
+	"golang.org/x/crypto/acme/autocert"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -58,6 +57,7 @@ type MNServer struct {
 	key           []byte
 	celPolicyEnv  *cel.Env
 	celSearchEnv  *cel.Env
+	autoCertDir   string
 
 	objects     objects.Objects
 	settings    objects.SettingsManager
@@ -72,6 +72,14 @@ func (s *MNServer) init() error {
 		return nil
 	}
 	s.initialized = true
+
+	if !s.config.Dev {
+		s.autoCertDir = filepath.Join(s.config.WorkingDir, "autocert")
+		err := os.MkdirAll(s.autoCertDir, os.ModePerm)
+		if err != nil {
+			return err
+		}
+	}
 
 	db, err := sql.Open("mysql", s.config.DSN)
 	if err != nil {
@@ -244,32 +252,12 @@ func (s *MNServer) startDefaultAPIServer() error {
 }
 
 func (s *MNServer) startAutoCertAPIServer() error {
-	cfg := simplecert.Default
-	cfg.Domains = s.config.Domains
-	cfg.CacheDir = filepath.Join(s.config.WorkingDir, "lets-encrypt")
-	cfg.SSLEmail = "omecodes@gmail.com"
-	cfg.DNSProvider = "cloudflare"
 
-	certReloadAgent, err := simplecert.Init(cfg, nil)
-	if err != nil {
-		return err
+	certManager := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist(s.config.Domains...),
 	}
-
-	log.Info("starting HTTP Listener on Port 80")
-	go func() {
-		if err := http.ListenAndServe(":80", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			httpx.Redirect(w, &httpx.RedirectURL{
-				URL:         fmt.Sprintf("https://%s:443%s", s.config.Domains[0], r.URL.Path),
-				Code:        http.StatusPermanentRedirect,
-				ContentType: "text/html",
-			})
-		})); err != nil {
-			log.Error("listen to port 80 failed", log.Err(err))
-		}
-	}()
-
-	tlsConf := tlsconfig.NewServerTLSConfig(tlsconfig.TLSModeServerStrict)
-	tlsConf.GetCertificate = certReloadAgent.GetCertificateFunc()
+	certManager.Cache = autocert.DirCache(s.autoCertDir)
 
 	middlewareList := []mux.MiddlewareFunc{
 		auth.DetectBasicMiddleware(auth.CredentialsMangerFunc(func(user string) (string, error) {
@@ -288,18 +276,28 @@ func (s *MNServer) startAutoCertAPIServer() error {
 	for _, m := range middlewareList {
 		handler = m.Middleware(handler)
 	}
-
-	// init server
+	// create the server itself
 	srv := &http.Server{
-		Addr:      ":443",
-		TLSConfig: tlsConf,
-		Handler:   handler,
+		Addr: ":https",
+		TLSConfig: &tls.Config{
+			GetCertificate: certManager.GetCertificate,
+		},
+		Handler: handler,
 	}
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
 			s.Errors <- err
 		}
 	}()
+
+	log.Info("starting HTTP Listener on Port 80")
+	go func() {
+		h := certManager.HTTPHandler(nil)
+		if err := http.ListenAndServe(":80", h); err != nil {
+			log.Error("listen to port 80 failed", log.Err(err))
+		}
+	}()
+
 	return nil
 }
 

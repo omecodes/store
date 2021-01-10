@@ -19,7 +19,7 @@ var (
 	caPort    int
 	apiPort   int
 	bindIP    string
-	domain    string
+	domains   []string
 	dbURI     string
 	wDir      string
 	cmd       *cobra.Command
@@ -54,7 +54,7 @@ func init() {
 	flags.IntVar(&caPort, "ca", 9092, "CA server port")
 	flags.IntVar(&apiPort, "api", 8080, "API server port")
 	flags.StringVar(&bindIP, "ip", "", "Http server address")
-	flags.StringVar(&domain, "domain", "", "Domain name")
+	flags.StringArrayVar(&domains, "domain", nil, "Domain names")
 	flags.StringVar(&jwtSecret, "jwt-secret", "", "Secret used to verify JWT hmac based signature")
 	flags.StringVar(&dbURI, "db-uri", "bome:bome@(127.0.0.1:3306)/bome?charset=utf8", "MySQL database source name")
 
@@ -92,14 +92,14 @@ func run(cmd *cobra.Command, args []string) {
 	config := oms.MsConfig{
 		Name:         "om-master",
 		BindIP:       bindIP,
-		Domain:       domain,
+		Domains:      domains,
 		RegistryPort: regPort,
 		CAPort:       caPort,
 		APIPort:      apiPort,
 		DBUri:        dbURI,
 		WorkingDir:   wDir,
 		JWTSecret:    jwtSecret,
-		Development:  dev,
+		Dev:          dev,
 	}
 
 	server := oms.NewMSServer(config)
