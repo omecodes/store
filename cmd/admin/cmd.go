@@ -61,5 +61,7 @@ func init() {
 	flags := password.PersistentFlags()
 	flags.IntVar(&passwordLen, "len", 16, "Password length")
 	flags.IntVar(&rounds, "rnd", 50000, "Password derivation rounds count")
-	flags.StringVar(&name, "out", "admin-pbkdf2", "output filename")
+	flags.StringVar(&name, "out", "admin", "output filename")
+
+	Cmd.AddCommand(password)
 }

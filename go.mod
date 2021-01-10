@@ -33,6 +33,7 @@ require (
 	github.com/tidwall/gjson v1.6.7
 	github.com/transip/gotransip/v6 v6.3.1 // indirect
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
+	golang.org/x/oauth2 v0.0.0-20201208152858-08078c50e5b5
 	golang.org/x/sys v0.0.0-20210108172913-0df2131ae363 // indirect
 	golang.org/x/text v0.3.5
 	google.golang.org/genproto v0.0.0-20210108203827-ffc7fda8c3d7

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/omecodes/store/admin"
 	"os"
 	"path/filepath"
 
@@ -11,6 +10,7 @@ import (
 
 	"github.com/omecodes/common/utils/prompt"
 	oms "github.com/omecodes/store"
+	"github.com/omecodes/store/cmd/admin"
 )
 
 var (
