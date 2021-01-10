@@ -25,19 +25,19 @@ func GetCredentialsManager(ctx context.Context) CredentialsManager {
 	return o.(CredentialsManager)
 }
 
-func GetProviders(ctx context.Context) ProviderStore {
+func GetProviders(ctx context.Context) ProviderManager {
 	o := ctx.Value(ctxProviders{})
 	if o == nil {
 		return nil
 	}
-	return o.(ProviderStore)
+	return o.(ProviderManager)
 }
 
 func Context(parent context.Context, a *pb.Auth) context.Context {
 	return context.WithValue(parent, ctxAuthentication{}, a)
 }
 
-func ContextWithProviders(parent context.Context, providers ProviderStore) context.Context {
+func ContextWithProviders(parent context.Context, providers ProviderManager) context.Context {
 	return context.WithValue(parent, ctxProviders{}, providers)
 }
 

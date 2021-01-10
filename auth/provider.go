@@ -17,26 +17,26 @@ type Provider struct {
 	Active bool           `json:"active"`
 }
 
-type ProviderStore interface {
+type ProviderManager interface {
 	Save(provider *Provider) error
 	Get(name string) (*Provider, error)
 	GetAll(hideConfig bool) ([]*Provider, error)
 	Delete(name string) error
 }
 
-func NewSQLProviderStore(db *sql.DB, dialect string, tableName string) (*sqlProviderStore, error) {
+func NewProviderSQLManager(db *sql.DB, dialect string, tableName string) (*sqlProviderManager, error) {
 	store, err := bome.NewJSONMap(db, dialect, tableName)
 	if err != nil {
 		return nil, err
 	}
-	return &sqlProviderStore{store: store}, nil
+	return &sqlProviderManager{store: store}, nil
 }
 
-type sqlProviderStore struct {
+type sqlProviderManager struct {
 	store *bome.JSONMap
 }
 
-func (s *sqlProviderStore) Save(provider *Provider) error {
+func (s *sqlProviderManager) Save(provider *Provider) error {
 	data, err := json.Marshal(provider)
 	if err != nil {
 		return err
@@ -48,7 +48,7 @@ func (s *sqlProviderStore) Save(provider *Provider) error {
 	})
 }
 
-func (s *sqlProviderStore) Get(name string) (*Provider, error) {
+func (s *sqlProviderManager) Get(name string) (*Provider, error) {
 	strEncoded, err := s.store.Get(name)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (s *sqlProviderStore) Get(name string) (*Provider, error) {
 	return provider, err
 }
 
-func (s *sqlProviderStore) GetAll(hideConfig bool) ([]*Provider, error) {
+func (s *sqlProviderManager) GetAll(hideConfig bool) ([]*Provider, error) {
 	c, err := s.store.List()
 	if err != nil {
 		return nil, err
@@ -92,6 +92,6 @@ func (s *sqlProviderStore) GetAll(hideConfig bool) ([]*Provider, error) {
 	return providers, nil
 }
 
-func (s *sqlProviderStore) Delete(name string) error {
+func (s *sqlProviderManager) Delete(name string) error {
 	return s.store.Delete(name)
 }
