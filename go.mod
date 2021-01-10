@@ -12,8 +12,6 @@ require (
 	github.com/cloudflare/cloudflare-go v0.13.7 // indirect
 	github.com/cpu/goacmedns v0.1.1 // indirect
 	github.com/deepmap/oapi-codegen v1.4.2 // indirect
-	github.com/foomo/simplecert v1.8.1
-	github.com/foomo/tlsconfig v0.0.0-20180418120404-b67861b076c9
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.4.3
 	github.com/google/cel-go v0.6.0
@@ -31,10 +29,10 @@ require (
 	github.com/omecodes/service v0.0.0-20210105205118-f4ff2592af2b
 	github.com/omecodes/services-ca v0.0.0-20201224183919-c7cef3fb9aa8
 	github.com/sethvargo/go-password v0.2.0
-	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.1.1
 	github.com/tidwall/gjson v1.6.7
 	github.com/transip/gotransip/v6 v6.3.1 // indirect
+	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/sys v0.0.0-20210108172913-0df2131ae363 // indirect
 	golang.org/x/text v0.3.5
 	google.golang.org/genproto v0.0.0-20210108203827-ffc7fda8c3d7
