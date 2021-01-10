@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
@@ -427,8 +426,14 @@ func (s *sqlCollection) Search(ctx context.Context, expression *pb.BooleanExp) (
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(ids)
-	return nil, errors.Unavailable
+
+	c := &idsListCursor{
+		ids: ids,
+		getObjectFunc: func(id string) (*pb.Object, error) {
+			return s.Get(ctx, id, pb.GetOptions{})
+		},
+	}
+	return pb.NewCursor(c, c), nil
 }
 
 func (s *sqlCollection) Clear() error {
