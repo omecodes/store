@@ -8,20 +8,97 @@ info:
     email: "omecodes@gmail.com"
   license:
     name: "GNU Affero General Public License v3.0"
-host: ""
+host: "firexio.com"
 basePath: "/"
 tags:
-  - name: "Store"
-    description: "Objects backend server"
+  - name: "Objects"
+    description: "JSON documents"
+  - name: "Collections"
+    description: "Class of objects"
 schemes:
   - "https"
   - "http"
 
 paths:
-  /objects:
+
+  /collections:
     put:
       tags:
-        - "Store"
+        - "Collections"
+      summary: "Create a collection and define default indexes for all its objects"
+      operationId: "CreateCollection"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+      responses:
+        "400":
+          description: "Invalid input"
+        "403":
+          description: "You are not authorized to create a resource"
+    get:
+      tags:
+        - "Collections"
+      summary: "List all collections"
+      description: ""
+      operationId: "ListCollections"
+      produces:
+        - "application/json"
+      responses:
+        "403":
+          description: "You are not authorized to read this resource"
+        "404":
+          description: "Resource not found"
+
+  /collections/{id}:
+    parameters:
+      - in: path
+        name: "id"
+        required: true
+        type: string
+        description: "collection id"
+    get:
+      tags:
+        - "Collections"
+      summary: "Get collection info"
+      description: ""
+      operationId: "GetCollection"
+      produces:
+        - "application/json"
+      responses:
+        "403":
+          description: "You are not authorized to read this resource"
+        "404":
+          description: "Resource not found"
+    delete:
+      tags:
+        - "Collections"
+      summary: "Delete a collection"
+      description: ""
+      operationId: "DeleteCollection"
+      produces:
+        - "application/json"
+      responses:
+        "403":
+          description: "You are not authorized to delete this resource"
+        "404":
+          description: "Resource not found"
+
+  /objects/{collection}:
+    parameters:
+      - in: path
+        name: "collection"
+        required: true
+        type: string
+        description: "collection id"
+    put:
+      tags:
+        - "Objects"
       summary: "Saves an object"
       operationId: "CreateObject"
       consumes:
@@ -40,7 +117,7 @@ paths:
           description: "You are not authorized to create a resource"
     get:
       tags:
-        - "Store"
+        - "Objects"
       summary: "Get objects list"
       description: ""
       operationId: "ListObjects"
@@ -63,7 +140,7 @@ paths:
           description: "Resource not found"
     post:
       tags:
-        - "Store"
+        - "Objects"
       summary: "Search for objects"
       description: ""
       operationId: "SearchObjects"
@@ -88,8 +165,13 @@ paths:
           description: "You are not authorized to read this resource"
         "404":
           description: "Resource not found"
-  /objects/{id}:
+  /objects/{collection}/{id}:
     parameters:
+      - in: path
+        name: "collection"
+        required: true
+        type: string
+        description: "collection id"
       - in: path
         name: "id"
         required: true
@@ -97,7 +179,7 @@ paths:
         description: "object id"
     put:
       tags:
-        - "Store"
+        - "Objects"
       summary: "Save an object to the store with id"
       operationId: "CreateObjectWithID"
       consumes:
@@ -116,7 +198,7 @@ paths:
           description: "You are not authorized to create a resource"
     patch:
       tags:
-        - "Store"
+        - "Objects"
       summary: "Patch an object"
       description: ""
       operationId: "Patch"
@@ -142,7 +224,7 @@ paths:
           description: "Resource not found"
     get:
       tags:
-        - "Store"
+        - "Objects"
       summary: "Get an object"
       description: ""
       operationId: "GetObject"
@@ -162,7 +244,7 @@ paths:
           description: "Resource not found"
     delete:
       tags:
-        - "Store"
+        - "Objects"
       summary: "Delete an object"
       description: ""
       operationId: "DeleteData"
@@ -177,8 +259,13 @@ paths:
           description: "You are not authorized to delete this resource"
         "404":
           description: "Resource not found"
-  /objects/{id}/acl:
+  /objects/{collection}/{id}/acl:
     parameters:
+      - in: path
+        name: "collection"
+        required: true
+        type: string
+        description: "collection id"
       - in: path
         name: "id"
         required: true
@@ -186,7 +273,7 @@ paths:
         description: "object id"
     get:
       tags:
-        - "Store"
+        - "Objects"
       summary: "Get an object ACL"
       description: ""
       operationId: "GetACL"
@@ -199,7 +286,7 @@ paths:
           description: "Resource not found"
     post:
       tags:
-        - "Store"
+        - "Objects"
       summary: "Update object ACL"
       description: ""
       operationId: "UpdateACL"
