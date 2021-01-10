@@ -24,5 +24,3 @@ script:
   - |
     cd cmd/mn-server
     go build
-
-  - go test -v ./...
