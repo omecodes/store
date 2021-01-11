@@ -37,7 +37,7 @@ func (e *Engine) Feed(msg *pb.MessageFeed) error {
 
 func (e *Engine) CreateTextMapping(mapping *pb.TextMapping) error {
 	analyzedText := e.analyzer(mapping.Text)
-	stream := e.tokenizer.TokenizeText(analyzedText)
+	stream := e.tokenizer.TokenizeText(analyzedText, mapping.PrefixMappingSize)
 
 	var err error
 	for {
