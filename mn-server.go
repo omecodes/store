@@ -62,6 +62,7 @@ type MNServer struct {
 	listener net.Listener
 	Errors   chan error
 	server   *http.Server
+	db       *sql.DB
 }
 
 func (s *MNServer) init() error {
@@ -78,32 +79,30 @@ func (s *MNServer) init() error {
 		}
 	}
 
-	db, err := sql.Open("mysql", s.config.DSN)
+	s.db = GetDB("mysql", s.config.DSN)
+
+	var err error
+	s.accessStore, err = acl.NewSQLStore(s.db, bome.MySQL, "objects_acl")
 	if err != nil {
 		return err
 	}
 
-	s.accessStore, err = acl.NewSQLStore(db, bome.MySQL, "objects_acl")
+	s.settings, err = objects.NewSQLSettings(s.db, bome.MySQL, "objects_settings")
 	if err != nil {
 		return err
 	}
 
-	s.settings, err = objects.NewSQLSettings(db, bome.MySQL, "objects_settings")
+	s.objects, err = objects.NewSQLStore(s.db, bome.MySQL, "objects")
 	if err != nil {
 		return err
 	}
 
-	s.objects, err = objects.NewSQLStore(db, bome.MySQL, "objects")
+	s.credentialsManager, err = auth.NewCredentialsSQLManager(s.db, bome.MySQL, "agents", s.config.AdminInfo)
 	if err != nil {
 		return err
 	}
 
-	s.credentialsManager, err = auth.NewCredentialsSQLManager(db, bome.MySQL, "agents", s.config.AdminInfo)
-	if err != nil {
-		return err
-	}
-
-	s.authenticationProviders, err = auth.NewProviderSQLManager(db, bome.MySQL, "auth_providers")
+	s.authenticationProviders, err = auth.NewProviderSQLManager(s.db, bome.MySQL, "auth_providers")
 	if err != nil {
 		return err
 	}
@@ -295,4 +294,5 @@ func (s *MNServer) enrichContext(next http.Handler) http.Handler {
 // Stop stops API server
 func (s *MNServer) Stop() {
 	_ = s.listener.Close()
+	_ = s.db.Close()
 }

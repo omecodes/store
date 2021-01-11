@@ -58,10 +58,10 @@ type MSServer struct {
 	registry                ome.Registry
 	caServer                *sca.Server
 	autoCertDir             string
+	db                      *sql.DB
 }
 
 func (s *MSServer) init() error {
-	var err error
 
 	if !s.config.Dev {
 		s.autoCertDir = filepath.Join(s.config.WorkingDir, "autocert")
@@ -71,22 +71,20 @@ func (s *MSServer) init() error {
 		}
 	}
 
-	db, err := sql.Open("mysql", s.config.DBUri)
+	s.db = GetDB("mysql", s.config.DBUri)
+
+	var err error
+	s.settings, err = objects.NewSQLSettings(s.db, bome.MySQL, "objects_settings")
 	if err != nil {
 		return err
 	}
 
-	s.settings, err = objects.NewSQLSettings(db, bome.MySQL, "objects_settings")
+	s.credentialsManager, err = auth.NewCredentialsSQLManager(s.db, bome.MySQL, "agents", s.config.AdminInfo)
 	if err != nil {
 		return err
 	}
 
-	s.credentialsManager, err = auth.NewCredentialsSQLManager(db, bome.MySQL, "agents", s.config.AdminInfo)
-	if err != nil {
-		return err
-	}
-
-	s.authenticationProviders, err = auth.NewProviderSQLManager(db, bome.MySQL, "auth_providers")
+	s.authenticationProviders, err = auth.NewProviderSQLManager(s.db, bome.MySQL, "auth_providers")
 	if err != nil {
 		return err
 	}
@@ -312,5 +310,7 @@ func (s *MSServer) Stop() error {
 			return err
 		}
 	}
+
+	_ = s.db.Close()
 	return s.caServer.Stop()
 }
