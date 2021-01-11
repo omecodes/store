@@ -48,27 +48,35 @@ func (p *PolicyHandler) DeleteCollection(ctx context.Context, id string) error {
 	return p.BaseHandler.DeleteCollection(ctx, id)
 }
 
-func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
+func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
 	ai := auth.Get(ctx)
 	if ai == nil {
 		return "", errors.Forbidden
 	}
 
-	docRules := security.AccessRules["$"]
+	if accessSecurityRules == nil {
+		collectionInfo, err := p.next.GetCollection(ctx, collection)
+		if err != nil {
+			return "", err
+		}
+		accessSecurityRules = collectionInfo.DefaultAccessSecurityRules
+	}
+
+	docRules := accessSecurityRules.AccessRules["$"]
 	if docRules == nil {
 		docRules = &pb.AccessRules{}
-		security.AccessRules["$"] = docRules
+		accessSecurityRules.AccessRules["$"] = docRules
 	}
 
 	userDefaultRule := fmt.Sprintf("auth.uid=='%s'", ai.Uid)
 	if len(docRules.Read) == 0 {
-		docRules.Read = append(docRules.Read, userDefaultRule, "auth.worker", "auth.uid=='admin'")
+		docRules.Read = append(docRules.Read, userDefaultRule, "auth.worker || auth.uid=='admin'")
 	} else {
-		docRules.Read = append(docRules.Read, "auth.worker", "auth.uid=='admin'")
+		docRules.Read = append(docRules.Read, "auth.worker || auth.uid=='admin'")
 	}
 
 	if len(docRules.Write) == 0 {
-		docRules.Write = append(docRules.Write, userDefaultRule, "auth.worker", "auth.uid=='admin'")
+		docRules.Write = append(docRules.Write, userDefaultRule, "auth.worker || auth.uid=='admin'")
 	} else {
 		docRules.Write = append(docRules.Write, "auth.worker", "auth.uid=='admin'")
 	}
@@ -78,7 +86,7 @@ func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object
 	}
 
 	object.Header.CreatedBy = ai.Uid
-	return p.BaseHandler.PutObject(ctx, collection, object, security, indexes, opts)
+	return p.BaseHandler.PutObject(ctx, collection, object, accessSecurityRules, indexes, opts)
 }
 
 func (p *PolicyHandler) GetObject(ctx context.Context, collection string, id string, opts pb.GetOptions) (*pb.Object, error) {
@@ -98,11 +106,34 @@ func (p *PolicyHandler) PatchObject(ctx context.Context, collection string, patc
 	return p.BaseHandler.PatchObject(ctx, collection, patch, opts)
 }
 
+func (p *PolicyHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *pb.PathAccessRules, opts pb.MoveOptions) error {
+	err := assetActionAllowedOnObject(&ctx, collection, objectID, pb.AllowedTo_read, "")
+	if err != nil {
+		return err
+	}
+
+	err = assetActionAllowedOnObject(&ctx, collection, objectID, pb.AllowedTo_delete, "")
+	if err != nil {
+		return err
+	}
+
+	if accessSecurityRules == nil {
+		collectionInfo, err := p.next.GetCollection(ctx, targetCollection)
+		if err != nil {
+			return err
+		}
+		accessSecurityRules = collectionInfo.DefaultAccessSecurityRules
+	}
+
+	return p.next.MoveObject(ctx, collection, objectID, targetCollection, accessSecurityRules, opts)
+}
+
 func (p *PolicyHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*pb.Header, error) {
 	err := assetActionAllowedOnObject(&ctx, collection, id, pb.AllowedTo_read, "")
 	if err != nil {
 		return nil, err
 	}
+
 	return p.BaseHandler.GetObjectHeader(ctx, collection, id)
 }
 

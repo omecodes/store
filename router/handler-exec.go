@@ -100,6 +100,37 @@ func (e *ExecHandler) PatchObject(ctx context.Context, collection string, patch 
 	return storage.Patch(ctx, collection, patch)
 }
 
+func (e *ExecHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *pb.PathAccessRules, opts pb.MoveOptions) error {
+	accessStore := acl.GetStore(ctx)
+	if accessStore == nil {
+		log.Info("exec-handler.MoveObject: missing access store in context")
+		return errors.Internal
+	}
+
+	storage := objects.Get(ctx)
+	if storage == nil {
+		log.Error("exec-handler.PutObject: missing storage in context")
+		return errors.Internal
+	}
+
+	object, err := storage.Get(ctx, collection, objectID, pb.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	err = storage.Save(ctx, targetCollection, object)
+	if err != nil {
+		return err
+	}
+
+	err = accessStore.SaveRules(ctx, targetCollection, objectID, accessSecurityRules)
+	if err != nil {
+		return err
+	}
+
+	return accessStore.Delete(ctx, collection, objectID)
+}
+
 func (e *ExecHandler) GetObject(ctx context.Context, collection string, id string, opts pb.GetOptions) (*pb.Object, error) {
 	storage := objects.Get(ctx)
 	if storage == nil {

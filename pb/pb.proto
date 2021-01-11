@@ -19,6 +19,7 @@ message Collection {
   string label = 2;
   string description = 3;
   repeated Index default_indexes = 4;
+  PathAccessRules default_access_security_rules = 5;
 }
 
 message AccessRules {
@@ -80,6 +81,7 @@ service HandlerUnit {
   rpc DeleteCollection(DeleteCollectionRequest) returns (DeleteCollectionResponse);
   rpc PutObject(PutObjectRequest) returns (PutObjectResponse);
   rpc PatchObject(PatchObjectRequest) returns (PatchObjectResponse);
+  rpc MoveObject(MoveObjectRequest) returns (MoveObjectResponse);
   rpc GetObject(GetObjectRequest) returns (GetObjectResponse);
   rpc DeleteObject(DeleteObjectRequest) returns (DeleteObjectResponse);
   rpc ObjectInfo(ObjectInfoRequest) returns (ObjectInfoResponse);
@@ -124,6 +126,14 @@ message PatchObjectRequest{
   Patch patch = 2;
 }
 message PatchObjectResponse{}
+
+message MoveObjectRequest {
+  string source_collection = 1;
+  string object_id = 2;
+  string target_collection = 3;
+  PathAccessRules access_security_rules = 4;
+}
+message MoveObjectResponse {}
 
 message GetObjectRequest {
   string Collection = 1;

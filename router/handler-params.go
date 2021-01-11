@@ -15,14 +15,30 @@ type ParamsHandler struct {
 	BaseHandler
 }
 
-func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
+func (p *ParamsHandler) CreateCollection(ctx context.Context, collection *pb.Collection) error {
+	if collection == nil || collection.DefaultAccessSecurityRules == nil || collection.Id == "" {
+		return errors.BadInput
+	}
+	return p.BaseHandler.CreateCollection(ctx, collection)
+}
+
+func (p *ParamsHandler) GetCollection(ctx context.Context, id string) (*pb.Collection, error) {
+	if id == "" {
+		return nil, errors.BadInput
+	}
+	return p.BaseHandler.GetCollection(ctx, id)
+}
+
+func (p *ParamsHandler) DeleteCollection(ctx context.Context, id string) error {
+	if id == "" {
+		return errors.BadInput
+	}
+	return p.BaseHandler.DeleteCollection(ctx, id)
+}
+
+func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
 	if collection == "" || object == nil || object.Header == nil || object.Header.Size == 0 {
 		return "", errors.BadInput
-	}
-
-	if security == nil {
-		security = new(pb.PathAccessRules)
-		security.AccessRules = map[string]*pb.AccessRules{}
 	}
 
 	settings := Settings(ctx)
@@ -47,7 +63,7 @@ func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object
 		return "", errors.BadInput
 	}
 
-	return p.next.PutObject(ctx, collection, object, security, indexes, opts)
+	return p.next.PutObject(ctx, collection, object, accessSecurityRules, indexes, opts)
 }
 
 func (p *ParamsHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts pb.PatchOptions) error {
@@ -74,6 +90,13 @@ func (p *ParamsHandler) PatchObject(ctx context.Context, collection string, patc
 	}
 
 	return p.next.PatchObject(ctx, collection, patch, opts)
+}
+
+func (p *ParamsHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *pb.PathAccessRules, opts pb.MoveOptions) error {
+	if collection == "" || objectID == "" || targetCollection == "" {
+		return errors.BadInput
+	}
+	return p.next.MoveObject(ctx, collection, objectID, targetCollection, accessSecurityRules, opts)
 }
 
 func (p *ParamsHandler) GetObject(ctx context.Context, collection string, id string, opts pb.GetOptions) (*pb.Object, error) {

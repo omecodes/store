@@ -23,6 +23,7 @@ type HandlerUnitClient interface {
 	DeleteCollection(ctx context.Context, in *DeleteCollectionRequest, opts ...grpc.CallOption) (*DeleteCollectionResponse, error)
 	PutObject(ctx context.Context, in *PutObjectRequest, opts ...grpc.CallOption) (*PutObjectResponse, error)
 	PatchObject(ctx context.Context, in *PatchObjectRequest, opts ...grpc.CallOption) (*PatchObjectResponse, error)
+	MoveObject(ctx context.Context, in *MoveObjectRequest, opts ...grpc.CallOption) (*MoveObjectResponse, error)
 	GetObject(ctx context.Context, in *GetObjectRequest, opts ...grpc.CallOption) (*GetObjectResponse, error)
 	DeleteObject(ctx context.Context, in *DeleteObjectRequest, opts ...grpc.CallOption) (*DeleteObjectResponse, error)
 	ObjectInfo(ctx context.Context, in *ObjectInfoRequest, opts ...grpc.CallOption) (*ObjectInfoResponse, error)
@@ -86,6 +87,15 @@ func (c *handlerUnitClient) PutObject(ctx context.Context, in *PutObjectRequest,
 func (c *handlerUnitClient) PatchObject(ctx context.Context, in *PatchObjectRequest, opts ...grpc.CallOption) (*PatchObjectResponse, error) {
 	out := new(PatchObjectResponse)
 	err := c.cc.Invoke(ctx, "/HandlerUnit/PatchObject", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *handlerUnitClient) MoveObject(ctx context.Context, in *MoveObjectRequest, opts ...grpc.CallOption) (*MoveObjectResponse, error) {
+	out := new(MoveObjectResponse)
+	err := c.cc.Invoke(ctx, "/HandlerUnit/MoveObject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -193,6 +203,7 @@ type HandlerUnitServer interface {
 	DeleteCollection(context.Context, *DeleteCollectionRequest) (*DeleteCollectionResponse, error)
 	PutObject(context.Context, *PutObjectRequest) (*PutObjectResponse, error)
 	PatchObject(context.Context, *PatchObjectRequest) (*PatchObjectResponse, error)
+	MoveObject(context.Context, *MoveObjectRequest) (*MoveObjectResponse, error)
 	GetObject(context.Context, *GetObjectRequest) (*GetObjectResponse, error)
 	DeleteObject(context.Context, *DeleteObjectRequest) (*DeleteObjectResponse, error)
 	ObjectInfo(context.Context, *ObjectInfoRequest) (*ObjectInfoResponse, error)
@@ -222,6 +233,9 @@ func (UnimplementedHandlerUnitServer) PutObject(context.Context, *PutObjectReque
 }
 func (UnimplementedHandlerUnitServer) PatchObject(context.Context, *PatchObjectRequest) (*PatchObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PatchObject not implemented")
+}
+func (UnimplementedHandlerUnitServer) MoveObject(context.Context, *MoveObjectRequest) (*MoveObjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MoveObject not implemented")
 }
 func (UnimplementedHandlerUnitServer) GetObject(context.Context, *GetObjectRequest) (*GetObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetObject not implemented")
@@ -359,6 +373,24 @@ func _HandlerUnit_PatchObject_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _HandlerUnit_MoveObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MoveObjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HandlerUnitServer).MoveObject(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/HandlerUnit/MoveObject",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HandlerUnitServer).MoveObject(ctx, req.(*MoveObjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _HandlerUnit_GetObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetObjectRequest)
 	if err := dec(in); err != nil {
@@ -482,6 +514,10 @@ var _HandlerUnit_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PatchObject",
 			Handler:    _HandlerUnit_PatchObject_Handler,
+		},
+		{
+			MethodName: "MoveObject",
+			Handler:    _HandlerUnit_MoveObject_Handler,
 		},
 		{
 			MethodName: "GetObject",

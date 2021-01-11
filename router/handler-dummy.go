@@ -23,11 +23,15 @@ func (d *dummyHandler) DeleteCollection(ctx context.Context, id string) error {
 	return nil
 }
 
-func (d *dummyHandler) PutObject(ctx context.Context, collection string, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
+func (d *dummyHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
 	return "", nil
 }
 
 func (d *dummyHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts pb.PatchOptions) error {
+	return nil
+}
+
+func (d *dummyHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *pb.PathAccessRules, opts pb.MoveOptions) error {
 	return nil
 }
 

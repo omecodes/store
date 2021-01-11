@@ -37,7 +37,6 @@ func (s *HTTPUnit) MuxRouter() *mux.Router {
 
 	r.Name("SetSettings").Methods(http.MethodPut).Path("/settings").Handler(http.HandlerFunc(s.setSettings))
 	r.Name("GetSettings").Methods(http.MethodGet).Path("/settings").Handler(http.HandlerFunc(s.getSettings))
-
 	settingsSubRouter := r.PathPrefix("/settings/").Subrouter()
 	settingsSubRouter.Name("SetSettings").Methods(http.MethodPost).Handler(http.HandlerFunc(s.setSettings))
 	settingsSubRouter.Name("GetSettings").Methods(http.MethodGet).Handler(http.HandlerFunc(s.getSettings))
@@ -47,12 +46,13 @@ func (s *HTTPUnit) MuxRouter() *mux.Router {
 	r.Name("DeleteCollection").Methods(http.MethodGet).Path("/collections/{id}").Handler(http.HandlerFunc(s.deleteCollection))
 	r.Name("GetCollection").Methods(http.MethodGet).Path("/collections/{id}").Handler(http.HandlerFunc(s.getCollection))
 
-	r.Name("Put").Methods(http.MethodPut).Path("/objects/{collection}").Handler(http.HandlerFunc(s.put))
-	r.Name("Patch").Methods(http.MethodPatch).Path("/objects/{collection}/{id}").Handler(http.HandlerFunc(s.patch))
-	r.Name("Get").Methods(http.MethodGet).Path("/objects/{collection}/{id}").Handler(http.HandlerFunc(s.get))
-	r.Name("Del").Methods(http.MethodDelete).Path("/objects/{collection}/{id}").Handler(http.HandlerFunc(s.del))
+	r.Name("PutObject").Methods(http.MethodPut).Path("/objects/{collection}").Handler(http.HandlerFunc(s.put))
+	r.Name("PatchObject").Methods(http.MethodPatch).Path("/objects/{collection}/{id}").Handler(http.HandlerFunc(s.patch))
+	r.Name("MoveObject").Methods(http.MethodPost).Path("/objects/{collection}/{id}").Handler(http.HandlerFunc(s.patch))
+	r.Name("GetObject").Methods(http.MethodGet).Path("/objects/{collection}/{id}").Handler(http.HandlerFunc(s.get))
+	r.Name("DeleteObject").Methods(http.MethodDelete).Path("/objects/{collection}/{id}").Handler(http.HandlerFunc(s.del))
 	r.Name("GetObjects").Methods(http.MethodGet).Path("/objects/{collection}").Handler(http.HandlerFunc(s.list))
-	r.Name("Search").Methods(http.MethodPost).Path("/objects/{collection}").Handler(http.HandlerFunc(s.search))
+	r.Name("SearchObjects").Methods(http.MethodPost).Path("/objects/{collection}").Handler(http.HandlerFunc(s.search))
 
 	return r
 }
@@ -126,6 +126,40 @@ func (s *HTTPUnit) patch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = route.PatchObject(ctx, collection, &patch, pb.PatchOptions{})
+	if err != nil {
+		w.WriteHeader(errors.HttpStatus(err))
+		return
+	}
+}
+
+func (s *HTTPUnit) move(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "application/json" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var request pb.MoveObjectRequest
+	err := jsonpb.Unmarshal(r.Body, &request)
+	if err != nil {
+		log.Error("failed to decode request body", log.Err(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	vars := mux.Vars(r)
+	collection := vars[pathItemCollection]
+	objectId := vars[pathItemId]
+
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = route.MoveObject(ctx, collection, objectId, request.TargetCollection, request.AccessSecurityRules, pb.MoveOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return

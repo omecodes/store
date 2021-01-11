@@ -88,6 +88,14 @@ func (h *handler) PatchObject(ctx context.Context, request *pb.PatchObjectReques
 	return &pb.PatchObjectResponse{}, route.PatchObject(ctx, "", request.Patch, pb.PatchOptions{})
 }
 
+func (h *handler) MoveObject(ctx context.Context, request *pb.MoveObjectRequest) (*pb.MoveObjectResponse, error) {
+	route, err := router.NewRoute(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.MoveObjectResponse{}, route.MoveObject(ctx, request.SourceCollection, request.ObjectId, request.TargetCollection, request.AccessSecurityRules, pb.MoveOptions{})
+}
+
 func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (*pb.GetObjectResponse, error) {
 	route, err := router.NewRoute(ctx)
 	if err != nil {

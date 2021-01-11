@@ -66,16 +66,17 @@ func (g *gRPCClientHandler) DeleteCollection(ctx context.Context, id string) err
 	return err
 }
 
-func (g *gRPCClientHandler) PutObject(ctx context.Context, collection string, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
+func (g *gRPCClientHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
 	client, err := clients.RouterGrpc(ctx, g.nodeType)
 	if err != nil {
 		return "", err
 	}
 
 	rsp, err := client.PutObject(auth.SetMetaWithExisting(ctx), &pb.PutObjectRequest{
-		AccessSecurityRules: security,
+		Collection:          collection,
 		Object:              object,
 		Indexes:             indexes,
+		AccessSecurityRules: accessSecurityRules,
 	})
 	if err != nil {
 		return "", err
@@ -91,7 +92,23 @@ func (g *gRPCClientHandler) PatchObject(ctx context.Context, collection string, 
 	}
 
 	_, err = client.PatchObject(auth.SetMetaWithExisting(ctx), &pb.PatchObjectRequest{
-		Patch: patch,
+		Collection: collection,
+		Patch:      patch,
+	})
+	return err
+}
+
+func (g *gRPCClientHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *pb.PathAccessRules, opts pb.MoveOptions) error {
+	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.MoveObject(auth.SetMetaWithExisting(ctx), &pb.MoveObjectRequest{
+		SourceCollection:    collection,
+		ObjectId:            objectID,
+		TargetCollection:    targetCollection,
+		AccessSecurityRules: accessSecurityRules,
 	})
 	return err
 }
@@ -103,9 +120,10 @@ func (g *gRPCClientHandler) GetObject(ctx context.Context, collection string, id
 	}
 
 	rsp, err := client.GetObject(auth.SetMetaWithExisting(ctx), &pb.GetObjectRequest{
-		ObjectId: id,
-		At:       opts.At,
-		InfoOnly: opts.Info,
+		Collection: collection,
+		ObjectId:   id,
+		At:         opts.At,
+		InfoOnly:   opts.Info,
 	})
 	if err != nil {
 		return nil, err
@@ -121,7 +139,8 @@ func (g *gRPCClientHandler) GetObjectHeader(ctx context.Context, collection stri
 	}
 
 	rsp, err := client.ObjectInfo(auth.SetMetaWithExisting(ctx), &pb.ObjectInfoRequest{
-		ObjectId: id,
+		Collection: collection,
+		ObjectId:   id,
 	})
 	if err != nil {
 		return nil, err

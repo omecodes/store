@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   description: "API specification for Objects Store"
-  version: "v0.0.0"
+  version: "v0.0.1"
   title: "Store API"
   termsOfService: ""
   contact:
@@ -11,10 +11,12 @@ info:
 host: "firexio.com"
 basePath: "/"
 tags:
-  - name: "Objects"
-    description: "JSON documents"
   - name: "Collections"
     description: "Class of objects"
+  - name: "Objects"
+    description: "JSON documents"
+  - name: "ACL"
+    description: "Objects access rule list"
 schemes:
   - "https"
   - "http"
@@ -165,6 +167,7 @@ paths:
           description: "You are not authorized to read this resource"
         "404":
           description: "Resource not found"
+
   /objects/{collection}/{id}:
     parameters:
       - in: path
@@ -222,6 +225,28 @@ paths:
           description: "You are not allowed to edit this resource"
         "404":
           description: "Resource not found"
+    post:
+      tags:
+        - "Objects"
+      summary: "Move an object from a collection to another"
+      description: ""
+      operationId: "Move"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+      responses:
+        "400":
+          description: "Bad input"
+        "403":
+          description: "You are not allowed to edit this resource"
+        "404":
+          description: "Resource not found"
     get:
       tags:
         - "Objects"
@@ -259,6 +284,7 @@ paths:
           description: "You are not authorized to delete this resource"
         "404":
           description: "Resource not found"
+
   /objects/{collection}/{id}/acl:
     parameters:
       - in: path
@@ -273,7 +299,7 @@ paths:
         description: "object id"
     get:
       tags:
-        - "Objects"
+        - "ACL"
       summary: "Get an object ACL"
       description: ""
       operationId: "GetACL"
@@ -286,7 +312,7 @@ paths:
           description: "Resource not found"
     post:
       tags:
-        - "Objects"
+        - "ACL"
       summary: "Update object ACL"
       description: ""
       operationId: "UpdateACL"

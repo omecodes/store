@@ -24,3 +24,7 @@ type GetOptions struct {
 }
 
 type PatchOptions struct{}
+
+type MoveOptions struct {
+	NewSecurity *PathAccessRules
+}
