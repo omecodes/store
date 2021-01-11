@@ -3,15 +3,22 @@ package se
 import "strings"
 
 type TextTokenizer interface {
-	TokenizeText(text string) TokenStream
+	TokenizeText(text string, originalMappedCount uint32) TokenStream
 }
 
 type textTokenizer struct {
 	text string
 }
 
-func (t *textTokenizer) TokenizeText(text string) TokenStream {
+func (t *textTokenizer) TokenizeText(text string, originalMappedCount uint32) TokenStream {
 	tokens := strings.Split(text, " ")
+	if originalMappedCount == 0 {
+		if len(text) < int(originalMappedCount) {
+			tokens = append(tokens, text)
+		} else {
+			tokens = append(tokens, text[:originalMappedCount])
+		}
+	}
 	return &tokenStream{tokens: tokens}
 }
 

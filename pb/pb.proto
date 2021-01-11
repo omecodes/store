@@ -232,7 +232,8 @@ message NumberMapping {
 message TextMapping {
   string text = 1;
   string field_name = 2;
-  string object_id = 4;
+  string object_id = 3;
+  uint32 prefix_mapping_size = 4;
 }
 
 message ObjectDeletedNotification {
