@@ -2,7 +2,6 @@ package oms
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/tls"
 	"database/sql"
 	"github.com/google/cel-go/cel"
@@ -13,7 +12,6 @@ import (
 	"github.com/omecodes/store/cenv"
 	"github.com/omecodes/store/objects"
 	"golang.org/x/crypto/acme/autocert"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -48,7 +46,6 @@ type MNServer struct {
 	initialized  bool
 	options      []netx.ListenOption
 	config       *MNConfig
-	key          []byte
 	celPolicyEnv *cel.Env
 	celSearchEnv *cel.Env
 	autoCertDir  string
@@ -117,11 +114,6 @@ func (s *MNServer) init() error {
 		return err
 	}
 
-	s.key, err = s.getStoredKey("token-key", 64)
-	if err != nil {
-		return err
-	}
-
 	_, err = s.settings.Get(objects.SettingsDataMaxSizePath)
 	if err != nil {
 		if !errors.IsNotFound(err) {
@@ -155,25 +147,6 @@ func (s *MNServer) init() error {
 		}
 	}
 	return nil
-}
-
-func (s *MNServer) getStoredKey(name string, size int) ([]byte, error) {
-	cookiesKeyFilename := filepath.Join(s.config.WorkingDir, name+".key")
-	key, err := ioutil.ReadFile(cookiesKeyFilename)
-	if err != nil {
-		key = make([]byte, size)
-		_, err = rand.Read(key)
-		if err != nil {
-			log.Error("could not generate secret key", log.Err(err), log.Field("name", name))
-			return nil, err
-		}
-		err = ioutil.WriteFile(cookiesKeyFilename, key, os.ModePerm)
-		if err != nil {
-			log.Error("could not save secret key", log.Err(err), log.Field("name", name))
-			return nil, err
-		}
-	}
-	return key, nil
 }
 
 func (s *MNServer) GetRouter(ctx context.Context) router.Router {
