@@ -155,7 +155,8 @@ func (g *gRPCClientHandler) DeleteObject(ctx context.Context, collection string,
 	}
 
 	_, err = client.DeleteObject(auth.SetMetaWithExisting(ctx), &pb.DeleteObjectRequest{
-		ObjectId: id,
+		Collection: collection,
+		ObjectId:   id,
 	})
 	return err
 }
@@ -186,7 +187,7 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, collection string, 
 	return pb.NewCursor(browser, closer), nil
 }
 
-func (g *gRPCClientHandler) SearchObjects(ctx context.Context, collection string, query *pb.BooleanExp) (*pb.Cursor, error) {
+func (g *gRPCClientHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error) {
 	client, err := clients.RouterGrpc(ctx, common.ServiceTypeHandler)
 	if err != nil {
 		return nil, err

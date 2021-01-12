@@ -155,7 +155,7 @@ func (d *dbClient) List(ctx context.Context, collection string, opts pb.ListOpti
 	return pb.NewCursor(browser, closer), nil
 }
 
-func (d *dbClient) Search(ctx context.Context, collection string, expr *pb.BooleanExp) (*pb.Cursor, error) {
+func (d *dbClient) Search(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error) {
 	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return nil, err
@@ -163,7 +163,7 @@ func (d *dbClient) Search(ctx context.Context, collection string, expr *pb.Boole
 
 	stream, err := objects.SearchObjects(ctx, &pb.SearchObjectsRequest{
 		Collection: collection,
-		Query:      expr,
+		Query:      query,
 	})
 
 	closer := pb.CloseFunc(func() error {

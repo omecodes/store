@@ -28,7 +28,6 @@ require (
 	github.com/omecodes/libome v0.0.0-20201225162725-c89c7a20a215
 	github.com/omecodes/service v0.0.0-20210105205118-f4ff2592af2b
 	github.com/omecodes/services-ca v0.0.0-20201224183919-c7cef3fb9aa8
-	github.com/sethvargo/go-password v0.2.0
 	github.com/spf13/cobra v1.1.1
 	github.com/tidwall/gjson v1.6.7
 	github.com/transip/gotransip/v6 v6.3.1 // indirect

@@ -32,5 +32,5 @@ type Objects interface {
 	// List returns a list of at most 'opts.Count' objects
 	List(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error)
 
-	Search(ctx context.Context, collection string, expr *pb.BooleanExp) (*pb.Cursor, error)
+	Search(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error)
 }

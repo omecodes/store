@@ -10,6 +10,7 @@ type Cursor interface {
 type Store interface {
 	SaveWordMapping(word string, field string, id string) error
 	SaveNumberMapping(num int64, field string, id string) error
-	Search(expression *pb.BooleanExp) (Cursor, error)
+	SavePropertiesMapping(id string, value string) error
+	Search(query *pb.SearchQuery) (Cursor, error)
 	DeleteObjectMappings(id string) error
 }

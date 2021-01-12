@@ -172,9 +172,9 @@ func (p *ParamsHandler) ListObjects(ctx context.Context, collection string, opts
 	return cursor, nil
 }
 
-func (p *ParamsHandler) SearchObjects(ctx context.Context, collection string, exp *pb.BooleanExp) (*pb.Cursor, error) {
-	if collection == "" || exp == nil {
+func (p *ParamsHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error) {
+	if collection == "" || query == nil {
 		return nil, errors.BadInput
 	}
-	return p.BaseHandler.SearchObjects(ctx, collection, exp)
+	return p.BaseHandler.SearchObjects(ctx, collection, query)
 }

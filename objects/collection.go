@@ -27,7 +27,7 @@ type Collection interface {
 	Info(ctx context.Context, objectID string) (*pb.Header, error)
 
 	// Search
-	Search(ctx context.Context, expression *pb.BooleanExp) (*pb.Cursor, error)
+	Search(ctx context.Context, query *pb.SearchQuery) (*pb.Cursor, error)
 
 	// Clear removes all objects store
 	Clear() error

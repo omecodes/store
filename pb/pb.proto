@@ -69,9 +69,25 @@ message ObjectList {
 }
 
 message Index {
-  string json_path = 1;
-  int32 field_type = 2;
-  string mapping_name = 3;
+  oneof info {
+    TextIndex text = 1;
+    NumberIndex number = 2;
+    PropertiesIndex properties = 3;
+  }
+}
+
+message TextIndex {
+  string path = 1;
+  string alias = 2;
+}
+
+message NumberIndex {
+  string path = 1;
+  string alias = 2;
+}
+
+message PropertiesIndex {
+  map<string, string> aliases = 1;
 }
 
 service HandlerUnit {
@@ -172,7 +188,7 @@ message ListObjectsResponse {
 
 message SearchObjectsRequest {
   string collection = 1;
-  BooleanExp query = 2;
+  SearchQuery query = 2;
 }
 
 
@@ -223,27 +239,79 @@ message DeleteRulesForPathResponse {}
 
 
 // SEARCH ENGINE
+
+message SearchQuery {
+  oneof query {
+    StrQuery text = 1;
+    NumQuery number = 2;
+    FieldQuery fields = 3;
+  }
+}
+
+message StrQuery {
+  oneof bool {
+    StrAnd and = 1;
+    StrOr or = 2;
+    StrEqual eq = 3;
+    Contains contains = 4;
+    StartsWith starts_with = 5;
+    EndsWith ends_with = 6;
+  }
+}
+
+message NumQuery {
+  oneof bool {
+    NumAnd and = 1;
+    NumOr or = 2;
+    Gt gt = 3;
+    Gte gte = 4;
+    Lt lt = 5;
+    Lte lte = 6;
+    NumbEq eq = 7;
+  }
+}
+
+message FieldQuery {
+  oneof bool {
+    And and = 1;
+    Or or = 2;
+    StartsWith starts_with =3;
+    EndsWith ends_with = 4;
+    Contains contains = 5;
+    StrEqual str_equal = 6;
+    Lt lt = 7;
+    Lte lte = 8;
+    Gt gt = 9;
+    Gte gte = 10;
+    NumbEq numb_eq = 11;
+  }
+}
+
 message MessageFeed {
   oneof message {
     NumberMapping num_mapping = 1;
     TextMapping text_mapping = 2;
-    ObjectDeletedNotification delete = 3;
+    PropertiesMapping properties_mapping = 3;
+    ObjectDeletedNotification delete = 4;
   }
 }
 
-message EngineStatus {}
-
 message NumberMapping {
   int64 number = 1;
-  string field_name = 2;
+  string name = 2;
   string object_id = 4;
 }
 
 message TextMapping {
   string text = 1;
-  string field_name = 2;
+  string name = 2;
   string object_id = 3;
   uint32 prefix_mapping_size = 4;
+}
+
+message PropertiesMapping {
+  string object_id = 1;
+  string json = 2;
 }
 
 message ObjectDeletedNotification {
@@ -255,20 +323,20 @@ service SearchEngine {
   rpc Search(ResearchRequest) returns (stream SearchResult);
 }
 
+message ResearchRequest {
+  SearchQuery query = 1;
+}
 message SearchResult {
   repeated string ids = 1;
 }
 
 message FeedResponse {}
-
-message ResearchRequest {
-  BooleanExp match_expression = 1;
-}
-
 message ResearchResponse {
   repeated string ids = 1;
 }
 
+
+// CONDITION
 message StartsWith {
   string field = 1;
   string value = 2;
@@ -289,12 +357,13 @@ message StrEqual {
   string value = 2;
 }
 
-message Not {
-  BooleanExp expressions = 1;
+message Like {
+  string field = 1;
+  string value = 2;
 }
 
-message Or {
-  repeated BooleanExp expressions = 1;
+message Not {
+  FieldQuery expressions = 1;
 }
 
 message Gt {
@@ -322,17 +391,26 @@ message NumbEq {
   int64 value = 2;
 }
 
-message BooleanExp {
-  oneof expression {
-    Or or = 1;
-    StartsWith starts_with = 2;
-    EndsWith ends_with = 3;
-    Contains contains = 4;
-    StrEqual str_equal = 5;
-    Lt lt = 6;
-    Lte lte = 7;
-    Gt gt = 8;
-    Gte gte = 9;
-    NumbEq numb_eq = 10;
-  }
+message And {
+  repeated FieldQuery queries = 1;
+}
+
+message Or {
+  repeated FieldQuery queries = 1;
+}
+
+message NumAnd {
+  repeated NumQuery queries = 1;
+}
+
+message NumOr {
+  repeated NumQuery queries = 1;
+}
+
+message StrAnd {
+  repeated StrQuery queries = 1;
+}
+
+message StrOr {
+  repeated StrQuery queries = 1;
 }

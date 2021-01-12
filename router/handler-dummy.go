@@ -51,6 +51,6 @@ func (d *dummyHandler) ListObjects(ctx context.Context, collection string, opts 
 	return nil, nil
 }
 
-func (d *dummyHandler) SearchObjects(ctx context.Context, collection string, exp *pb.BooleanExp) (*pb.Cursor, error) {
+func (d *dummyHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error) {
 	return nil, nil
 }

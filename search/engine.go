@@ -46,23 +46,27 @@ func (e *Engine) CreateTextMapping(mapping *pb.TextMapping) error {
 			return nil
 		}
 
-		err = e.store.SaveWordMapping(token, mapping.FieldName, mapping.ObjectId)
+		err = e.store.SaveWordMapping(token, mapping.Name, mapping.ObjectId)
 		if err != nil {
 			return err
 		}
 	}
 }
 
+func (e *Engine) CreatePropertiesMapping(mapping *pb.PropertiesMapping) error {
+	return e.store.SavePropertiesMapping(mapping.ObjectId, mapping.Json)
+}
+
 func (e *Engine) CreateNumberMapping(m *pb.NumberMapping) error {
-	return e.store.SaveNumberMapping(m.Number, m.FieldName, m.ObjectId)
+	return e.store.SaveNumberMapping(m.Number, m.Name, m.ObjectId)
 }
 
 func (e *Engine) DeleteObjectMappings(id string) error {
 	return e.store.DeleteObjectMappings(id)
 }
 
-func (e *Engine) Search(expression *pb.BooleanExp) ([]string, error) {
-	c, err := e.store.Search(expression)
+func (e *Engine) Search(query *pb.SearchQuery) ([]string, error) {
+	c, err := e.store.Search(query)
 	if err != nil {
 		return nil, err
 	}

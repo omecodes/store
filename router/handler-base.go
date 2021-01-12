@@ -53,6 +53,6 @@ func (b *BaseHandler) ListObjects(ctx context.Context, collection string, opts p
 	return b.next.ListObjects(ctx, collection, opts)
 }
 
-func (b *BaseHandler) SearchObjects(ctx context.Context, collection string, exp *pb.BooleanExp) (*pb.Cursor, error) {
-	return b.next.SearchObjects(ctx, collection, exp)
+func (b *BaseHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error) {
+	return b.next.SearchObjects(ctx, collection, query)
 }

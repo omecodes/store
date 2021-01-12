@@ -15,6 +15,16 @@ const wordsTableName = "$prefix$_words_mapping"
 
 const numbersTableName = "$prefix$_numbers_mapping"
 
+const propsTableName = "$prefix$_props_mapping"
+
+const propsTablesDef = `
+create table if not exists $prefix$_props_mapping (
+  	object varchar(255) not null,
+    value LONGTEXT not null,
+    primary key(object)
+);
+`
+
 const wordsTablesDef = `
 create table if not exists $prefix$_words_mapping (
   	token varchar(255) not null,
@@ -40,6 +50,7 @@ insert into $prefix$_words_mapping values(?, ?, ?);
 const appendToWord = `
 update $prefix$_words_mapping set objects=concat(objects, ?) where token=? and field=?;
 `
+
 const deleteObjectWordMapping = `
 update $prefix$_words_mapping set objects=replace(objects, ?, ' ') where objects like ?;
 `
@@ -54,6 +65,18 @@ update $prefix$_numbers_mapping set objects=concat(objects, ?) where num=? and f
 
 const deleteObjectNumberMapping = `
 update $prefix$_numbers_mapping set objects=replace(objects, ?, ' ') where objects like ?;
+`
+
+const insertProps = `
+insert into $prefix$_props_mapping values(?, ?);
+`
+
+const updateProps = `
+update $prefix$_props_mapping set value=concat(objects, ?) where token=? and field=?;
+`
+
+const deleteProps = `
+delete from $prefix$_props_mapping where id=?;
 `
 
 func NewSQLIndexStore(db *sql.DB, dialect string, tablePrefix string) (Store, error) {
@@ -84,6 +107,9 @@ func NewSQLIndexStore(db *sql.DB, dialect string, tablePrefix string) (Store, er
 	err = s.db.RawExec(wordsTablesDef).Error
 	if err == nil {
 		err = s.db.RawExec(numbersTablesDef).Error
+		if err == nil {
+			err = s.db.RawExec(propsTablesDef).Error
+		}
 	}
 	return s, err
 }
@@ -113,139 +139,223 @@ func (s *sqlStore) SaveNumberMapping(num int64, field string, id string) error {
 	return err
 }
 
-func (s *sqlStore) DeleteObjectMappings(id string) error {
-	err := s.db.RawExec(deleteObjectNumberMapping, id, "' %"+id+"%'").Error
-	if err == nil {
-		err = s.db.RawExec(deleteObjectWordMapping, id, "' %"+id+"%'").Error
+func (s *sqlStore) SavePropertiesMapping(id string, value string) error {
+	err := s.db.RawExec(insertProps, id, value).Error
+	if err != nil && bome.IsPrimaryKeyConstraintError(err) {
+		err = s.db.RawExec(updateProps, value, id).Error
+		if err != nil {
+			log.Error("failed to create index mapping", log.Err(err))
+		}
 	}
 	return err
 }
 
-func (s *sqlStore) Search(expression *pb.BooleanExp) (Cursor, error) {
-	affectedTables := &tables{}
-	var tableNames []string
-
-	whereClause := evaluate(expression, affectedTables)
-
-	if affectedTables.numberMapping {
-		tableNames = append(tableNames, numbersTableName)
-	}
-
-	if affectedTables.textMapping {
-		tableNames = append(tableNames, wordsTableName)
-	}
-
-	if len(tableNames) == 0 {
-		return nil, errors.New("bad input")
-	}
-
-	var query string
-	if len(tableNames) > 1 {
-		var selection []string
-		for _, tableName := range tableNames {
-			selection = append(selection, tableName+".objects")
+func (s *sqlStore) DeleteObjectMappings(id string) error {
+	err := s.db.RawExec(deleteObjectNumberMapping, id, "' %"+id+"%'").Error
+	if err == nil {
+		err = s.db.RawExec(deleteObjectWordMapping, id, "' %"+id+"%'").Error
+		if err == nil {
+			s.db.RawExec(deleteProps, id)
 		}
-		query += fmt.Sprintf("select concat(%s) from %s where %s)", strings.Join(selection, "'<>'"), strings.Join(tableNames, ","), whereClause)
-	} else {
-		query += fmt.Sprintf("select objects from %s where %s", tableNames[0], whereClause)
 	}
-
-	cursor, err := s.db.RawQuery(query, bome.StringScanner)
-	if err != nil {
-		return nil, err
-	}
-
-	return &sqlSearchCursor{
-		cursor: cursor,
-	}, err
+	return err
 }
 
-type tables struct {
-	numberMapping bool
-	textMapping   bool
+func (s *sqlStore) Search(query *pb.SearchQuery) (Cursor, error) {
+	return s.performSearch(query)
 }
 
-func evaluate(expr *pb.BooleanExp, tables *tables) string {
+func (s *sqlStore) performSearch(query *pb.SearchQuery) (Cursor, error) {
+	switch q := query.Query.(type) {
+
+	case *pb.SearchQuery_Text:
+		sqlQuery := "select value from " + wordsTableName + " where " + evaluateStrQuery(q.Text)
+		c, err := s.db.RawQuery(sqlQuery, bome.StringScanner)
+		return &aggregatedStrIdsCursor{cursor: c}, err
+
+	case *pb.SearchQuery_Number:
+		sqlQuery := "select value from " + numbersTableName + " where " + evaluateNumQuery(q.Number)
+		c, err := s.db.RawQuery(sqlQuery, bome.StringScanner)
+		return &aggregatedStrIdsCursor{cursor: c}, err
+
+	case *pb.SearchQuery_Fields:
+		sqlQuery := "select id from " + propsTableName + " where " + evaluateFieldsQuery(q.Fields)
+		c, err := s.db.RawQuery(sqlQuery, bome.StringScanner)
+		return &bomeCursorWrapper{cursor: c}, err
+	}
+
+	return nil, errors.New("unsupported query type")
+}
+
+func evaluateStrQuery(query *pb.StrQuery) string {
 	textAnalyzer := getQueryTextAnalyzer()
 
-	switch v := expr.Expression.(type) {
-	case *pb.BooleanExp_Or:
+	switch v := query.Bool.(type) {
+
+	case *pb.StrQuery_And:
 		var evaluatedExpression []string
-		for _, ox := range v.Or.Expressions {
-			evaluatedExpression = append(evaluatedExpression, evaluate(ox, tables))
+		for _, ox := range v.And.Queries {
+			evaluatedExpression = append(evaluatedExpression, evaluateStrQuery(ox))
+		}
+		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " AND "))
+
+	case *pb.StrQuery_Or:
+		var evaluatedExpression []string
+		for _, ox := range v.Or.Queries {
+			evaluatedExpression = append(evaluatedExpression, evaluateStrQuery(ox))
 		}
 		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " OR "))
 
-	case *pb.BooleanExp_Contains:
-		tables.textMapping = true
+	case *pb.StrQuery_Contains:
 		return "($prefix$_words_mapping.token like '%" + textAnalyzer(v.Contains.Value) + "%')"
 
-	case *pb.BooleanExp_StartsWith:
-		tables.textMapping = true
+	case *pb.StrQuery_StartsWith:
 		return "($prefix$_words_mapping.token like '" + textAnalyzer(v.StartsWith.Value) + "%')"
 
-	case *pb.BooleanExp_EndsWith:
-		tables.textMapping = true
-		return "($prefix$_words_mapping.token like '%" + textAnalyzer(v.EndsWith.Value) + "')"
+	case *pb.StrQuery_EndsWith:
+		return "($prefix$_words_mapping.token='%" + textAnalyzer(v.EndsWith.Value) + "')"
 
-	case *pb.BooleanExp_StrEqual:
-		tables.textMapping = true
-		return "($prefix$_words_mapping.token='" + textAnalyzer(v.StrEqual.Value) + "')"
+	case *pb.StrQuery_Eq:
+		return "($prefix$_words_mapping.token='" + textAnalyzer(v.Eq.Value) + "')"
+	}
+	return ""
+}
 
-	case *pb.BooleanExp_Lt:
-		tables.numberMapping = true
-		return fmt.Sprintf("($prefix$_numbers_mappingnumber<%d)", v.Lt.Value)
+func evaluateNumQuery(query *pb.NumQuery) string {
+	switch v := query.Bool.(type) {
 
-	case *pb.BooleanExp_Lte:
-		tables.numberMapping = true
-		return fmt.Sprintf("($prefix$_numbers_mappingnumber<=%d)", v.Lte.Value)
+	case *pb.NumQuery_And:
+		var evaluatedExpression []string
+		for _, ox := range v.And.Queries {
+			evaluatedExpression = append(evaluatedExpression, evaluateNumQuery(ox))
+		}
+		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " AND "))
 
-	case *pb.BooleanExp_Gt:
-		tables.numberMapping = true
-		return fmt.Sprintf("($prefix$_numbers_mappingnumber>%d)", v.Gt.Value)
+	case *pb.NumQuery_Or:
+		var evaluatedExpression []string
+		for _, ox := range v.Or.Queries {
+			evaluatedExpression = append(evaluatedExpression, evaluateNumQuery(ox))
+		}
+		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " OR "))
 
-	case *pb.BooleanExp_Gte:
-		tables.numberMapping = true
-		return fmt.Sprintf("($prefix$_numbers_mappingnumber>=%d)", v.Gte.Value)
+	case *pb.NumQuery_Eq:
+		return fmt.Sprintf("(num=%d)", v.Eq.Value)
 
-	case *pb.BooleanExp_NumbEq:
-		tables.numberMapping = true
-		return fmt.Sprintf("($prefix$_numbers_mappingnumber=%d)", v.NumbEq.Value)
+	case *pb.NumQuery_Gt:
+		return fmt.Sprintf("(num>%d)", v.Gt.Value)
+
+	case *pb.NumQuery_Gte:
+		return fmt.Sprintf("(num>=%d)", v.Gte.Value)
+
+	case *pb.NumQuery_Lt:
+		return fmt.Sprintf("(num<%d)", v.Lt.Value)
+
+	case *pb.NumQuery_Lte:
+		return fmt.Sprintf("(num<=%d)", v.Lte.Value)
 	}
 
 	return ""
 }
 
-type sqlSearchCursor struct {
+func evaluateFieldsQuery(query *pb.FieldQuery) string {
+	textAnalyzer := getQueryTextAnalyzer()
+
+	switch v := query.Bool.(type) {
+
+	case *pb.FieldQuery_And:
+		var evaluatedExpression []string
+		for _, ox := range v.And.Queries {
+			evaluatedExpression = append(evaluatedExpression, evaluateFieldsQuery(ox))
+		}
+		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " AND "))
+
+	case *pb.FieldQuery_Or:
+		var evaluatedExpression []string
+		for _, ox := range v.Or.Queries {
+			evaluatedExpression = append(evaluatedExpression, evaluateFieldsQuery(ox))
+		}
+		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " OR "))
+
+	case *pb.FieldQuery_Contains:
+		return fmt.Sprintf("(value->>'$.%s' like '%%s%')", v.Contains.Field, textAnalyzer(v.Contains.Value))
+
+	case *pb.FieldQuery_StartsWith:
+		return fmt.Sprintf("(value->>'$.%s' like '%s%')", v.StartsWith.Field, textAnalyzer(v.StartsWith.Value))
+
+	case *pb.FieldQuery_EndsWith:
+		return fmt.Sprintf("(value->>'$.%s' like '%s%')", v.EndsWith.Field, textAnalyzer(v.EndsWith.Value))
+
+	case *pb.FieldQuery_StrEqual:
+		return fmt.Sprintf("(value->>'$.%s'='%s')", v.StrEqual.Field, textAnalyzer(v.StrEqual.Value))
+
+	case *pb.FieldQuery_Lt:
+		return fmt.Sprintf("(value->>'$.%s'<%d)", v.Lt.Field, v.Lt.Value)
+
+	case *pb.FieldQuery_Lte:
+		return fmt.Sprintf("(value->>'$.%s'<=%d)", v.Lte.Field, v.Lte.Value)
+
+	case *pb.FieldQuery_Gt:
+		return fmt.Sprintf("(value->>'$.%s'>%d)", v.Gt.Field, v.Gt.Value)
+
+	case *pb.FieldQuery_Gte:
+		return fmt.Sprintf("(value->>'$.%s'>=%d)", v.Gte.Field, v.Gte.Value)
+
+	case *pb.FieldQuery_NumbEq:
+		return fmt.Sprintf("(value->>'$.%s'=%d)", v.NumbEq.Field, v.NumbEq.Value)
+	}
+
+	return ""
+}
+
+type aggregatedStrIdsCursor struct {
 	cursor      bome.Cursor
 	currentList []string
 }
 
-func (s *sqlSearchCursor) Next() (string, error) {
+func (c *aggregatedStrIdsCursor) Next() (string, error) {
 	for {
-		if len(s.currentList) == 0 {
-			if !s.cursor.HasNext() {
+		if len(c.currentList) == 0 {
+			if !c.cursor.HasNext() {
 				return "", io.EOF
 			}
 
-			o, err := s.cursor.Next()
+			o, err := c.cursor.Next()
 			if err != nil {
 				return "", err
 			}
 
-			s.currentList = strings.Split(o.(string), "<>")
+			c.currentList = strings.Split(o.(string), "<>")
 		}
 
-		next := strings.Trim(s.currentList[0], " ")
+		next := strings.Trim(c.currentList[0], " ")
 		if next == "" {
 			continue
 		}
 
-		s.currentList = s.currentList[1:]
+		c.currentList = c.currentList[1:]
 		return next, nil
 	}
 }
 
-func (s *sqlSearchCursor) Close() error {
+func (c *aggregatedStrIdsCursor) Close() error {
 	return nil
+}
+
+type bomeCursorWrapper struct {
+	cursor bome.Cursor
+}
+
+func (c *bomeCursorWrapper) Next() (string, error) {
+	if c.cursor.HasNext() {
+		o, err := c.cursor.Next()
+		if err == nil {
+			return o.(string), nil
+		}
+		return "", err
+	}
+	return "", io.EOF
+}
+
+func (c *bomeCursorWrapper) Close() error {
+	return c.cursor.Close()
 }

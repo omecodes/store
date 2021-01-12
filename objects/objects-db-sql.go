@@ -176,10 +176,10 @@ func (ms *sqlStore) List(ctx context.Context, collection string, opts pb.ListOpt
 	return col.List(ctx, opts)
 }
 
-func (ms *sqlStore) Search(ctx context.Context, collection string, expr *pb.BooleanExp) (*pb.Cursor, error) {
+func (ms *sqlStore) Search(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error) {
 	col, err := ms.ResolveCollection(ctx, collection)
 	if err != nil {
 		return nil, err
 	}
-	return col.Search(ctx, expr)
+	return col.Search(ctx, query)
 }

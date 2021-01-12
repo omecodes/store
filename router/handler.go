@@ -18,5 +18,5 @@ type Handler interface {
 	GetObjectHeader(ctx context.Context, collection string, id string) (*pb.Header, error)
 	DeleteObject(ctx context.Context, collection string, id string) error
 	ListObjects(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error)
-	SearchObjects(ctx context.Context, collection string, exp *pb.BooleanExp) (*pb.Cursor, error)
+	SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error)
 }

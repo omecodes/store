@@ -296,7 +296,7 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var query pb.BooleanExp
+	var query pb.SearchQuery
 	err := jsonpb.Unmarshal(r.Body, &query)
 	if err != nil {
 		log.Error("could not parse param 'before'")

@@ -160,20 +160,29 @@ func (s *sqlCollection) Save(ctx context.Context, object *pb.Object, indexes ...
 
 	allIndexes := append(s.info.DefaultIndexes, indexes...)
 	for _, index := range allIndexes {
-		result := gjson.Get(object.Data, strings.TrimPrefix(index.JsonPath, "$."))
-		if !result.Exists() {
-			log.Error("Save: index references path that does not exists", log.Err(err))
-			if err2 := tx.Rollback(); err2 != nil {
-				log.Error("Save: rollback failed", log.Err(err2))
+		switch ind := index.Info.(type) {
+		case *pb.Index_Text:
+			result := gjson.Get(object.Data, strings.TrimPrefix(ind.Text.Path, "$."))
+			if !result.Exists() {
+				log.Error("Save: index references path that does not exists", log.Err(err))
+				if err2 := tx.Rollback(); err2 != nil {
+					log.Error("Save: rollback failed", log.Err(err2))
+				}
+				return errors.BadInput
 			}
-			return errors.BadInput
-		}
 
-		if index.FieldType == 0 {
+			if result.Type != gjson.String {
+				log.Error("Save: Text index supports only text field", log.Err(err))
+				if err2 := tx.Rollback(); err2 != nil {
+					log.Error("Save: rollback failed", log.Err(err2))
+				}
+				return errors.BadInput
+			}
+
 			mp := &pb.TextMapping{
-				Text:      result.Str,
-				FieldName: index.MappingName,
-				ObjectId:  object.Header.Id,
+				Text:     result.Str,
+				Name:     ind.Text.Alias,
+				ObjectId: object.Header.Id,
 			}
 			err = s.engine.CreateTextMapping(mp)
 			if err != nil {
@@ -183,13 +192,30 @@ func (s *sqlCollection) Save(ctx context.Context, object *pb.Object, indexes ...
 				}
 				return errors.BadInput
 			}
-		} else if index.FieldType == 1 {
-			mp := &pb.NumberMapping{
-				Number:    result.Int(),
-				FieldName: index.MappingName,
-				ObjectId:  object.Header.Id,
+
+		case *pb.Index_Number:
+			result := gjson.Get(object.Data, strings.TrimPrefix(ind.Number.Path, "$."))
+			if !result.Exists() {
+				log.Error("Save: index references path that does not exists", log.Err(err))
+				if err2 := tx.Rollback(); err2 != nil {
+					log.Error("Save: rollback failed", log.Err(err2))
+				}
+				return errors.BadInput
 			}
 
+			if result.Type != gjson.Number {
+				log.Error("Save: Number index supports only number field", log.Err(err))
+				if err2 := tx.Rollback(); err2 != nil {
+					log.Error("Save: rollback failed", log.Err(err2))
+				}
+				return errors.BadInput
+			}
+
+			mp := &pb.NumberMapping{
+				Number:   result.Int(),
+				Name:     ind.Number.Alias,
+				ObjectId: object.Header.Id,
+			}
 			err = s.engine.CreateNumberMapping(mp)
 			if err != nil {
 				log.Error("Save: index references path that does not exists", log.Err(err))
@@ -198,7 +224,54 @@ func (s *sqlCollection) Save(ctx context.Context, object *pb.Object, indexes ...
 				}
 				return errors.BadInput
 			}
+
+		case *pb.Index_Properties:
+			props := map[string]interface{}{}
+
+			for path, alias := range ind.Properties.Aliases {
+				result := gjson.Get(object.Data, strings.TrimPrefix(path, "$."))
+				if !result.Exists() {
+					log.Error("Save: index references path that does not exists", log.Err(err))
+					if err2 := tx.Rollback(); err2 != nil {
+						log.Error("Save: rollback failed", log.Err(err2))
+					}
+					return errors.BadInput
+				}
+
+				if result.Type == gjson.JSON {
+					log.Error("Save: Text index supports only text text, number and boolean", log.Err(err))
+					if err2 := tx.Rollback(); err2 != nil {
+						log.Error("Save: rollback failed", log.Err(err2))
+					}
+					return errors.BadInput
+				}
+				props[alias] = result.Value()
+			}
+
+			value, err := json.Marshal(props)
+			if err != nil {
+				log.Error("Save: could not create properties index", log.Err(err))
+				if err2 := tx.Rollback(); err2 != nil {
+					log.Error("Save: rollback failed", log.Err(err2))
+				}
+				return errors.BadInput
+			}
+
+			mp := &pb.PropertiesMapping{
+				ObjectId: object.Header.Id,
+				Json:     string(value),
+			}
+			err = s.engine.CreatePropertiesMapping(mp)
+			if err != nil {
+				log.Error("Save: index references path that does not exists", log.Err(err))
+				if err2 := tx.Rollback(); err2 != nil {
+					log.Error("Save: rollback failed", log.Err(err2))
+				}
+				return errors.BadInput
+			}
+
 		}
+
 	}
 
 	err = tx.Commit()
@@ -427,8 +500,8 @@ func (s *sqlCollection) List(ctx context.Context, opts pb.ListOptions) (*pb.Curs
 	return pb.NewCursor(browser, closer), nil
 }
 
-func (s *sqlCollection) Search(ctx context.Context, expression *pb.BooleanExp) (*pb.Cursor, error) {
-	ids, err := s.engine.Search(expression)
+func (s *sqlCollection) Search(ctx context.Context, query *pb.SearchQuery) (*pb.Cursor, error) {
+	ids, err := s.engine.Search(query)
 	if err != nil {
 		return nil, err
 	}

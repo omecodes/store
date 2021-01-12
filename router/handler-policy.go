@@ -177,12 +177,12 @@ func (p *PolicyHandler) ListObjects(ctx context.Context, collection string, opts
 	return cursor, nil
 }
 
-func (p *PolicyHandler) SearchObjects(ctx context.Context, collection string, exp *pb.BooleanExp) (*pb.Cursor, error) {
-	if collection == "" || exp == nil {
+func (p *PolicyHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error) {
+	if collection == "" || query == nil {
 		return nil, errors.BadInput
 	}
 
-	cursor, err := p.BaseHandler.SearchObjects(ctx, collection, exp)
+	cursor, err := p.BaseHandler.SearchObjects(ctx, collection, query)
 	if err != nil {
 		return nil, err
 	}

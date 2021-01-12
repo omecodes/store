@@ -182,12 +182,12 @@ func (e *ExecHandler) ListObjects(ctx context.Context, collection string, opts p
 	return storage.List(ctx, collection, opts)
 }
 
-func (e *ExecHandler) SearchObjects(ctx context.Context, collection string, exp *pb.BooleanExp) (*pb.Cursor, error) {
+func (e *ExecHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error) {
 	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Error("exec-handler.SearchObjects: missing storage in context")
 		return nil, errors.Internal
 	}
 
-	return storage.Search(ctx, collection, exp)
+	return storage.Search(ctx, collection, query)
 }
