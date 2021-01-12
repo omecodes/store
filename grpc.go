@@ -36,7 +36,7 @@ func (h *handler) GetCollection(ctx context.Context, request *pb.GetCollectionRe
 	return &pb.GetCollectionResponse{Collection: collection}, err
 }
 
-func (h *handler) ListCollections(ctx context.Context, request *pb.ListCollectionsRequest) (*pb.ListCollectionsResponse, error) {
+func (h *handler) ListCollections(ctx context.Context, _ *pb.ListCollectionsRequest) (*pb.ListCollectionsResponse, error) {
 	route, err := router.NewRoute(ctx)
 	if err != nil {
 		return nil, err
