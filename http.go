@@ -42,6 +42,7 @@ func (s *HTTPUnit) MuxRouter() *mux.Router {
 	r.Name("GetAuthProvider").Methods(http.MethodGet).Path("/auth/providers/{name}").Handler(http.HandlerFunc(s.getProvider))
 	r.Name("DeleteAuthProvider").Methods(http.MethodDelete).Path("/auth/providers/{name}").Handler(http.HandlerFunc(s.deleteProvider))
 	r.Name("ListProviders").Methods(http.MethodGet).Path("/auth/providers").Handler(http.HandlerFunc(s.listProviders))
+	r.Name("ListProviders").Methods(http.MethodPut).Path("/auth/access").Handler(http.HandlerFunc(s.createAccess))
 
 	r.Name("CreateCollection").Methods(http.MethodPut).Path("/collections").Handler(http.HandlerFunc(s.createCollection))
 	r.Name("ListCollections").Methods(http.MethodGet).Path("/collections").Handler(http.HandlerFunc(s.listCollections))
@@ -601,13 +602,6 @@ func (s *HTTPUnit) deleteProvider(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var provider *auth.Provider
-	err := json.NewDecoder(r.Body).Decode(&provider)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
 	providers := auth.GetProviders(ctx)
 	if providers == nil {
 		log.Error("missing providers manager in context")
@@ -615,7 +609,9 @@ func (s *HTTPUnit) deleteProvider(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = providers.Save(provider)
+	vars := mux.Vars(r)
+	name := vars[pathItemId]
+	err := providers.Delete(name)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -651,6 +647,106 @@ func (s *HTTPUnit) listProviders(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error("failed to send provider as response", log.Err(err))
 	}
+}
+
+func (s *HTTPUnit) createAccess(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userInfo := auth.Get(ctx)
+
+	if userInfo == nil || userInfo.Uid != "admin" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	var access *auth.APIAccess
+	err := json.NewDecoder(r.Body).Decode(&access)
+	if err != nil {
+		log.Error("failed to decode request body", log.Err(err))
+		return
+	}
+
+	manager := auth.GetCredentialsManager(ctx)
+	if manager == nil {
+		log.Error("missing credentials manager in context")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = manager.SaveAccess(access)
+	if err != nil {
+		log.Error("failed to save access", log.Err(err))
+		w.WriteHeader(errors.HttpStatus(err))
+		return
+	}
+}
+
+func (s *HTTPUnit) listAccesses(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userInfo := auth.Get(ctx)
+
+	if userInfo == nil || userInfo.Uid != "admin" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	manager := auth.GetCredentialsManager(ctx)
+	if manager == nil {
+		log.Error("missing credentials manager in context")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	accesses, err := manager.GetAllAccesses()
+	if err != nil {
+		log.Error("failed to get access", log.Err(err))
+		w.WriteHeader(errors.HttpStatus(err))
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(accesses)
+	if err != nil {
+		log.Error("failed to send provider as response", log.Err(err))
+	}
+}
+
+func (s *HTTPUnit) deleteAccess(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userInfo := auth.Get(ctx)
+
+	if userInfo == nil || userInfo.Uid != "admin" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	vars := mux.Vars(r)
+	name := vars[pathItemId]
+
+	manager := auth.GetCredentialsManager(ctx)
+	if manager == nil {
+		log.Error("missing credentials manager in context")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	access, err := manager.GetAccess(name)
+	if err != nil {
+		log.Error("could not get access", log.Err(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(access)
+	if err != nil {
+		log.Error("failed to send provider as response", log.Err(err))
+	}
+}
+
+func (s *HTTPUnit) getAccountInfo(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (s *HTTPUnit) createAccount(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func Int64QueryParam(r *http.Request, name string) (int64, error) {

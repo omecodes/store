@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	TypeUser   = "user"
-	TypeWorker = "worker"
-	TypeAdmin  = "admin"
+	TypeUser    = "user"
+	TypeWorker  = "worker"
+	TypeService = "service"
 )
 
 type APIAccess struct {
@@ -30,6 +30,7 @@ type CredentialsManager interface {
 
 	SaveAccess(access *APIAccess) error
 	GetAccess(key string) (*APIAccess, error)
+	GetAllAccesses() ([]*APIAccess, error)
 	DeleteAccess(key string) error
 }
 
