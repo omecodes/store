@@ -41,10 +41,15 @@ func (s *HTTPUnit) MuxRouter() *mux.Router {
 	settingsSubRouter.Name("SetSettings").Methods(http.MethodPost).Handler(http.HandlerFunc(s.setSettings))
 	settingsSubRouter.Name("GetSettings").Methods(http.MethodGet).Handler(http.HandlerFunc(s.getSettings))
 
+	r.Name("SaveAuthProvider≈").Methods(http.MethodPut).Path("/auth/providers").Handler(http.HandlerFunc(s.saveProvider))
+	r.Name("GetAuthProvider").Methods(http.MethodGet).Path("/auth/providers/{name}").Handler(http.HandlerFunc(s.getProvider))
+	r.Name("DeleteAuthProvider").Methods(http.MethodDelete).Path("/auth/providers/{name}").Handler(http.HandlerFunc(s.deleteProvider))
+	r.Name("ListProviders").Methods(http.MethodGet).Path("/auth/providers").Handler(http.HandlerFunc(s.listProviders))
+
 	r.Name("CreateCollection").Methods(http.MethodPut).Path("/collections").Handler(http.HandlerFunc(s.createCollection))
 	r.Name("ListCollections").Methods(http.MethodGet).Path("/collections").Handler(http.HandlerFunc(s.listCollections))
 	r.Name("DeleteCollection").Methods(http.MethodGet).Path("/collections/{id}").Handler(http.HandlerFunc(s.deleteCollection))
-	r.Name("GetCollection").Methods(http.MethodGet).Path("/collections/{id}").Handler(http.HandlerFunc(s.getCollection))
+	r.Name("GetCollection").Methods(http.MethodGet).Path("/collections/{id}").Handler(http.HandlerFunc(s.listProviders))
 
 	r.Name("PutObject").Methods(http.MethodPut).Path("/objects/{collection}").Handler(http.HandlerFunc(s.put))
 	r.Name("PatchObject").Methods(http.MethodPatch).Path("/objects/{collection}/{id}").Handler(http.HandlerFunc(s.patch))
@@ -518,6 +523,22 @@ func (s *HTTPUnit) deleteCollection(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
 	}
+}
+
+func (s *HTTPUnit) saveProvider(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (s *HTTPUnit) getProvider(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (s *HTTPUnit) deleteProvider(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (s *HTTPUnit) listProviders(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func Int64QueryParam(r *http.Request, name string) (int64, error) {
