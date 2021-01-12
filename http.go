@@ -523,19 +523,134 @@ func (s *HTTPUnit) deleteCollection(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPUnit) saveProvider(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userInfo := auth.Get(ctx)
 
+	if userInfo == nil || userInfo.Uid != "admin" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	var provider *auth.Provider
+	err := json.NewDecoder(r.Body).Decode(&provider)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if provider.Config == nil || provider.Name == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	providers := auth.GetProviders(ctx)
+	if providers == nil {
+		log.Error("missing providers manager in context")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = providers.Save(provider)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 }
 
 func (s *HTTPUnit) getProvider(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userInfo := auth.Get(ctx)
 
+	if userInfo == nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	vars := mux.Vars(r)
+
+	providers := auth.GetProviders(ctx)
+	if providers == nil {
+		log.Error("missing providers manager in context")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	provider, err := providers.Get(vars[pathItemId])
+	if err != nil {
+		log.Error("failed to get provider", log.Field("id", vars[pathItemId]), log.Err(err))
+		w.WriteHeader(errors.HttpStatus(err))
+		return
+	}
+
+	if userInfo.Uid != "admin" {
+		provider.Config = nil
+	}
+
+	err = json.NewEncoder(w).Encode(provider)
+	if err != nil {
+		log.Error("failed to send provider as response", log.Err(err))
+	}
 }
 
 func (s *HTTPUnit) deleteProvider(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userInfo := auth.Get(ctx)
 
+	if userInfo == nil || userInfo.Uid != "admin" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	var provider *auth.Provider
+	err := json.NewDecoder(r.Body).Decode(&provider)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	providers := auth.GetProviders(ctx)
+	if providers == nil {
+		log.Error("missing providers manager in context")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = providers.Save(provider)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 }
 
 func (s *HTTPUnit) listProviders(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userInfo := auth.Get(ctx)
 
+	if userInfo == nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	vars := mux.Vars(r)
+
+	providers := auth.GetProviders(ctx)
+	if providers == nil {
+		log.Error("missing providers manager in context")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	providerList, err := providers.GetAll(userInfo.Uid != "admin")
+	if err != nil {
+		log.Error("failed to get provider", log.Field("id", vars[pathItemId]), log.Err(err))
+		w.WriteHeader(errors.HttpStatus(err))
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(providerList)
+	if err != nil {
+		log.Error("failed to send provider as response", log.Err(err))
+	}
 }
 
 func Int64QueryParam(r *http.Request, name string) (int64, error) {

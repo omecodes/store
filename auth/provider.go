@@ -10,11 +10,11 @@ import (
 )
 
 type Provider struct {
-	Name   string         `json:"name"`
-	Label  string         `json:"label"`
-	Config *oauth2.Config `json:"config"`
-	Color  string         `json:"color"`
-	Active bool           `json:"active"`
+	Name   string         `json:"name,omitempty"`
+	Label  string         `json:"label,omitempty"`
+	Config *oauth2.Config `json:"config,omitempty"`
+	Color  string         `json:"color,omitempty"`
+	Active bool           `json:"active,omitempty"`
 }
 
 type ProviderManager interface {
