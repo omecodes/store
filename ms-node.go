@@ -38,7 +38,6 @@ type MSNode struct {
 	config       *NodeConfig
 	box          *service.Box
 	celPolicyEnv *cel.Env
-	celSearchEnv *cel.Env
 	accessStore  acl.Store
 	objects      objects.Objects
 	reg          ome.Registry
@@ -50,11 +49,6 @@ func (n *MSNode) init() error {
 	n.objects = objects.NewStoreGrpcClient()
 
 	n.celPolicyEnv, err = cenv.ACLEnv()
-	if err != nil {
-		return err
-	}
-
-	n.celSearchEnv, err = cenv.SearchEnv()
 	if err != nil {
 		return err
 	}
@@ -79,7 +73,6 @@ func (n *MSNode) updateGrpcContext(ctx context.Context) (context.Context, error)
 	ctx = context2.WithRegistry(ctx, n.reg)
 	ctx = acl.ContextWithStore(ctx, n.accessStore)
 	ctx = router.WithCelPolicyEnv(n.celPolicyEnv)(ctx)
-	ctx = router.WithCelSearchEnv(n.celSearchEnv)(ctx)
 	ctx = objects.ContextWithStore(ctx, n.objects)
 	ctx = service.ContextWithBox(ctx, n.box)
 	ctx = router.WithRouterProvider(ctx, n)

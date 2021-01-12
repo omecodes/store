@@ -47,7 +47,6 @@ type MNServer struct {
 	options      []netx.ListenOption
 	config       *MNConfig
 	celPolicyEnv *cel.Env
-	celSearchEnv *cel.Env
 	autoCertDir  string
 
 	objects                 objects.Objects
@@ -105,11 +104,6 @@ func (s *MNServer) init() error {
 	}
 
 	s.celPolicyEnv, err = cenv.ACLEnv()
-	if err != nil {
-		return err
-	}
-
-	s.celSearchEnv, err = cenv.SearchEnv()
 	if err != nil {
 		return err
 	}
@@ -255,7 +249,6 @@ func (s *MNServer) enrichContext(next http.Handler) http.Handler {
 		ctx = acl.ContextWithStore(ctx, s.accessStore)
 		ctx = objects.ContextWithStore(ctx, s.objects)
 		ctx = router.WithCelPolicyEnv(s.celPolicyEnv)(ctx)
-		ctx = router.WithCelSearchEnv(s.celSearchEnv)(ctx)
 		ctx = router.WithSettings(s.settings)(ctx)
 		ctx = router.WithRouterProvider(ctx, s)
 

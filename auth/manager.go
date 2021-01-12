@@ -5,15 +5,24 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/libome/crypt"
 )
 
+const (
+	TypeUser   = "user"
+	TypeWorker = "worker"
+	TypeAdmin  = "admin"
+)
+
 type APIAccess struct {
-	Key    string `json:"key"`
-	Secret string `json:"secret"`
+	Key    string            `json:"key,omitempty"`
+	Secret string            `json:"secret,omitempty"`
+	Type   string            `json:"worker,omitempty"`
+	Meta   map[string]string `json:"meta,omitempty"`
 }
 
 type CredentialsManager interface {

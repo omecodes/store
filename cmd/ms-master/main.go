@@ -67,10 +67,6 @@ func init() {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
-	if err := cobra.MarkFlagRequired(flags, "jwt-secret"); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
 
 	versionCMD := &cobra.Command{
 		Use:   "version",
