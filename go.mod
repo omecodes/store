@@ -25,7 +25,7 @@ require (
 	github.com/omecodes/bome v0.0.0-20210106205629-28fe97eb70d7
 	github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08
 	github.com/omecodes/discover v0.0.0-20210105205043-5b445aac6bcd
-	github.com/omecodes/errors v0.0.0-20210112225209-259622bca3db
+	github.com/omecodes/errors v0.0.0-20210113205449-8eda8b62d63f
 	github.com/omecodes/libome v0.0.0-20201225162725-c89c7a20a215
 	github.com/omecodes/service v0.0.0-20210105205118-f4ff2592af2b
 	github.com/omecodes/services-ca v0.0.0-20201224183919-c7cef3fb9aa8

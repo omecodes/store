@@ -4,18 +4,34 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/errors"
 )
 
 func NewSQLManager(db *sql.DB, dialect string, tablePrefix string) (Manager, error) {
-	return &sqlManager{}, nil
+	accounts, err := bome.NewJSONMap(db, dialect, tablePrefix+"_accounts")
+	if err != nil {
+		return nil, err
+	}
+
+	sources, err := bome.NewDoubleMap(db, dialect, tablePrefix+"_account_sources")
+	if err != nil {
+		return nil, err
+	}
+
+	return &sqlManager{
+		tablePrefix: tablePrefix,
+		accounts:    accounts,
+		sources:     sources,
+	}, nil
 }
 
 type sqlManager struct {
-	accounts bome.Map
-	sources  bome.DoubleMap
+	tablePrefix string
+	accounts    *bome.JSONMap
+	sources     *bome.DoubleMap
 }
 
 func (s *sqlManager) Create(ctx context.Context, account *Account) error {
@@ -37,16 +53,9 @@ func (s *sqlManager) Create(ctx context.Context, account *Account) error {
 		if rer := tx.Rollback(); rer != nil {
 			log.Error("Transaction rollback failed", log.Err(err))
 		}
-
-		if bome.IsPrimaryKeyConstraintError(err) {
-			return errors.Create(errors.DuplicateResource, "account_exists", errors.Info{
-				Name:    "db",
-				Details: err.Error(),
-			})
-		}
-		return errors.Create(errors.Internal, "could_not_create_account", errors.Info{
-			Name:    "bome.SQL",
-			Details: err.Error(),
+		return errors.AppendDetails(err, errors.Info{
+			Name:    "am",
+			Details: "could not create entry",
 		})
 	}
 
@@ -60,27 +69,73 @@ func (s *sqlManager) Create(ctx context.Context, account *Account) error {
 		if rer := tx.Rollback(); rer != nil {
 			log.Error("Transaction rollback failed", log.Err(err))
 		}
-
-		if bome.IsPrimaryKeyConstraintError(err) {
-			return errors.Create(errors.DuplicateResource, "account_exists", errors.Info{
-				Name:    "db",
-				Details: err.Error(),
-			})
-		}
-		return err
+		return errors.AppendDetails(err, errors.Info{
+			Name:    "am",
+			Details: "could not create source reference",
+		})
 	}
 
 	return nil
 }
 
 func (s *sqlManager) Get(ctx context.Context, username string) (*Account, error) {
-	panic("implement me")
+	encoded, err := s.accounts.Get(username)
+	if err != nil {
+		return nil, errors.AppendDetails(err, errors.Info{
+			Name:    "am",
+			Details: "failed to get account by name",
+		})
+	}
+
+	var account *Account
+	err = json.Unmarshal([]byte(encoded), &account)
+	if err != nil {
+		return nil, errors.AppendDetails(err, errors.Info{
+			Name:    "am",
+			Details: "failed to decode account from db result",
+		})
+	}
+	return account, nil
 }
 
 func (s *sqlManager) Find(ctx context.Context, provider string, originalName string) (*Account, error) {
-	panic("implement me")
+	accountName, err := s.sources.Get(provider, originalName)
+	if err != nil {
+		return nil, errors.AppendDetails(err, errors.Info{
+			Name:    "am",
+			Details: "failed to get account by source",
+		})
+	}
+	return s.Get(ctx, accountName)
 }
 
 func (s *sqlManager) Search(ctx context.Context, pattern string) ([]string, error) {
-	panic("implement me")
+	query := fmt.Sprintf("select value from %s_accounts where name like ?", s.tablePrefix)
+	cursor, err := s.accounts.RawQuery(query, bome.StringScanner, fmt.Sprintf("%%%s%%", pattern))
+	if err != nil {
+		return nil, errors.AppendDetails(err, errors.Info{
+			Name:    "am",
+			Details: "failed to finds accounts matching pattern",
+		})
+	}
+
+	defer func() {
+		if cer := cursor.Close(); cer != nil {
+			log.Error("cursor close", log.Err(cer))
+		}
+	}()
+
+	var names []string
+
+	for cursor.HasNext() {
+		o, err := cursor.Next()
+		if err != nil {
+			return nil, errors.AppendDetails(err, errors.Info{
+				Name:    "am",
+				Details: "failed to decode account from db result",
+			})
+		}
+		names = append(names, o.(string))
+	}
+	return names, nil
 }
