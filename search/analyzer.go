@@ -39,7 +39,7 @@ func removeAccents(analyzer Analyzer) Analyzer {
 	}
 }
 
-func removeIgnored(analyzer Analyzer) Analyzer {
+func removeStopWords(analyzer Analyzer) Analyzer {
 	return func(in string) string {
 		var out = in
 		for _, word := range stopWords {
@@ -49,12 +49,20 @@ func removeIgnored(analyzer Analyzer) Analyzer {
 	}
 }
 
-func getMappingTextAnalyzer() Analyzer {
+func defaultTextAnalyzer() Analyzer {
 	a := strings.ToLower
-	a = removeIgnored(a)
+	a = removeStopWords(a)
 	a = removePunctuation(a)
 	a = removeAccents(a)
 	return a
+}
+
+func propsMappingTextAnalyzer() Analyzer {
+	a := strings.ToLower
+	a = removePunctuation(a)
+	a = removeAccents(a)
+	return a
+
 }
 
 func getQueryTextAnalyzer() Analyzer {

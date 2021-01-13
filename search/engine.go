@@ -1,7 +1,10 @@
 package se
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/errors"
 	"github.com/omecodes/store/pb"
 	"io"
 	"strings"
@@ -10,13 +13,11 @@ import (
 func NewEngine(store Store) *Engine {
 	return &Engine{
 		store:     store,
-		analyzer:  getMappingTextAnalyzer(),
 		tokenizer: &textTokenizer{},
 	}
 }
 
 type Engine struct {
-	analyzer  Analyzer
 	tokenizer TextTokenizer
 	store     Store
 }
@@ -36,7 +37,9 @@ func (e *Engine) Feed(msg *pb.MessageFeed) error {
 }
 
 func (e *Engine) CreateTextMapping(mapping *pb.TextMapping) error {
-	analyzedText := e.analyzer(mapping.Text)
+	textAnalyzer := defaultTextAnalyzer()
+	analyzedText := textAnalyzer(mapping.Text)
+
 	stream := e.tokenizer.TokenizeText(analyzedText, mapping.PrefixMappingSize)
 
 	var err error
@@ -54,7 +57,25 @@ func (e *Engine) CreateTextMapping(mapping *pb.TextMapping) error {
 }
 
 func (e *Engine) CreatePropertiesMapping(mapping *pb.PropertiesMapping) error {
-	return e.store.SavePropertiesMapping(mapping.ObjectId, mapping.Json)
+	var props map[string]interface{}
+	err := json.NewDecoder(bytes.NewBufferString(mapping.Json)).Decode(&props)
+	if err != nil {
+		return errors.Create(errors.BadRequest, err.Error())
+	}
+
+	for key, value := range props {
+		if str, ok := value.(string); ok {
+			textAnalyzer := propsMappingTextAnalyzer()
+			props[key] = textAnalyzer(str)
+		}
+	}
+
+	encoded, err := json.Marshal(props)
+	if err != nil {
+		return errors.Create(errors.Internal, err.Error(), errors.Info{Name: "engine", Details: "text not usable after analyze"})
+	}
+
+	return e.store.SavePropertiesMapping(mapping.ObjectId, string(encoded))
 }
 
 func (e *Engine) CreateNumberMapping(m *pb.NumberMapping) error {

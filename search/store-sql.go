@@ -235,7 +235,7 @@ func evaluateNumberSearchingQuery(query *pb.NumQuery) string {
 }
 
 func evaluatePropertiesSearchingQuery(query *pb.FieldQuery) string {
-	textAnalyzer := getQueryTextAnalyzer()
+	textAnalyzer := propsMappingTextAnalyzer()
 
 	switch v := query.Bool.(type) {
 
