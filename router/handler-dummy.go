@@ -23,7 +23,7 @@ func (d *dummyHandler) DeleteCollection(ctx context.Context, id string) error {
 	return nil
 }
 
-func (d *dummyHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
+func (d *dummyHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.TextIndex, opts pb.PutOptions) (string, error) {
 	return "", nil
 }
 

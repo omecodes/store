@@ -63,7 +63,7 @@ func (d *dbClient) DeleteCollection(ctx context.Context, id string) error {
 	return err
 }
 
-func (d *dbClient) Save(ctx context.Context, collection string, object *pb.Object, index ...*pb.Index) error {
+func (d *dbClient) Save(ctx context.Context, collection string, object *pb.Object, index ...*pb.TextIndex) error {
 	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
 	if err != nil {
 		return err

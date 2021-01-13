@@ -127,7 +127,7 @@ func (ms *sqlStore) DeleteCollection(ctx context.Context, id string) error {
 	return ms.collections.Delete(id)
 }
 
-func (ms *sqlStore) Save(ctx context.Context, collection string, object *pb.Object, indexes ...*pb.Index) error {
+func (ms *sqlStore) Save(ctx context.Context, collection string, object *pb.Object, indexes ...*pb.TextIndex) error {
 	col, err := ms.ResolveCollection(ctx, collection)
 	if err != nil {
 		return err

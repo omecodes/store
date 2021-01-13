@@ -11,7 +11,7 @@ type Handler interface {
 	ListCollections(ctx context.Context) ([]*pb.Collection, error)
 	DeleteCollection(ctx context.Context, id string) error
 
-	PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error)
+	PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.TextIndex, opts pb.PutOptions) (string, error)
 	PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts pb.PatchOptions) error
 	MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *pb.PathAccessRules, opts pb.MoveOptions) error
 	GetObject(ctx context.Context, collection string, id string, opts pb.GetOptions) (*pb.Object, error)

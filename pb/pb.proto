@@ -18,8 +18,10 @@ message Collection {
   string id = 1;
   string label = 2;
   string description = 3;
-  repeated Index default_indexes = 4;
-  PathAccessRules default_access_security_rules = 5;
+  NumberIndex number_index = 4;
+  repeated TextIndex text_indexes = 5;
+  PropertiesIndex fields_index = 6;
+  PathAccessRules default_access_security_rules = 7;
 }
 
 message AccessRules {
@@ -130,7 +132,7 @@ message DeleteCollectionResponse {}
 message PutObjectRequest {
   string Collection = 1;
   Object object = 2;
-  repeated Index indexes = 3;
+  repeated TextIndex indexes = 3;
   PathAccessRules access_security_rules = 4;
 }
 message PutObjectResponse {

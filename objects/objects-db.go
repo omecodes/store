@@ -15,7 +15,7 @@ type Objects interface {
 	DeleteCollection(ctx context.Context, id string) error
 
 	// Save saves object content as JSON in database
-	Save(ctx context.Context, collection string, object *pb.Object, index ...*pb.Index) error
+	Save(ctx context.Context, collection string, object *pb.Object, index ...*pb.TextIndex) error
 
 	// Update applies patch to object with id equals patch.ID()
 	Patch(ctx context.Context, collection string, patch *pb.Patch) error

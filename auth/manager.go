@@ -90,6 +90,35 @@ func (s *credentialsSQLManager) GetAccess(key string) (*APIAccess, error) {
 	return access, err
 }
 
+func (s *credentialsSQLManager) GetAllAccesses() ([]*APIAccess, error) {
+	cursor, err := s.store.List()
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if cer := cursor.Close(); cer != nil {
+			log.Error("cursor close", log.Err(cer))
+		}
+	}()
+
+	var accesses []*APIAccess
+	for cursor.HasNext() {
+		o, err := cursor.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		var access *APIAccess
+		err = json.Unmarshal([]byte(o.(string)), &access)
+		if err != nil {
+			return nil, err
+		}
+		accesses = append(accesses, access)
+	}
+	return accesses, nil
+}
+
 func (s *credentialsSQLManager) DeleteAccess(key string) error {
 	return s.store.Delete(key)
 }

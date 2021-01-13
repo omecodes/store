@@ -48,7 +48,7 @@ func (p *PolicyHandler) DeleteCollection(ctx context.Context, id string) error {
 	return p.BaseHandler.DeleteCollection(ctx, id)
 }
 
-func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
+func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.TextIndex, opts pb.PutOptions) (string, error) {
 	ai := auth.Get(ctx)
 	if ai == nil {
 		return "", errors.Forbidden

@@ -25,7 +25,7 @@ func (b *BaseHandler) DeleteCollection(ctx context.Context, id string) error {
 	return b.next.DeleteCollection(ctx, id)
 }
 
-func (b *BaseHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
+func (b *BaseHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.TextIndex, opts pb.PutOptions) (string, error) {
 	return b.next.PutObject(ctx, collection, object, accessSecurityRules, indexes, opts)
 }
 

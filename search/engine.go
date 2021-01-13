@@ -46,7 +46,7 @@ func (e *Engine) CreateTextMapping(mapping *pb.TextMapping) error {
 			return nil
 		}
 
-		err = e.store.SaveWordMapping(token, mapping.Name, mapping.ObjectId)
+		err = e.store.SaveWordMapping(token, mapping.ObjectId)
 		if err != nil {
 			return err
 		}
@@ -58,7 +58,7 @@ func (e *Engine) CreatePropertiesMapping(mapping *pb.PropertiesMapping) error {
 }
 
 func (e *Engine) CreateNumberMapping(m *pb.NumberMapping) error {
-	return e.store.SaveNumberMapping(m.Number, m.Name, m.ObjectId)
+	return e.store.SaveNumberMapping(m.Number, m.ObjectId)
 }
 
 func (e *Engine) DeleteObjectMappings(id string) error {

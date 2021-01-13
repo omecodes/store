@@ -9,7 +9,7 @@ import (
 type Collection interface {
 
 	// Save saves object content as JSON in database
-	Save(ctx context.Context, object *pb.Object, index ...*pb.Index) error
+	Save(ctx context.Context, object *pb.Object, index ...*pb.TextIndex) error
 
 	// Update applies patch to object with id equals patch.ID()
 	Patch(ctx context.Context, patch *pb.Patch) error

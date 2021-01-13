@@ -36,7 +36,7 @@ func (p *ParamsHandler) DeleteCollection(ctx context.Context, id string) error {
 	return p.BaseHandler.DeleteCollection(ctx, id)
 }
 
-func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
+func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.TextIndex, opts pb.PutOptions) (string, error) {
 	if collection == "" || object == nil || object.Header == nil || object.Header.Size == 0 {
 		return "", errors.BadInput
 	}

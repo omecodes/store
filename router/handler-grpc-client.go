@@ -66,7 +66,7 @@ func (g *gRPCClientHandler) DeleteCollection(ctx context.Context, id string) err
 	return err
 }
 
-func (g *gRPCClientHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
+func (g *gRPCClientHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.TextIndex, opts pb.PutOptions) (string, error) {
 	client, err := clients.RouterGrpc(ctx, g.nodeType)
 	if err != nil {
 		return "", err

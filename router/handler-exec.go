@@ -54,7 +54,7 @@ func (e *ExecHandler) DeleteCollection(ctx context.Context, id string) error {
 	return storage.DeleteCollection(ctx, id)
 }
 
-func (e *ExecHandler) PutObject(ctx context.Context, collection string, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.Index, opts pb.PutOptions) (string, error) {
+func (e *ExecHandler) PutObject(ctx context.Context, collection string, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.TextIndex, opts pb.PutOptions) (string, error) {
 	if object.Header.Id == "" {
 		object.Header.Id = uuid.New().String()
 	}

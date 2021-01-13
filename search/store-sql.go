@@ -20,7 +20,7 @@ const propsTableName = "$prefix$_props_mapping"
 const propsTablesDef = `
 create table if not exists $prefix$_props_mapping (
   	object varchar(255) not null,
-    value LONGTEXT not null,
+    value JSON not null,
     primary key(object)
 );
 `
@@ -28,43 +28,33 @@ create table if not exists $prefix$_props_mapping (
 const wordsTablesDef = `
 create table if not exists $prefix$_words_mapping (
   	token varchar(255) not null,
-    field varchar(255) not null,
-    objects LONGTEXT not null,
-    primary key(token, field)
+    id varchar(255) not null,
+    primary key(token, id)
 );
 `
 
 const numbersTablesDef = `
 create table if not exists $prefix$_numbers_mapping (
   	num bigInt not null,
-    field varchar(255) not null,
-    objects LONGTEXT not null,
-    primary key(num, field)
+    id varchar(255) not null,
+    primary key(num, id)
 );
 `
 
 const insertWord = `
-insert into $prefix$_words_mapping values(?, ?, ?);
+insert into $prefix$_words_mapping values(?, ?);
 `
 
-const appendToWord = `
-update $prefix$_words_mapping set objects=concat(objects, ?) where token=? and field=?;
-`
-
-const deleteObjectWordMapping = `
-update $prefix$_words_mapping set objects=replace(objects, ?, ' ') where objects like ?;
+const deleteObjectWordMappings = `
+delete $prefix$_words_mapping where id=?;
 `
 
 const insertNumber = `
-insert into $prefix$_numbers_mapping values(?, ?, ?);
-`
-
-const appendToNumber = `
-update $prefix$_numbers_mapping set objects=concat(objects, ?) where num=? and field=?;
+insert into $prefix$_numbers_mapping values(?, ?);
 `
 
 const deleteObjectNumberMapping = `
-update $prefix$_numbers_mapping set objects=replace(objects, ?, ' ') where objects like ?;
+delete from $prefix$_numbers_mapping where id=?;
 `
 
 const insertProps = `
@@ -118,25 +108,12 @@ type sqlStore struct {
 	db *bome.Bome
 }
 
-func (s *sqlStore) SaveWordMapping(word string, field string, id string) error {
-	err := s.db.RawExec(insertWord, word, field, " "+id).Error
-	if err != nil {
-		if bome.IsPrimaryKeyConstraintError(err) {
-			err = s.db.RawExec(appendToWord, " "+id, word, field).Error
-			if err != nil {
-				log.Error("failed to create index mapping", log.Err(err))
-			}
-		}
-	}
-	return err
+func (s *sqlStore) SaveWordMapping(word string, id string) error {
+	return s.db.RawExec(insertWord, word, id).Error
 }
 
-func (s *sqlStore) SaveNumberMapping(num int64, field string, id string) error {
-	err := s.db.RawExec(insertNumber, num, field, " "+id).Error
-	if err != nil && bome.IsPrimaryKeyConstraintError(err) {
-		err = s.db.RawExec(appendToNumber, " "+id, num, field).Error
-	}
-	return err
+func (s *sqlStore) SaveNumberMapping(num int64, id string) error {
+	return s.db.RawExec(insertNumber, num, id).Error
 }
 
 func (s *sqlStore) SavePropertiesMapping(id string, value string) error {
@@ -151,9 +128,9 @@ func (s *sqlStore) SavePropertiesMapping(id string, value string) error {
 }
 
 func (s *sqlStore) DeleteObjectMappings(id string) error {
-	err := s.db.RawExec(deleteObjectNumberMapping, id, "' %"+id+"%'").Error
+	err := s.db.RawExec(deleteObjectNumberMapping, id).Error
 	if err == nil {
-		err = s.db.RawExec(deleteObjectWordMapping, id, "' %"+id+"%'").Error
+		err = s.db.RawExec(deleteObjectNumberMapping, id).Error
 		if err == nil {
 			s.db.RawExec(deleteProps, id)
 		}
@@ -169,17 +146,17 @@ func (s *sqlStore) performSearch(query *pb.SearchQuery) (Cursor, error) {
 	switch q := query.Query.(type) {
 
 	case *pb.SearchQuery_Text:
-		sqlQuery := "select value from " + wordsTableName + " where " + evaluateStrQuery(q.Text)
+		sqlQuery := "select value from " + wordsTableName + " where " + evaluateWordSearchingQuery(q.Text)
 		c, err := s.db.RawQuery(sqlQuery, bome.StringScanner)
 		return &aggregatedStrIdsCursor{cursor: c}, err
 
 	case *pb.SearchQuery_Number:
-		sqlQuery := "select value from " + numbersTableName + " where " + evaluateNumQuery(q.Number)
+		sqlQuery := "select value from " + numbersTableName + " where " + evaluateNumberSearchingQuery(q.Number)
 		c, err := s.db.RawQuery(sqlQuery, bome.StringScanner)
 		return &aggregatedStrIdsCursor{cursor: c}, err
 
 	case *pb.SearchQuery_Fields:
-		sqlQuery := "select id from " + propsTableName + " where " + evaluateFieldsQuery(q.Fields)
+		sqlQuery := "select id from " + propsTableName + " where " + evaluatePropertiesSearchingQuery(q.Fields)
 		c, err := s.db.RawQuery(sqlQuery, bome.StringScanner)
 		return &bomeCursorWrapper{cursor: c}, err
 	}
@@ -187,7 +164,7 @@ func (s *sqlStore) performSearch(query *pb.SearchQuery) (Cursor, error) {
 	return nil, errors.New("unsupported query type")
 }
 
-func evaluateStrQuery(query *pb.StrQuery) string {
+func evaluateWordSearchingQuery(query *pb.StrQuery) string {
 	textAnalyzer := getQueryTextAnalyzer()
 
 	switch v := query.Bool.(type) {
@@ -195,14 +172,14 @@ func evaluateStrQuery(query *pb.StrQuery) string {
 	case *pb.StrQuery_And:
 		var evaluatedExpression []string
 		for _, ox := range v.And.Queries {
-			evaluatedExpression = append(evaluatedExpression, evaluateStrQuery(ox))
+			evaluatedExpression = append(evaluatedExpression, evaluateWordSearchingQuery(ox))
 		}
 		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " AND "))
 
 	case *pb.StrQuery_Or:
 		var evaluatedExpression []string
 		for _, ox := range v.Or.Queries {
-			evaluatedExpression = append(evaluatedExpression, evaluateStrQuery(ox))
+			evaluatedExpression = append(evaluatedExpression, evaluateWordSearchingQuery(ox))
 		}
 		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " OR "))
 
@@ -221,20 +198,20 @@ func evaluateStrQuery(query *pb.StrQuery) string {
 	return ""
 }
 
-func evaluateNumQuery(query *pb.NumQuery) string {
+func evaluateNumberSearchingQuery(query *pb.NumQuery) string {
 	switch v := query.Bool.(type) {
 
 	case *pb.NumQuery_And:
 		var evaluatedExpression []string
 		for _, ox := range v.And.Queries {
-			evaluatedExpression = append(evaluatedExpression, evaluateNumQuery(ox))
+			evaluatedExpression = append(evaluatedExpression, evaluateNumberSearchingQuery(ox))
 		}
 		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " AND "))
 
 	case *pb.NumQuery_Or:
 		var evaluatedExpression []string
 		for _, ox := range v.Or.Queries {
-			evaluatedExpression = append(evaluatedExpression, evaluateNumQuery(ox))
+			evaluatedExpression = append(evaluatedExpression, evaluateNumberSearchingQuery(ox))
 		}
 		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " OR "))
 
@@ -257,7 +234,7 @@ func evaluateNumQuery(query *pb.NumQuery) string {
 	return ""
 }
 
-func evaluateFieldsQuery(query *pb.FieldQuery) string {
+func evaluatePropertiesSearchingQuery(query *pb.FieldQuery) string {
 	textAnalyzer := getQueryTextAnalyzer()
 
 	switch v := query.Bool.(type) {
@@ -265,14 +242,14 @@ func evaluateFieldsQuery(query *pb.FieldQuery) string {
 	case *pb.FieldQuery_And:
 		var evaluatedExpression []string
 		for _, ox := range v.And.Queries {
-			evaluatedExpression = append(evaluatedExpression, evaluateFieldsQuery(ox))
+			evaluatedExpression = append(evaluatedExpression, evaluatePropertiesSearchingQuery(ox))
 		}
 		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " AND "))
 
 	case *pb.FieldQuery_Or:
 		var evaluatedExpression []string
 		for _, ox := range v.Or.Queries {
-			evaluatedExpression = append(evaluatedExpression, evaluateFieldsQuery(ox))
+			evaluatedExpression = append(evaluatedExpression, evaluatePropertiesSearchingQuery(ox))
 		}
 		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " OR "))
 
