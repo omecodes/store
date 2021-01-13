@@ -12,12 +12,10 @@ type textTokenizer struct {
 
 func (t *textTokenizer) TokenizeText(text string, originalMappedCount uint32) TokenStream {
 	tokens := strings.Split(text, " ")
-	if originalMappedCount == 0 {
-		if len(text) < int(originalMappedCount) {
-			tokens = append(tokens, text)
-		} else {
-			tokens = append(tokens, text[:originalMappedCount])
-		}
+	if len(text) < int(originalMappedCount) || originalMappedCount == 0 {
+		tokens = append(tokens, text)
+	} else {
+		tokens = append(tokens, text[:originalMappedCount])
 	}
 	return &tokenStream{tokens: tokens}
 }
