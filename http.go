@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/gorilla/mux"
-	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/errors"
+	"github.com/omecodes/store/accounts"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/pb"
 	"github.com/omecodes/store/router"
@@ -14,6 +15,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -23,6 +25,7 @@ const (
 	queryAt            = "at"
 	queryHeader        = "header"
 	pathItemId         = "id"
+	pathItemName       = "name"
 	pathItemCollection = "collection"
 )
 
@@ -38,11 +41,16 @@ func (s *HTTPUnit) MuxRouter() *mux.Router {
 	r.Name("SetSettings").Methods(http.MethodPut).Path("/settings").Handler(http.HandlerFunc(s.setSettings))
 	r.Name("GetSettings").Methods(http.MethodGet).Path("/settings").Handler(http.HandlerFunc(s.getSettings))
 
+	r.Name("GetAccount").Methods(http.MethodGet).Path("/accounts/{name}").Handler(http.HandlerFunc(s.getAccount))
+	r.Name("FindAccount").Methods(http.MethodPost).Path("/accounts").Handler(http.HandlerFunc(s.findAccount))
+	r.Name("CreateAccount").Methods(http.MethodPut).Path("/accounts").Handler(http.HandlerFunc(s.createAccount))
+
 	r.Name("SaveAuthProvider≈").Methods(http.MethodPut).Path("/auth/providers").Handler(http.HandlerFunc(s.saveProvider))
 	r.Name("GetAuthProvider").Methods(http.MethodGet).Path("/auth/providers/{name}").Handler(http.HandlerFunc(s.getProvider))
 	r.Name("DeleteAuthProvider").Methods(http.MethodDelete).Path("/auth/providers/{name}").Handler(http.HandlerFunc(s.deleteProvider))
 	r.Name("ListProviders").Methods(http.MethodGet).Path("/auth/providers").Handler(http.HandlerFunc(s.listProviders))
-	r.Name("ListProviders").Methods(http.MethodPut).Path("/auth/access").Handler(http.HandlerFunc(s.createAccess))
+
+	r.Name("CreateAccess").Methods(http.MethodPut).Path("/auth/access").Handler(http.HandlerFunc(s.createAccess))
 
 	r.Name("CreateCollection").Methods(http.MethodPut).Path("/collections").Handler(http.HandlerFunc(s.createCollection))
 	r.Name("ListCollections").Methods(http.MethodGet).Path("/collections").Handler(http.HandlerFunc(s.listCollections))
@@ -93,7 +101,7 @@ func (s *HTTPUnit) put(w http.ResponseWriter, r *http.Request) {
 
 	id, err := route.PutObject(ctx, collection, putRequest.Object, putRequest.AccessSecurityRules, putRequest.Indexes, pb.PutOptions{})
 	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 
@@ -130,7 +138,7 @@ func (s *HTTPUnit) patch(w http.ResponseWriter, r *http.Request) {
 
 	err = route.PatchObject(ctx, collection, &patch, pb.PatchOptions{})
 	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 }
@@ -164,7 +172,7 @@ func (s *HTTPUnit) move(w http.ResponseWriter, r *http.Request) {
 
 	err = route.MoveObject(ctx, collection, objectId, request.TargetCollection, request.AccessSecurityRules, pb.MoveOptions{})
 	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 }
@@ -190,7 +198,7 @@ func (s *HTTPUnit) get(w http.ResponseWriter, r *http.Request) {
 		Info: header == "true",
 	})
 	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 
@@ -216,7 +224,7 @@ func (s *HTTPUnit) del(w http.ResponseWriter, r *http.Request) {
 
 	err = route.DeleteObject(ctx, collection, id)
 	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 }
@@ -254,7 +262,7 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 
 	cursor, err := route.ListObjects(ctx, collection, opts)
 	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 
@@ -273,7 +281,7 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 			if err2 == io.EOF {
 				break
 			}
-			w.WriteHeader(errors.HttpStatus(err2))
+			w.WriteHeader(errors.HTTPStatus(err2))
 			return
 		}
 
@@ -316,7 +324,7 @@ func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 
 	cursor, err := route.SearchObjects(ctx, collection, &query)
 	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 	defer func() {
@@ -334,7 +342,7 @@ func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 			if err2 == io.EOF {
 				break
 			}
-			w.WriteHeader(errors.HttpStatus(err2))
+			w.WriteHeader(errors.HTTPStatus(err2))
 			_, err = w.Write([]byte("}"))
 			return
 		}
@@ -389,7 +397,7 @@ func (s *HTTPUnit) setSettings(w http.ResponseWriter, r *http.Request) {
 	err = settings.Set(name, string(data))
 	if err != nil {
 		log.Error("failed to set settings", log.Err(err))
-		w.WriteHeader(errors.HttpStatus(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 	}
 }
 
@@ -417,7 +425,7 @@ func (s *HTTPUnit) getSettings(w http.ResponseWriter, r *http.Request) {
 	value, err := settings.Get(name)
 	if err != nil {
 		log.Error("failed to set settings", log.Err(err))
-		w.WriteHeader(errors.HttpStatus(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 	}
 
 	w.Header().Add("Content-Type", "text/plain")
@@ -442,7 +450,7 @@ func (s *HTTPUnit) createCollection(w http.ResponseWriter, r *http.Request) {
 
 	err = route.CreateCollection(ctx, &collection)
 	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 }
@@ -458,7 +466,7 @@ func (s *HTTPUnit) listCollections(w http.ResponseWriter, r *http.Request) {
 
 	collections, err := route.ListCollections(ctx)
 	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 
@@ -490,7 +498,7 @@ func (s *HTTPUnit) getCollection(w http.ResponseWriter, r *http.Request) {
 
 	collection, err := route.GetCollection(ctx, id)
 	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 
@@ -518,7 +526,7 @@ func (s *HTTPUnit) deleteCollection(w http.ResponseWriter, r *http.Request) {
 
 	err = route.DeleteCollection(ctx, id)
 	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 }
@@ -579,7 +587,7 @@ func (s *HTTPUnit) getProvider(w http.ResponseWriter, r *http.Request) {
 	provider, err := providers.Get(vars[pathItemId])
 	if err != nil {
 		log.Error("failed to get provider", log.Field("id", vars[pathItemId]), log.Err(err))
-		w.WriteHeader(errors.HttpStatus(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 
@@ -639,7 +647,7 @@ func (s *HTTPUnit) listProviders(w http.ResponseWriter, r *http.Request) {
 	providerList, err := providers.GetAll(userInfo.Uid != "admin")
 	if err != nil {
 		log.Error("failed to get provider", log.Field("id", vars[pathItemId]), log.Err(err))
-		w.WriteHeader(errors.HttpStatus(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 
@@ -675,7 +683,7 @@ func (s *HTTPUnit) createAccess(w http.ResponseWriter, r *http.Request) {
 	err = manager.SaveAccess(access)
 	if err != nil {
 		log.Error("failed to save access", log.Err(err))
-		w.WriteHeader(errors.HttpStatus(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 }
@@ -699,7 +707,7 @@ func (s *HTTPUnit) listAccesses(w http.ResponseWriter, r *http.Request) {
 	accesses, err := manager.GetAllAccesses()
 	if err != nil {
 		log.Error("failed to get access", log.Err(err))
-		w.WriteHeader(errors.HttpStatus(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 
@@ -741,12 +749,91 @@ func (s *HTTPUnit) deleteAccess(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *HTTPUnit) getAccountInfo(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPUnit) getAccount(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userInfo := auth.Get(ctx)
 
+	if userInfo == nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	vars := mux.Vars(r)
+	name := vars[pathItemName]
+
+	if name == "admin" {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	manager := accounts.GetManager(ctx)
+	account, err := manager.Get(ctx, name)
+	if err != nil {
+		w.WriteHeader(errors.HTTPStatus(err))
+		_, _ = w.Write([]byte(err.Error()))
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(account)
+}
+
+func (s *HTTPUnit) findAccount(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	jwt := auth.JWT(ctx)
+
+	if jwt == nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	manager := accounts.GetManager(ctx)
+	account, err := manager.Find(ctx, jwt.Claims.Iss, jwt.Claims.Sub)
+	if err != nil {
+		w.WriteHeader(errors.HTTPStatus(err))
+		_, _ = w.Write([]byte(err.Error()))
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(account)
 }
 
 func (s *HTTPUnit) createAccount(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	jwt := auth.JWT(ctx)
 
+	if jwt == nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	contentType := r.Header.Get("Content-Type")
+	if !strings.HasPrefix(contentType, "application/json") {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var account *accounts.Account
+	err := json.NewDecoder(r.Body).Decode(&account)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	account.Source = &accounts.Source{
+		Provider: jwt.Claims.Iss,
+		Name:     jwt.Claims.Sub,
+		Email:    jwt.Claims.Profile.Email,
+	}
+
+	manager := accounts.GetManager(ctx)
+	err = manager.Create(ctx, account)
+	if err != nil {
+		w.WriteHeader(errors.HTTPStatus(err))
+		_, _ = w.Write([]byte(err.Error()))
+		return
+	}
 }
 
 func Int64QueryParam(r *http.Request, name string) (int64, error) {

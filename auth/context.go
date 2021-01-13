@@ -2,10 +2,12 @@ package auth
 
 import (
 	"context"
+	ome "github.com/omecodes/libome"
 	"github.com/omecodes/store/pb"
 )
 
 type ctxAuthentication struct{}
+type ctxJWt struct{}
 type ctxManager struct{}
 type ctxProviders struct{}
 
@@ -15,6 +17,14 @@ func Get(ctx context.Context) *pb.Auth {
 		return nil
 	}
 	return o.(*pb.Auth)
+}
+
+func JWT(ctx context.Context) *ome.JWT {
+	o := ctx.Value(ctxJWt{})
+	if o == nil {
+		return nil
+	}
+	return o.(*ome.JWT)
 }
 
 func GetCredentialsManager(ctx context.Context) CredentialsManager {

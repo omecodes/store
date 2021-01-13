@@ -214,6 +214,7 @@ func updateContextWithOauth2(ctx context.Context, authorization string) (context
 		return ctx, errors.New(errors.CodeForbidden, "token not signed")
 	}
 
+	ctx = context.WithValue(ctx, ctxJWt{}, jwt)
 	return context.WithValue(ctx, ctxAuthentication{}, &pb.Auth{
 		Uid:    jwt.Claims.Sub,
 		Email:  jwt.Claims.Profile.Email,
