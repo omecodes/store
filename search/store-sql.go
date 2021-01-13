@@ -277,13 +277,13 @@ func evaluateFieldsQuery(query *pb.FieldQuery) string {
 		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " OR "))
 
 	case *pb.FieldQuery_Contains:
-		return fmt.Sprintf("(value->>'$.%s' like '%%s%')", v.Contains.Field, textAnalyzer(v.Contains.Value))
+		return fmt.Sprintf("(value->>'$.%s' like '%%%s%%')", v.Contains.Field, textAnalyzer(v.Contains.Value))
 
 	case *pb.FieldQuery_StartsWith:
-		return fmt.Sprintf("(value->>'$.%s' like '%s%')", v.StartsWith.Field, textAnalyzer(v.StartsWith.Value))
+		return fmt.Sprintf("(value->>'$.%s' like '%s%%')", v.StartsWith.Field, textAnalyzer(v.StartsWith.Value))
 
 	case *pb.FieldQuery_EndsWith:
-		return fmt.Sprintf("(value->>'$.%s' like '%s%')", v.EndsWith.Field, textAnalyzer(v.EndsWith.Value))
+		return fmt.Sprintf("(value->>'$.%s' like '%s%%')", v.EndsWith.Field, textAnalyzer(v.EndsWith.Value))
 
 	case *pb.FieldQuery_StrEqual:
 		return fmt.Sprintf("(value->>'$.%s'='%s')", v.StrEqual.Field, textAnalyzer(v.StrEqual.Value))
