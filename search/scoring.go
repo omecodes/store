@@ -1,10 +1,12 @@
 package se
 
+import "strings"
+
 type scoreRecords struct {
 	scores map[string]int
 }
 
-func (s *scoreRecords) append(ids []string) {
+func (s *scoreRecords) append(ids ...string) {
 	if s.scores == nil {
 		s.scores = make(map[string]int)
 	}
@@ -51,17 +53,33 @@ func (s *scoreRecords) sorted() []string {
 type tokenMatchScorer func(string, string, *scoreRecords)
 
 func containsScorer(pattern string) tokenMatchScorer {
-	return func(token string, id string, records *scoreRecords) {}
+	return func(token string, id string, records *scoreRecords) {
+		if strings.Contains(token, pattern) {
+			records.append(id)
+		}
+	}
 }
 
 func startsWithScorer(pattern string) tokenMatchScorer {
-	return func(token string, id string, records *scoreRecords) {}
+	return func(token string, id string, records *scoreRecords) {
+		if strings.HasPrefix(token, pattern) {
+			records.append(id)
+		}
+	}
 }
 
 func equalsScorer(pattern string) tokenMatchScorer {
-	return func(token string, id string, records *scoreRecords) {}
+	return func(token string, id string, records *scoreRecords) {
+		if pattern == token {
+			records.append(id)
+		}
+	}
 }
 
 func endsWithScorer(pattern string) tokenMatchScorer {
-	return func(token string, id string, records *scoreRecords) {}
+	return func(token string, id string, records *scoreRecords) {
+		if strings.HasSuffix(token, pattern) {
+			records.append(id)
+		}
+	}
 }
