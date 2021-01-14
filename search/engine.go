@@ -111,7 +111,7 @@ func (e *Engine) Search(query *pb.SearchQuery) ([]string, error) {
 		}
 
 		ids := strings.Split(value, " ")
-		sorter.append(ids)
+		sorter.append(ids...)
 	}
 
 	return sorter.sorted(), nil
