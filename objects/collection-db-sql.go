@@ -26,11 +26,6 @@ func NewSQLCollection(collection *pb.Collection, db *sql.DB, dialect string, tab
 		return nil, err
 	}
 
-	datedRefs, err := bome.NewList(db, dialect, tableName+"_dated_refs")
-	if err != nil {
-		return nil, err
-	}
-
 	fk := &bome.ForeignKey{
 		Name: "fk_objects_header_id",
 		Table: &bome.Keys{
@@ -54,13 +49,12 @@ func NewSQLCollection(collection *pb.Collection, db *sql.DB, dialect string, tab
 	}
 
 	s := &sqlCollection{
-		db:        db,
-		dialect:   dialect,
-		objects:   objects,
-		headers:   headers,
-		datedRefs: datedRefs,
-		info:      collection,
-		engine:    se.NewEngine(indexStore),
+		db:      db,
+		dialect: dialect,
+		objects: objects,
+		headers: headers,
+		info:    collection,
+		engine:  se.NewEngine(indexStore),
 	}
 	return s, nil
 }
@@ -73,17 +67,12 @@ type sqlCollection struct {
 
 	indexes []*pb.Index
 
-	objects   *bome.JSONMap
-	datedRefs *bome.List
-	headers   *bome.JSONMap
+	objects *bome.JSONMap
+	headers *bome.JSONMap
 }
 
 func (s *sqlCollection) Objects() *bome.JSONMap {
 	return s.objects
-}
-
-func (s *sqlCollection) DatedRefs() *bome.List {
-	return s.datedRefs
 }
 
 func (s *sqlCollection) Save(ctx context.Context, object *pb.Object, indexes ...*pb.TextIndex) error {
@@ -139,19 +128,6 @@ func (s *sqlCollection) Save(ctx context.Context, object *pb.Object, indexes ...
 	})
 	if err != nil {
 		log.Error("Save: failed to save object headers", log.Err(err))
-		if err2 := tx.Rollback(); err2 != nil {
-			log.Error("Save: rollback failed", log.Err(err2))
-		}
-		return err
-	}
-
-	dTx := s.datedRefs.ContinueTransaction(tx.TX())
-	err = dTx.Save(&bome.ListEntry{
-		Index: object.Header.CreatedAt,
-		Value: object.Header.Id,
-	})
-	if err != nil {
-		log.Error("Save: failed to save dated reference", log.Err(err))
 		if err2 := tx.Rollback(); err2 != nil {
 			log.Error("Save: rollback failed", log.Err(err2))
 		}
@@ -331,84 +307,14 @@ func (s *sqlCollection) Delete(ctx context.Context, objectID string) error {
 		}
 	}()
 
-	info, err := s.Info(ctx, objectID)
-	if err != nil {
-		return err
-	}
-
-	tx, err := s.objects.BeginTransaction()
-	if err != nil {
-		log.Error("Delete: could not start objects DB transaction", log.Err(err))
-		if err2 := tx.Rollback(); err2 != nil {
-			log.Error("Delete: rollback failed", log.Err(err2))
-		}
-		return errors.Internal
-	}
-
-	err = tx.Delete(objectID)
+	err := s.objects.Delete(objectID)
 	if err != nil {
 		log.Error("Delete: object deletion failed", log.Err(err))
-		if err2 := tx.Rollback(); err2 != nil {
-			log.Error("Delete: rollback failed", log.Err(err2))
-		}
-		return errors.Internal
-	}
-
-	htx := s.headers.ContinueTransaction(tx.TX())
-	err = htx.Delete(objectID)
-	if err != nil {
-		log.Error("Delete: failed to delete header", log.Err(err))
-		if err2 := tx.Rollback(); err2 != nil {
-			log.Error("Delete: rollback failed", log.Err(err2))
-		}
-		return errors.Internal
-	}
-
-	dtx := s.datedRefs.ContinueTransaction(tx.TX())
-	err = dtx.Delete(info.CreatedAt)
-	if err != nil {
-		log.Error("Delete: failed to delete dated references", log.Err(err))
-		if err2 := tx.Rollback(); err2 != nil {
-			log.Error("Delete: rollback failed", log.Err(err2))
-		}
-		return errors.Internal
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		log.Error("Delete: operations commit failed", log.Err(err))
 		return errors.Internal
 	}
 
 	log.Debug("Delete: object deleted", log.Field("id", objectID))
 	return nil
-}
-
-func (s *sqlCollection) listInRange(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
-	cursor, _, err := s.datedRefs.IndexInRange(opts.DateOptions.After, opts.DateOptions.Before)
-	if err != nil {
-		return nil, err
-	}
-
-	closer := pb.CloseFunc(func() error {
-		return cursor.Close()
-	})
-	browser := pb.BrowseFunc(func() (*pb.Object, error) {
-		if !cursor.HasNext() {
-			return nil, io.EOF
-		}
-		next, err := cursor.Next()
-		if err != nil {
-			return nil, err
-		}
-		entry := next.(*bome.ListEntry)
-		id := entry.Value
-		return s.Get(context.Background(), id, pb.GetOptions{
-			At: opts.At,
-		})
-	})
-
-	return pb.NewCursor(browser, closer), nil
 }
 
 func (s *sqlCollection) Get(ctx context.Context, objectID string, opts pb.GetOptions) (*pb.Object, error) {
@@ -463,7 +369,7 @@ func (s *sqlCollection) Info(ctx context.Context, id string) (*pb.Header, error)
 }
 
 func (s *sqlCollection) List(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
-	cursor, err := s.headers.List()
+	cursor, err := s.objects.List()
 	if err != nil {
 		return nil, err
 	}
