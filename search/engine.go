@@ -98,7 +98,7 @@ func (e *Engine) Search(query *pb.SearchQuery) ([]string, error) {
 		}
 	}()
 
-	sorter := &scoreRecords{}
+	records := &scoreRecords{}
 
 	for {
 		value, err := c.Next()
@@ -111,8 +111,8 @@ func (e *Engine) Search(query *pb.SearchQuery) ([]string, error) {
 		}
 
 		ids := strings.Split(value, " ")
-		sorter.append(ids...)
+		records.append(ids...)
 	}
 
-	return sorter.sorted(), nil
+	return records.sorted(), nil
 }

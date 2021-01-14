@@ -40,11 +40,11 @@ func (c *aggregatedStrIdsCursor) Close() error {
 	return nil
 }
 
-type bomeCursorWrapper struct {
+type dbCursorWrapper struct {
 	cursor bome.Cursor
 }
 
-func (c *bomeCursorWrapper) Next() (string, error) {
+func (c *dbCursorWrapper) Next() (string, error) {
 	if c.cursor.HasNext() {
 		o, err := c.cursor.Next()
 		if err == nil {
@@ -55,7 +55,7 @@ func (c *bomeCursorWrapper) Next() (string, error) {
 	return "", io.EOF
 }
 
-func (c *bomeCursorWrapper) Close() error {
+func (c *dbCursorWrapper) Close() error {
 	return c.cursor.Close()
 }
 

@@ -153,10 +153,15 @@ func (s *sqlStore) performSearch(query *pb.SearchQuery) (Cursor, error) {
 			return nil, err
 		}
 
+		if len(scorers) <= 1 {
+			return &dbCursorWrapper{cursor: c}, nil
+		}
+
 		defer func() {
 			_ = c.Close()
 		}()
 
+		scorers = append(scorers, presenceScorer)
 		records := &scoreRecords{}
 
 		for c.HasNext() {
@@ -184,7 +189,7 @@ func (s *sqlStore) performSearch(query *pb.SearchQuery) (Cursor, error) {
 	case *pb.SearchQuery_Fields:
 		sqlQuery := "select id from " + propsTableName + " where " + evaluatePropertiesSearchingQuery(q.Fields)
 		c, err := s.db.RawQuery(sqlQuery, bome.StringScanner)
-		return &bomeCursorWrapper{cursor: c}, err
+		return &dbCursorWrapper{cursor: c}, err
 	}
 
 	return nil, errors.New("unsupported query type")

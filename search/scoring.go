@@ -83,3 +83,7 @@ func endsWithScorer(pattern string) tokenMatchScorer {
 		}
 	}
 }
+
+func presenceScorer(_ string, id string, records *scoreRecords) {
+	records.append(id)
+}
