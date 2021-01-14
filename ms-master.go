@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/omecodes/discover"
 	"github.com/omecodes/service"
+	"github.com/omecodes/store/accounts"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/objects"
 	"golang.org/x/crypto/acme/autocert"
@@ -46,19 +47,21 @@ func NewMSServer(cfg MsConfig) *MSServer {
 }
 
 type MSServer struct {
-	config                  MsConfig
+	config         MsConfig
+	listener       net.Listener
+	adminPassword  string
+	workerPassword string
+	Errors         chan error
+	loadBalancer   *router.BaseHandler
+	registry       ome.Registry
+	caServer       *sca.Server
+	autoCertDir    string
+	db             *sql.DB
+
 	authenticationProviders auth.ProviderManager
 	credentialsManager      auth.CredentialsManager
 	settings                objects.SettingsManager
-	listener                net.Listener
-	adminPassword           string
-	workerPassword          string
-	Errors                  chan error
-	loadBalancer            *router.BaseHandler
-	registry                ome.Registry
-	caServer                *sca.Server
-	autoCertDir             string
-	db                      *sql.DB
+	accountsManager         accounts.Manager
 }
 
 func (s *MSServer) init() error {
@@ -75,6 +78,11 @@ func (s *MSServer) init() error {
 
 	var err error
 	s.settings, err = objects.NewSQLSettings(s.db, bome.MySQL, "objects_settings")
+	if err != nil {
+		return err
+	}
+
+	s.accountsManager, err = accounts.NewSQLManager(s.db, bome.MySQL, "accounts")
 	if err != nil {
 		return err
 	}
@@ -262,6 +270,7 @@ func (s *MSServer) httpEnrichContext(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		ctx = accounts.ContextWithManager(ctx, s.accountsManager)
 		ctx = auth.ContextWithCredentialsManager(ctx, s.credentialsManager)
 		ctx = auth.ContextWithProviders(ctx, s.authenticationProviders)
 		ctx = service.ContextWithBox(ctx, box)

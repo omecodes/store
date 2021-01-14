@@ -7,6 +7,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/gorilla/mux"
 	"github.com/omecodes/common/errors"
+	"github.com/omecodes/store/accounts"
 	"github.com/omecodes/store/acl"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/cenv"
@@ -51,6 +52,7 @@ type MNServer struct {
 
 	objects                 objects.Objects
 	settings                objects.SettingsManager
+	accountsManager         accounts.Manager
 	authenticationProviders auth.ProviderManager
 	credentialsManager      auth.CredentialsManager
 	accessStore             acl.Store
@@ -84,6 +86,11 @@ func (s *MNServer) init() error {
 	}
 
 	s.settings, err = objects.NewSQLSettings(s.db, bome.MySQL, "objects_settings")
+	if err != nil {
+		return err
+	}
+
+	s.accountsManager, err = accounts.NewSQLManager(s.db, bome.MySQL, "accounts")
 	if err != nil {
 		return err
 	}
@@ -244,6 +251,7 @@ func (s *MNServer) startAutoCertAPIServer() error {
 func (s *MNServer) enrichContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		ctx = accounts.ContextWithManager(ctx, s.accountsManager)
 		ctx = auth.ContextWithCredentialsManager(ctx, s.credentialsManager)
 		ctx = auth.ContextWithProviders(ctx, s.authenticationProviders)
 		ctx = acl.ContextWithStore(ctx, s.accessStore)
