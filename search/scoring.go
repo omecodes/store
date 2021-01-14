@@ -1,10 +1,10 @@
 package se
 
-type scoreSorter struct {
+type scoreRecords struct {
 	scores map[string]int
 }
 
-func (s *scoreSorter) append(ids []string) {
+func (s *scoreRecords) append(ids []string) {
 	if s.scores == nil {
 		s.scores = make(map[string]int)
 	}
@@ -19,7 +19,7 @@ func (s *scoreSorter) append(ids []string) {
 	}
 }
 
-func (s *scoreSorter) sorted() []string {
+func (s *scoreRecords) sorted() []string {
 	var sortedIds []string
 	var sortedValues []int
 
@@ -46,4 +46,22 @@ func (s *scoreSorter) sorted() []string {
 		}
 	}
 	return sortedIds
+}
+
+type tokenMatchScorer func(string, string, *scoreRecords)
+
+func containsScorer(pattern string) tokenMatchScorer {
+	return func(token string, id string, records *scoreRecords) {}
+}
+
+func startsWithScorer(pattern string) tokenMatchScorer {
+	return func(token string, id string, records *scoreRecords) {}
+}
+
+func equalsScorer(pattern string) tokenMatchScorer {
+	return func(token string, id string, records *scoreRecords) {}
+}
+
+func endsWithScorer(pattern string) tokenMatchScorer {
+	return func(token string, id string, records *scoreRecords) {}
 }

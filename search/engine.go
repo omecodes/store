@@ -98,7 +98,7 @@ func (e *Engine) Search(query *pb.SearchQuery) ([]string, error) {
 		}
 	}()
 
-	sorter := &scoreSorter{}
+	sorter := &scoreRecords{}
 
 	for {
 		value, err := c.Next()

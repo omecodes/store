@@ -146,9 +146,35 @@ func (s *sqlStore) performSearch(query *pb.SearchQuery) (Cursor, error) {
 	switch q := query.Query.(type) {
 
 	case *pb.SearchQuery_Text:
-		sqlQuery := "select id from " + wordsTableName + " where " + evaluateWordSearchingQuery(q.Text)
-		c, err := s.db.RawQuery(sqlQuery, bome.StringScanner)
-		return &aggregatedStrIdsCursor{cursor: c}, err
+		expr, scorers := evaluateWordSearchingQuery(q.Text)
+		sqlQuery := "select * from " + wordsTableName + " where " + expr
+		c, err := s.db.RawQuery(sqlQuery, bome.MapEntryScanner)
+		if err != nil {
+			return nil, err
+		}
+
+		defer func() {
+			_ = c.Close()
+		}()
+
+		records := &scoreRecords{}
+
+		for c.HasNext() {
+			o, err := c.Next()
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				return nil, err
+			}
+
+			entry := o.(*bome.MapEntry)
+			for _, scorer := range scorers {
+				scorer(entry.Key, entry.Value, records)
+			}
+		}
+
+		return &idListCursor{ids: records.sorted(), pos: 0}, err
 
 	case *pb.SearchQuery_Number:
 		sqlQuery := "select id from " + numbersTableName + " where " + evaluateNumberSearchingQuery(q.Number)
@@ -164,38 +190,42 @@ func (s *sqlStore) performSearch(query *pb.SearchQuery) (Cursor, error) {
 	return nil, errors.New("unsupported query type")
 }
 
-func evaluateWordSearchingQuery(query *pb.StrQuery) string {
+func evaluateWordSearchingQuery(query *pb.StrQuery) (string, []tokenMatchScorer) {
+	var matchScorers []tokenMatchScorer
 	textAnalyzer := getQueryTextAnalyzer()
 
 	switch v := query.Bool.(type) {
 
-	case *pb.StrQuery_And:
-		var evaluatedExpression []string
-		for _, ox := range v.And.Queries {
-			evaluatedExpression = append(evaluatedExpression, evaluateWordSearchingQuery(ox))
-		}
-		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " AND "))
-
 	case *pb.StrQuery_Or:
 		var evaluatedExpression []string
 		for _, ox := range v.Or.Queries {
-			evaluatedExpression = append(evaluatedExpression, evaluateWordSearchingQuery(ox))
+			expr, scorers := evaluateWordSearchingQuery(ox)
+			evaluatedExpression = append(evaluatedExpression, expr)
+			matchScorers = append(matchScorers, scorers...)
 		}
-		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " OR "))
+		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " OR ")), matchScorers
 
 	case *pb.StrQuery_Contains:
-		return "(token like '%" + textAnalyzer(v.Contains.Value) + "%')"
+		value := textAnalyzer(v.Contains.Value)
+		matchScorers = append(matchScorers, containsScorer(value))
+		return "(token like '%" + value + "%')", matchScorers
 
 	case *pb.StrQuery_StartsWith:
-		return "(token like '" + textAnalyzer(v.StartsWith.Value) + "%')"
+		value := textAnalyzer(v.StartsWith.Value)
+		matchScorers = append(matchScorers, startsWithScorer(value))
+		return "(token like '" + value + "%')", matchScorers
 
 	case *pb.StrQuery_EndsWith:
-		return "(token='%" + textAnalyzer(v.EndsWith.Value) + "')"
+		value := textAnalyzer(v.EndsWith.Value)
+		matchScorers = append(matchScorers, endsWithScorer(value))
+		return "(token='%" + textAnalyzer(v.EndsWith.Value) + "')", matchScorers
 
 	case *pb.StrQuery_Eq:
-		return "(token='" + textAnalyzer(v.Eq.Value) + "')"
+		value := textAnalyzer(v.Eq.Value)
+		matchScorers = append(matchScorers, equalsScorer(value))
+		return "(token='" + textAnalyzer(v.Eq.Value) + "')", matchScorers
 	}
-	return ""
+	return "", nil
 }
 
 func evaluateNumberSearchingQuery(query *pb.NumQuery) string {
@@ -286,57 +316,4 @@ func evaluatePropertiesSearchingQuery(query *pb.FieldQuery) string {
 
 func escape(value string) string {
 	return strings.Replace(value, "'", `\'`, -1)
-}
-
-type aggregatedStrIdsCursor struct {
-	cursor      bome.Cursor
-	currentList []string
-}
-
-func (c *aggregatedStrIdsCursor) Next() (string, error) {
-	for {
-		if len(c.currentList) == 0 {
-			if !c.cursor.HasNext() {
-				return "", io.EOF
-			}
-
-			o, err := c.cursor.Next()
-			if err != nil {
-				return "", err
-			}
-
-			c.currentList = strings.Split(o.(string), "<>")
-		}
-
-		next := strings.Trim(c.currentList[0], " ")
-		if next == "" {
-			continue
-		}
-
-		c.currentList = c.currentList[1:]
-		return next, nil
-	}
-}
-
-func (c *aggregatedStrIdsCursor) Close() error {
-	return nil
-}
-
-type bomeCursorWrapper struct {
-	cursor bome.Cursor
-}
-
-func (c *bomeCursorWrapper) Next() (string, error) {
-	if c.cursor.HasNext() {
-		o, err := c.cursor.Next()
-		if err == nil {
-			return o.(string), nil
-		}
-		return "", err
-	}
-	return "", io.EOF
-}
-
-func (c *bomeCursorWrapper) Close() error {
-	return c.cursor.Close()
 }

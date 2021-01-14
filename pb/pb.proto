@@ -250,12 +250,11 @@ message SearchQuery {
 
 message StrQuery {
   oneof bool {
-    StrAnd and = 1;
-    StrOr or = 2;
-    StrEqual eq = 3;
-    Contains contains = 4;
-    StartsWith starts_with = 5;
-    EndsWith ends_with = 6;
+    StrOr or = 1;
+    StrEqual eq = 2;
+    Contains contains = 3;
+    StartsWith starts_with = 4;
+    EndsWith ends_with = 5;
   }
 }
 
@@ -405,10 +404,6 @@ message NumAnd {
 
 message NumOr {
   repeated NumQuery queries = 1;
-}
-
-message StrAnd {
-  repeated StrQuery queries = 1;
 }
 
 message StrOr {
