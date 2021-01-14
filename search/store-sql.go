@@ -10,11 +10,11 @@ import (
 	"strings"
 )
 
-const wordsTableName = "$prefix$_words_mapping"
+const wordsTableName = "$prefix$_words"
 
-const numbersTableName = "$prefix$_numbers_mapping"
+const numbersTableName = "$prefix$_numbers"
 
-const propsTableName = "$prefix$_props_mapping"
+const propsTableName = "$prefix$_props"
 
 const propsTablesDef = `
 create table if not exists $prefix$_props_mapping (

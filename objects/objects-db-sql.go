@@ -11,8 +11,8 @@ import (
 	"github.com/omecodes/store/pb"
 )
 
-func NewSQLStore(db *sql.DB, dialect string, tableName string) (Objects, error) {
-	col, err := bome.NewJSONMap(db, dialect, tableName+"_collections")
+func NewSQLStore(db *sql.DB, dialect string, tablePrefix string) (Objects, error) {
+	col, err := bome.NewJSONMap(db, dialect, tablePrefix+"_collections")
 	if err != nil {
 		return nil, err
 	}

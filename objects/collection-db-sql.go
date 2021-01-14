@@ -20,12 +20,12 @@ import (
 const objectScanner = "object"
 
 func NewSQLCollection(collection *pb.Collection, db *sql.DB, dialect string, tableName string) (*sqlCollection, error) {
-	objects, err := bome.NewJSONMap(db, dialect, tableName)
+	objects, err := bome.NewJSONMap(db, dialect, "store_"+tableName+"collection")
 	if err != nil {
 		return nil, err
 	}
 
-	headers, err := bome.NewJSONMap(db, dialect, tableName+"_headers")
+	headers, err := bome.NewJSONMap(db, dialect, "store_"+tableName+"_col_headers")
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func NewSQLCollection(collection *pb.Collection, db *sql.DB, dialect string, tab
 		return nil, err
 	}
 
-	indexStore, err := se.NewSQLIndexStore(db, dialect, tableName)
+	indexStore, err := se.NewSQLIndexStore(db, dialect, "store_"+tableName+"_col")
 	if err != nil {
 		return nil, err
 	}

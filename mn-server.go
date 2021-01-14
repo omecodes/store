@@ -80,32 +80,32 @@ func (s *MNServer) init() error {
 	s.db = GetDB("mysql", s.config.DSN)
 
 	var err error
-	s.accessStore, err = acl.NewSQLStore(s.db, bome.MySQL, "objects_acl")
+	s.accessStore, err = acl.NewSQLStore(s.db, bome.MySQL, "store_acl")
 	if err != nil {
 		return err
 	}
 
-	s.settings, err = objects.NewSQLSettings(s.db, bome.MySQL, "objects_settings")
+	s.settings, err = objects.NewSQLSettings(s.db, bome.MySQL, "store_settings")
 	if err != nil {
 		return err
 	}
 
-	s.accountsManager, err = accounts.NewSQLManager(s.db, bome.MySQL, "accounts")
+	s.accountsManager, err = accounts.NewSQLManager(s.db, bome.MySQL, "store")
 	if err != nil {
 		return err
 	}
 
-	s.objects, err = objects.NewSQLStore(s.db, bome.MySQL, "objects")
+	s.objects, err = objects.NewSQLStore(s.db, bome.MySQL, "store")
 	if err != nil {
 		return err
 	}
 
-	s.credentialsManager, err = auth.NewCredentialsSQLManager(s.db, bome.MySQL, "agents", s.config.AdminInfo)
+	s.credentialsManager, err = auth.NewCredentialsSQLManager(s.db, bome.MySQL, "store", s.config.AdminInfo)
 	if err != nil {
 		return err
 	}
 
-	s.authenticationProviders, err = auth.NewProviderSQLManager(s.db, bome.MySQL, "auth_providers")
+	s.authenticationProviders, err = auth.NewProviderSQLManager(s.db, bome.MySQL, "store_auth_providers")
 	if err != nil {
 		return err
 	}
