@@ -20,7 +20,7 @@ import (
 const objectScanner = "object"
 
 func NewSQLCollection(collection *pb.Collection, db *sql.DB, dialect string, tableName string) (*sqlCollection, error) {
-	objects, err := bome.NewJSONMap(db, dialect, "store_"+tableName+"collection")
+	objects, err := bome.NewJSONMap(db, dialect, "store_"+tableName+"_col")
 	if err != nil {
 		return nil, err
 	}
