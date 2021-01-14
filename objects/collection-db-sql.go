@@ -1,9 +1,11 @@
 package objects
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
@@ -14,6 +16,8 @@ import (
 	"io"
 	"strings"
 )
+
+const objectScanner = "object"
 
 func NewSQLCollection(collection *pb.Collection, db *sql.DB, dialect string, tableName string) (*sqlCollection, error) {
 	objects, err := bome.NewJSONMap(db, dialect, tableName)
@@ -56,6 +60,8 @@ func NewSQLCollection(collection *pb.Collection, db *sql.DB, dialect string, tab
 		info:    collection,
 		engine:  se.NewEngine(indexStore),
 	}
+
+	objects.RegisterScanner(objectScanner, bome.NewScannerFunc(s.scanFullObject))
 	return s, nil
 }
 
@@ -369,7 +375,8 @@ func (s *sqlCollection) Info(ctx context.Context, id string) (*pb.Header, error)
 }
 
 func (s *sqlCollection) List(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
-	cursor, err := s.objects.List()
+	sqlQuery := fmt.Sprintf("select headers.value as header, objects.value as object from %s as headers, %s as objects limit ?, 50", s.headers.Table(), s.objects.Table())
+	cursor, err := s.objects.RawQuery(sqlQuery, objectScanner, opts.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -381,23 +388,11 @@ func (s *sqlCollection) List(ctx context.Context, opts pb.ListOptions) (*pb.Curs
 		if !cursor.HasNext() {
 			return nil, io.EOF
 		}
-
 		next, err := cursor.Next()
 		if err != nil {
 			return nil, err
 		}
-
-		o := &pb.Object{
-			Header: &pb.Header{},
-		}
-
-		entry := next.(*bome.MapEntry)
-		err = json.Unmarshal([]byte(entry.Value), o.Header)
-		if err != nil {
-			return nil, err
-		}
-		o.Data, err = s.objects.Get(entry.Key)
-		return o, err
+		return next.(*pb.Object), err
 	})
 	return pb.NewCursor(browser, closer), nil
 }
@@ -541,6 +536,19 @@ func (s *sqlCollection) indexFieldExists(name string) bool {
 		}
 	}
 	return false
+}
+
+func (s *sqlCollection) scanFullObject(row bome.Row) (interface{}, error) {
+	var header, data string
+	err := row.Scan(&header, &data)
+	if err != nil {
+		return nil, err
+	}
+	object := &pb.Object{
+		Data: data,
+	}
+	err = json.NewDecoder(bytes.NewBufferString(header)).Decode(&object.Header)
+	return object, err
 }
 
 func sqlJSONSetValue(value string) string {
