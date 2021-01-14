@@ -144,11 +144,8 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 	}
 
 	opts := pb.ListOptions{
-		At: request.At,
-		DateOptions: pb.DateRangeOptions{
-			Before: request.Before,
-			After:  request.After,
-		},
+		At:     request.At,
+		Offset: request.Offset,
 	}
 
 	cursor, err := route.ListObjects(ctx, request.Collection, opts)

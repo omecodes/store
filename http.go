@@ -21,6 +21,7 @@ import (
 const (
 	queryBefore        = "before"
 	queryAfter         = "after"
+	queryOffset        = "offset"
 	queryCount         = "count"
 	queryAt            = "at"
 	queryHeader        = "header"
@@ -240,18 +241,13 @@ func (s *HTTPUnit) list(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	collection := vars[pathItemCollection]
 
-	opts.DateOptions.Before, err = Int64QueryParam(r, queryBefore)
+	opts.Offset, err = Int64QueryParam(r, queryOffset)
 	if err != nil {
 		log.Error("could not parse param 'before'")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	opts.DateOptions.After, err = Int64QueryParam(r, queryAfter)
-	if err != nil {
-		log.Error("could not parse param 'after'")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+
 	opts.At = r.URL.Query().Get(queryAt)
 
 	route, err := router.NewRoute(ctx)

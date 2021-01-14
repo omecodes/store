@@ -168,8 +168,7 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, collection string, 
 	}
 
 	stream, err := client.ListObjects(auth.SetMetaWithExisting(ctx), &pb.ListObjectsRequest{
-		Before:     opts.DateOptions.Before,
-		After:      opts.DateOptions.After,
+		Offset:     opts.Offset,
 		At:         opts.At,
 		Collection: collection,
 	})

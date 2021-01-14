@@ -148,11 +148,8 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 	}
 
 	opts := pb.ListOptions{
-		At: request.At,
-		DateOptions: pb.DateRangeOptions{
-			Before: request.Before,
-			After:  request.After,
-		},
+		At:     request.At,
+		Offset: request.Offset,
 	}
 
 	cursor, err := storage.List(ctx, request.Collection, opts)

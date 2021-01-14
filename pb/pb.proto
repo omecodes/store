@@ -64,10 +64,9 @@ message Patch {
 }
 
 message ObjectList {
-  int64 before = 1;
-  int64 after = 2;
-  uint32 total = 4;
-  repeated Object objects = 5;
+  int64 offset = 1;
+  uint32 total = 2;
+  repeated Object objects = 3;
 }
 
 message Index {
@@ -179,12 +178,11 @@ message ObjectInfoResponse {
 
 message ListObjectsRequest {
   string collection = 1;
-  int64 before = 2;
-  int64 after = 3;
-  string at = 4;
-  string condition = 5;
+  int64 offset = 2;
+  string at = 3;
 }
 message ListObjectsResponse {
+
   ObjectList result = 1;
 }
 

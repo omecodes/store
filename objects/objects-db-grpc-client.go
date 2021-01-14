@@ -140,8 +140,7 @@ func (d *dbClient) List(ctx context.Context, collection string, opts pb.ListOpti
 
 	stream, err := objects.ListObjects(ctx, &pb.ListObjectsRequest{
 		Collection: collection,
-		Before:     opts.DateOptions.Before,
-		After:      opts.DateOptions.After,
+		Offset:     opts.Offset,
 		At:         opts.At,
 	})
 

@@ -6,7 +6,6 @@ import (
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/pb"
-	"github.com/omecodes/store/utime"
 	"io"
 	"strconv"
 )
@@ -123,14 +122,6 @@ func (p *ParamsHandler) DeleteObject(ctx context.Context, collection string, id 
 func (p *ParamsHandler) ListObjects(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
 	if collection == "" {
 		return nil, errors.BadInput
-	}
-
-	if opts.DateOptions.Before == 0 {
-		opts.DateOptions.Before = utime.Now()
-	}
-
-	if opts.DateOptions.After == 0 {
-		opts.DateOptions.After = 1
 	}
 
 	settings := Settings(ctx)
