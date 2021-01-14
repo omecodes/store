@@ -17,7 +17,7 @@ const numbersTableName = "$prefix$_numbers"
 const propsTableName = "$prefix$_props"
 
 const propsTablesDef = `
-create table if not exists $prefix$_props_mapping (
+create table if not exists $prefix$_props (
   	object varchar(255) not null,
     value JSON not null,
     primary key(object)
@@ -25,7 +25,7 @@ create table if not exists $prefix$_props_mapping (
 `
 
 const wordsTablesDef = `
-create table if not exists $prefix$_words_mapping (
+create table if not exists $prefix$_words (
   	token varchar(255) not null,
     id varchar(255) not null,
     primary key(token, id)
@@ -33,7 +33,7 @@ create table if not exists $prefix$_words_mapping (
 `
 
 const numbersTablesDef = `
-create table if not exists $prefix$_numbers_mapping (
+create table if not exists $prefix$_numbers (
   	num bigInt not null,
     id varchar(255) not null,
     primary key(num, id)
@@ -41,27 +41,27 @@ create table if not exists $prefix$_numbers_mapping (
 `
 
 const insertWord = `
-insert into $prefix$_words_mapping values(?, ?);
+insert into $prefix$_words values(?, ?);
 `
 
 const deleteObjectWordMappings = `
-delete $prefix$_words_mapping where id=?;
+delete $prefix$_words where id=?;
 `
 
 const insertNumber = `
-insert into $prefix$_numbers_mapping values(?, ?);
+insert into $prefix$_numbers values(?, ?);
 `
 
 const deleteObjectNumberMapping = `
-delete from $prefix$_numbers_mapping where id=?;
+delete from $prefix$_numbers where id=?;
 `
 
 const insertProps = `
-insert into $prefix$_props_mapping values(?, ?);
+insert into $prefix$_props values(?, ?);
 `
 
 const deleteProps = `
-delete from $prefix$_props_mapping where id=?;
+delete from $prefix$_props where id=?;
 `
 
 func NewSQLIndexStore(db *sql.DB, dialect string, tablePrefix string) (Store, error) {
