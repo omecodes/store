@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/omecodes/bome"
-	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/pb"
 	"io"
 	"strings"
@@ -61,10 +60,6 @@ const insertProps = `
 insert into $prefix$_props_mapping values(?, ?);
 `
 
-const updateProps = `
-update $prefix$_props_mapping set value=concat(objects, ?) where token=? and field=?;
-`
-
 const deleteProps = `
 delete from $prefix$_props_mapping where id=?;
 `
@@ -109,20 +104,25 @@ type sqlStore struct {
 }
 
 func (s *sqlStore) SaveWordMapping(word string, id string) error {
-	return s.db.RawExec(insertWord, word, id).Error
+	err := s.db.RawExec(insertWord, word, id).Error
+	if bome.IsPrimaryKeyConstraintError(err) {
+		return nil
+	}
+	return err
 }
 
 func (s *sqlStore) SaveNumberMapping(num int64, id string) error {
-	return s.db.RawExec(insertNumber, num, id).Error
+	err := s.db.RawExec(insertNumber, num, id).Error
+	if bome.IsPrimaryKeyConstraintError(err) {
+		return nil
+	}
+	return err
 }
 
 func (s *sqlStore) SavePropertiesMapping(id string, value string) error {
 	err := s.db.RawExec(insertProps, id, value).Error
-	if err != nil && bome.IsPrimaryKeyConstraintError(err) {
-		err = s.db.RawExec(updateProps, value, id).Error
-		if err != nil {
-			log.Error("failed to create index mapping", log.Err(err))
-		}
+	if bome.IsPrimaryKeyConstraintError(err) {
+		return nil
 	}
 	return err
 }
