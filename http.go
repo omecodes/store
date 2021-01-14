@@ -308,7 +308,7 @@ func (s *HTTPUnit) search(w http.ResponseWriter, r *http.Request) {
 	var query pb.SearchQuery
 	err := jsonpb.Unmarshal(r.Body, &query)
 	if err != nil {
-		log.Error("could not parse param 'before'")
+		log.Error("could not parse search query")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

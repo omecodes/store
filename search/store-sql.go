@@ -146,12 +146,12 @@ func (s *sqlStore) performSearch(query *pb.SearchQuery) (Cursor, error) {
 	switch q := query.Query.(type) {
 
 	case *pb.SearchQuery_Text:
-		sqlQuery := "select value from " + wordsTableName + " where " + evaluateWordSearchingQuery(q.Text)
+		sqlQuery := "select id from " + wordsTableName + " where " + evaluateWordSearchingQuery(q.Text)
 		c, err := s.db.RawQuery(sqlQuery, bome.StringScanner)
 		return &aggregatedStrIdsCursor{cursor: c}, err
 
 	case *pb.SearchQuery_Number:
-		sqlQuery := "select value from " + numbersTableName + " where " + evaluateNumberSearchingQuery(q.Number)
+		sqlQuery := "select id from " + numbersTableName + " where " + evaluateNumberSearchingQuery(q.Number)
 		c, err := s.db.RawQuery(sqlQuery, bome.StringScanner)
 		return &aggregatedStrIdsCursor{cursor: c}, err
 
