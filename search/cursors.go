@@ -40,11 +40,11 @@ func (c *aggregatedStrIdsCursor) Close() error {
 	return nil
 }
 
-type dbCursorWrapper struct {
+type dbStringCursorWrapper struct {
 	cursor bome.Cursor
 }
 
-func (c *dbCursorWrapper) Next() (string, error) {
+func (c *dbStringCursorWrapper) Next() (string, error) {
 	if c.cursor.HasNext() {
 		o, err := c.cursor.Next()
 		if err == nil {
@@ -55,7 +55,27 @@ func (c *dbCursorWrapper) Next() (string, error) {
 	return "", io.EOF
 }
 
-func (c *dbCursorWrapper) Close() error {
+func (c *dbStringCursorWrapper) Close() error {
+	return c.cursor.Close()
+}
+
+type dbMapEntryCursorWrapper struct {
+	cursor bome.Cursor
+}
+
+func (c *dbMapEntryCursorWrapper) Next() (string, error) {
+	if c.cursor.HasNext() {
+		o, err := c.cursor.Next()
+		if err == nil {
+			entry := o.(*bome.MapEntry)
+			return entry.Value, nil
+		}
+		return "", err
+	}
+	return "", io.EOF
+}
+
+func (c *dbMapEntryCursorWrapper) Close() error {
 	return c.cursor.Close()
 }
 
