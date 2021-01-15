@@ -1,43 +1,43 @@
 package router
 
-type CustomRouter struct {
-	paramsHandler *ParamsHandler
-	policyHandler *PolicyHandler
+type CustomObjectsRouter struct {
+	paramsHandler *ParamsObjectsHandler
+	policyHandler *PolicyObjectsHandler
 	execHandler   ObjectsHandler
 }
 
-type handlersOptions struct {
-	params *ParamsHandler
-	policy *PolicyHandler
+type objectsHandlersOptions struct {
+	params *ParamsObjectsHandler
+	policy *PolicyObjectsHandler
 }
 
-type HandlerOption func(*handlersOptions)
+type ObjectsHandlerOption func(*objectsHandlersOptions)
 
-func WithParamsHandler(handler *ParamsHandler) HandlerOption {
-	return func(options *handlersOptions) {
+func WithParamsObjectsHandler(handler *ParamsObjectsHandler) ObjectsHandlerOption {
+	return func(options *objectsHandlersOptions) {
 		options.params = handler
 	}
 }
 
-func WithPolicyHandler(handler *PolicyHandler) HandlerOption {
-	return func(options *handlersOptions) {
+func WithPolicyObjectsHandler(handler *PolicyObjectsHandler) ObjectsHandlerOption {
+	return func(options *objectsHandlersOptions) {
 		options.policy = handler
 	}
 }
 
-func WithDefaultParamsHandler() HandlerOption {
-	return func(options *handlersOptions) {
-		options.params = &ParamsHandler{}
+func WithDefaultParamsObjectsHandler() ObjectsHandlerOption {
+	return func(options *objectsHandlersOptions) {
+		options.params = &ParamsObjectsHandler{}
 	}
 }
 
-func WithDefaultPoliciesHandler() HandlerOption {
-	return func(options *handlersOptions) {
-		options.policy = &PolicyHandler{}
+func WithDefaultPoliciesObjectsHandler() ObjectsHandlerOption {
+	return func(options *objectsHandlersOptions) {
+		options.policy = &PolicyObjectsHandler{}
 	}
 }
 
-func (r *CustomRouter) GetRoute(opts ...RouteOption) ObjectsHandler {
+func (r *CustomObjectsRouter) GetRoute(opts ...RouteOption) ObjectsHandler {
 	var handler ObjectsHandler
 
 	options := routesOptions{}
@@ -55,7 +55,7 @@ func (r *CustomRouter) GetRoute(opts ...RouteOption) ObjectsHandler {
 		r.policyHandler.next = handler
 		handler = r.policyHandler
 	} else {
-		handler = &BaseHandler{
+		handler = &BaseObjectsHandler{
 			next: handler,
 		}
 	}
@@ -64,20 +64,20 @@ func (r *CustomRouter) GetRoute(opts ...RouteOption) ObjectsHandler {
 		r.paramsHandler.next = handler
 		handler = r.paramsHandler
 	} else {
-		handler = &BaseHandler{
+		handler = &BaseObjectsHandler{
 			next: handler,
 		}
 	}
 	return handler
 }
 
-func NewCustomRouter(exec ObjectsHandler, opts ...HandlerOption) *CustomRouter {
-	var options handlersOptions
+func NewCustomObjectsRouter(exec ObjectsHandler, opts ...ObjectsHandlerOption) *CustomObjectsRouter {
+	var options objectsHandlersOptions
 	for _, opt := range opts {
 		opt(&options)
 	}
 
-	return &CustomRouter{
+	return &CustomObjectsRouter{
 		paramsHandler: options.params,
 		policyHandler: options.policy,
 		execHandler:   exec,

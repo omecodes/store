@@ -10,32 +10,32 @@ import (
 	"strconv"
 )
 
-type ParamsHandler struct {
-	BaseHandler
+type ParamsObjectsHandler struct {
+	BaseObjectsHandler
 }
 
-func (p *ParamsHandler) CreateCollection(ctx context.Context, collection *pb.Collection) error {
+func (p *ParamsObjectsHandler) CreateCollection(ctx context.Context, collection *pb.Collection) error {
 	if collection == nil || collection.DefaultAccessSecurityRules == nil || collection.Id == "" {
 		return errors.BadInput
 	}
-	return p.BaseHandler.CreateCollection(ctx, collection)
+	return p.BaseObjectsHandler.CreateCollection(ctx, collection)
 }
 
-func (p *ParamsHandler) GetCollection(ctx context.Context, id string) (*pb.Collection, error) {
+func (p *ParamsObjectsHandler) GetCollection(ctx context.Context, id string) (*pb.Collection, error) {
 	if id == "" {
 		return nil, errors.BadInput
 	}
-	return p.BaseHandler.GetCollection(ctx, id)
+	return p.BaseObjectsHandler.GetCollection(ctx, id)
 }
 
-func (p *ParamsHandler) DeleteCollection(ctx context.Context, id string) error {
+func (p *ParamsObjectsHandler) DeleteCollection(ctx context.Context, id string) error {
 	if id == "" {
 		return errors.BadInput
 	}
-	return p.BaseHandler.DeleteCollection(ctx, id)
+	return p.BaseObjectsHandler.DeleteCollection(ctx, id)
 }
 
-func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.TextIndex, opts pb.PutOptions) (string, error) {
+func (p *ParamsObjectsHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.TextIndex, opts pb.PutOptions) (string, error) {
 	if collection == "" || object == nil || object.Header == nil || object.Header.Size == 0 {
 		return "", errors.BadInput
 	}
@@ -65,7 +65,7 @@ func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object
 	return p.next.PutObject(ctx, collection, object, accessSecurityRules, indexes, opts)
 }
 
-func (p *ParamsHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts pb.PatchOptions) error {
+func (p *ParamsObjectsHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts pb.PatchOptions) error {
 	if collection == "" || patch == nil || patch.ObjectId == "" || len(patch.Data) == 0 || patch.At == "" {
 		return errors.BadInput
 	}
@@ -91,35 +91,35 @@ func (p *ParamsHandler) PatchObject(ctx context.Context, collection string, patc
 	return p.next.PatchObject(ctx, collection, patch, opts)
 }
 
-func (p *ParamsHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *pb.PathAccessRules, opts pb.MoveOptions) error {
+func (p *ParamsObjectsHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *pb.PathAccessRules, opts pb.MoveOptions) error {
 	if collection == "" || objectID == "" || targetCollection == "" {
 		return errors.BadInput
 	}
 	return p.next.MoveObject(ctx, collection, objectID, targetCollection, accessSecurityRules, opts)
 }
 
-func (p *ParamsHandler) GetObject(ctx context.Context, collection string, id string, opts pb.GetOptions) (*pb.Object, error) {
+func (p *ParamsObjectsHandler) GetObject(ctx context.Context, collection string, id string, opts pb.GetOptions) (*pb.Object, error) {
 	if collection == "" || id == "" {
 		return nil, errors.BadInput
 	}
-	return p.BaseHandler.GetObject(ctx, collection, id, opts)
+	return p.BaseObjectsHandler.GetObject(ctx, collection, id, opts)
 }
 
-func (p *ParamsHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*pb.Header, error) {
+func (p *ParamsObjectsHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*pb.Header, error) {
 	if collection == "" || id == "" {
 		return nil, errors.BadInput
 	}
-	return p.BaseHandler.GetObjectHeader(ctx, collection, id)
+	return p.BaseObjectsHandler.GetObjectHeader(ctx, collection, id)
 }
 
-func (p *ParamsHandler) DeleteObject(ctx context.Context, collection string, id string) error {
+func (p *ParamsObjectsHandler) DeleteObject(ctx context.Context, collection string, id string) error {
 	if collection == "" || id == "" {
 		return errors.BadInput
 	}
 	return p.next.DeleteObject(ctx, collection, id)
 }
 
-func (p *ParamsHandler) ListObjects(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
+func (p *ParamsObjectsHandler) ListObjects(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
 	if collection == "" {
 		return nil, errors.BadInput
 	}
@@ -141,7 +141,7 @@ func (p *ParamsHandler) ListObjects(ctx context.Context, collection string, opts
 		return nil, errors.Internal
 	}
 
-	cursor, err := p.BaseHandler.ListObjects(ctx, collection, opts)
+	cursor, err := p.BaseObjectsHandler.ListObjects(ctx, collection, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -163,9 +163,9 @@ func (p *ParamsHandler) ListObjects(ctx context.Context, collection string, opts
 	return cursor, nil
 }
 
-func (p *ParamsHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error) {
+func (p *ParamsObjectsHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error) {
 	if collection == "" || query == nil {
 		return nil, errors.BadInput
 	}
-	return p.BaseHandler.SearchObjects(ctx, collection, query)
+	return p.BaseObjectsHandler.SearchObjects(ctx, collection, query)
 }

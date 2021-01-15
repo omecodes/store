@@ -150,7 +150,7 @@ func (s *MNServer) init() error {
 	return nil
 }
 
-func (s *MNServer) GetRouter(ctx context.Context) router.Router {
+func (s *MNServer) GetRouter(ctx context.Context) router.ObjectsRouter {
 	return router.DefaultRouter()
 }
 

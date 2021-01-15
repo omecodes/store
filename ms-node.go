@@ -81,10 +81,10 @@ func (n *MSNode) updateGrpcContext(ctx context.Context) (context.Context, error)
 	return ctx, nil
 }
 
-func (n *MSNode) GetRouter(ctx context.Context) router.Router {
-	return router.NewCustomRouter(
-		&router.ExecHandler{},
-		router.WithDefaultPoliciesHandler(),
+func (n *MSNode) GetRouter(ctx context.Context) router.ObjectsRouter {
+	return router.NewCustomObjectsRouter(
+		&router.ExecObjectsHandler{},
+		router.WithDefaultPoliciesObjectsHandler(),
 	)
 }
 

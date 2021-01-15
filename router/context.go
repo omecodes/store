@@ -73,7 +73,7 @@ func WithWorkers(infoDB *bome.JSONMap) ContextUpdaterFunc {
 }
 
 // WithRouterProvider updates context by adding a RouterProvider object in its values
-func WithRouterProvider(ctx context.Context, p Provider) context.Context {
+func WithRouterProvider(ctx context.Context, p ObjectsRouterProvider) context.Context {
 	return context.WithValue(ctx, ctxRouterProvider{}, p)
 }
 
@@ -205,7 +205,7 @@ func NewRoute(ctx context.Context, opt ...RouteOption) (ObjectsHandler, error) {
 		return nil, errors.New("no router provider")
 	}
 
-	p := o.(Provider)
+	p := o.(ObjectsRouterProvider)
 	router := p.GetRouter(ctx)
 
 	return router.GetRoute(opt...), nil

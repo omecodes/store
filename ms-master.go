@@ -52,7 +52,7 @@ type MSServer struct {
 	adminPassword  string
 	workerPassword string
 	Errors         chan error
-	loadBalancer   *router.BaseHandler
+	loadBalancer   *router.BaseObjectsHandler
 	registry       ome.Registry
 	caServer       *sca.Server
 	autoCertDir    string
@@ -274,7 +274,7 @@ func (s *MSServer) httpEnrichContext(next http.Handler) http.Handler {
 		ctx = auth.ContextWithCredentialsManager(ctx, s.credentialsManager)
 		ctx = auth.ContextWithProviders(ctx, s.authenticationProviders)
 		ctx = service.ContextWithBox(ctx, box)
-		ctx = router.WithRouterProvider(ctx, router.ProviderFunc(s.GetRouter))
+		ctx = router.WithRouterProvider(ctx, router.ObjectsRouterProvideFunc(s.GetRouter))
 		ctx = router.WithSettings(s.settings)(ctx)
 		ctx = clients.WithRouterGrpcClientProvider(ctx, &clients.LoadBalancer{})
 
@@ -283,10 +283,10 @@ func (s *MSServer) httpEnrichContext(next http.Handler) http.Handler {
 	})
 }
 
-func (s *MSServer) GetRouter(ctx context.Context) router.Router {
-	return router.NewCustomRouter(
-		router.NewGRPCClientHandler(common.ServiceTypeHandler),
-		router.WithDefaultParamsHandler(),
+func (s *MSServer) GetRouter(ctx context.Context) router.ObjectsRouter {
+	return router.NewCustomObjectsRouter(
+		router.NewGRPCObjectsClientHandler(common.ServiceTypeHandler),
+		router.WithDefaultParamsObjectsHandler(),
 	)
 }
 

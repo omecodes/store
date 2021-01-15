@@ -8,8 +8,8 @@ import (
 	"github.com/omecodes/store/pb"
 )
 
-// NewGRPCClientHandler creates a router ObjectsHandler that embed that calls a gRPC service to perform final actions
-func NewGRPCClientHandler(nodeType uint32) ObjectsHandler {
+// NewGRPCObjectsClientHandler creates a router ObjectsHandler that embed that calls a gRPC service to perform final actions
+func NewGRPCObjectsClientHandler(nodeType uint32) ObjectsHandler {
 	return &gRPCClientHandler{
 		nodeType: nodeType,
 	}
@@ -17,7 +17,7 @@ func NewGRPCClientHandler(nodeType uint32) ObjectsHandler {
 
 type gRPCClientHandler struct {
 	nodeType uint32
-	BaseHandler
+	BaseObjectsHandler
 }
 
 func (g *gRPCClientHandler) CreateCollection(ctx context.Context, collection *pb.Collection) error {

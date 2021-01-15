@@ -8,19 +8,19 @@ const (
 	handlerTypeExec   = 3
 )
 
-type Router interface {
+type ObjectsRouter interface {
 	// GetRoute returns a sequence of handler
 	GetRoute(opts ...RouteOption) ObjectsHandler
 }
 
-type Provider interface {
+type ObjectsRouterProvider interface {
 	//GetRouter returns a router
-	GetRouter(ctx context.Context) Router
+	GetRouter(ctx context.Context) ObjectsRouter
 }
 
-type ProviderFunc func(ctx context.Context) Router
+type ObjectsRouterProvideFunc func(ctx context.Context) ObjectsRouter
 
-func (f ProviderFunc) GetRouter(ctx context.Context) Router {
+func (f ObjectsRouterProvideFunc) GetRouter(ctx context.Context) ObjectsRouter {
 	return f(ctx)
 }
 
@@ -50,17 +50,17 @@ func SkipExec() RouteOption {
 	}
 }
 
-type RouteProviderFunc func(opts ...RouteOption) ObjectsHandler
+type ObjectsRouteProviderFunc func(opts ...RouteOption) ObjectsHandler
 
-func (f RouteProviderFunc) GetRoute(opts ...RouteOption) ObjectsHandler {
+func (f ObjectsRouteProviderFunc) GetRoute(opts ...RouteOption) ObjectsHandler {
 	return f(opts...)
 }
 
-func DefaultRouter() Router {
-	return RouteProviderFunc(getRoute)
+func DefaultRouter() ObjectsRouter {
+	return ObjectsRouteProviderFunc(getObjectsRoute)
 }
 
-func getRoute(opts ...RouteOption) (handler ObjectsHandler) {
+func getObjectsRoute(opts ...RouteOption) (handler ObjectsHandler) {
 	routes := routesOptions{}
 
 	for _, o := range opts {
@@ -68,20 +68,20 @@ func getRoute(opts ...RouteOption) (handler ObjectsHandler) {
 	}
 
 	if !routes.skipExecution {
-		handler = &ExecHandler{}
+		handler = &ExecObjectsHandler{}
 	} else {
 		handler = &dummyHandler{}
 	}
 
 	if !routes.skipPolicies {
-		handler = &PolicyHandler{BaseHandler: BaseHandler{
+		handler = &PolicyObjectsHandler{BaseObjectsHandler: BaseObjectsHandler{
 			next: handler,
 		}}
 	}
 
 	if !routes.skipParams {
-		handler = &ParamsHandler{
-			BaseHandler{next: handler},
+		handler = &ParamsObjectsHandler{
+			BaseObjectsHandler{next: handler},
 		}
 	}
 	return

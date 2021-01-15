@@ -77,9 +77,9 @@ func (s *MSStore) updateGrpcContext(ctx context.Context) (context.Context, error
 	ctx = service.ContextWithBox(ctx, s.box)
 	ctx = acl.ContextWithStore(ctx, s.accessStore)
 	ctx = objects.ContextWithStore(ctx, s.objects)
-	ctx = router.WithRouterProvider(ctx, router.ProviderFunc(
-		func(ctx context.Context) router.Router {
-			return router.NewCustomRouter(&router.ExecHandler{})
+	ctx = router.WithRouterProvider(ctx, router.ObjectsRouterProvideFunc(
+		func(ctx context.Context) router.ObjectsRouter {
+			return router.NewCustomObjectsRouter(&router.ExecObjectsHandler{})
 		},
 	))
 	return ctx, nil
