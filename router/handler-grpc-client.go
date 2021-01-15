@@ -8,8 +8,8 @@ import (
 	"github.com/omecodes/store/pb"
 )
 
-// NewGRPCClientHandler creates a router Handler that embed that calls a gRPC service to perform final actions
-func NewGRPCClientHandler(nodeType uint32) Handler {
+// NewGRPCClientHandler creates a router ObjectsHandler that embed that calls a gRPC service to perform final actions
+func NewGRPCClientHandler(nodeType uint32) ObjectsHandler {
 	return &gRPCClientHandler{
 		nodeType: nodeType,
 	}

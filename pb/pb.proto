@@ -33,6 +33,14 @@ message AccessRules {
   repeated string delete = 6;
 }
 
+message FileAccessRules {
+  string path = 1;
+  string label = 2;
+  string description = 3;
+  repeated string read = 4;
+  repeated string write = 5;
+}
+
 message PathAccessRules {
   map<string, AccessRules> access_rules = 1;
 }

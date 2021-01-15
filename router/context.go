@@ -199,7 +199,7 @@ func LoadProgramForSearch(ctx *context.Context, expression string) (cel.Program,
 	return prg, nil
 }
 
-func NewRoute(ctx context.Context, opt ...RouteOption) (Handler, error) {
+func NewRoute(ctx context.Context, opt ...RouteOption) (ObjectsHandler, error) {
 	o := ctx.Value(ctxRouterProvider{})
 	if o == nil {
 		return nil, errors.New("no router provider")

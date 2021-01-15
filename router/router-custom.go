@@ -3,7 +3,7 @@ package router
 type CustomRouter struct {
 	paramsHandler *ParamsHandler
 	policyHandler *PolicyHandler
-	execHandler   Handler
+	execHandler   ObjectsHandler
 }
 
 type handlersOptions struct {
@@ -37,8 +37,8 @@ func WithDefaultPoliciesHandler() HandlerOption {
 	}
 }
 
-func (r *CustomRouter) GetRoute(opts ...RouteOption) Handler {
-	var handler Handler
+func (r *CustomRouter) GetRoute(opts ...RouteOption) ObjectsHandler {
+	var handler ObjectsHandler
 
 	options := routesOptions{}
 	for _, o := range opts {
@@ -71,7 +71,7 @@ func (r *CustomRouter) GetRoute(opts ...RouteOption) Handler {
 	return handler
 }
 
-func NewCustomRouter(exec Handler, opts ...HandlerOption) *CustomRouter {
+func NewCustomRouter(exec ObjectsHandler, opts ...HandlerOption) *CustomRouter {
 	var options handlersOptions
 	for _, opt := range opts {
 		opt(&options)

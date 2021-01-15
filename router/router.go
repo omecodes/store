@@ -10,7 +10,7 @@ const (
 
 type Router interface {
 	// GetRoute returns a sequence of handler
-	GetRoute(opts ...RouteOption) Handler
+	GetRoute(opts ...RouteOption) ObjectsHandler
 }
 
 type Provider interface {
@@ -50,9 +50,9 @@ func SkipExec() RouteOption {
 	}
 }
 
-type RouteProviderFunc func(opts ...RouteOption) Handler
+type RouteProviderFunc func(opts ...RouteOption) ObjectsHandler
 
-func (f RouteProviderFunc) GetRoute(opts ...RouteOption) Handler {
+func (f RouteProviderFunc) GetRoute(opts ...RouteOption) ObjectsHandler {
 	return f(opts...)
 }
 
@@ -60,7 +60,7 @@ func DefaultRouter() Router {
 	return RouteProviderFunc(getRoute)
 }
 
-func getRoute(opts ...RouteOption) (handler Handler) {
+func getRoute(opts ...RouteOption) (handler ObjectsHandler) {
 	routes := routesOptions{}
 
 	for _, o := range opts {

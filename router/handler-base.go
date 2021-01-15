@@ -6,7 +6,7 @@ import (
 )
 
 type BaseHandler struct {
-	next Handler
+	next ObjectsHandler
 }
 
 func (b *BaseHandler) CreateCollection(ctx context.Context, collection *pb.Collection) error {
