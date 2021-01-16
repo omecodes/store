@@ -17,7 +17,7 @@ func NewGRPCObjectsClientHandler(nodeType uint32) ObjectsHandler {
 
 type gRPCClientHandler struct {
 	nodeType uint32
-	BaseObjectsHandler
+	ObjectsBaseHandler
 }
 
 func (g *gRPCClientHandler) CreateCollection(ctx context.Context, collection *pb.Collection) error {

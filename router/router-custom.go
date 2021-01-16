@@ -1,39 +1,39 @@
 package router
 
 type CustomObjectsRouter struct {
-	paramsHandler *ParamsObjectsHandler
-	policyHandler *PolicyObjectsHandler
+	paramsHandler *ObjectsParamsHandler
+	policyHandler *ObjectsPolicyHandler
 	execHandler   ObjectsHandler
 }
 
 type objectsHandlersOptions struct {
-	params *ParamsObjectsHandler
-	policy *PolicyObjectsHandler
+	params *ObjectsParamsHandler
+	policy *ObjectsPolicyHandler
 }
 
 type ObjectsHandlerOption func(*objectsHandlersOptions)
 
-func WithParamsObjectsHandler(handler *ParamsObjectsHandler) ObjectsHandlerOption {
+func WithObjectsParamsHandler(handler *ObjectsParamsHandler) ObjectsHandlerOption {
 	return func(options *objectsHandlersOptions) {
 		options.params = handler
 	}
 }
 
-func WithPolicyObjectsHandler(handler *PolicyObjectsHandler) ObjectsHandlerOption {
+func WithObjectsPolicyHandler(handler *ObjectsPolicyHandler) ObjectsHandlerOption {
 	return func(options *objectsHandlersOptions) {
 		options.policy = handler
 	}
 }
 
-func WithDefaultParamsObjectsHandler() ObjectsHandlerOption {
+func WithDefaultObjectsParamsHandler() ObjectsHandlerOption {
 	return func(options *objectsHandlersOptions) {
-		options.params = &ParamsObjectsHandler{}
+		options.params = &ObjectsParamsHandler{}
 	}
 }
 
-func WithDefaultPoliciesObjectsHandler() ObjectsHandlerOption {
+func WithDefaultObjectsPolicyHandler() ObjectsHandlerOption {
 	return func(options *objectsHandlersOptions) {
-		options.policy = &PolicyObjectsHandler{}
+		options.policy = &ObjectsPolicyHandler{}
 	}
 }
 
@@ -55,7 +55,7 @@ func (r *CustomObjectsRouter) GetRoute(opts ...RouteOption) ObjectsHandler {
 		r.policyHandler.next = handler
 		handler = r.policyHandler
 	} else {
-		handler = &BaseObjectsHandler{
+		handler = &ObjectsBaseHandler{
 			next: handler,
 		}
 	}
@@ -64,7 +64,7 @@ func (r *CustomObjectsRouter) GetRoute(opts ...RouteOption) ObjectsHandler {
 		r.paramsHandler.next = handler
 		handler = r.paramsHandler
 	} else {
-		handler = &BaseObjectsHandler{
+		handler = &ObjectsBaseHandler{
 			next: handler,
 		}
 	}

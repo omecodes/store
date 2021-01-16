@@ -8,11 +8,11 @@ import (
 	"github.com/omecodes/store/pb"
 )
 
-type PolicyObjectsHandler struct {
-	BaseObjectsHandler
+type ObjectsPolicyHandler struct {
+	ObjectsBaseHandler
 }
 
-func (p *PolicyObjectsHandler) isAdmin(ctx context.Context) bool {
+func (p *ObjectsPolicyHandler) isAdmin(ctx context.Context) bool {
 	authCEL := auth.Get(ctx)
 	if authCEL == nil {
 		return false
@@ -20,35 +20,35 @@ func (p *PolicyObjectsHandler) isAdmin(ctx context.Context) bool {
 	return authCEL.Uid == "admin"
 }
 
-func (p *PolicyObjectsHandler) CreateCollection(ctx context.Context, collection *pb.Collection) error {
+func (p *ObjectsPolicyHandler) CreateCollection(ctx context.Context, collection *pb.Collection) error {
 	if !p.isAdmin(ctx) {
 		return errors.Forbidden
 	}
-	return p.BaseObjectsHandler.CreateCollection(ctx, collection)
+	return p.ObjectsBaseHandler.CreateCollection(ctx, collection)
 }
 
-func (p *PolicyObjectsHandler) GetCollection(ctx context.Context, id string) (*pb.Collection, error) {
+func (p *ObjectsPolicyHandler) GetCollection(ctx context.Context, id string) (*pb.Collection, error) {
 	if !p.isAdmin(ctx) {
 		return nil, errors.Forbidden
 	}
-	return p.BaseObjectsHandler.GetCollection(ctx, id)
+	return p.ObjectsBaseHandler.GetCollection(ctx, id)
 }
 
-func (p *PolicyObjectsHandler) ListCollections(ctx context.Context) ([]*pb.Collection, error) {
+func (p *ObjectsPolicyHandler) ListCollections(ctx context.Context) ([]*pb.Collection, error) {
 	if !p.isAdmin(ctx) {
 		return nil, errors.Forbidden
 	}
-	return p.BaseObjectsHandler.ListCollections(ctx)
+	return p.ObjectsBaseHandler.ListCollections(ctx)
 }
 
-func (p *PolicyObjectsHandler) DeleteCollection(ctx context.Context, id string) error {
+func (p *ObjectsPolicyHandler) DeleteCollection(ctx context.Context, id string) error {
 	if !p.isAdmin(ctx) {
 		return errors.Forbidden
 	}
-	return p.BaseObjectsHandler.DeleteCollection(ctx, id)
+	return p.ObjectsBaseHandler.DeleteCollection(ctx, id)
 }
 
-func (p *PolicyObjectsHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.TextIndex, opts pb.PutOptions) (string, error) {
+func (p *ObjectsPolicyHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.TextIndex, opts pb.PutOptions) (string, error) {
 	ai := auth.Get(ctx)
 	if ai == nil {
 		return "", errors.Forbidden
@@ -86,27 +86,27 @@ func (p *PolicyObjectsHandler) PutObject(ctx context.Context, collection string,
 	}
 
 	object.Header.CreatedBy = ai.Uid
-	return p.BaseObjectsHandler.PutObject(ctx, collection, object, accessSecurityRules, indexes, opts)
+	return p.ObjectsBaseHandler.PutObject(ctx, collection, object, accessSecurityRules, indexes, opts)
 }
 
-func (p *PolicyObjectsHandler) GetObject(ctx context.Context, collection string, id string, opts pb.GetOptions) (*pb.Object, error) {
+func (p *ObjectsPolicyHandler) GetObject(ctx context.Context, collection string, id string, opts pb.GetOptions) (*pb.Object, error) {
 	err := assetActionAllowedOnObject(&ctx, collection, id, pb.AllowedTo_read, opts.At)
 	if err != nil {
 		return nil, err
 	}
-	return p.BaseObjectsHandler.GetObject(ctx, collection, id, opts)
+	return p.ObjectsBaseHandler.GetObject(ctx, collection, id, opts)
 }
 
-func (p *PolicyObjectsHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts pb.PatchOptions) error {
+func (p *ObjectsPolicyHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts pb.PatchOptions) error {
 	err := assetActionAllowedOnObject(&ctx, collection, patch.ObjectId, pb.AllowedTo_delete, "")
 	if err != nil {
 		return err
 	}
 
-	return p.BaseObjectsHandler.PatchObject(ctx, collection, patch, opts)
+	return p.ObjectsBaseHandler.PatchObject(ctx, collection, patch, opts)
 }
 
-func (p *PolicyObjectsHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *pb.PathAccessRules, opts pb.MoveOptions) error {
+func (p *ObjectsPolicyHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *pb.PathAccessRules, opts pb.MoveOptions) error {
 	err := assetActionAllowedOnObject(&ctx, collection, objectID, pb.AllowedTo_read, "")
 	if err != nil {
 		return err
@@ -128,27 +128,27 @@ func (p *PolicyObjectsHandler) MoveObject(ctx context.Context, collection string
 	return p.next.MoveObject(ctx, collection, objectID, targetCollection, accessSecurityRules, opts)
 }
 
-func (p *PolicyObjectsHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*pb.Header, error) {
+func (p *ObjectsPolicyHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*pb.Header, error) {
 	err := assetActionAllowedOnObject(&ctx, collection, id, pb.AllowedTo_read, "")
 	if err != nil {
 		return nil, err
 	}
 
-	return p.BaseObjectsHandler.GetObjectHeader(ctx, collection, id)
+	return p.ObjectsBaseHandler.GetObjectHeader(ctx, collection, id)
 }
 
-func (p *PolicyObjectsHandler) DeleteObject(ctx context.Context, collection string, id string) error {
+func (p *ObjectsPolicyHandler) DeleteObject(ctx context.Context, collection string, id string) error {
 	err := assetActionAllowedOnObject(&ctx, collection, id, pb.AllowedTo_delete, "")
 	if err != nil {
 		return err
 	}
-	return p.BaseObjectsHandler.DeleteObject(ctx, collection, id)
+	return p.ObjectsBaseHandler.DeleteObject(ctx, collection, id)
 }
 
-func (p *PolicyObjectsHandler) ListObjects(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
+func (p *ObjectsPolicyHandler) ListObjects(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
 	var err error
 
-	cursor, err := p.BaseObjectsHandler.ListObjects(ctx, collection, opts)
+	cursor, err := p.ObjectsBaseHandler.ListObjects(ctx, collection, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -177,12 +177,12 @@ func (p *PolicyObjectsHandler) ListObjects(ctx context.Context, collection strin
 	return cursor, nil
 }
 
-func (p *PolicyObjectsHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error) {
+func (p *ObjectsPolicyHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error) {
 	if collection == "" || query == nil {
 		return nil, errors.BadInput
 	}
 
-	cursor, err := p.BaseObjectsHandler.SearchObjects(ctx, collection, query)
+	cursor, err := p.ObjectsBaseHandler.SearchObjects(ctx, collection, query)
 	if err != nil {
 		return nil, err
 	}

@@ -52,7 +52,7 @@ type MSServer struct {
 	adminPassword  string
 	workerPassword string
 	Errors         chan error
-	loadBalancer   *router.BaseObjectsHandler
+	loadBalancer   *router.ObjectsBaseHandler
 	registry       ome.Registry
 	caServer       *sca.Server
 	autoCertDir    string
@@ -286,7 +286,7 @@ func (s *MSServer) httpEnrichContext(next http.Handler) http.Handler {
 func (s *MSServer) GetRouter(ctx context.Context) router.ObjectsRouter {
 	return router.NewCustomObjectsRouter(
 		router.NewGRPCObjectsClientHandler(common.ServiceTypeHandler),
-		router.WithDefaultParamsObjectsHandler(),
+		router.WithDefaultObjectsParamsHandler(),
 	)
 }
 

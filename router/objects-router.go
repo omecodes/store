@@ -68,20 +68,20 @@ func getObjectsRoute(opts ...RouteOption) (handler ObjectsHandler) {
 	}
 
 	if !routes.skipExecution {
-		handler = &ExecObjectsHandler{}
+		handler = &ObjectsExecHandler{}
 	} else {
 		handler = &dummyHandler{}
 	}
 
 	if !routes.skipPolicies {
-		handler = &PolicyObjectsHandler{BaseObjectsHandler: BaseObjectsHandler{
+		handler = &ObjectsPolicyHandler{ObjectsBaseHandler: ObjectsBaseHandler{
 			next: handler,
 		}}
 	}
 
 	if !routes.skipParams {
-		handler = &ParamsObjectsHandler{
-			BaseObjectsHandler{next: handler},
+		handler = &ObjectsParamsHandler{
+			ObjectsBaseHandler{next: handler},
 		}
 	}
 	return

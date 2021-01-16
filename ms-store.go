@@ -79,7 +79,7 @@ func (s *MSStore) updateGrpcContext(ctx context.Context) (context.Context, error
 	ctx = objects.ContextWithStore(ctx, s.objects)
 	ctx = router.WithRouterProvider(ctx, router.ObjectsRouterProvideFunc(
 		func(ctx context.Context) router.ObjectsRouter {
-			return router.NewCustomObjectsRouter(&router.ExecObjectsHandler{})
+			return router.NewCustomObjectsRouter(&router.ObjectsExecHandler{})
 		},
 	))
 	return ctx, nil

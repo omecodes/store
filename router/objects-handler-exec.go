@@ -10,11 +10,11 @@ import (
 	"github.com/omecodes/store/pb"
 )
 
-type ExecObjectsHandler struct {
-	BaseObjectsHandler
+type ObjectsExecHandler struct {
+	ObjectsBaseHandler
 }
 
-func (e *ExecObjectsHandler) CreateCollection(ctx context.Context, collection *pb.Collection) error {
+func (e *ObjectsExecHandler) CreateCollection(ctx context.Context, collection *pb.Collection) error {
 	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Error("exec-handler.CreateCollection: missing storage in context")
@@ -24,7 +24,7 @@ func (e *ExecObjectsHandler) CreateCollection(ctx context.Context, collection *p
 	return storage.CreateCollection(ctx, collection)
 }
 
-func (e *ExecObjectsHandler) GetCollection(ctx context.Context, id string) (*pb.Collection, error) {
+func (e *ObjectsExecHandler) GetCollection(ctx context.Context, id string) (*pb.Collection, error) {
 	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Error("exec-handler.GetCollection: missing storage in context")
@@ -34,7 +34,7 @@ func (e *ExecObjectsHandler) GetCollection(ctx context.Context, id string) (*pb.
 	return storage.GetCollection(ctx, id)
 }
 
-func (e *ExecObjectsHandler) ListCollections(ctx context.Context) ([]*pb.Collection, error) {
+func (e *ObjectsExecHandler) ListCollections(ctx context.Context) ([]*pb.Collection, error) {
 	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Error("exec-handler.ListCollections: missing storage in context")
@@ -44,7 +44,7 @@ func (e *ExecObjectsHandler) ListCollections(ctx context.Context) ([]*pb.Collect
 	return storage.ListCollections(ctx)
 }
 
-func (e *ExecObjectsHandler) DeleteCollection(ctx context.Context, id string) error {
+func (e *ObjectsExecHandler) DeleteCollection(ctx context.Context, id string) error {
 	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Error("exec-handler.PutObject: missing storage in context")
@@ -54,7 +54,7 @@ func (e *ExecObjectsHandler) DeleteCollection(ctx context.Context, id string) er
 	return storage.DeleteCollection(ctx, id)
 }
 
-func (e *ExecObjectsHandler) PutObject(ctx context.Context, collection string, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.TextIndex, opts pb.PutOptions) (string, error) {
+func (e *ObjectsExecHandler) PutObject(ctx context.Context, collection string, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.TextIndex, opts pb.PutOptions) (string, error) {
 	if object.Header.Id == "" {
 		object.Header.Id = uuid.New().String()
 	}
@@ -91,7 +91,7 @@ func (e *ExecObjectsHandler) PutObject(ctx context.Context, collection string, o
 	return object.Header.Id, nil
 }
 
-func (e *ExecObjectsHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts pb.PatchOptions) error {
+func (e *ObjectsExecHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts pb.PatchOptions) error {
 	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Info("missing storage in context")
@@ -100,7 +100,7 @@ func (e *ExecObjectsHandler) PatchObject(ctx context.Context, collection string,
 	return storage.Patch(ctx, collection, patch)
 }
 
-func (e *ExecObjectsHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *pb.PathAccessRules, opts pb.MoveOptions) error {
+func (e *ObjectsExecHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *pb.PathAccessRules, opts pb.MoveOptions) error {
 	accessStore := acl.GetStore(ctx)
 	if accessStore == nil {
 		log.Info("exec-handler.MoveObject: missing access store in context")
@@ -131,7 +131,7 @@ func (e *ExecObjectsHandler) MoveObject(ctx context.Context, collection string, 
 	return accessStore.Delete(ctx, collection, objectID)
 }
 
-func (e *ExecObjectsHandler) GetObject(ctx context.Context, collection string, id string, opts pb.GetOptions) (*pb.Object, error) {
+func (e *ObjectsExecHandler) GetObject(ctx context.Context, collection string, id string, opts pb.GetOptions) (*pb.Object, error) {
 	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
@@ -141,7 +141,7 @@ func (e *ExecObjectsHandler) GetObject(ctx context.Context, collection string, i
 	return storage.Get(ctx, collection, id, opts)
 }
 
-func (e *ExecObjectsHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*pb.Header, error) {
+func (e *ObjectsExecHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*pb.Header, error) {
 	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
@@ -150,7 +150,7 @@ func (e *ExecObjectsHandler) GetObjectHeader(ctx context.Context, collection str
 	return storage.Info(ctx, collection, id)
 }
 
-func (e *ExecObjectsHandler) DeleteObject(ctx context.Context, collection string, id string) error {
+func (e *ObjectsExecHandler) DeleteObject(ctx context.Context, collection string, id string) error {
 	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Info("exec-handler.DeleteObjet: missing DB in context")
@@ -172,7 +172,7 @@ func (e *ExecObjectsHandler) DeleteObject(ctx context.Context, collection string
 	return accessStore.Delete(ctx, collection, id)
 }
 
-func (e *ExecObjectsHandler) ListObjects(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
+func (e *ObjectsExecHandler) ListObjects(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
 	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Info("missing DB in context")
@@ -182,7 +182,7 @@ func (e *ExecObjectsHandler) ListObjects(ctx context.Context, collection string,
 	return storage.List(ctx, collection, opts)
 }
 
-func (e *ExecObjectsHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error) {
+func (e *ObjectsExecHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error) {
 	storage := objects.Get(ctx)
 	if storage == nil {
 		log.Error("exec-handler.SearchObjects: missing storage in context")
