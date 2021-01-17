@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"github.com/omecodes/store/files"
 	"github.com/omecodes/store/pb"
 	"io"
 )
@@ -14,8 +15,8 @@ func (h *FilesBaseObjectsHandler) CreateDir(ctx context.Context, filename string
 	return h.next.CreateDir(ctx, filename)
 }
 
-func (h *FilesBaseObjectsHandler) WriteFileContent(ctx context.Context, filename string, content io.Reader, size int64, accessRules *pb.FileAccessRules, opts pb.PutFileOptions) error {
-	return h.next.WriteFileContent(ctx, filename, content, size, accessRules, opts)
+func (h *FilesBaseObjectsHandler) WriteFileContent(ctx context.Context, filename string, content io.Reader, size int64, opts pb.PutFileOptions) error {
+	return h.next.WriteFileContent(ctx, filename, content, size, opts)
 }
 
 func (h *FilesBaseObjectsHandler) ListDir(ctx context.Context, dirname string, opts pb.GetFileInfoOptions) ([]*pb.File, error) {
@@ -34,11 +35,11 @@ func (h *FilesBaseObjectsHandler) DeleteFile(ctx context.Context, filename strin
 	return h.next.DeleteFile(ctx, filename)
 }
 
-func (h *FilesBaseObjectsHandler) SetFileMetaData(ctx context.Context, filename string, name string, value string) error {
+func (h *FilesBaseObjectsHandler) SetFileMetaData(ctx context.Context, filename string, name files.AttrName, value string) error {
 	return h.next.SetFileMetaData(ctx, filename, name, value)
 }
 
-func (h *FilesBaseObjectsHandler) GetFileMetaData(ctx context.Context, filename string, name string) (string, error) {
+func (h *FilesBaseObjectsHandler) GetFileMetaData(ctx context.Context, filename string, name files.AttrName) (string, error) {
 	return h.next.GetFileMetaData(ctx, filename, name)
 }
 

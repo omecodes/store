@@ -3,8 +3,10 @@ package router
 import (
 	"context"
 	"github.com/omecodes/errors"
+	"github.com/omecodes/store/files"
 	"github.com/omecodes/store/pb"
 	"io"
+	"path"
 )
 
 type FilesParamsHandler struct {
@@ -18,11 +20,25 @@ func (h *FilesParamsHandler) CreateDir(ctx context.Context, filename string) err
 			Details: "required",
 		})
 	}
+
+	sourceID, fPath := files.Split(filename)
+	if sourceID == "" {
+		return errors.Create(errors.BadRequest, "missing source reference")
+	}
+
+	source, err := files.ResolveSource(ctx, sourceID)
+	if err != nil {
+		return err
+	}
+
+	filename = path.Join(source.URI, fPath)
+	ctx = files.ContextWithSource(ctx, source)
+
 	return h.next.CreateDir(ctx, filename)
 }
 
-func (h *FilesParamsHandler) WriteFileContent(ctx context.Context, filename string, content io.Reader, size int64, accessRules *pb.FileAccessRules, opts pb.PutFileOptions) error {
-	if filename == "" || content == nil || accessRules == nil {
+func (h *FilesParamsHandler) WriteFileContent(ctx context.Context, filename string, content io.Reader, size int64, opts pb.PutFileOptions) error {
+	if filename == "" || content == nil {
 		err := errors.Create(errors.BadRequest, "missing parameters")
 		if filename == "" {
 			err.AppendDetails(errors.Info{
@@ -37,17 +53,23 @@ func (h *FilesParamsHandler) WriteFileContent(ctx context.Context, filename stri
 				Details: "required",
 			})
 		}
-
-		if accessRules == nil {
-			err.AppendDetails(errors.Info{
-				Name:    "access_rules",
-				Details: "required",
-			})
-		}
-
 		return err
 	}
-	return h.next.WriteFileContent(ctx, filename, content, size, accessRules, opts)
+
+	sourceID, fPath := files.Split(filename)
+	if sourceID == "" {
+		return errors.Create(errors.BadRequest, "missing source reference")
+	}
+
+	source, err := files.ResolveSource(ctx, sourceID)
+	if err != nil {
+		return err
+	}
+
+	resolvedPath := path.Join(source.URI, fPath)
+	ctx = files.ContextWithSource(ctx, source)
+
+	return h.next.WriteFileContent(ctx, resolvedPath, content, size, opts)
 }
 
 func (h *FilesParamsHandler) ListDir(ctx context.Context, dirname string, opts pb.GetFileInfoOptions) ([]*pb.File, error) {
@@ -57,6 +79,17 @@ func (h *FilesParamsHandler) ListDir(ctx context.Context, dirname string, opts p
 			Details: "required",
 		})
 	}
+
+	sourceID, fPath := files.Split(dirname)
+	if sourceID != "" {
+		source, err := files.ResolveSource(ctx, sourceID)
+		if err != nil {
+			return nil, err
+		}
+		ctx = files.ContextWithSource(ctx, source)
+		dirname = path.Join(source.URI, fPath)
+	}
+
 	return h.next.ListDir(ctx, dirname, opts)
 }
 
@@ -67,7 +100,21 @@ func (h *FilesParamsHandler) ReadFileContent(ctx context.Context, filename strin
 			Details: "required",
 		})
 	}
-	return h.next.ReadFileContent(ctx, filename, opts)
+
+	sourceID, fPath := files.Split(filename)
+	if sourceID == "" {
+		return nil, 0, errors.Create(errors.BadRequest, "missing source reference")
+	}
+
+	source, err := files.ResolveSource(ctx, sourceID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	resolvedPath := path.Join(source.URI, fPath)
+	ctx = files.ContextWithSource(ctx, source)
+
+	return h.next.ReadFileContent(ctx, resolvedPath, opts)
 }
 
 func (h *FilesParamsHandler) GetFileInfo(ctx context.Context, filename string, opts pb.GetFileInfoOptions) (*pb.File, error) {
@@ -77,7 +124,21 @@ func (h *FilesParamsHandler) GetFileInfo(ctx context.Context, filename string, o
 			Details: "required",
 		})
 	}
-	return h.next.GetFileInfo(ctx, filename, opts)
+
+	sourceID, fPath := files.Split(filename)
+	if sourceID == "" {
+		return nil, errors.Create(errors.BadRequest, "missing source reference")
+	}
+
+	source, err := files.ResolveSource(ctx, sourceID)
+	if err != nil {
+		return nil, err
+	}
+
+	resolvedPath := path.Join(source.URI, fPath)
+	ctx = files.ContextWithSource(ctx, source)
+
+	return h.next.GetFileInfo(ctx, resolvedPath, opts)
 }
 
 func (h *FilesParamsHandler) DeleteFile(ctx context.Context, filename string) error {
@@ -87,10 +148,23 @@ func (h *FilesParamsHandler) DeleteFile(ctx context.Context, filename string) er
 			Details: "required",
 		})
 	}
+
+	sourceID, fPath := files.Split(filename)
+	if sourceID == "" {
+		return errors.Create(errors.BadRequest, "missing source reference")
+	}
+
+	source, err := files.ResolveSource(ctx, sourceID)
+	if err != nil {
+		return err
+	}
+
+	filename = path.Join(source.URI, fPath)
+	ctx = files.ContextWithSource(ctx, source)
 	return h.next.DeleteFile(ctx, filename)
 }
 
-func (h *FilesParamsHandler) SetFileMetaData(ctx context.Context, filename string, name string, value string) error {
+func (h *FilesParamsHandler) SetFileMetaData(ctx context.Context, filename string, name files.AttrName, value string) error {
 	if filename == "" || name == "" {
 		err := errors.Create(errors.BadRequest, "missing parameters")
 		if filename == "" {
@@ -108,10 +182,24 @@ func (h *FilesParamsHandler) SetFileMetaData(ctx context.Context, filename strin
 		}
 		return err
 	}
+
+	sourceID, fPath := files.Split(filename)
+	if sourceID == "" {
+		return errors.Create(errors.BadRequest, "missing source reference")
+	}
+
+	source, err := files.ResolveSource(ctx, sourceID)
+	if err != nil {
+		return err
+	}
+
+	filename = path.Join(source.URI, fPath)
+	ctx = files.ContextWithSource(ctx, source)
+
 	return h.next.SetFileMetaData(ctx, filename, name, value)
 }
 
-func (h *FilesParamsHandler) GetFileMetaData(ctx context.Context, filename string, name string) (string, error) {
+func (h *FilesParamsHandler) GetFileMetaData(ctx context.Context, filename string, name files.AttrName) (string, error) {
 	if filename == "" || name == "" {
 		err := errors.Create(errors.BadRequest, "missing parameters")
 		if filename == "" {
@@ -129,6 +217,20 @@ func (h *FilesParamsHandler) GetFileMetaData(ctx context.Context, filename strin
 		}
 		return "", err
 	}
+
+	sourceID, fPath := files.Split(filename)
+	if sourceID == "" {
+		return "", errors.Create(errors.BadRequest, "missing source reference")
+	}
+
+	source, err := files.ResolveSource(ctx, sourceID)
+	if err != nil {
+		return "", err
+	}
+
+	filename = path.Join(source.URI, fPath)
+	ctx = files.ContextWithSource(ctx, source)
+
 	return h.next.GetFileMetaData(ctx, filename, name)
 }
 
@@ -150,6 +252,20 @@ func (h *FilesParamsHandler) RenameFile(ctx context.Context, filename string, ne
 		}
 		return err
 	}
+
+	sourceID, fPath := files.Split(filename)
+	if sourceID == "" {
+		return errors.Create(errors.BadRequest, "missing source reference")
+	}
+
+	source, err := files.ResolveSource(ctx, sourceID)
+	if err != nil {
+		return err
+	}
+
+	filename = path.Join(source.URI, fPath)
+	ctx = files.ContextWithSource(ctx, source)
+
 	return h.next.RenameFile(ctx, filename, newName)
 }
 
@@ -171,6 +287,20 @@ func (h *FilesParamsHandler) MoveFile(ctx context.Context, srcFilename string, d
 		}
 		return err
 	}
+
+	sourceID, fPath := files.Split(srcFilename)
+	if sourceID == "" {
+		return errors.Create(errors.BadRequest, "missing source reference")
+	}
+
+	source, err := files.ResolveSource(ctx, sourceID)
+	if err != nil {
+		return err
+	}
+
+	srcFilename = path.Join(source.URI, fPath)
+	ctx = files.ContextWithSource(ctx, source)
+
 	return h.next.MoveFile(ctx, srcFilename, dstFilename)
 }
 
@@ -192,6 +322,20 @@ func (h *FilesParamsHandler) CopyFile(ctx context.Context, srcFilename string, d
 		}
 		return err
 	}
+
+	sourceID, fPath := files.Split(srcFilename)
+	if sourceID == "" {
+		return errors.Create(errors.BadRequest, "missing source reference")
+	}
+
+	source, err := files.ResolveSource(ctx, sourceID)
+	if err != nil {
+		return err
+	}
+
+	srcFilename = path.Join(source.URI, fPath)
+	ctx = files.ContextWithSource(ctx, source)
+
 	return h.next.MoveFile(ctx, srcFilename, dstFilename)
 }
 
@@ -213,6 +357,20 @@ func (h *FilesParamsHandler) OpenMultipartSession(ctx context.Context, filename 
 		}
 		return "", err
 	}
+
+	sourceID, fPath := files.Split(filename)
+	if sourceID == "" {
+		return "", errors.Create(errors.BadRequest, "missing source reference")
+	}
+
+	source, err := files.ResolveSource(ctx, sourceID)
+	if err != nil {
+		return "", err
+	}
+
+	filename = path.Join(source.URI, fPath)
+	ctx = files.ContextWithSource(ctx, source)
+
 	return h.next.OpenMultipartSession(ctx, filename, info)
 }
 
@@ -234,6 +392,13 @@ func (h *FilesParamsHandler) AddContentPart(ctx context.Context, sessionID strin
 		}
 		return err
 	}
+
+	source, err := files.ResolveSource(ctx, sessionID)
+	if err != nil {
+		return err
+	}
+	ctx = files.ContextWithSource(ctx, source)
+
 	return h.next.AddContentPart(ctx, sessionID, content, size, info)
 }
 
@@ -244,5 +409,12 @@ func (h *FilesParamsHandler) CloseMultipartSession(ctx context.Context, sessionI
 			Details: "required",
 		})
 	}
+
+	source, err := files.ResolveSource(ctx, sessionID)
+	if err != nil {
+		return err
+	}
+	ctx = files.ContextWithSource(ctx, source)
+
 	return h.next.CloseMultipartSession(ctx, sessionID)
 }

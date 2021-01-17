@@ -10,8 +10,9 @@ type File struct {
 }
 
 type PutFileOptions struct {
-	Append bool   `json:"append,omitempty"`
-	Hash   string `json:"hash,omitempty"`
+	Append      bool             `json:"append,omitempty"`
+	Hash        string           `json:"hash,omitempty"`
+	Permissions *FileAccessRules `json:"permissions,omitempty"`
 }
 
 type ContentRange struct {

@@ -34,11 +34,11 @@ message AccessRules {
 }
 
 message FileAccessRules {
-  string path = 1;
-  string label = 2;
-  string description = 3;
-  repeated string read = 4;
-  repeated string write = 5;
+  string label = 1;
+  string description = 2;
+  repeated string read = 3;
+  repeated string write = 4;
+  repeated string chmod = 5;
 }
 
 message PathAccessRules {
@@ -282,7 +282,7 @@ message FieldQuery {
   oneof bool {
     And and = 1;
     Or or = 2;
-    StartsWith starts_with =3;
+    StartsWith starts_with = 3;
     EndsWith ends_with = 4;
     Contains contains = 5;
     StrEqual str_equal = 6;
