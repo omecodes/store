@@ -31,8 +31,8 @@ func (h *FilesBaseObjectsHandler) GetFileInfo(ctx context.Context, filename stri
 	return h.next.GetFileInfo(ctx, filename, opts)
 }
 
-func (h *FilesBaseObjectsHandler) DeleteFile(ctx context.Context, filename string) error {
-	return h.next.DeleteFile(ctx, filename)
+func (h *FilesBaseObjectsHandler) DeleteFile(ctx context.Context, filename string, opts *pb.DeleteFileOptions) error {
+	return h.next.DeleteFile(ctx, filename, opts)
 }
 
 func (h *FilesBaseObjectsHandler) SetFileMetaData(ctx context.Context, filename string, attrs files.Attributes) error {
@@ -60,7 +60,7 @@ func (h *FilesBaseObjectsHandler) OpenMultipartSession(ctx context.Context, file
 }
 
 func (h *FilesBaseObjectsHandler) AddContentPart(ctx context.Context, sessionID string, content io.Reader, size int64, info *pb.ContentPartInfo) error {
-	return h.next.AddContentPart(ctx, "", content, size, info)
+	return h.next.AddContentPart(ctx, sessionID, content, size, info)
 }
 
 func (h *FilesBaseObjectsHandler) CloseMultipartSession(ctx context.Context, sessionId string) error {

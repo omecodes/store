@@ -31,8 +31,8 @@ func (h *FilesExecHandler) GetFileInfo(ctx context.Context, filename string, opt
 	return files.Info(ctx, filename, opts.WithAttrs)
 }
 
-func (h *FilesExecHandler) DeleteFile(ctx context.Context, filename string) error {
-	return files.DeleteFile(ctx, filename)
+func (h *FilesExecHandler) DeleteFile(ctx context.Context, filename string, opts *pb.DeleteFileOptions) error {
+	return files.DeleteFile(ctx, filename, opts.Recursive)
 }
 
 func (h *FilesExecHandler) SetFileMetaData(ctx context.Context, filename string, attrs files.Attributes) error {

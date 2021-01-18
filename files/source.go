@@ -3,6 +3,7 @@ package files
 import (
 	"context"
 	"github.com/omecodes/errors"
+	"github.com/omecodes/store/pb"
 	"net/url"
 	"path"
 	"strings"
@@ -35,21 +36,15 @@ type EncryptionInfo struct {
 	Alg EncryptionAlg `json:"alg,omitempty"`
 }
 
-type Permissions struct {
-	Read  []string `json:"read,omitempty"`
-	Write []string `json:"write,omitempty"`
-	Share []string `json:"share,omitempty"`
-}
-
 type Source struct {
-	ID                  string          `json:"id,omitempty"`
-	Label               string          `json:"label,omitempty"`
-	Description         string          `json:"description,omitempty"`
-	Type                SourceType      `json:"type,omitempty"`
-	URI                 string          `json:"uri,omitempty"`
-	Encryption          *EncryptionInfo `json:"encryption,omitempty"`
-	PermissionOverrides *Permissions    `json:"permission_overrides,omitempty"`
-	ExpireTime          int64           `json:"expire_time,omitempty"`
+	ID                  string              `json:"id,omitempty"`
+	Label               string              `json:"label,omitempty"`
+	Description         string              `json:"description,omitempty"`
+	Type                SourceType          `json:"type,omitempty"`
+	URI                 string              `json:"uri,omitempty"`
+	Encryption          *EncryptionInfo     `json:"encryption,omitempty"`
+	PermissionOverrides *pb.FilePermissions `json:"permission_overrides,omitempty"`
+	ExpireTime          int64               `json:"expire_time,omitempty"`
 }
 
 type SourceManager interface {

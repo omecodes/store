@@ -13,7 +13,7 @@ type FilesHandler interface {
 	ListDir(ctx context.Context, dirname string, opts pb.ListDirOptions) (*pb.DirContent, error)
 	ReadFileContent(ctx context.Context, filename string, opts pb.GetFileOptions) (io.ReadCloser, int64, error)
 	GetFileInfo(ctx context.Context, filename string, opts pb.GetFileInfoOptions) (*pb.File, error)
-	DeleteFile(ctx context.Context, filename string) error
+	DeleteFile(ctx context.Context, filename string, opts *pb.DeleteFileOptions) error
 	SetFileMetaData(ctx context.Context, filename string, attrs files.Attributes) error
 	GetFileAttributes(ctx context.Context, filename string, name ...string) (files.Attributes, error)
 	RenameFile(ctx context.Context, filename string, newName string) error

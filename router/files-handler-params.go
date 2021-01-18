@@ -141,7 +141,7 @@ func (h *FilesParamsHandler) GetFileInfo(ctx context.Context, filename string, o
 	return h.next.GetFileInfo(ctx, resolvedPath, opts)
 }
 
-func (h *FilesParamsHandler) DeleteFile(ctx context.Context, filename string) error {
+func (h *FilesParamsHandler) DeleteFile(ctx context.Context, filename string, opts *pb.DeleteFileOptions) error {
 	if filename == "" {
 		return errors.Create(errors.BadRequest, "missing parameters", errors.Info{
 			Name:    "filename",
@@ -161,7 +161,7 @@ func (h *FilesParamsHandler) DeleteFile(ctx context.Context, filename string) er
 
 	filename = path.Join(source.URI, fPath)
 	ctx = files.ContextWithSource(ctx, source)
-	return h.next.DeleteFile(ctx, filename)
+	return h.next.DeleteFile(ctx, filename, opts)
 }
 
 func (h *FilesParamsHandler) SetFileMetaData(ctx context.Context, filename string, attrs files.Attributes) error {

@@ -39,6 +39,11 @@ type GetFileInfoOptions struct {
 	WithAttrs bool `json:"with_attrs,omitempty"`
 }
 
+type DeleteFileOptions struct {
+	Recursive    bool `json:"recursive,omitempty"`
+	PutInRecycle bool `json:"put_in_recycle"`
+}
+
 type MultipartSessionInfo struct {
 	ID          string `json:"id,omitempty"`
 	User        string `json:"user,omitempty"`

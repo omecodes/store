@@ -208,7 +208,7 @@ func (h *FilesPolicyHandler) GetFileInfo(ctx context.Context, filename string, o
 	return h.next.GetFileInfo(ctx, filename, opts)
 }
 
-func (h *FilesPolicyHandler) DeleteFile(ctx context.Context, filename string) error {
+func (h *FilesPolicyHandler) DeleteFile(ctx context.Context, filename string, opts *pb.DeleteFileOptions) error {
 	source := files.GetSource(ctx)
 	if source == nil {
 		return errors.Create(errors.Internal, "missing source in context")
@@ -223,7 +223,7 @@ func (h *FilesPolicyHandler) DeleteFile(ctx context.Context, filename string) er
 		return errors.Create(errors.Unauthorized, "not_allowed")
 	}
 
-	return h.next.DeleteFile(ctx, filename)
+	return h.next.DeleteFile(ctx, filename, opts)
 }
 
 func (h *FilesPolicyHandler) SetFileMetaData(ctx context.Context, filename string, attrs files.Attributes) error {

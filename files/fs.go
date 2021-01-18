@@ -20,8 +20,7 @@ type FS interface {
 	Rename(ctx context.Context, filename string, newName string) error
 	Move(ctx context.Context, filename string, dirname string) error
 	Copy(ctx context.Context, filename string, dirname string) error
-	DeleteDir(ctx context.Context, filename string, recursive bool) error
-	DeleteFile(ctx context.Context, dirname string) error
+	DeleteFile(ctx context.Context, filename string, recursive bool) error
 }
 
 func NewFS(sourceType SourceType, uri string) (FS, error) {
@@ -165,7 +164,7 @@ func Copy(ctx context.Context, filename string, dirname string) error {
 	return fs.Rename(ctx, filename, dirname)
 }
 
-func DeleteFile(ctx context.Context, filename string) error {
+func DeleteFile(ctx context.Context, filename string, recursive bool) error {
 	source := GetSource(ctx)
 	if source == nil {
 		return errors.Create(errors.Internal, "missing source in context")
@@ -176,19 +175,5 @@ func DeleteFile(ctx context.Context, filename string) error {
 		return err
 	}
 
-	return fs.DeleteFile(ctx, filename)
-}
-
-func DeleteDir(ctx context.Context, filename string, recursive bool) error {
-	source := GetSource(ctx)
-	if source == nil {
-		return errors.Create(errors.Internal, "missing source in context")
-	}
-
-	fs, err := NewFS(source.Type, source.URI)
-	if err != nil {
-		return err
-	}
-
-	return fs.DeleteDir(ctx, filename, recursive)
+	return fs.DeleteFile(ctx, filename, recursive)
 }

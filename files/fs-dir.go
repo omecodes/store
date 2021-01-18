@@ -342,8 +342,8 @@ func (d *dirFS) Copy(_ context.Context, filename string, dirname string) error {
 	return nil
 }
 
-func (d *dirFS) DeleteDir(_ context.Context, dirname string, recursive bool) error {
-	fullDirname := filepath.Join(d.root, dirname)
+func (d *dirFS) DeleteFile(_ context.Context, filename string, recursive bool) error {
+	fullDirname := filepath.Join(d.root, filename)
 
 	var err error
 
@@ -354,32 +354,7 @@ func (d *dirFS) DeleteDir(_ context.Context, dirname string, recursive bool) err
 	}
 
 	if err != nil {
-		logs.Error("failed to delete directory", logs.Details("file", dirname), logs.Err(err))
-
-		if os.IsNotExist(err) {
-			return errors.Create(errors.NotFound, "file not found",
-				errors.Info{Name: "file", Details: dirname},
-			)
-		}
-
-		if os.IsPermission(err) {
-			return errors.Create(errors.Internal, "file not found",
-				errors.Info{Name: "system", Details: "Store app has no READ permissions on FS"},
-				errors.Info{Name: "file", Details: dirname},
-			)
-		}
-
-		return errors.Create(errors.Internal, "could not delete directory", errors.Info{Name: "file", Details: dirname})
-	}
-	return nil
-}
-
-func (d *dirFS) DeleteFile(_ context.Context, filename string) error {
-	fullDirname := filepath.Join(d.root, filename)
-
-	err := os.Remove(fullDirname)
-	if err != nil {
-		logs.Error("failed to delete directory", logs.Details("file", filename), logs.Err(err))
+		logs.Error("failed to delete file", logs.Details("file", filename), logs.Err(err))
 
 		if os.IsNotExist(err) {
 			return errors.Create(errors.NotFound, "file not found",
@@ -394,7 +369,7 @@ func (d *dirFS) DeleteFile(_ context.Context, filename string) error {
 			)
 		}
 
-		return errors.Create(errors.Internal, "could not delete file", errors.Info{Name: "file", Details: filename})
+		return errors.Create(errors.Internal, "could not delete directory", errors.Info{Name: "file", Details: filename})
 	}
 	return nil
 }
