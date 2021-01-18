@@ -7,7 +7,7 @@ import (
 )
 
 type FilesEncryptionHandler struct {
-	FilesBaseObjectsHandler
+	FilesBaseHandler
 }
 
 func (h *FilesEncryptionHandler) WriteFileContent(ctx context.Context, filename string, content io.Reader, size int64, opts pb.PutFileOptions) error {

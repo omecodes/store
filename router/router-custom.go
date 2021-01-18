@@ -48,7 +48,7 @@ func (r *CustomObjectsRouter) GetRoute(opts ...RouteOption) ObjectsHandler {
 	if !options.skipExecution && r.execHandler != nil {
 		handler = r.execHandler
 	} else {
-		handler = &dummyHandler{}
+		handler = &objectsDummyHandler{}
 	}
 
 	if !options.skipPolicies && r.policyHandler != nil {

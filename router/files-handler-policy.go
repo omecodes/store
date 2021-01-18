@@ -15,7 +15,7 @@ import (
 )
 
 type FilesPolicyHandler struct {
-	FilesBaseObjectsHandler
+	FilesBaseHandler
 }
 
 func (h *FilesPolicyHandler) evaluateRules(ctx context.Context, rules ...string) (bool, error) {

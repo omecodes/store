@@ -10,7 +10,7 @@ import (
 )
 
 type FilesParamsHandler struct {
-	FilesBaseObjectsHandler
+	FilesBaseHandler
 }
 
 func (h *FilesParamsHandler) CreateDir(ctx context.Context, filename string) error {

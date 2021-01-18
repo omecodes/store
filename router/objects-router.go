@@ -2,12 +2,6 @@ package router
 
 import "context"
 
-const (
-	handlerTypeParams = 1
-	handlerTypePolicy = 2
-	handlerTypeExec   = 3
-)
-
 type ObjectsRouter interface {
 	// GetRoute returns a sequence of handler
 	GetRoute(opts ...RouteOption) ObjectsHandler
@@ -22,32 +16,6 @@ type ObjectsRouterProvideFunc func(ctx context.Context) ObjectsRouter
 
 func (f ObjectsRouterProvideFunc) GetRouter(ctx context.Context) ObjectsRouter {
 	return f(ctx)
-}
-
-type routesOptions struct {
-	skipPolicies  bool
-	skipParams    bool
-	skipExecution bool
-}
-
-type RouteOption func(*routesOptions)
-
-func SkipParamsCheck() RouteOption {
-	return func(r *routesOptions) {
-		r.skipParams = true
-	}
-}
-
-func SkipPoliciesCheck() RouteOption {
-	return func(r *routesOptions) {
-		r.skipPolicies = true
-	}
-}
-
-func SkipExec() RouteOption {
-	return func(r *routesOptions) {
-		r.skipExecution = true
-	}
 }
 
 type ObjectsRouteProviderFunc func(opts ...RouteOption) ObjectsHandler
@@ -67,11 +35,7 @@ func getObjectsRoute(opts ...RouteOption) (handler ObjectsHandler) {
 		o(&routes)
 	}
 
-	if !routes.skipExecution {
-		handler = &ObjectsExecHandler{}
-	} else {
-		handler = &dummyHandler{}
-	}
+	handler = &ObjectsExecHandler{}
 
 	if !routes.skipPolicies {
 		handler = &ObjectsPolicyHandler{ObjectsBaseHandler: ObjectsBaseHandler{

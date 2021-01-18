@@ -8,7 +8,7 @@ import (
 )
 
 type FilesExecHandler struct {
-	FilesBaseObjectsHandler
+	FilesBaseHandler
 }
 
 func (h *FilesExecHandler) CreateDir(ctx context.Context, dirname string) error {
