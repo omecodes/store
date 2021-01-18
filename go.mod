@@ -19,7 +19,7 @@ require (
 	github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08
 	github.com/omecodes/discover v0.0.0-20210105205043-5b445aac6bcd
 	github.com/omecodes/errors v0.0.0-20210113230812-4f98b9fc3d3c
-	github.com/omecodes/libome v0.0.0-20201225162725-c89c7a20a215
+	github.com/omecodes/libome v0.0.0-20210118230551-aff816f21c74
 	github.com/omecodes/service v0.0.0-20210110005141-cfa8317d24a0
 	github.com/omecodes/services-ca v0.0.0-20201224183919-c7cef3fb9aa8
 	github.com/pkg/xattr v0.4.3
@@ -31,7 +31,7 @@ require (
 	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78 // indirect
 	golang.org/x/text v0.3.5
 	golang.org/x/tools v0.0.0-20210108195828-e2f9c7f1fc8e // indirect
-	google.golang.org/genproto v0.0.0-20210113195801-ae06605f4595
+	google.golang.org/genproto v0.0.0-20210114201628-6edceaf6022f
 	google.golang.org/grpc v1.35.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
