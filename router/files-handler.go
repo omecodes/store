@@ -10,7 +10,7 @@ import (
 type FilesHandler interface {
 	CreateDir(ctx context.Context, filename string) error
 	WriteFileContent(ctx context.Context, filename string, content io.Reader, size int64, opts pb.PutFileOptions) error
-	ListDir(ctx context.Context, dirname string, opts pb.GetFileInfoOptions) ([]*pb.File, error)
+	ListDir(ctx context.Context, dirname string, opts pb.ListDirOptions) (*pb.DirContent, error)
 	ReadFileContent(ctx context.Context, filename string, opts pb.GetFileOptions) (io.ReadCloser, int64, error)
 	GetFileInfo(ctx context.Context, filename string, opts pb.GetFileInfoOptions) (*pb.File, error)
 	DeleteFile(ctx context.Context, filename string) error

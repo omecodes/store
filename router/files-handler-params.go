@@ -72,7 +72,7 @@ func (h *FilesParamsHandler) WriteFileContent(ctx context.Context, filename stri
 	return h.next.WriteFileContent(ctx, resolvedPath, content, size, opts)
 }
 
-func (h *FilesParamsHandler) ListDir(ctx context.Context, dirname string, opts pb.GetFileInfoOptions) ([]*pb.File, error) {
+func (h *FilesParamsHandler) ListDir(ctx context.Context, dirname string, opts pb.ListDirOptions) (*pb.DirContent, error) {
 	if dirname == "" {
 		return nil, errors.Create(errors.BadRequest, "missing parameters", errors.Info{
 			Name:    "dirname",

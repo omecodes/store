@@ -134,7 +134,7 @@ func (h *FilesPolicyHandler) WriteFileContent(ctx context.Context, filename stri
 	return h.next.WriteFileContent(ctx, filename, content, size, opts)
 }
 
-func (h *FilesPolicyHandler) ListDir(ctx context.Context, dirname string, opts pb.GetFileInfoOptions) ([]*pb.File, error) {
+func (h *FilesPolicyHandler) ListDir(ctx context.Context, dirname string, opts pb.ListDirOptions) (*pb.DirContent, error) {
 	source := files.GetSource(ctx)
 	if source == nil {
 		return nil, errors.Create(errors.Internal, "missing source in context")

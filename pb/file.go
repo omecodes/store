@@ -1,12 +1,24 @@
 package pb
 
 type File struct {
-	Path       string            `json:"path,omitempty"`
+	Name       string            `json:"name,omitempty"`
 	IsDir      bool              `json:"is_dir,omitempty"`
-	Size       uint64            `json:"size,omitempty"`
+	Size       int64             `json:"size,omitempty"`
 	CreateTime int64             `json:"create_time,omitempty"`
+	ModTime    int64             `json:"mod_time,omitempty"`
 	Hash       string            `json:"hash,omitempty"`
 	Metadata   map[string]string `json:"metadata,omitempty"`
+}
+
+type DirContent struct {
+	Files  []*File `json:"files,omitempty"`
+	Total  int     `json:"total"`
+	Offset int     `json:"offset"`
+}
+
+type ListDirOptions struct {
+	Offset int `json:"offset"`
+	Count  int `json:"count"`
 }
 
 type PutFileOptions struct {
@@ -16,8 +28,8 @@ type PutFileOptions struct {
 }
 
 type ContentRange struct {
-	Offset uint64 `json:"offset,omitempty"`
-	Length int64  `json:"length,omitempty"`
+	Offset int64 `json:"offset,omitempty"`
+	Length int64 `json:"length,omitempty"`
 }
 
 type GetFileOptions struct {

@@ -9,6 +9,7 @@ import (
 	"github.com/omecodes/store/pb"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -85,22 +86,108 @@ func (h *FilesExecHandler) WriteFileContent(ctx context.Context, filename string
 	return nil
 }
 
-func (h *FilesExecHandler) ListDir(ctx context.Context, dirname string, opts pb.GetFileInfoOptions) ([]*pb.File, error) {
-	if dirname == "" {
-		return nil, errors.Create(errors.BadRequest, "missing parameters", errors.Info{
-			Name:    "dirname",
-			Details: "required",
-		})
+func (h *FilesExecHandler) ListDir(ctx context.Context, dirname string, opts pb.ListDirOptions) (*pb.DirContent, error) {
+	source := files.GetSource(ctx)
+	if source == nil {
+		return nil, errors.Create(errors.Internal, "missing source in context")
 	}
-	return h.next.ListDir(ctx, dirname, opts)
+
+	if source.Type != files.TypeFS {
+		return nil, errors.Create(errors.NotImplemented, "file source type is not supported")
+	}
+
+	prefix := fmt.Sprintf("%s://", files.SchemeFS)
+	dirname = strings.TrimPrefix(dirname, prefix)
+
+	f, err := os.Open(dirname)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		_ = f.Close()
+	}()
+
+	names, err := f.Readdirnames(-1)
+	if err != nil {
+		return nil, err
+	}
+
+	dirContent := &pb.DirContent{
+		Total: len(names),
+	}
+
+	for ind, name := range names {
+		if ind >= opts.Offset && len(dirContent.Files) < opts.Count {
+			stats, err := os.Stat(filepath.Join(dirname, name))
+			if err != nil {
+				continue
+			}
+
+			f := &pb.File{
+				Name:    name,
+				IsDir:   stats.IsDir(),
+				Size:    stats.Size(),
+				ModTime: stats.ModTime().Unix(),
+			}
+			dirContent.Files = append(dirContent.Files, f)
+		}
+	}
+
+	return dirContent, nil
 }
 
 func (h *FilesExecHandler) ReadFileContent(ctx context.Context, filename string, opts pb.GetFileOptions) (io.ReadCloser, int64, error) {
-	panic("implement me")
+	source := files.GetSource(ctx)
+	if source == nil {
+		return nil, 0, errors.Create(errors.Internal, "missing source in context")
+	}
+
+	if source.Type != files.TypeFS {
+		return nil, 0, errors.Create(errors.NotImplemented, "file source type is not supported")
+	}
+
+	prefix := fmt.Sprintf("%s://", files.SchemeFS)
+	filename = strings.TrimPrefix(filename, prefix)
+
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	stats, err := f.Stat()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if opts.Range.Offset > 0 {
+		_, err = f.Seek(opts.Range.Offset, io.SeekStart)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		if opts.Range.Length > 0 {
+			return files.LimitReadCloser(f, opts.Range.Length), stats.Size(), nil
+		}
+	}
+
+	return f, stats.Size(), nil
 }
 
 func (h *FilesExecHandler) GetFileInfo(ctx context.Context, filename string, opts pb.GetFileInfoOptions) (*pb.File, error) {
-	panic("implement me")
+	source := files.GetSource(ctx)
+	if source == nil {
+		return nil, errors.Create(errors.Internal, "missing source in context")
+	}
+
+	if source.Type != files.TypeFS {
+		return nil, errors.Create(errors.NotImplemented, "file source type is not supported")
+	}
+
+	prefix := fmt.Sprintf("%s://", files.SchemeFS)
+	filename = strings.TrimPrefix(filename, prefix)
+
+	return nil, nil
 }
 
 func (h *FilesExecHandler) DeleteFile(ctx context.Context, filename string) error {

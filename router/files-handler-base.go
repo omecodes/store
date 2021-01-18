@@ -19,7 +19,7 @@ func (h *FilesBaseObjectsHandler) WriteFileContent(ctx context.Context, filename
 	return h.next.WriteFileContent(ctx, filename, content, size, opts)
 }
 
-func (h *FilesBaseObjectsHandler) ListDir(ctx context.Context, dirname string, opts pb.GetFileInfoOptions) ([]*pb.File, error) {
+func (h *FilesBaseObjectsHandler) ListDir(ctx context.Context, dirname string, opts pb.ListDirOptions) (*pb.DirContent, error) {
 	return h.next.ListDir(ctx, dirname, opts)
 }
 
