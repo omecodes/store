@@ -6,8 +6,7 @@ type File struct {
 	Size       int64             `json:"size,omitempty"`
 	CreateTime int64             `json:"create_time,omitempty"`
 	ModTime    int64             `json:"mod_time,omitempty"`
-	Hash       string            `json:"hash,omitempty"`
-	Metadata   map[string]string `json:"metadata,omitempty"`
+	Attributes map[string]string `json:"attributes,omitempty"`
 }
 
 type DirContent struct {
@@ -24,7 +23,7 @@ type ListDirOptions struct {
 type PutFileOptions struct {
 	Append      bool             `json:"append,omitempty"`
 	Hash        string           `json:"hash,omitempty"`
-	Permissions *FileAccessRules `json:"permissions,omitempty"`
+	Permissions *FilePermissions `json:"permissions,omitempty"`
 }
 
 type ContentRange struct {
@@ -37,8 +36,7 @@ type GetFileOptions struct {
 }
 
 type GetFileInfoOptions struct {
-	WithHash bool `json:"with_hash,omitempty"`
-	WithMeta bool `json:"with_meta,omitempty"`
+	WithAttrs bool `json:"with_attrs,omitempty"`
 }
 
 type MultipartSessionInfo struct {

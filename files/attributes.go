@@ -1,49 +1,68 @@
 package files
 
-import "github.com/omecodes/store/pb"
+import (
+	"encoding/json"
+	"github.com/omecodes/store/pb"
+)
 
-type Attributes map[AttrName]string
+type Attributes map[string]string
 
-type AttrName string
-
-type Attribute struct {
-	Name  AttrName
-	Value []byte
+type Attribute interface {
+	Name() string
+	Value() string
 }
 
 const (
-	AttrPathHistory      = AttrName("store-path-history")
-	AttrSize             = AttrName("store-size")
-	AttrCreatedBy        = AttrName("store-created-by")
-	AttrReadPermissions  = AttrName("store-read-permissions")
-	AttrWritePermissions = AttrName("store-write-permissions")
-	AttrChmodPermissions = AttrName("store-chmod-permissions")
+	AttrPrefix = "store-"
+
+	AttrPathHistory = AttrPrefix + "path-history"
+	AttrSize        = AttrPrefix + "size"
+	AttrCreatedBy   = AttrPrefix + "created-by"
+	AttrCreatedAt   = AttrPrefix + "created-at"
+	AttrHash        = AttrPrefix + "hash"
+	AttrPermissions = AttrPrefix + "permissions"
 )
 
-func DecodePermissions(attrValue string) ([]string, error) {
+func NewAttributesHolder() *AttributesHolder {
+	return &AttributesHolder{
+		Attributes: Attributes{},
+	}
+}
+
+func HoldAttributes(attrs Attributes) *AttributesHolder {
+	return &AttributesHolder{
+		Attributes: attrs,
+	}
+}
+
+type AttributesHolder struct {
+	Attributes  Attributes
+	permissions *pb.FilePermissions
+}
+
+func (h *AttributesHolder) SetPermissions(perms *pb.FilePermissions) error {
+	return nil
+}
+
+func (h *AttributesHolder) SetEncodedPermissions(encoded string) error {
+	return nil
+}
+
+func (h *AttributesHolder) AddReadPermission(permission *pb.Permission) {
+
+}
+
+func (h *AttributesHolder) GetPermissions() (*pb.FilePermissions, error) {
+	if h.permissions == nil {
+		encoded := h.Attributes[AttrPermissions]
+		err := json.Unmarshal([]byte(encoded), &h.permissions)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return h.permissions, nil
+}
+
+func (h *AttributesHolder) GetAttributes() (Attributes, error) {
 	return nil, nil
-}
-
-func DecodePathHistory(attrValue string) ([]string, error) {
-	return nil, nil
-}
-
-func SizeFromMeta(attrValue string) (int64, error) {
-	return 0, nil
-}
-
-func CreatorFromMeta(attrValue string) (string, error) {
-	return "", nil
-}
-
-func SetAttributes(filename string, attrs ...Attribute) error {
-	return nil
-}
-
-func SetPermissions(filename string, rules *pb.FileAccessRules) error {
-	return nil
-}
-
-func AppendToPathHistoryAttribute(filename string, paths ...string) error {
-	return nil
 }

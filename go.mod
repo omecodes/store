@@ -22,7 +22,7 @@ require (
 	github.com/omecodes/libome v0.0.0-20201225162725-c89c7a20a215
 	github.com/omecodes/service v0.0.0-20210110005141-cfa8317d24a0
 	github.com/omecodes/services-ca v0.0.0-20201224183919-c7cef3fb9aa8
-	github.com/pkg/xattr v0.4.3 // indirect
+	github.com/pkg/xattr v0.4.3
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/tidwall/gjson v1.6.7

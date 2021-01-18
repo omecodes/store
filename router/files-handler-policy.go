@@ -60,41 +60,62 @@ func (h *FilesPolicyHandler) evaluateRules(ctx context.Context, rules ...string)
 }
 
 func (h *FilesPolicyHandler) isAllowedToRead(ctx context.Context, filename string) (bool, error) {
-	attrValue, err := h.GetFileMetaData(ctx, filename, files.AttrReadPermissions)
+	attrs, err := h.GetFileAttributes(ctx, filename, files.AttrPermissions)
 	if err != nil {
 		return false, err
 	}
 
-	rules, err := files.DecodePermissions(attrValue)
+	attrsHolder := files.HoldAttributes(attrs)
+	perms, err := attrsHolder.GetPermissions()
 	if err != nil {
 		return false, err
 	}
+
+	var rules []string
+	for _, perm := range perms.Read {
+		rules = append(rules, perm.Rule)
+	}
+
 	return h.evaluateRules(ctx, rules...)
 }
 
 func (h *FilesPolicyHandler) isAllowedToWrite(ctx context.Context, filename string) (bool, error) {
-	attrValue, err := h.GetFileMetaData(ctx, filename, files.AttrWritePermissions)
+	attrs, err := h.GetFileAttributes(ctx, filename, files.AttrPermissions)
 	if err != nil {
 		return false, err
 	}
 
-	rules, err := files.DecodePermissions(attrValue)
+	attrsHolder := files.HoldAttributes(attrs)
+	perms, err := attrsHolder.GetPermissions()
 	if err != nil {
 		return false, err
 	}
+
+	var rules []string
+	for _, perm := range perms.Write {
+		rules = append(rules, perm.Rule)
+	}
+
 	return h.evaluateRules(ctx, rules...)
 }
 
 func (h *FilesPolicyHandler) isAllowedToChmod(ctx context.Context, filename string) (bool, error) {
-	attrValue, err := h.GetFileMetaData(ctx, filename, files.AttrChmodPermissions)
+	attrs, err := h.GetFileAttributes(ctx, filename, files.AttrPermissions)
 	if err != nil {
 		return false, err
 	}
 
-	rules, err := files.DecodePermissions(attrValue)
+	attrsHolder := files.HoldAttributes(attrs)
+	perms, err := attrsHolder.GetPermissions()
 	if err != nil {
 		return false, err
 	}
+
+	var rules []string
+	for _, perm := range perms.Chmod {
+		rules = append(rules, perm.Rule)
+	}
+
 	return h.evaluateRules(ctx, rules...)
 }
 
@@ -205,7 +226,7 @@ func (h *FilesPolicyHandler) DeleteFile(ctx context.Context, filename string) er
 	return h.next.DeleteFile(ctx, filename)
 }
 
-func (h *FilesPolicyHandler) SetFileMetaData(ctx context.Context, filename string, name files.AttrName, value string) error {
+func (h *FilesPolicyHandler) SetFileMetaData(ctx context.Context, filename string, attrs files.Attributes) error {
 	source := files.GetSource(ctx)
 	if source == nil {
 		return errors.Create(errors.Internal, "missing source in context")
@@ -220,25 +241,25 @@ func (h *FilesPolicyHandler) SetFileMetaData(ctx context.Context, filename strin
 		return errors.Create(errors.Unauthorized, "not_allowed")
 	}
 
-	return h.next.SetFileMetaData(ctx, filename, name, value)
+	return h.next.SetFileMetaData(ctx, filename, attrs)
 }
 
-func (h *FilesPolicyHandler) GetFileMetaData(ctx context.Context, filename string, name files.AttrName) (string, error) {
+func (h *FilesPolicyHandler) GetFileAttributes(ctx context.Context, filename string, name ...string) (files.Attributes, error) {
 	source := files.GetSource(ctx)
 	if source == nil {
-		return "", errors.Create(errors.Internal, "missing source in context")
+		return nil, errors.Create(errors.Internal, "missing source in context")
 	}
 
 	allowed, err := h.isAllowedToRead(ctx, filename)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if !allowed {
-		return "", errors.Create(errors.Unauthorized, "not_allowed")
+		return nil, errors.Create(errors.Unauthorized, "not_allowed")
 	}
 
-	return h.next.GetFileMetaData(ctx, filename, name)
+	return h.next.GetFileAttributes(ctx, filename, name...)
 }
 
 func (h *FilesPolicyHandler) RenameFile(ctx context.Context, filename string, newName string) error {
@@ -266,13 +287,13 @@ func (h *FilesPolicyHandler) RenameFile(ctx context.Context, filename string, ne
 	return h.next.RenameFile(ctx, filename, newName)
 }
 
-func (h *FilesPolicyHandler) MoveFile(ctx context.Context, srcFilename string, dstFilename string) error {
+func (h *FilesPolicyHandler) MoveFile(ctx context.Context, filename string, dirname string) error {
 	source := files.GetSource(ctx)
 	if source == nil {
 		return errors.Create(errors.Internal, "missing source in context")
 	}
 
-	allowed, err := h.isAllowedToRead(ctx, srcFilename)
+	allowed, err := h.isAllowedToRead(ctx, filename)
 	if err != nil {
 		return err
 	}
@@ -280,7 +301,7 @@ func (h *FilesPolicyHandler) MoveFile(ctx context.Context, srcFilename string, d
 		return errors.Create(errors.Unauthorized, "not_allowed")
 	}
 
-	allowed, err = h.isAllowedToWrite(ctx, path.Dir(dstFilename))
+	allowed, err = h.isAllowedToWrite(ctx, path.Dir(dirname))
 	if err != nil {
 		return err
 	}
@@ -288,16 +309,16 @@ func (h *FilesPolicyHandler) MoveFile(ctx context.Context, srcFilename string, d
 		return errors.Create(errors.Unauthorized, "not_allowed")
 	}
 
-	return h.next.MoveFile(ctx, srcFilename, dstFilename)
+	return h.next.MoveFile(ctx, filename, dirname)
 }
 
-func (h *FilesPolicyHandler) CopyFile(ctx context.Context, srcFilename string, dstFilename string) error {
+func (h *FilesPolicyHandler) CopyFile(ctx context.Context, filename string, dirname string) error {
 	source := files.GetSource(ctx)
 	if source == nil {
 		return errors.Create(errors.Internal, "missing source in context")
 	}
 
-	allowed, err := h.isAllowedToRead(ctx, srcFilename)
+	allowed, err := h.isAllowedToRead(ctx, filename)
 	if err != nil {
 		return err
 	}
@@ -305,7 +326,7 @@ func (h *FilesPolicyHandler) CopyFile(ctx context.Context, srcFilename string, d
 		return errors.Create(errors.Unauthorized, "not_allowed")
 	}
 
-	allowed, err = h.isAllowedToWrite(ctx, path.Dir(dstFilename))
+	allowed, err = h.isAllowedToWrite(ctx, path.Dir(dirname))
 	if err != nil {
 		return err
 	}
@@ -313,7 +334,7 @@ func (h *FilesPolicyHandler) CopyFile(ctx context.Context, srcFilename string, d
 		return errors.Create(errors.Unauthorized, "not_allowed")
 	}
 
-	return h.next.CopyFile(ctx, srcFilename, dstFilename)
+	return h.next.CopyFile(ctx, filename, dirname)
 }
 
 func (h *FilesPolicyHandler) OpenMultipartSession(ctx context.Context, filename string, info *pb.MultipartSessionInfo) (string, error) {

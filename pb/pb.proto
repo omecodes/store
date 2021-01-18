@@ -33,12 +33,18 @@ message AccessRules {
   repeated string delete = 6;
 }
 
-message FileAccessRules {
-  string label = 1;
-  string description = 2;
-  repeated string read = 3;
-  repeated string write = 4;
-  repeated string chmod = 5;
+message Permission {
+  string identifier = 1;
+  string label = 2;
+  string description = 3;
+  string rule = 4;
+}
+
+message FilePermissions {
+  string filename = 1;
+  repeated Permission read = 2;
+  repeated Permission write = 3;
+  repeated Permission chmod = 4;
 }
 
 message PathAccessRules {

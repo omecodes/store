@@ -164,8 +164,8 @@ func (h *FilesParamsHandler) DeleteFile(ctx context.Context, filename string) er
 	return h.next.DeleteFile(ctx, filename)
 }
 
-func (h *FilesParamsHandler) SetFileMetaData(ctx context.Context, filename string, name files.AttrName, value string) error {
-	if filename == "" || name == "" {
+func (h *FilesParamsHandler) SetFileMetaData(ctx context.Context, filename string, attrs files.Attributes) error {
+	if filename == "" || len(attrs) == 0 {
 		err := errors.Create(errors.BadRequest, "missing parameters")
 		if filename == "" {
 			err.AppendDetails(errors.Info{
@@ -174,9 +174,9 @@ func (h *FilesParamsHandler) SetFileMetaData(ctx context.Context, filename strin
 			})
 		}
 
-		if name == "" {
+		if len(attrs) == 0 {
 			err.AppendDetails(errors.Info{
-				Name:    "name",
+				Name:    "attributes",
 				Details: "required",
 			})
 		}
@@ -196,11 +196,11 @@ func (h *FilesParamsHandler) SetFileMetaData(ctx context.Context, filename strin
 	filename = path.Join(source.URI, fPath)
 	ctx = files.ContextWithSource(ctx, source)
 
-	return h.next.SetFileMetaData(ctx, filename, name, value)
+	return h.next.SetFileMetaData(ctx, filename, attrs)
 }
 
-func (h *FilesParamsHandler) GetFileMetaData(ctx context.Context, filename string, name files.AttrName) (string, error) {
-	if filename == "" || name == "" {
+func (h *FilesParamsHandler) GetFileAttributes(ctx context.Context, filename string, name ...string) (files.Attributes, error) {
+	if filename == "" || len(name) == 0 {
 		err := errors.Create(errors.BadRequest, "missing parameters")
 		if filename == "" {
 			err.AppendDetails(errors.Info{
@@ -209,29 +209,29 @@ func (h *FilesParamsHandler) GetFileMetaData(ctx context.Context, filename strin
 			})
 		}
 
-		if name == "" {
+		if len(name) == 0 {
 			err.AppendDetails(errors.Info{
-				Name:    "name",
+				Name:    "names",
 				Details: "required",
 			})
 		}
-		return "", err
+		return nil, err
 	}
 
 	sourceID, fPath := files.Split(filename)
 	if sourceID == "" {
-		return "", errors.Create(errors.BadRequest, "missing source reference")
+		return nil, errors.Create(errors.BadRequest, "missing source reference")
 	}
 
 	source, err := files.ResolveSource(ctx, sourceID)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	filename = path.Join(source.URI, fPath)
 	ctx = files.ContextWithSource(ctx, source)
 
-	return h.next.GetFileMetaData(ctx, filename, name)
+	return h.next.GetFileAttributes(ctx, filename, name...)
 }
 
 func (h *FilesParamsHandler) RenameFile(ctx context.Context, filename string, newName string) error {
@@ -269,17 +269,17 @@ func (h *FilesParamsHandler) RenameFile(ctx context.Context, filename string, ne
 	return h.next.RenameFile(ctx, filename, newName)
 }
 
-func (h *FilesParamsHandler) MoveFile(ctx context.Context, srcFilename string, dstFilename string) error {
-	if srcFilename == "" || dstFilename == "" {
+func (h *FilesParamsHandler) MoveFile(ctx context.Context, filename string, dirname string) error {
+	if filename == "" || dirname == "" {
 		err := errors.Create(errors.BadRequest, "missing parameters")
-		if srcFilename == "" {
+		if filename == "" {
 			err.AppendDetails(errors.Info{
 				Name:    "filename",
 				Details: "required",
 			})
 		}
 
-		if dstFilename == "" {
+		if dirname == "" {
 			err.AppendDetails(errors.Info{
 				Name:    "new_filename",
 				Details: "required",
@@ -288,7 +288,7 @@ func (h *FilesParamsHandler) MoveFile(ctx context.Context, srcFilename string, d
 		return err
 	}
 
-	sourceID, fPath := files.Split(srcFilename)
+	sourceID, fPath := files.Split(filename)
 	if sourceID == "" {
 		return errors.Create(errors.BadRequest, "missing source reference")
 	}
@@ -298,23 +298,23 @@ func (h *FilesParamsHandler) MoveFile(ctx context.Context, srcFilename string, d
 		return err
 	}
 
-	srcFilename = path.Join(source.URI, fPath)
+	filename = path.Join(source.URI, fPath)
 	ctx = files.ContextWithSource(ctx, source)
 
-	return h.next.MoveFile(ctx, srcFilename, dstFilename)
+	return h.next.MoveFile(ctx, filename, dirname)
 }
 
-func (h *FilesParamsHandler) CopyFile(ctx context.Context, srcFilename string, dstFilename string) error {
-	if srcFilename == "" || dstFilename == "" {
+func (h *FilesParamsHandler) CopyFile(ctx context.Context, filename string, dirname string) error {
+	if filename == "" || dirname == "" {
 		err := errors.Create(errors.BadRequest, "missing parameters")
-		if srcFilename == "" {
+		if filename == "" {
 			err.AppendDetails(errors.Info{
 				Name:    "filename",
 				Details: "required",
 			})
 		}
 
-		if dstFilename == "" {
+		if dirname == "" {
 			err.AppendDetails(errors.Info{
 				Name:    "copy_filename",
 				Details: "required",
@@ -323,7 +323,7 @@ func (h *FilesParamsHandler) CopyFile(ctx context.Context, srcFilename string, d
 		return err
 	}
 
-	sourceID, fPath := files.Split(srcFilename)
+	sourceID, fPath := files.Split(filename)
 	if sourceID == "" {
 		return errors.Create(errors.BadRequest, "missing source reference")
 	}
@@ -333,10 +333,10 @@ func (h *FilesParamsHandler) CopyFile(ctx context.Context, srcFilename string, d
 		return err
 	}
 
-	srcFilename = path.Join(source.URI, fPath)
+	filename = path.Join(source.URI, fPath)
 	ctx = files.ContextWithSource(ctx, source)
 
-	return h.next.MoveFile(ctx, srcFilename, dstFilename)
+	return h.next.MoveFile(ctx, filename, dirname)
 }
 
 func (h *FilesParamsHandler) OpenMultipartSession(ctx context.Context, filename string, info *pb.MultipartSessionInfo) (string, error) {

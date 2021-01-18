@@ -35,24 +35,24 @@ func (h *FilesBaseObjectsHandler) DeleteFile(ctx context.Context, filename strin
 	return h.next.DeleteFile(ctx, filename)
 }
 
-func (h *FilesBaseObjectsHandler) SetFileMetaData(ctx context.Context, filename string, name files.AttrName, value string) error {
-	return h.next.SetFileMetaData(ctx, filename, name, value)
+func (h *FilesBaseObjectsHandler) SetFileMetaData(ctx context.Context, filename string, attrs files.Attributes) error {
+	return h.next.SetFileMetaData(ctx, filename, attrs)
 }
 
-func (h *FilesBaseObjectsHandler) GetFileMetaData(ctx context.Context, filename string, name files.AttrName) (string, error) {
-	return h.next.GetFileMetaData(ctx, filename, name)
+func (h *FilesBaseObjectsHandler) GetFileAttributes(ctx context.Context, filename string, name ...string) (files.Attributes, error) {
+	return h.next.GetFileAttributes(ctx, filename, name...)
 }
 
 func (h *FilesBaseObjectsHandler) RenameFile(ctx context.Context, filename string, newName string) error {
 	return h.next.RenameFile(ctx, filename, newName)
 }
 
-func (h *FilesBaseObjectsHandler) MoveFile(ctx context.Context, srcFilename string, dstFilename string) error {
-	return h.next.MoveFile(ctx, srcFilename, dstFilename)
+func (h *FilesBaseObjectsHandler) MoveFile(ctx context.Context, filename string, dirname string) error {
+	return h.next.MoveFile(ctx, filename, dirname)
 }
 
-func (h *FilesBaseObjectsHandler) CopyFile(ctx context.Context, srcFilename string, dstFilename string) error {
-	return h.next.CopyFile(ctx, srcFilename, dstFilename)
+func (h *FilesBaseObjectsHandler) CopyFile(ctx context.Context, filename string, dirname string) error {
+	return h.next.CopyFile(ctx, filename, dirname)
 }
 
 func (h *FilesBaseObjectsHandler) OpenMultipartSession(ctx context.Context, filename string, info *pb.MultipartSessionInfo) (string, error) {
