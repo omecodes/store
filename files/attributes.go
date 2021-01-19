@@ -37,10 +37,10 @@ func HoldAttributes(attrs Attributes) *AttributesHolder {
 
 type AttributesHolder struct {
 	Attributes  Attributes
-	permissions *pb.FilePermissions
+	permissions *Permissions
 }
 
-func (h *AttributesHolder) SetPermissions(perms *pb.FilePermissions) error {
+func (h *AttributesHolder) SetPermissions(perms *Permissions) error {
 	return nil
 }
 
@@ -52,7 +52,7 @@ func (h *AttributesHolder) AddReadPermission(permission *pb.Permission) {
 
 }
 
-func (h *AttributesHolder) GetPermissions() (*pb.FilePermissions, error) {
+func (h *AttributesHolder) GetPermissions() (*Permissions, error) {
 	if h.permissions == nil {
 		encoded := h.Attributes[AttrPermissions]
 		err := json.Unmarshal([]byte(encoded), &h.permissions)

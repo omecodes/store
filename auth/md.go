@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"github.com/omecodes/store/pb"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -23,7 +22,7 @@ func SetMetaWithExisting(ctx context.Context) context.Context {
 	return ctx
 }
 
-func FindInMD(ctx context.Context) *pb.Auth {
+func FindInMD(ctx context.Context) *Auth {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil
@@ -31,7 +30,7 @@ func FindInMD(ctx context.Context) *pb.Auth {
 	return FromMD(md)
 }
 
-func ToMD(a *pb.Auth) metadata.MD {
+func ToMD(a *Auth) metadata.MD {
 	md := metadata.MD{}
 	md.Set(uuid, a.Uid)
 
@@ -55,13 +54,13 @@ func ToMD(a *pb.Auth) metadata.MD {
 	return md
 }
 
-func FromMD(md metadata.MD) *pb.Auth {
+func FromMD(md metadata.MD) *Auth {
 	userValues := md.Get(uuid)
 	if len(userValues) == 0 {
 		return nil
 	}
 
-	a := &pb.Auth{}
+	a := &Auth{}
 	a.Uid = userValues[0]
 
 	emailValues := md.Get(email)

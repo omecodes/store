@@ -5,28 +5,26 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/omecodes/discover"
-	"github.com/omecodes/service"
-	"github.com/omecodes/store/accounts"
-	"github.com/omecodes/store/auth"
-	"github.com/omecodes/store/objects"
-	"golang.org/x/crypto/acme/autocert"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 
+	"github.com/gorilla/mux"
+	"golang.org/x/crypto/acme/autocert"
+
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/httpx"
 	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/discover"
 	ome "github.com/omecodes/libome"
 	"github.com/omecodes/libome/ports"
+	"github.com/omecodes/service"
 	sca "github.com/omecodes/services-ca"
-	"github.com/omecodes/store/clients"
-	"github.com/omecodes/store/common"
-	"github.com/omecodes/store/router"
+	"github.com/omecodes/store/accounts"
+	"github.com/omecodes/store/auth"
+	"github.com/omecodes/store/objects"
 )
 
 type MsConfig struct {
@@ -52,7 +50,7 @@ type MSServer struct {
 	adminPassword  string
 	workerPassword string
 	Errors         chan error
-	loadBalancer   *router.ObjectsBaseHandler
+	loadBalancer   *objects.BaseHandler
 	registry       ome.Registry
 	caServer       *sca.Server
 	autoCertDir    string
@@ -274,19 +272,19 @@ func (s *MSServer) httpEnrichContext(next http.Handler) http.Handler {
 		ctx = auth.ContextWithCredentialsManager(ctx, s.credentialsManager)
 		ctx = auth.ContextWithProviders(ctx, s.authenticationProviders)
 		ctx = service.ContextWithBox(ctx, box)
-		ctx = router.WithRouterProvider(ctx, router.ObjectsRouterProvideFunc(s.GetRouter))
-		ctx = router.WithSettings(s.settings)(ctx)
-		ctx = clients.WithRouterGrpcClientProvider(ctx, &clients.LoadBalancer{})
+		ctx = objects.WithRouterProvider(ctx, objects.ObjectsRouterProvideFunc(s.GetRouter))
+		ctx = objects.WithSettings(s.settings)(ctx)
+		ctx = objects.WithRouterGrpcClientProvider(ctx, &objects.LoadBalancer{})
 
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
 }
 
-func (s *MSServer) GetRouter(ctx context.Context) router.ObjectsRouter {
-	return router.NewCustomObjectsRouter(
-		router.NewGRPCObjectsClientHandler(common.ServiceTypeHandler),
-		router.WithDefaultObjectsParamsHandler(),
+func (s *MSServer) GetRouter(ctx context.Context) objects.ObjectsRouter {
+	return objects.NewCustomObjectsRouter(
+		objects.NewGRPCObjectsClientHandler(objects.ServiceTypeHandler),
+		objects.WithDefaultObjectsParamsHandler(),
 	)
 }
 

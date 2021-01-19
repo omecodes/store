@@ -3,35 +3,50 @@ module github.com/omecodes/store
 go 1.15
 
 require (
+	cloud.google.com/go v0.74.0 // indirect
+	github.com/Azure/azure-sdk-for-go v49.2.0+incompatible // indirect
+	github.com/Azure/go-autorest/autorest v0.11.15 // indirect
+	github.com/Azure/go-autorest/autorest/adal v0.9.10 // indirect
+	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/PaesslerAG/gval v1.1.0 // indirect
 	github.com/PaesslerAG/jsonpath v0.1.1
+	github.com/aliyun/alibaba-cloud-sdk-go v1.61.821 // indirect
 	github.com/antlr/antlr4 v0.0.0-20210114010855-d34d2e1c271a // indirect
+	github.com/aws/aws-sdk-go v1.36.19 // indirect
+	github.com/cpu/goacmedns v0.1.0 // indirect
+	github.com/exoscale/egoscale v0.37.1 // indirect
+	github.com/foomo/simplecert v1.8.1 // indirect
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.4.3
 	github.com/google/cel-go v0.7.0
-	github.com/google/uuid v1.1.4
+	github.com/google/uuid v1.1.5
+	github.com/gophercloud/gophercloud v0.15.0 // indirect
+	github.com/gophercloud/utils v0.0.0-20201221200157-19f764eec2b7 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.1.0
-	github.com/iancoleman/strcase v0.1.2
+	github.com/iancoleman/strcase v0.1.3
+	github.com/linode/linodego v0.24.1 // indirect
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/omecodes/bome v0.0.0-20210106205629-28fe97eb70d7
 	github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08
-	github.com/omecodes/discover v0.0.0-20210105205043-5b445aac6bcd
+	github.com/omecodes/discover v0.0.0-20210119195912-fc755694fab9
 	github.com/omecodes/errors v0.0.0-20210113230812-4f98b9fc3d3c
 	github.com/omecodes/libome v0.0.0-20210118230551-aff816f21c74
-	github.com/omecodes/service v0.0.0-20210110005141-cfa8317d24a0
-	github.com/omecodes/services-ca v0.0.0-20201224183919-c7cef3fb9aa8
+	github.com/omecodes/service v0.0.0-20210119200004-85aec6812c6b
+	github.com/omecodes/services-ca v0.0.0-20210119200320-e05b356709b1
 	github.com/pkg/xattr v0.4.3
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/tidwall/gjson v1.6.7
+	github.com/transip/gotransip/v6 v6.3.0 // indirect
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/oauth2 v0.0.0-20210113205817-d3ed898aa8a3
 	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78 // indirect
 	golang.org/x/text v0.3.5
 	golang.org/x/tools v0.0.0-20210108195828-e2f9c7f1fc8e // indirect
-	google.golang.org/genproto v0.0.0-20210114201628-6edceaf6022f
+	google.golang.org/genproto v0.0.0-20210119180700-e258113e47cc
 	google.golang.org/grpc v1.35.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect

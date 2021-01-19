@@ -4,25 +4,22 @@ import (
 	"context"
 	"crypto/tls"
 	"database/sql"
-	"github.com/google/cel-go/cel"
-	"github.com/gorilla/mux"
-	"github.com/omecodes/common/errors"
-	"github.com/omecodes/store/accounts"
-	"github.com/omecodes/store/acl"
-	"github.com/omecodes/store/auth"
-	"github.com/omecodes/store/cenv"
-	"github.com/omecodes/store/objects"
-	"golang.org/x/crypto/acme/autocert"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 
+	"github.com/gorilla/mux"
+	"golang.org/x/crypto/acme/autocert"
+
 	"github.com/omecodes/bome"
+	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/httpx"
 	"github.com/omecodes/common/netx"
 	"github.com/omecodes/common/utils/log"
-	"github.com/omecodes/store/router"
+	"github.com/omecodes/store/accounts"
+	"github.com/omecodes/store/auth"
+	"github.com/omecodes/store/objects"
 )
 
 // Config contains info to configure an instance of Server
@@ -44,18 +41,17 @@ func NewMNServer(config MNConfig) *MNServer {
 // Server embeds an Ome data store
 // it also exposes an API server
 type MNServer struct {
-	initialized  bool
-	options      []netx.ListenOption
-	config       *MNConfig
-	celPolicyEnv *cel.Env
-	autoCertDir  string
+	initialized bool
+	options     []netx.ListenOption
+	config      *MNConfig
+	autoCertDir string
 
 	objects                 objects.Objects
 	settings                objects.SettingsManager
 	accountsManager         accounts.Manager
 	authenticationProviders auth.ProviderManager
 	credentialsManager      auth.CredentialsManager
-	accessStore             acl.Store
+	accessStore             objects.ACLStore
 
 	listener net.Listener
 	Errors   chan error
@@ -80,7 +76,7 @@ func (s *MNServer) init() error {
 	s.db = GetDB("mysql", s.config.DSN)
 
 	var err error
-	s.accessStore, err = acl.NewSQLStore(s.db, bome.MySQL, "store_acl")
+	s.accessStore, err = objects.NewSQLACLStore(s.db, bome.MySQL, "store_acl")
 	if err != nil {
 		return err
 	}
@@ -106,11 +102,6 @@ func (s *MNServer) init() error {
 	}
 
 	s.authenticationProviders, err = auth.NewProviderSQLManager(s.db, bome.MySQL, "store_auth_providers")
-	if err != nil {
-		return err
-	}
-
-	s.celPolicyEnv, err = cenv.ACLEnv()
 	if err != nil {
 		return err
 	}
@@ -150,8 +141,8 @@ func (s *MNServer) init() error {
 	return nil
 }
 
-func (s *MNServer) GetRouter(ctx context.Context) router.ObjectsRouter {
-	return router.DefaultRouter()
+func (s *MNServer) GetRouter(ctx context.Context) objects.ObjectsRouter {
+	return objects.DefaultRouter()
 }
 
 // Start starts API server
@@ -254,11 +245,10 @@ func (s *MNServer) enrichContext(next http.Handler) http.Handler {
 		ctx = accounts.ContextWithManager(ctx, s.accountsManager)
 		ctx = auth.ContextWithCredentialsManager(ctx, s.credentialsManager)
 		ctx = auth.ContextWithProviders(ctx, s.authenticationProviders)
-		ctx = acl.ContextWithStore(ctx, s.accessStore)
+		ctx = objects.ContextWithACLStore(ctx, s.accessStore)
 		ctx = objects.ContextWithStore(ctx, s.objects)
-		ctx = router.WithCelPolicyEnv(s.celPolicyEnv)(ctx)
-		ctx = router.WithSettings(s.settings)(ctx)
-		ctx = router.WithRouterProvider(ctx, s)
+		ctx = objects.WithSettings(s.settings)(ctx)
+		ctx = objects.WithRouterProvider(ctx, s)
 
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)

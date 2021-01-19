@@ -9,8 +9,7 @@ import (
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
-	"github.com/omecodes/store/pb"
-	se "github.com/omecodes/store/search"
+	se "github.com/omecodes/store/search-engine"
 	"github.com/omecodes/store/utime"
 	"github.com/tidwall/gjson"
 	"io"
@@ -19,7 +18,7 @@ import (
 
 const objectScanner = "object"
 
-func NewSQLCollection(collection *pb.Collection, db *sql.DB, dialect string, tableName string) (*sqlCollection, error) {
+func NewSQLCollection(collection *Collection, db *sql.DB, dialect string, tableName string) (*sqlCollection, error) {
 	objects, err := bome.NewJSONMap(db, dialect, "store_"+tableName+"_col")
 	if err != nil {
 		return nil, err
@@ -66,12 +65,12 @@ func NewSQLCollection(collection *pb.Collection, db *sql.DB, dialect string, tab
 }
 
 type sqlCollection struct {
-	info    *pb.Collection
+	info    *Collection
 	dialect string
 	db      *sql.DB
 	engine  *se.Engine
 
-	indexes []*pb.Index
+	indexes []*se.Index
 
 	objects *bome.JSONMap
 	headers *bome.JSONMap
@@ -81,7 +80,7 @@ func (s *sqlCollection) Objects() *bome.JSONMap {
 	return s.objects
 }
 
-func (s *sqlCollection) Save(ctx context.Context, object *pb.Object, indexes ...*pb.TextIndex) error {
+func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se.TextIndex) error {
 	if object.Header.CreatedAt == 0 {
 		object.Header.CreatedAt = utime.Now()
 	}
@@ -159,7 +158,7 @@ func (s *sqlCollection) Save(ctx context.Context, object *pb.Object, indexes ...
 			return errors.BadInput
 		}
 
-		mp := &pb.TextMapping{
+		mp := &se.TextMapping{
 			Text:     result.Str,
 			Name:     index.Alias,
 			ObjectId: object.Header.Id,
@@ -192,7 +191,7 @@ func (s *sqlCollection) Save(ctx context.Context, object *pb.Object, indexes ...
 			return errors.BadInput
 		}
 
-		mp := &pb.NumberMapping{
+		mp := &se.NumberMapping{
 			Number:   result.Int(),
 			Name:     s.info.NumberIndex.Alias,
 			ObjectId: object.Header.Id,
@@ -238,7 +237,7 @@ func (s *sqlCollection) Save(ctx context.Context, object *pb.Object, indexes ...
 			return errors.BadInput
 		}
 
-		mp := &pb.PropertiesMapping{
+		mp := &se.PropertiesMapping{
 			ObjectId: object.Header.Id,
 			Json:     string(value),
 		}
@@ -261,7 +260,7 @@ func (s *sqlCollection) Save(ctx context.Context, object *pb.Object, indexes ...
 	return nil
 }
 
-func (s *sqlCollection) Patch(ctx context.Context, patch *pb.Patch) error {
+func (s *sqlCollection) Patch(ctx context.Context, patch *Patch) error {
 
 	value := sqlJSONSetValue(patch.Data)
 
@@ -323,7 +322,7 @@ func (s *sqlCollection) Delete(ctx context.Context, objectID string) error {
 	return nil
 }
 
-func (s *sqlCollection) Get(ctx context.Context, objectID string, opts pb.GetOptions) (*pb.Object, error) {
+func (s *sqlCollection) Get(ctx context.Context, objectID string, opts GetOptions) (*Object, error) {
 	hv, err := s.headers.Get(objectID)
 	if err != nil {
 		log.Error("Get: could not get object header", log.Field("id", objectID), log.Err(err))
@@ -333,8 +332,8 @@ func (s *sqlCollection) Get(ctx context.Context, objectID string, opts pb.GetOpt
 		return nil, errors.Internal
 	}
 
-	o := &pb.Object{
-		Header: &pb.Header{},
+	o := &Object{
+		Header: &Header{},
 	}
 
 	err = json.Unmarshal([]byte(hv), o.Header)
@@ -359,13 +358,13 @@ func (s *sqlCollection) Get(ctx context.Context, objectID string, opts pb.GetOpt
 	return o, nil
 }
 
-func (s *sqlCollection) Info(ctx context.Context, id string) (*pb.Header, error) {
+func (s *sqlCollection) Info(ctx context.Context, id string) (*Header, error) {
 	value, err := s.headers.Get(id)
 	if err != nil {
 		return nil, err
 	}
 
-	var info pb.Header
+	var info Header
 	err = json.Unmarshal([]byte(value), &info)
 	if err != nil {
 		log.Error("List: failed to decode object header", log.Field("encoded", value), log.Err(err))
@@ -374,17 +373,17 @@ func (s *sqlCollection) Info(ctx context.Context, id string) (*pb.Header, error)
 	return &info, nil
 }
 
-func (s *sqlCollection) List(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error) {
+func (s *sqlCollection) List(ctx context.Context, opts ListOptions) (*Cursor, error) {
 	sqlQuery := fmt.Sprintf("select headers.value as header, objects.value as object from %s as headers, %s as objects limit ?, 50", s.headers.Table(), s.objects.Table())
 	cursor, err := s.objects.RawQuery(sqlQuery, objectScanner, opts.Offset)
 	if err != nil {
 		return nil, err
 	}
 
-	closer := pb.CloseFunc(func() error {
+	closer := CloseFunc(func() error {
 		return cursor.Close()
 	})
-	browser := pb.BrowseFunc(func() (*pb.Object, error) {
+	browser := BrowseFunc(func() (*Object, error) {
 		if !cursor.HasNext() {
 			return nil, io.EOF
 		}
@@ -392,12 +391,12 @@ func (s *sqlCollection) List(ctx context.Context, opts pb.ListOptions) (*pb.Curs
 		if err != nil {
 			return nil, err
 		}
-		return next.(*pb.Object), err
+		return next.(*Object), err
 	})
-	return pb.NewCursor(browser, closer), nil
+	return NewCursor(browser, closer), nil
 }
 
-func (s *sqlCollection) Search(ctx context.Context, query *pb.SearchQuery) (*pb.Cursor, error) {
+func (s *sqlCollection) Search(ctx context.Context, query *se.SearchQuery) (*Cursor, error) {
 	ids, err := s.engine.Search(query)
 	if err != nil {
 		return nil, err
@@ -405,11 +404,11 @@ func (s *sqlCollection) Search(ctx context.Context, query *pb.SearchQuery) (*pb.
 
 	c := &idsListCursor{
 		ids: ids,
-		getObjectFunc: func(id string) (*pb.Object, error) {
-			return s.Get(ctx, id, pb.GetOptions{})
+		getObjectFunc: func(id string) (*Object, error) {
+			return s.Get(ctx, id, GetOptions{})
 		},
 	}
-	return pb.NewCursor(c, c), nil
+	return NewCursor(c, c), nil
 }
 
 func (s *sqlCollection) Clear() error {
@@ -446,17 +445,17 @@ func (s *sqlCollection) Clear() error {
 	return nil
 }
 
-func (s *sqlCollection) validateSearchQuery(query *pb.SearchQuery) bool {
+func (s *sqlCollection) validateSearchQuery(query *se.SearchQuery) bool {
 	switch q := query.Query.(type) {
-	case *pb.SearchQuery_Fields:
+	case *se.SearchQuery_Fields:
 		return s.validatePropertiesSearchingQuery(q.Fields)
 	default:
 		return true
 	}
 }
 
-func (s *sqlCollection) validatePropertiesSearchingQuery(query *pb.FieldQuery) bool {
-	var fieldQueries []*pb.FieldQuery
+func (s *sqlCollection) validatePropertiesSearchingQuery(query *se.FieldQuery) bool {
+	var fieldQueries []*se.FieldQuery
 	fieldQueries = append(fieldQueries, query)
 	for len(fieldQueries) > 0 {
 
@@ -465,59 +464,59 @@ func (s *sqlCollection) validatePropertiesSearchingQuery(query *pb.FieldQuery) b
 
 		switch v := q.Bool.(type) {
 
-		case *pb.FieldQuery_And:
+		case *se.FieldQuery_And:
 			for _, ox := range v.And.Queries {
 				fieldQueries = append(fieldQueries, ox)
 			}
 			continue
 
-		case *pb.FieldQuery_Or:
+		case *se.FieldQuery_Or:
 			for _, ox := range v.Or.Queries {
 				fieldQueries = append(fieldQueries, ox)
 			}
 			continue
 
-		case *pb.FieldQuery_Contains:
+		case *se.FieldQuery_Contains:
 			if !s.indexFieldExists(v.Contains.Field) {
 				return false
 			}
 
-		case *pb.FieldQuery_StartsWith:
+		case *se.FieldQuery_StartsWith:
 			if !s.indexFieldExists(v.StartsWith.Field) {
 				return false
 			}
 
-		case *pb.FieldQuery_EndsWith:
+		case *se.FieldQuery_EndsWith:
 			if !s.indexFieldExists(v.EndsWith.Field) {
 				return false
 			}
 
-		case *pb.FieldQuery_StrEqual:
+		case *se.FieldQuery_StrEqual:
 			if !s.indexFieldExists(v.StrEqual.Field) {
 				return false
 			}
 
-		case *pb.FieldQuery_Lt:
+		case *se.FieldQuery_Lt:
 			if !s.indexFieldExists(v.Lt.Field) {
 				return false
 			}
 
-		case *pb.FieldQuery_Lte:
+		case *se.FieldQuery_Lte:
 			if !s.indexFieldExists(v.Lte.Field) {
 				return false
 			}
 
-		case *pb.FieldQuery_Gt:
+		case *se.FieldQuery_Gt:
 			if !s.indexFieldExists(v.Gt.Field) {
 				return false
 			}
 
-		case *pb.FieldQuery_Gte:
+		case *se.FieldQuery_Gte:
 			if !s.indexFieldExists(v.Gte.Field) {
 				return false
 			}
 
-		case *pb.FieldQuery_NumbEq:
+		case *se.FieldQuery_NumbEq:
 			if !s.indexFieldExists(v.NumbEq.Field) {
 				return false
 			}
@@ -544,7 +543,7 @@ func (s *sqlCollection) scanFullObject(row bome.Row) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	object := &pb.Object{
+	object := &Object{
 		Data: data,
 	}
 	err = json.NewDecoder(bytes.NewBufferString(header)).Decode(&object.Header)

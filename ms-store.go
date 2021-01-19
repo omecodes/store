@@ -3,16 +3,14 @@ package oms
 import (
 	"context"
 	"database/sql"
+
+	"google.golang.org/grpc"
+
 	"github.com/omecodes/bome"
 	ome "github.com/omecodes/libome"
 	"github.com/omecodes/service"
-	"github.com/omecodes/store/acl"
 	"github.com/omecodes/store/auth"
-	"github.com/omecodes/store/common"
 	"github.com/omecodes/store/objects"
-	"github.com/omecodes/store/pb"
-	"github.com/omecodes/store/router"
-	"google.golang.org/grpc"
 )
 
 type StoreConfig struct {
@@ -37,7 +35,7 @@ func NewMSStore(config *StoreConfig) *MSStore {
 type MSStore struct {
 	config      *StoreConfig
 	box         *service.Box
-	accessStore acl.Store
+	accessStore objects.ACLStore
 	objects     objects.Objects
 }
 
@@ -49,7 +47,7 @@ func (s *MSStore) init() error {
 		return err
 	}
 
-	s.accessStore, err = acl.NewSQLStore(db, bome.MySQL, "objects_acl")
+	s.accessStore, err = objects.NewSQLACLStore(db, bome.MySQL, "objects_acl")
 	if err != nil {
 		return err
 	}
@@ -75,11 +73,11 @@ func (s *MSStore) init() error {
 
 func (s *MSStore) updateGrpcContext(ctx context.Context) (context.Context, error) {
 	ctx = service.ContextWithBox(ctx, s.box)
-	ctx = acl.ContextWithStore(ctx, s.accessStore)
+	ctx = objects.ContextWithACLStore(ctx, s.accessStore)
 	ctx = objects.ContextWithStore(ctx, s.objects)
-	ctx = router.WithRouterProvider(ctx, router.ObjectsRouterProvideFunc(
-		func(ctx context.Context) router.ObjectsRouter {
-			return router.NewCustomObjectsRouter(&router.ObjectsExecHandler{})
+	ctx = objects.WithRouterProvider(ctx, objects.ObjectsRouterProvideFunc(
+		func(ctx context.Context) objects.ObjectsRouter {
+			return objects.NewCustomObjectsRouter(&objects.ExecHandler{})
 		},
 	))
 	return ctx, nil
@@ -88,9 +86,9 @@ func (s *MSStore) updateGrpcContext(ctx context.Context) (context.Context, error
 func (s *MSStore) startACLService() error {
 	params := &service.NodeParams{
 		RegisterHandlerFunc: func(server *grpc.Server) {
-			pb.RegisterACLServer(server, acl.NewUnitServerHandler())
+			objects.RegisterACLServer(server, objects.NewUnitServerHandler())
 		},
-		ServiceType: common.ServiceTypeACL,
+		ServiceType: objects.ServiceTypeACL,
 		ServiceID:   s.config.Name + "-acl",
 		Name:        s.config.Name + "-grpc",
 		Meta:        nil,
@@ -99,7 +97,7 @@ func (s *MSStore) startACLService() error {
 		service.WithInterceptor(
 			ome.GrpcContextUpdaterFunc(
 				func(ctx context.Context) (context.Context, error) {
-					ctx = acl.ContextWithStore(ctx, s.accessStore)
+					ctx = objects.ContextWithACLStore(ctx, s.accessStore)
 					return ctx, nil
 				}),
 		),
@@ -110,9 +108,9 @@ func (s *MSStore) startACLService() error {
 func (s *MSStore) startObjectsService() error {
 	params := &service.NodeParams{
 		RegisterHandlerFunc: func(server *grpc.Server) {
-			pb.RegisterHandlerUnitServer(server, objects.NewStoreGrpcHandler())
+			objects.RegisterHandlerUnitServer(server, objects.NewStoreGrpcHandler())
 		},
-		ServiceType: common.ServiceTypeObjects,
+		ServiceType: objects.ServiceTypeObjects,
 		ServiceID:   s.config.Name + "-objects",
 		Name:        s.config.Name + "-grpc",
 		Meta:        nil,

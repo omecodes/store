@@ -2,19 +2,13 @@ package oms
 
 import (
 	"context"
-	"github.com/google/cel-go/cel"
+
+	"google.golang.org/grpc"
+
 	ome "github.com/omecodes/libome"
 	"github.com/omecodes/service"
-	"github.com/omecodes/store/acl"
 	"github.com/omecodes/store/auth"
-	"github.com/omecodes/store/cenv"
-	"github.com/omecodes/store/clients"
-	"github.com/omecodes/store/common"
-	context2 "github.com/omecodes/store/context"
 	"github.com/omecodes/store/objects"
-	"github.com/omecodes/store/pb"
-	"github.com/omecodes/store/router"
-	"google.golang.org/grpc"
 )
 
 type NodeConfig struct {
@@ -35,23 +29,17 @@ func NewMSNode(config *NodeConfig) *MSNode {
 }
 
 type MSNode struct {
-	config       *NodeConfig
-	box          *service.Box
-	celPolicyEnv *cel.Env
-	accessStore  acl.Store
-	objects      objects.Objects
-	reg          ome.Registry
+	config      *NodeConfig
+	box         *service.Box
+	accessStore objects.ACLStore
+	objects     objects.Objects
+	reg         ome.Registry
 }
 
 func (n *MSNode) init() error {
 	var err error
-	n.accessStore = acl.NewStoreClient()
+	n.accessStore = objects.NewStoreClient()
 	n.objects = objects.NewStoreGrpcClient()
-
-	n.celPolicyEnv, err = cenv.ACLEnv()
-	if err != nil {
-		return err
-	}
 
 	n.box = service.CreateBox(
 		service.Dir(n.config.WorkingDir),
@@ -70,21 +58,20 @@ func (n *MSNode) init() error {
 }
 
 func (n *MSNode) updateGrpcContext(ctx context.Context) (context.Context, error) {
-	ctx = context2.WithRegistry(ctx, n.reg)
-	ctx = acl.ContextWithStore(ctx, n.accessStore)
-	ctx = router.WithCelPolicyEnv(n.celPolicyEnv)(ctx)
+	ctx = WithRegistry(ctx, n.reg)
+	ctx = objects.ContextWithACLStore(ctx, n.accessStore)
 	ctx = objects.ContextWithStore(ctx, n.objects)
 	ctx = service.ContextWithBox(ctx, n.box)
-	ctx = router.WithRouterProvider(ctx, n)
-	ctx = clients.WithACLGrpcClientProvider(ctx, &clients.DefaultACLGrpcProvider{})
-	ctx = clients.WithRouterGrpcClientProvider(ctx, &clients.DefaultRouterGrpcProvider{})
+	ctx = objects.WithRouterProvider(ctx, n)
+	ctx = objects.WithACLGrpcClientProvider(ctx, &objects.DefaultACLGrpcProvider{})
+	ctx = objects.WithRouterGrpcClientProvider(ctx, &objects.DefaultRouterGrpcProvider{})
 	return ctx, nil
 }
 
-func (n *MSNode) GetRouter(ctx context.Context) router.ObjectsRouter {
-	return router.NewCustomObjectsRouter(
-		&router.ObjectsExecHandler{},
-		router.WithDefaultObjectsPolicyHandler(),
+func (n *MSNode) GetRouter(ctx context.Context) objects.ObjectsRouter {
+	return objects.NewCustomObjectsRouter(
+		&objects.ExecHandler{},
+		objects.WithDefaultObjectsPolicyHandler(),
 	)
 }
 
@@ -96,9 +83,9 @@ func (n *MSNode) Start() error {
 
 	params := &service.NodeParams{
 		RegisterHandlerFunc: func(server *grpc.Server) {
-			pb.RegisterHandlerUnitServer(server, NewHandler())
+			objects.RegisterHandlerUnitServer(server, objects.NewHandler())
 		},
-		ServiceType: common.ServiceTypeHandler,
+		ServiceType: objects.ServiceTypeHandler,
 		ServiceID:   n.config.Name,
 		Name:        n.config.Name + "-grpc",
 		Meta:        nil,

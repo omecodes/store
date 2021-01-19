@@ -4,19 +4,18 @@ import (
 	"context"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/libome/logs"
-	"github.com/omecodes/store/pb"
 	"io"
 )
 
-func NewStoreGrpcHandler() pb.HandlerUnitServer {
+func NewStoreGrpcHandler() HandlerUnitServer {
 	return &handler{}
 }
 
 type handler struct {
-	pb.UnimplementedHandlerUnitServer
+	UnimplementedHandlerUnitServer
 }
 
-func (h *handler) CreateCollection(ctx context.Context, request *pb.CreateCollectionRequest) (*pb.CreateCollectionResponse, error) {
+func (h *handler) CreateCollection(ctx context.Context, request *CreateCollectionRequest) (*CreateCollectionResponse, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
@@ -24,10 +23,10 @@ func (h *handler) CreateCollection(ctx context.Context, request *pb.CreateCollec
 	}
 
 	err := storage.CreateCollection(ctx, request.Collection)
-	return &pb.CreateCollectionResponse{}, err
+	return &CreateCollectionResponse{}, err
 }
 
-func (h *handler) GetCollection(ctx context.Context, request *pb.GetCollectionRequest) (*pb.GetCollectionResponse, error) {
+func (h *handler) GetCollection(ctx context.Context, request *GetCollectionRequest) (*GetCollectionResponse, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
@@ -35,10 +34,10 @@ func (h *handler) GetCollection(ctx context.Context, request *pb.GetCollectionRe
 	}
 
 	collection, err := storage.GetCollection(ctx, request.Id)
-	return &pb.GetCollectionResponse{Collection: collection}, err
+	return &GetCollectionResponse{Collection: collection}, err
 }
 
-func (h *handler) ListCollections(ctx context.Context, request *pb.ListCollectionsRequest) (*pb.ListCollectionsResponse, error) {
+func (h *handler) ListCollections(ctx context.Context, request *ListCollectionsRequest) (*ListCollectionsResponse, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
@@ -46,10 +45,10 @@ func (h *handler) ListCollections(ctx context.Context, request *pb.ListCollectio
 	}
 
 	collections, err := storage.ListCollections(ctx)
-	return &pb.ListCollectionsResponse{Collections: collections}, err
+	return &ListCollectionsResponse{Collections: collections}, err
 }
 
-func (h *handler) DeleteCollection(ctx context.Context, request *pb.DeleteCollectionRequest) (*pb.DeleteCollectionResponse, error) {
+func (h *handler) DeleteCollection(ctx context.Context, request *DeleteCollectionRequest) (*DeleteCollectionResponse, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
@@ -57,10 +56,10 @@ func (h *handler) DeleteCollection(ctx context.Context, request *pb.DeleteCollec
 	}
 
 	err := storage.DeleteCollection(ctx, request.Id)
-	return &pb.DeleteCollectionResponse{}, err
+	return &DeleteCollectionResponse{}, err
 }
 
-func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (*pb.PutObjectResponse, error) {
+func (h *handler) PutObject(ctx context.Context, request *PutObjectRequest) (*PutObjectResponse, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
@@ -72,10 +71,10 @@ func (h *handler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (
 		return nil, err
 	}
 
-	return &pb.PutObjectResponse{}, nil
+	return &PutObjectResponse{}, nil
 }
 
-func (h *handler) PatchObject(ctx context.Context, request *pb.PatchObjectRequest) (*pb.PatchObjectResponse, error) {
+func (h *handler) PatchObject(ctx context.Context, request *PatchObjectRequest) (*PatchObjectResponse, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
@@ -87,17 +86,17 @@ func (h *handler) PatchObject(ctx context.Context, request *pb.PatchObjectReques
 		return nil, err
 	}
 
-	return &pb.PatchObjectResponse{}, nil
+	return &PatchObjectResponse{}, nil
 }
 
-func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (*pb.GetObjectResponse, error) {
+func (h *handler) GetObject(ctx context.Context, request *GetObjectRequest) (*GetObjectResponse, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
 		return nil, errors.Internal
 	}
 
-	o, err := storage.Get(ctx, request.Collection, request.ObjectId, pb.GetOptions{
+	o, err := storage.Get(ctx, request.Collection, request.ObjectId, GetOptions{
 		At:   request.At,
 		Info: request.InfoOnly,
 	})
@@ -105,11 +104,11 @@ func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (
 		return nil, err
 	}
 
-	return &pb.GetObjectResponse{
+	return &GetObjectResponse{
 		Object: o}, err
 }
 
-func (h *handler) DeleteObject(ctx context.Context, request *pb.DeleteObjectRequest) (*pb.DeleteObjectResponse, error) {
+func (h *handler) DeleteObject(ctx context.Context, request *DeleteObjectRequest) (*DeleteObjectResponse, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
@@ -120,10 +119,10 @@ func (h *handler) DeleteObject(ctx context.Context, request *pb.DeleteObjectRequ
 	if err != nil {
 		return nil, err
 	}
-	return &pb.DeleteObjectResponse{}, nil
+	return &DeleteObjectResponse{}, nil
 }
 
-func (h *handler) ObjectInfo(ctx context.Context, request *pb.ObjectInfoRequest) (*pb.ObjectInfoResponse, error) {
+func (h *handler) ObjectInfo(ctx context.Context, request *ObjectInfoRequest) (*ObjectInfoResponse, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
@@ -135,10 +134,10 @@ func (h *handler) ObjectInfo(ctx context.Context, request *pb.ObjectInfoRequest)
 		return nil, err
 	}
 
-	return &pb.ObjectInfoResponse{Header: header}, nil
+	return &ObjectInfoResponse{Header: header}, nil
 }
 
-func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerUnit_ListObjectsServer) error {
+func (h *handler) ListObjects(request *ListObjectsRequest, stream HandlerUnit_ListObjectsServer) error {
 	ctx := stream.Context()
 
 	storage := Get(ctx)
@@ -147,7 +146,7 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 		return errors.Internal
 	}
 
-	opts := pb.ListOptions{
+	opts := ListOptions{
 		At:     request.At,
 		Offset: request.Offset,
 	}
@@ -179,7 +178,7 @@ func (h *handler) ListObjects(request *pb.ListObjectsRequest, stream pb.HandlerU
 	}
 }
 
-func (h *handler) SearchObjects(request *pb.SearchObjectsRequest, stream pb.HandlerUnit_SearchObjectsServer) error {
+func (h *handler) SearchObjects(request *SearchObjectsRequest, stream HandlerUnit_SearchObjectsServer) error {
 	ctx := stream.Context()
 
 	storage := Get(ctx)

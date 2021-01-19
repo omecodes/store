@@ -2,32 +2,32 @@ package objects
 
 import (
 	"context"
-	"github.com/omecodes/store/pb"
+	se "github.com/omecodes/store/search-engine"
 	"sync"
 )
 
-type Collection interface {
+type CollectionDB interface {
 
 	// Save saves object content as JSON in database
-	Save(ctx context.Context, object *pb.Object, index ...*pb.TextIndex) error
+	Save(ctx context.Context, object *Object, index ...*se.TextIndex) error
 
 	// Update applies patch to object with id equals patch.ID()
-	Patch(ctx context.Context, patch *pb.Patch) error
+	Patch(ctx context.Context, patch *Patch) error
 
 	// Delete removes all content associated with objectID
 	Delete(ctx context.Context, objectID string) error
 
 	// List returns a list of at most 'opts.Count' objects
-	List(ctx context.Context, opts pb.ListOptions) (*pb.Cursor, error)
+	List(ctx context.Context, opts ListOptions) (*Cursor, error)
 
 	// Get gets the object associated with objectID
-	Get(ctx context.Context, objectID string, opts pb.GetOptions) (*pb.Object, error)
+	Get(ctx context.Context, objectID string, opts GetOptions) (*Object, error)
 
 	// Info gets header of the object associated with objectID
-	Info(ctx context.Context, objectID string) (*pb.Header, error)
+	Info(ctx context.Context, objectID string) (*Header, error)
 
 	// Search
-	Search(ctx context.Context, query *pb.SearchQuery) (*pb.Cursor, error)
+	Search(ctx context.Context, query *se.SearchQuery) (*Cursor, error)
 
 	// Clear removes all objects store
 	Clear() error
@@ -35,17 +35,17 @@ type Collection interface {
 
 type collectionContainer struct {
 	sync.RWMutex
-	container map[string]Collection
+	container map[string]CollectionDB
 }
 
-func (c *collectionContainer) Get(name string) (Collection, bool) {
+func (c *collectionContainer) Get(name string) (CollectionDB, bool) {
 	c.RLock()
 	defer c.RUnlock()
 	collection, found := c.container[name]
 	return collection, found
 }
 
-func (c *collectionContainer) Save(name string, collection Collection) {
+func (c *collectionContainer) Save(name string, collection CollectionDB) {
 	c.Lock()
 	defer c.Unlock()
 	c.container[name] = collection

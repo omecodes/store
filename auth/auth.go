@@ -5,15 +5,14 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
-	"github.com/omecodes/common/utils/log"
 	"net/http"
 	"strings"
 
 	"google.golang.org/grpc/metadata"
 
+	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/errors"
 	ome "github.com/omecodes/libome"
-	"github.com/omecodes/libome/errors"
-	"github.com/omecodes/store/pb"
 )
 
 func BasicContextUpdater(ctx context.Context) (context.Context, error) {
@@ -31,7 +30,7 @@ func BasicContextUpdater(ctx context.Context) (context.Context, error) {
 
 	if authType == "basic" {
 		if authorization == "" {
-			return ctx, errors.New(errors.CodeBadRequest, "malformed authorization value")
+			return ctx, errors.Create(errors.BadRequest, "malformed authorization value")
 		}
 		return updateContextWithBasic(ctx, authorization)
 	}
@@ -53,7 +52,7 @@ func OAuth2ContextUpdater(ctx context.Context) (context.Context, error) {
 
 	if authType == "bearer" {
 		if authorization == "" {
-			return ctx, errors.New(errors.CodeBadRequest, "malformed authorization value")
+			return ctx, errors.Create(errors.BadRequest, "malformed authorization value")
 		}
 
 		return updateContextWithOauth2(ctx, authorization)
@@ -139,12 +138,12 @@ func DetectOauth2Middleware(next http.Handler) http.Handler {
 func updateContextWithBasic(ctx context.Context, authorization string) (context.Context, error) {
 	bytes, err := base64.StdEncoding.DecodeString(authorization)
 	if err != nil {
-		return ctx, errors.New(errors.CodeBadRequest, "authorization value non base64 encoding")
+		return ctx, errors.Create(errors.BadRequest, "authorization value non base64 encoding")
 	}
 
 	parts := strings.Split(string(bytes), ":")
 	if len(parts) != 2 {
-		return ctx, errors.New(errors.CodeBadRequest, "authorization value non base64 encoding")
+		return ctx, errors.Create(errors.BadRequest, "authorization value non base64 encoding")
 	}
 
 	authUser := parts[0]
@@ -155,21 +154,21 @@ func updateContextWithBasic(ctx context.Context, authorization string) (context.
 
 	manager := GetCredentialsManager(ctx)
 	if manager == nil {
-		return ctx, errors.New(errors.CodeForbidden, "No manager basic authentication is not supported")
+		return ctx, errors.Create(errors.Forbidden, "No manager basic authentication is not supported")
 	}
 
 	if authUser == "admin" {
 		err = manager.VerifyAdminCredentials(pass)
 		if err != nil {
 			log.Error("verifying admin authentication", log.Err(err))
-			return ctx, errors.New(errors.CodeForbidden, "admin authentication failed")
+			return ctx, errors.Create(errors.Forbidden, "admin authentication failed")
 		}
 
 	} else {
 		sh := sha512.New()
 		_, err = sh.Write([]byte(pass))
 		if err != nil {
-			return ctx, errors.New(errors.CodeInternal, "password hashing failed")
+			return ctx, errors.Create(errors.Internal, "password hashing failed")
 		}
 		hashed := sh.Sum(nil)
 
@@ -179,11 +178,11 @@ func updateContextWithBasic(ctx context.Context, authorization string) (context.
 		}
 
 		if access.Secret != hex.EncodeToString(hashed) {
-			return ctx, errors.New(errors.CodeForbidden, "authorization value non base64 encoding")
+			return ctx, errors.Create(errors.Forbidden, "authorization value non base64 encoding")
 		}
 	}
 
-	return context.WithValue(ctx, ctxAuthentication{}, &pb.Auth{
+	return context.WithValue(ctx, ctxAuthentication{}, &Auth{
 		Uid:    authUser,
 		Worker: "admin" != authUser,
 	}), nil
@@ -197,7 +196,7 @@ func updateContextWithOauth2(ctx context.Context, authorization string) (context
 
 	providers := GetProviders(ctx)
 	if providers == nil {
-		return ctx, errors.New(errors.CodeForbidden, "token not signed")
+		return ctx, errors.Create(errors.Forbidden, "token not signed")
 	}
 
 	provider, err := providers.Get(jwt.Claims.Iss)
@@ -211,11 +210,11 @@ func updateContextWithOauth2(ctx context.Context, authorization string) (context
 	}
 
 	if signature != jwt.Signature {
-		return ctx, errors.New(errors.CodeForbidden, "token not signed")
+		return ctx, errors.Create(errors.Forbidden, "token not signed")
 	}
 
 	ctx = context.WithValue(ctx, ctxJWt{}, jwt)
-	return context.WithValue(ctx, ctxAuthentication{}, &pb.Auth{
+	return context.WithValue(ctx, ctxAuthentication{}, &Auth{
 		Uid:    jwt.Claims.Sub,
 		Email:  jwt.Claims.Profile.Email,
 		Worker: false,

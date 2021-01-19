@@ -3,9 +3,7 @@ package objects
 import (
 	"context"
 	"github.com/omecodes/common/errors"
-	"github.com/omecodes/store/clients"
-	"github.com/omecodes/store/common"
-	"github.com/omecodes/store/pb"
+	se "github.com/omecodes/store/search-engine"
 )
 
 func NewStoreGrpcClient() Objects {
@@ -14,24 +12,24 @@ func NewStoreGrpcClient() Objects {
 
 type dbClient struct{}
 
-func (d *dbClient) CreateCollection(ctx context.Context, collection *pb.Collection) error {
-	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
+func (d *dbClient) CreateCollection(ctx context.Context, collection *Collection) error {
+	objects, err := RouterGrpc(ctx, ServiceTypeObjects)
 	if err != nil {
 		return err
 	}
 
-	_, err = objects.CreateCollection(ctx, &pb.CreateCollectionRequest{
+	_, err = objects.CreateCollection(ctx, &CreateCollectionRequest{
 		Collection: collection})
 	return err
 }
 
-func (d *dbClient) GetCollection(ctx context.Context, id string) (*pb.Collection, error) {
-	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
+func (d *dbClient) GetCollection(ctx context.Context, id string) (*Collection, error) {
+	objects, err := RouterGrpc(ctx, ServiceTypeObjects)
 	if err != nil {
 		return nil, err
 	}
 
-	rsp, err := objects.GetCollection(ctx, &pb.GetCollectionRequest{
+	rsp, err := objects.GetCollection(ctx, &GetCollectionRequest{
 		Id: id,
 	})
 	if err != nil {
@@ -40,13 +38,13 @@ func (d *dbClient) GetCollection(ctx context.Context, id string) (*pb.Collection
 	return rsp.Collection, err
 }
 
-func (d *dbClient) ListCollections(ctx context.Context) ([]*pb.Collection, error) {
-	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
+func (d *dbClient) ListCollections(ctx context.Context) ([]*Collection, error) {
+	objects, err := RouterGrpc(ctx, ServiceTypeObjects)
 	if err != nil {
 		return nil, err
 	}
 
-	rsp, err := objects.ListCollections(ctx, &pb.ListCollectionsRequest{})
+	rsp, err := objects.ListCollections(ctx, &ListCollectionsRequest{})
 	if err != nil {
 		return nil, err
 	}
@@ -54,22 +52,22 @@ func (d *dbClient) ListCollections(ctx context.Context) ([]*pb.Collection, error
 }
 
 func (d *dbClient) DeleteCollection(ctx context.Context, id string) error {
-	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
+	objects, err := RouterGrpc(ctx, ServiceTypeObjects)
 	if err != nil {
 		return err
 	}
 
-	_, err = objects.DeleteCollection(ctx, &pb.DeleteCollectionRequest{Id: id})
+	_, err = objects.DeleteCollection(ctx, &DeleteCollectionRequest{Id: id})
 	return err
 }
 
-func (d *dbClient) Save(ctx context.Context, collection string, object *pb.Object, index ...*pb.TextIndex) error {
-	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
+func (d *dbClient) Save(ctx context.Context, collection string, object *Object, index ...*se.TextIndex) error {
+	objects, err := RouterGrpc(ctx, ServiceTypeObjects)
 	if err != nil {
 		return err
 	}
 
-	_, err = objects.PutObject(ctx, &pb.PutObjectRequest{
+	_, err = objects.PutObject(ctx, &PutObjectRequest{
 		Collection: collection,
 		Object:     object,
 		Indexes:    index,
@@ -77,13 +75,13 @@ func (d *dbClient) Save(ctx context.Context, collection string, object *pb.Objec
 	return err
 }
 
-func (d *dbClient) Patch(ctx context.Context, collection string, patch *pb.Patch) error {
-	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
+func (d *dbClient) Patch(ctx context.Context, collection string, patch *Patch) error {
+	objects, err := RouterGrpc(ctx, ServiceTypeObjects)
 	if err != nil {
 		return err
 	}
 
-	_, err = objects.PatchObject(ctx, &pb.PatchObjectRequest{
+	_, err = objects.PatchObject(ctx, &PatchObjectRequest{
 		Collection: collection,
 		Patch:      patch,
 	})
@@ -91,25 +89,25 @@ func (d *dbClient) Patch(ctx context.Context, collection string, patch *pb.Patch
 }
 
 func (d *dbClient) Delete(ctx context.Context, collection string, objectID string) error {
-	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
+	objects, err := RouterGrpc(ctx, ServiceTypeObjects)
 	if err != nil {
 		return err
 	}
 
-	_, err = objects.DeleteObject(ctx, &pb.DeleteObjectRequest{
+	_, err = objects.DeleteObject(ctx, &DeleteObjectRequest{
 		Collection: collection,
 		ObjectId:   objectID,
 	})
 	return err
 }
 
-func (d *dbClient) Get(ctx context.Context, collection string, objectID string, opts pb.GetOptions) (*pb.Object, error) {
-	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
+func (d *dbClient) Get(ctx context.Context, collection string, objectID string, opts GetOptions) (*Object, error) {
+	objects, err := RouterGrpc(ctx, ServiceTypeObjects)
 	if err != nil {
 		return nil, err
 	}
 
-	rsp, err := objects.GetObject(ctx, &pb.GetObjectRequest{
+	rsp, err := objects.GetObject(ctx, &GetObjectRequest{
 		Collection: collection, ObjectId: objectID})
 	if err != nil {
 		return nil, err
@@ -118,13 +116,13 @@ func (d *dbClient) Get(ctx context.Context, collection string, objectID string, 
 	return rsp.Object, nil
 }
 
-func (d *dbClient) Info(ctx context.Context, collection string, objectID string) (*pb.Header, error) {
-	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
+func (d *dbClient) Info(ctx context.Context, collection string, objectID string) (*Header, error) {
+	objects, err := RouterGrpc(ctx, ServiceTypeObjects)
 	if err != nil {
 		return nil, err
 	}
 
-	rsp, err := objects.ObjectInfo(ctx, &pb.ObjectInfoRequest{
+	rsp, err := objects.ObjectInfo(ctx, &ObjectInfoRequest{
 		Collection: collection, ObjectId: objectID})
 	if err != nil {
 		return nil, err
@@ -132,47 +130,47 @@ func (d *dbClient) Info(ctx context.Context, collection string, objectID string)
 	return rsp.Header, nil
 }
 
-func (d *dbClient) List(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
-	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
+func (d *dbClient) List(ctx context.Context, collection string, opts ListOptions) (*Cursor, error) {
+	objects, err := RouterGrpc(ctx, ServiceTypeObjects)
 	if err != nil {
 		return nil, err
 	}
 
-	stream, err := objects.ListObjects(ctx, &pb.ListObjectsRequest{
+	stream, err := objects.ListObjects(ctx, &ListObjectsRequest{
 		Collection: collection,
 		Offset:     opts.Offset,
 		At:         opts.At,
 	})
 
-	closer := pb.CloseFunc(func() error {
+	closer := CloseFunc(func() error {
 		return stream.CloseSend()
 	})
-	browser := pb.BrowseFunc(func() (*pb.Object, error) {
+	browser := BrowseFunc(func() (*Object, error) {
 		return stream.Recv()
 	})
 
-	return pb.NewCursor(browser, closer), nil
+	return NewCursor(browser, closer), nil
 }
 
-func (d *dbClient) Search(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error) {
-	objects, err := clients.RouterGrpc(ctx, common.ServiceTypeObjects)
+func (d *dbClient) Search(ctx context.Context, collection string, query *se.SearchQuery) (*Cursor, error) {
+	objects, err := RouterGrpc(ctx, ServiceTypeObjects)
 	if err != nil {
 		return nil, err
 	}
 
-	stream, err := objects.SearchObjects(ctx, &pb.SearchObjectsRequest{
+	stream, err := objects.SearchObjects(ctx, &SearchObjectsRequest{
 		Collection: collection,
 		Query:      query,
 	})
 
-	closer := pb.CloseFunc(func() error {
+	closer := CloseFunc(func() error {
 		return stream.CloseSend()
 	})
-	browser := pb.BrowseFunc(func() (*pb.Object, error) {
+	browser := BrowseFunc(func() (*Object, error) {
 		return stream.Recv()
 	})
 
-	return pb.NewCursor(browser, closer), nil
+	return NewCursor(browser, closer), nil
 }
 
 func (d *dbClient) Clear() error {

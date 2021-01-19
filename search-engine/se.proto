@@ -1,0 +1,196 @@
+syntax = "proto3";
+
+option go_package = "github.com/omecodes/store/search-engine/se.proto;se";
+
+// SEARCH ENGINE
+message Index {
+  oneof info {
+    TextIndex text = 1;
+    NumberIndex number = 2;
+    PropertiesIndex properties = 3;
+  }
+}
+
+message TextIndex {
+  string path = 1;
+  string alias = 2;
+}
+
+message NumberIndex {
+  string path = 1;
+  string alias = 2;
+}
+
+message PropertiesIndex {
+  map<string, string> aliases = 1;
+}
+
+message SearchQuery {
+  oneof query {
+    StrQuery text = 1;
+    NumQuery number = 2;
+    FieldQuery fields = 3;
+  }
+}
+
+message StrQuery {
+  oneof bool {
+    StrOr or = 1;
+    StrEqual eq = 2;
+    Contains contains = 3;
+    StartsWith starts_with = 4;
+    EndsWith ends_with = 5;
+  }
+}
+
+message NumQuery {
+  oneof bool {
+    NumAnd and = 1;
+    NumOr or = 2;
+    Gt gt = 3;
+    Gte gte = 4;
+    Lt lt = 5;
+    Lte lte = 6;
+    NumbEq eq = 7;
+  }
+}
+
+message FieldQuery {
+  oneof bool {
+    And and = 1;
+    Or or = 2;
+    StartsWith starts_with = 3;
+    EndsWith ends_with = 4;
+    Contains contains = 5;
+    StrEqual str_equal = 6;
+    Lt lt = 7;
+    Lte lte = 8;
+    Gt gt = 9;
+    Gte gte = 10;
+    NumbEq numb_eq = 11;
+  }
+}
+
+message MessageFeed {
+  oneof message {
+    NumberMapping num_mapping = 1;
+    TextMapping text_mapping = 2;
+    PropertiesMapping properties_mapping = 3;
+    ObjectDeletedNotification delete = 4;
+  }
+}
+
+message NumberMapping {
+  int64 number = 1;
+  string name = 2;
+  string object_id = 4;
+}
+
+message TextMapping {
+  string text = 1;
+  string name = 2;
+  string object_id = 3;
+  uint32 prefix_mapping_size = 4;
+}
+
+message PropertiesMapping {
+  string object_id = 1;
+  string json = 2;
+}
+
+message ObjectDeletedNotification {
+  string id = 1;
+}
+
+service SearchEngine {
+  rpc Feed(stream MessageFeed) returns (FeedResponse);
+  rpc Search(ResearchRequest) returns (stream SearchResult);
+}
+
+message ResearchRequest {
+  SearchQuery query = 1;
+}
+message SearchResult {
+  repeated string ids = 1;
+}
+
+message FeedResponse {}
+message ResearchResponse {
+  repeated string ids = 1;
+}
+
+
+// CONDITION
+message StartsWith {
+  string field = 1;
+  string value = 2;
+}
+
+message EndsWith {
+  string field = 1;
+  string value = 2;
+}
+
+message Contains {
+  string field = 1;
+  string value = 2;
+}
+
+message StrEqual {
+  string field = 1;
+  string value = 2;
+}
+
+message Like {
+  string field = 1;
+  string value = 2;
+}
+
+message Not {
+  FieldQuery expressions = 1;
+}
+
+message Gt {
+  string field = 1;
+  int64 value = 2;
+}
+
+message Gte {
+  string field = 1;
+  int64 value = 2;
+}
+
+message Lt {
+  string field = 1;
+  int64 value = 2;
+}
+
+message Lte {
+  string field = 1;
+  int64 value = 2;
+}
+
+message NumbEq {
+  string field = 1;
+  int64 value = 2;
+}
+
+message And {
+  repeated FieldQuery queries = 1;
+}
+
+message Or {
+  repeated FieldQuery queries = 1;
+}
+
+message NumAnd {
+  repeated NumQuery queries = 1;
+}
+
+message NumOr {
+  repeated NumQuery queries = 1;
+}
+
+message StrOr {
+  repeated StrQuery queries = 1;
+}

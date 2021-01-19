@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	ome "github.com/omecodes/libome"
-	"github.com/omecodes/store/pb"
 )
 
 type ctxAuthentication struct{}
@@ -11,12 +10,12 @@ type ctxJWt struct{}
 type ctxManager struct{}
 type ctxProviders struct{}
 
-func Get(ctx context.Context) *pb.Auth {
+func Get(ctx context.Context) *Auth {
 	o := ctx.Value(ctxAuthentication{})
 	if o == nil {
 		return nil
 	}
-	return o.(*pb.Auth)
+	return o.(*Auth)
 }
 
 func JWT(ctx context.Context) *ome.JWT {
@@ -43,7 +42,7 @@ func GetProviders(ctx context.Context) ProviderManager {
 	return o.(ProviderManager)
 }
 
-func Context(parent context.Context, a *pb.Auth) context.Context {
+func ContextWithAuth(parent context.Context, a *Auth) context.Context {
 	return context.WithValue(parent, ctxAuthentication{}, a)
 }
 

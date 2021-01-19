@@ -8,7 +8,7 @@ import (
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
-	"github.com/omecodes/store/pb"
+	se "github.com/omecodes/store/search-engine"
 )
 
 func NewSQLStore(db *sql.DB, dialect string, tablePrefix string) (Objects, error) {
@@ -21,7 +21,7 @@ func NewSQLStore(db *sql.DB, dialect string, tablePrefix string) (Objects, error
 		db:                db,
 		dialect:           dialect,
 		collections:       col,
-		loadedCollections: &collectionContainer{container: make(map[string]Collection)},
+		loadedCollections: &collectionContainer{container: make(map[string]CollectionDB)},
 	}
 	return s, nil
 }
@@ -33,7 +33,7 @@ type sqlStore struct {
 	collections       *bome.JSONMap
 }
 
-func (ms *sqlStore) ResolveCollection(ctx context.Context, name string) (Collection, error) {
+func (ms *sqlStore) ResolveCollection(ctx context.Context, name string) (CollectionDB, error) {
 	col, found := ms.loadedCollections.Get(name)
 	if !found {
 		encoded, err := ms.collections.Get(name)
@@ -41,7 +41,7 @@ func (ms *sqlStore) ResolveCollection(ctx context.Context, name string) (Collect
 			return nil, err
 		}
 
-		var collection *pb.Collection
+		var collection *Collection
 		err = json.Unmarshal([]byte(encoded), &collection)
 		if err != nil {
 			return nil, err
@@ -54,7 +54,7 @@ func (ms *sqlStore) ResolveCollection(ctx context.Context, name string) (Collect
 	return col, nil
 }
 
-func (ms *sqlStore) CreateCollection(ctx context.Context, collection *pb.Collection) error {
+func (ms *sqlStore) CreateCollection(ctx context.Context, collection *Collection) error {
 	contains, err := ms.collections.Contains(collection.Id)
 	if err != nil {
 		return err
@@ -82,18 +82,18 @@ func (ms *sqlStore) CreateCollection(ctx context.Context, collection *pb.Collect
 	})
 }
 
-func (ms *sqlStore) GetCollection(ctx context.Context, id string) (*pb.Collection, error) {
+func (ms *sqlStore) GetCollection(ctx context.Context, id string) (*Collection, error) {
 	encoded, err := ms.collections.Get(id)
 	if err != nil {
 		return nil, err
 	}
 
-	var collection *pb.Collection
+	var collection *Collection
 	err = json.Unmarshal([]byte(encoded), &collection)
 	return collection, err
 }
 
-func (ms *sqlStore) ListCollections(ctx context.Context) ([]*pb.Collection, error) {
+func (ms *sqlStore) ListCollections(ctx context.Context) ([]*Collection, error) {
 	cursor, err := ms.collections.List()
 	if err != nil {
 		return nil, err
@@ -105,14 +105,14 @@ func (ms *sqlStore) ListCollections(ctx context.Context) ([]*pb.Collection, erro
 		}
 	}()
 
-	var collections []*pb.Collection
+	var collections []*Collection
 	for cursor.HasNext() {
 		o, err := cursor.Next()
 		if err != nil {
 			return nil, err
 		}
 
-		var collection *pb.Collection
+		var collection *Collection
 		err = json.Unmarshal([]byte(o.(*bome.MapEntry).Value), &collection)
 		if err != nil {
 			return nil, err
@@ -127,7 +127,7 @@ func (ms *sqlStore) DeleteCollection(ctx context.Context, id string) error {
 	return ms.collections.Delete(id)
 }
 
-func (ms *sqlStore) Save(ctx context.Context, collection string, object *pb.Object, indexes ...*pb.TextIndex) error {
+func (ms *sqlStore) Save(ctx context.Context, collection string, object *Object, indexes ...*se.TextIndex) error {
 	col, err := ms.ResolveCollection(ctx, collection)
 	if err != nil {
 		return err
@@ -135,7 +135,7 @@ func (ms *sqlStore) Save(ctx context.Context, collection string, object *pb.Obje
 	return col.Save(ctx, object, indexes...)
 }
 
-func (ms *sqlStore) Patch(ctx context.Context, collection string, patch *pb.Patch) error {
+func (ms *sqlStore) Patch(ctx context.Context, collection string, patch *Patch) error {
 	col, err := ms.ResolveCollection(ctx, collection)
 	if err != nil {
 		return err
@@ -151,7 +151,7 @@ func (ms *sqlStore) Delete(ctx context.Context, collection string, objectID stri
 	return col.Delete(ctx, objectID)
 }
 
-func (ms *sqlStore) Get(ctx context.Context, collection string, objectID string, opts pb.GetOptions) (*pb.Object, error) {
+func (ms *sqlStore) Get(ctx context.Context, collection string, objectID string, opts GetOptions) (*Object, error) {
 	col, err := ms.ResolveCollection(ctx, collection)
 	if err != nil {
 		return nil, err
@@ -159,7 +159,7 @@ func (ms *sqlStore) Get(ctx context.Context, collection string, objectID string,
 	return col.Get(ctx, objectID, opts)
 }
 
-func (ms *sqlStore) Info(ctx context.Context, collection string, id string) (*pb.Header, error) {
+func (ms *sqlStore) Info(ctx context.Context, collection string, id string) (*Header, error) {
 	col, err := ms.ResolveCollection(ctx, collection)
 	if err != nil {
 		return nil, err
@@ -168,7 +168,7 @@ func (ms *sqlStore) Info(ctx context.Context, collection string, id string) (*pb
 	return col.Info(ctx, id)
 }
 
-func (ms *sqlStore) List(ctx context.Context, collection string, opts pb.ListOptions) (*pb.Cursor, error) {
+func (ms *sqlStore) List(ctx context.Context, collection string, opts ListOptions) (*Cursor, error) {
 	col, err := ms.ResolveCollection(ctx, collection)
 	if err != nil {
 		return nil, err
@@ -176,7 +176,7 @@ func (ms *sqlStore) List(ctx context.Context, collection string, opts pb.ListOpt
 	return col.List(ctx, opts)
 }
 
-func (ms *sqlStore) Search(ctx context.Context, collection string, query *pb.SearchQuery) (*pb.Cursor, error) {
+func (ms *sqlStore) Search(ctx context.Context, collection string, query *se.SearchQuery) (*Cursor, error) {
 	col, err := ms.ResolveCollection(ctx, collection)
 	if err != nil {
 		return nil, err
