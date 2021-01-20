@@ -139,11 +139,6 @@ func LoadProgramForACLValidation(ctx *context.Context, expression string) (cel.P
 		m = map[string]cel.Program{}
 	}
 
-	env := CELPolicyEnv(*ctx)
-	if env == nil {
-		return nil, errors.Internal
-	}
-
 	prg, err := cenv.GetProgram(expression)
 	if err != nil {
 		return nil, err
