@@ -10,7 +10,6 @@ import (
 
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
-	"github.com/omecodes/store/pb"
 	"github.com/pkg/xattr"
 )
 
@@ -42,7 +41,7 @@ func (d *dirFS) Mkdir(_ context.Context, dirname string) error {
 	return nil
 }
 
-func (d *dirFS) Ls(_ context.Context, dirname string, offset int, count int) (*pb.DirContent, error) {
+func (d *dirFS) Ls(_ context.Context, dirname string, offset int, count int) (*DirContent, error) {
 	fullDirname := filepath.Join(d.root, dirname)
 	f, err := os.Open(fullDirname)
 	if err != nil {
@@ -73,7 +72,7 @@ func (d *dirFS) Ls(_ context.Context, dirname string, offset int, count int) (*p
 		return nil, errors.Create(errors.Internal, "failed to get children names", errors.Info{Name: "file", Details: dirname})
 	}
 
-	dirContent := &pb.DirContent{
+	dirContent := &DirContent{
 		Total: len(names),
 	}
 
@@ -85,7 +84,7 @@ func (d *dirFS) Ls(_ context.Context, dirname string, offset int, count int) (*p
 				continue
 			}
 
-			f := &pb.File{
+			f := &File{
 				Name:    name,
 				IsDir:   stats.IsDir(),
 				Size:    stats.Size(),
@@ -182,7 +181,7 @@ func (d *dirFS) Read(_ context.Context, filename string, offset int64, length in
 	return f, stats.Size(), nil
 }
 
-func (d *dirFS) Info(_ context.Context, filename string, withAttrs bool) (*pb.File, error) {
+func (d *dirFS) Info(_ context.Context, filename string, withAttrs bool) (*File, error) {
 	fullFilename := filepath.Join(d.root, filename)
 
 	stats, err := os.Stat(fullFilename)
@@ -205,7 +204,7 @@ func (d *dirFS) Info(_ context.Context, filename string, withAttrs bool) (*pb.Fi
 		return nil, errors.Create(errors.Internal, "could not get file info", errors.Info{Name: "file", Details: filename})
 	}
 
-	file := &pb.File{
+	file := &File{
 		Name:    path.Base(filename),
 		IsDir:   stats.IsDir(),
 		Size:    stats.Size(),

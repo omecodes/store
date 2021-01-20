@@ -1,6 +1,8 @@
 package files
 
-import "github.com/omecodes/store/pb"
+import (
+	"github.com/omecodes/store/auth"
+)
 
 type File struct {
 	Name       string            `json:"name,omitempty"`
@@ -16,11 +18,16 @@ type FileLocation struct {
 	Filename string `json:"filename,omitempty"`
 }
 
+type TreePatchInfo struct {
+	Rename bool   `json:"rename,omitempty"`
+	Value  string `json:"value,omitempty"`
+}
+
 type Permissions struct {
-	Filename string           `json:"string,omitempty"`
-	Read     []*pb.Permission `json:"read,omitempty"`
-	Write    []*pb.Permission `json:"write,omitempty"`
-	Chmod    []*pb.Permission `json:"chmod,omitempty"`
+	Filename string             `json:"string,omitempty"`
+	Read     []*auth.Permission `json:"read,omitempty"`
+	Write    []*auth.Permission `json:"write,omitempty"`
+	Chmod    []*auth.Permission `json:"chmod,omitempty"`
 }
 
 type DirContent struct {
@@ -34,7 +41,7 @@ type ListDirOptions struct {
 	Count  int `json:"count"`
 }
 
-type PutFileOptions struct {
+type WriteOptions struct {
 	Append      bool         `json:"append,omitempty"`
 	Hash        string       `json:"hash,omitempty"`
 	Permissions *Permissions `json:"permissions,omitempty"`
@@ -45,7 +52,7 @@ type ContentRange struct {
 	Length int64 `json:"length,omitempty"`
 }
 
-type GetFileOptions struct {
+type ReadOptions struct {
 	Range ContentRange `json:"range,omitempty"`
 }
 
@@ -54,8 +61,7 @@ type GetFileInfoOptions struct {
 }
 
 type DeleteFileOptions struct {
-	Recursive    bool `json:"recursive,omitempty"`
-	PutInRecycle bool `json:"put_in_recycle"`
+	Recursive bool `json:"recursive,omitempty"`
 }
 
 type MultipartSessionInfo struct {

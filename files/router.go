@@ -1,6 +1,11 @@
 package files
 
-import "context"
+import (
+	"context"
+	"github.com/omecodes/errors"
+)
+
+type ctxRouterProvider struct{}
 
 type Router interface {
 	// GetRoute returns a sequence of handler
@@ -81,4 +86,16 @@ func SkipEncryption() RouteOption {
 	return func(r *routesOptions) {
 		r.skipEncryption = true
 	}
+}
+
+func NewRoute(ctx context.Context, opt ...RouteOption) (Handler, error) {
+	o := ctx.Value(ctxRouterProvider{})
+	if o == nil {
+		return nil, errors.New("router provider missing in context")
+	}
+
+	p := o.(RouterProvider)
+	router := p.GetRouter(ctx)
+
+	return router.GetRoute(opt...), nil
 }

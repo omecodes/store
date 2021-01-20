@@ -2,7 +2,6 @@ package files
 
 import (
 	"encoding/json"
-	"github.com/omecodes/store/pb"
 )
 
 type Attributes map[string]string
@@ -48,7 +47,7 @@ func (h *AttributesHolder) SetEncodedPermissions(encoded string) error {
 	return nil
 }
 
-func (h *AttributesHolder) AddReadPermission(permission *pb.Permission) {
+func (h *AttributesHolder) AddReadPermissions(permission *Permissions) {
 
 }
 

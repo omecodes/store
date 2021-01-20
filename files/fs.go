@@ -6,15 +6,14 @@ import (
 	"strings"
 
 	"github.com/omecodes/errors"
-	"github.com/omecodes/store/pb"
 )
 
 type FS interface {
 	Mkdir(ctx context.Context, dirname string) error
-	Ls(ctx context.Context, dirname string, offset int, count int) (*pb.DirContent, error)
+	Ls(ctx context.Context, dirname string, offset int, count int) (*DirContent, error)
 	Write(ctx context.Context, filename string, content io.Reader, append bool) error
 	Read(ctx context.Context, filename string, offset int64, count int64) (io.ReadCloser, int64, error)
-	Info(ctx context.Context, filename string, withAttrs bool) (*pb.File, error)
+	Info(ctx context.Context, filename string, withAttrs bool) (*File, error)
 	SetAttributes(ctx context.Context, filename string, attrs Attributes) error
 	GetAttributes(ctx context.Context, filename string, names ...string) (Attributes, error)
 	Rename(ctx context.Context, filename string, newName string) error
@@ -44,7 +43,7 @@ func Mkdir(ctx context.Context, dirname string) error {
 	return fs.Mkdir(ctx, dirname)
 }
 
-func Ls(ctx context.Context, dirname string, offset int, count int) (*pb.DirContent, error) {
+func Ls(ctx context.Context, dirname string, offset int, count int) (*DirContent, error) {
 	source := GetSource(ctx)
 	if source == nil {
 		return nil, errors.Create(errors.Internal, "missing source in context")
@@ -83,7 +82,7 @@ func Read(ctx context.Context, filename string, offset int64, count int64) (io.R
 	return fs.Read(ctx, filename, offset, count)
 }
 
-func Info(ctx context.Context, filename string, withAttrs bool) (*pb.File, error) {
+func Info(ctx context.Context, filename string, withAttrs bool) (*File, error) {
 	source := GetSource(ctx)
 	if source == nil {
 		return nil, errors.Create(errors.Internal, "missing source in context")

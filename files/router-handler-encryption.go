@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/crypt"
-	"github.com/omecodes/store/pb"
 	"io"
 )
 
@@ -12,7 +11,7 @@ type EncryptionHandler struct {
 	BaseHandler
 }
 
-func (h *EncryptionHandler) WriteFileContent(ctx context.Context, filename string, content io.Reader, size int64, opts pb.PutFileOptions) error {
+func (h *EncryptionHandler) WriteFileContent(ctx context.Context, filename string, content io.Reader, size int64, opts WriteOptions) error {
 	source := GetSource(ctx)
 	if source == nil {
 		return errors.Create(errors.Internal, "missing source in context")
@@ -26,7 +25,7 @@ func (h *EncryptionHandler) WriteFileContent(ctx context.Context, filename strin
 	return h.next.WriteFileContent(ctx, filename, encryptStream.WrapReader(content), size, opts)
 }
 
-func (h *EncryptionHandler) ReadFileContent(ctx context.Context, filename string, opts pb.GetFileOptions) (io.ReadCloser, int64, error) {
+func (h *EncryptionHandler) ReadFileContent(ctx context.Context, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
 	source := GetSource(ctx)
 	if source == nil {
 		return nil, 0, errors.Create(errors.Internal, "missing source in context")
@@ -45,7 +44,7 @@ func (h *EncryptionHandler) ReadFileContent(ctx context.Context, filename string
 	return decryptStream.WrapReadCloser(readCloser), size, nil
 }
 
-func (h *EncryptionHandler) AddContentPart(ctx context.Context, sessionID string, content io.Reader, size int64, info *pb.ContentPartInfo) error {
+func (h *EncryptionHandler) AddContentPart(ctx context.Context, sessionID string, content io.Reader, size int64, info *ContentPartInfo) error {
 	source := GetSource(ctx)
 	if source == nil {
 		return errors.Create(errors.Internal, "missing source in context")

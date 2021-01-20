@@ -10,7 +10,6 @@ import (
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/cenv"
-	"github.com/omecodes/store/pb"
 )
 
 type PolicyHandler struct {
@@ -131,7 +130,7 @@ func (h *PolicyHandler) CreateDir(ctx context.Context, filename string) error {
 	return h.next.CreateDir(ctx, filename)
 }
 
-func (h *PolicyHandler) WriteFileContent(ctx context.Context, filename string, content io.Reader, size int64, opts pb.PutFileOptions) error {
+func (h *PolicyHandler) WriteFileContent(ctx context.Context, filename string, content io.Reader, size int64, opts WriteOptions) error {
 	source := GetSource(ctx)
 	if source == nil {
 		return errors.Create(errors.Internal, "missing source in context")
@@ -149,7 +148,7 @@ func (h *PolicyHandler) WriteFileContent(ctx context.Context, filename string, c
 	return h.next.WriteFileContent(ctx, filename, content, size, opts)
 }
 
-func (h *PolicyHandler) ListDir(ctx context.Context, dirname string, opts pb.ListDirOptions) (*pb.DirContent, error) {
+func (h *PolicyHandler) ListDir(ctx context.Context, dirname string, opts ListDirOptions) (*DirContent, error) {
 	source := GetSource(ctx)
 	if source == nil {
 		return nil, errors.Create(errors.Internal, "missing source in context")
@@ -166,7 +165,7 @@ func (h *PolicyHandler) ListDir(ctx context.Context, dirname string, opts pb.Lis
 	return h.next.ListDir(ctx, dirname, opts)
 }
 
-func (h *PolicyHandler) ReadFileContent(ctx context.Context, filename string, opts pb.GetFileOptions) (io.ReadCloser, int64, error) {
+func (h *PolicyHandler) ReadFileContent(ctx context.Context, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
 	source := GetSource(ctx)
 	if source == nil {
 		return nil, 0, errors.Create(errors.Internal, "missing source in context")
@@ -184,7 +183,7 @@ func (h *PolicyHandler) ReadFileContent(ctx context.Context, filename string, op
 	return h.next.ReadFileContent(ctx, filename, opts)
 }
 
-func (h *PolicyHandler) GetFileInfo(ctx context.Context, filename string, opts pb.GetFileInfoOptions) (*pb.File, error) {
+func (h *PolicyHandler) GetFileInfo(ctx context.Context, filename string, opts GetFileInfoOptions) (*File, error) {
 	source := GetSource(ctx)
 	if source == nil {
 		return nil, errors.Create(errors.Internal, "missing source in context")
@@ -202,7 +201,7 @@ func (h *PolicyHandler) GetFileInfo(ctx context.Context, filename string, opts p
 	return h.next.GetFileInfo(ctx, filename, opts)
 }
 
-func (h *PolicyHandler) DeleteFile(ctx context.Context, filename string, opts *pb.DeleteFileOptions) error {
+func (h *PolicyHandler) DeleteFile(ctx context.Context, filename string, opts DeleteFileOptions) error {
 	source := GetSource(ctx)
 	if source == nil {
 		return errors.Create(errors.Internal, "missing source in context")
@@ -331,7 +330,7 @@ func (h *PolicyHandler) CopyFile(ctx context.Context, filename string, dirname s
 	return h.next.CopyFile(ctx, filename, dirname)
 }
 
-func (h *PolicyHandler) OpenMultipartSession(ctx context.Context, filename string, info *pb.MultipartSessionInfo) (string, error) {
+func (h *PolicyHandler) OpenMultipartSession(ctx context.Context, filename string, info *MultipartSessionInfo) (string, error) {
 	allowed, err := h.isAllowedToWrite(ctx, path.Dir(filename))
 	if err != nil {
 		return "", err
@@ -344,7 +343,7 @@ func (h *PolicyHandler) OpenMultipartSession(ctx context.Context, filename strin
 	return h.next.OpenMultipartSession(ctx, filename, info)
 }
 
-func (h *PolicyHandler) AddContentPart(ctx context.Context, sessionID string, content io.Reader, size int64, info *pb.ContentPartInfo) error {
+func (h *PolicyHandler) AddContentPart(ctx context.Context, sessionID string, content io.Reader, size int64, info *ContentPartInfo) error {
 	panic("implement me")
 }
 

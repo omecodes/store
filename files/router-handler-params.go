@@ -3,7 +3,6 @@ package files
 import (
 	"context"
 	"github.com/omecodes/errors"
-	"github.com/omecodes/store/pb"
 	"io"
 	"path"
 )
@@ -36,7 +35,7 @@ func (h *ParamsHandler) CreateDir(ctx context.Context, filename string) error {
 	return h.next.CreateDir(ctx, filename)
 }
 
-func (h *ParamsHandler) WriteFileContent(ctx context.Context, filename string, content io.Reader, size int64, opts pb.PutFileOptions) error {
+func (h *ParamsHandler) WriteFileContent(ctx context.Context, filename string, content io.Reader, size int64, opts WriteOptions) error {
 	if filename == "" || content == nil {
 		err := errors.Create(errors.BadRequest, "missing parameters")
 		if filename == "" {
@@ -71,7 +70,7 @@ func (h *ParamsHandler) WriteFileContent(ctx context.Context, filename string, c
 	return h.next.WriteFileContent(ctx, resolvedPath, content, size, opts)
 }
 
-func (h *ParamsHandler) ListDir(ctx context.Context, dirname string, opts pb.ListDirOptions) (*pb.DirContent, error) {
+func (h *ParamsHandler) ListDir(ctx context.Context, dirname string, opts ListDirOptions) (*DirContent, error) {
 	if dirname == "" {
 		return nil, errors.Create(errors.BadRequest, "missing parameters", errors.Info{
 			Name:    "dirname",
@@ -92,7 +91,7 @@ func (h *ParamsHandler) ListDir(ctx context.Context, dirname string, opts pb.Lis
 	return h.next.ListDir(ctx, dirname, opts)
 }
 
-func (h *ParamsHandler) ReadFileContent(ctx context.Context, filename string, opts pb.GetFileOptions) (io.ReadCloser, int64, error) {
+func (h *ParamsHandler) ReadFileContent(ctx context.Context, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
 	if filename == "" {
 		return nil, 0, errors.Create(errors.BadRequest, "missing parameters", errors.Info{
 			Name:    "filename",
@@ -116,7 +115,7 @@ func (h *ParamsHandler) ReadFileContent(ctx context.Context, filename string, op
 	return h.next.ReadFileContent(ctx, resolvedPath, opts)
 }
 
-func (h *ParamsHandler) GetFileInfo(ctx context.Context, filename string, opts pb.GetFileInfoOptions) (*pb.File, error) {
+func (h *ParamsHandler) GetFileInfo(ctx context.Context, filename string, opts GetFileInfoOptions) (*File, error) {
 	if filename == "" {
 		return nil, errors.Create(errors.BadRequest, "missing parameters", errors.Info{
 			Name:    "filename",
@@ -140,7 +139,7 @@ func (h *ParamsHandler) GetFileInfo(ctx context.Context, filename string, opts p
 	return h.next.GetFileInfo(ctx, resolvedPath, opts)
 }
 
-func (h *ParamsHandler) DeleteFile(ctx context.Context, filename string, opts *pb.DeleteFileOptions) error {
+func (h *ParamsHandler) DeleteFile(ctx context.Context, filename string, opts DeleteFileOptions) error {
 	if filename == "" {
 		return errors.Create(errors.BadRequest, "missing parameters", errors.Info{
 			Name:    "filename",
@@ -338,7 +337,7 @@ func (h *ParamsHandler) CopyFile(ctx context.Context, filename string, dirname s
 	return h.next.MoveFile(ctx, filename, dirname)
 }
 
-func (h *ParamsHandler) OpenMultipartSession(ctx context.Context, filename string, info *pb.MultipartSessionInfo) (string, error) {
+func (h *ParamsHandler) OpenMultipartSession(ctx context.Context, filename string, info *MultipartSessionInfo) (string, error) {
 	if filename == "" || info == nil {
 		err := errors.Create(errors.BadRequest, "missing parameters")
 		if filename == "" {
@@ -373,7 +372,7 @@ func (h *ParamsHandler) OpenMultipartSession(ctx context.Context, filename strin
 	return h.next.OpenMultipartSession(ctx, filename, info)
 }
 
-func (h *ParamsHandler) AddContentPart(ctx context.Context, sessionID string, content io.Reader, size int64, info *pb.ContentPartInfo) error {
+func (h *ParamsHandler) AddContentPart(ctx context.Context, sessionID string, content io.Reader, size int64, info *ContentPartInfo) error {
 	if sessionID == "" || content == nil || size == 0 || info == nil {
 		err := errors.Create(errors.BadRequest, "missing parameters")
 		if sessionID == "" {
