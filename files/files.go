@@ -30,6 +30,17 @@ type Permissions struct {
 	Chmod    []*auth.Permission `json:"chmod,omitempty"`
 }
 
+type PermissionsOverrides struct {
+	Read  []*auth.Permission `json:"read,omitempty"`
+	Write []*auth.Permission `json:"write,omitempty"`
+	Chmod []*auth.Permission `json:"chmod,omitempty"`
+}
+
+type EncryptionInfo struct {
+	Key []byte        `json:"key,omitempty"`
+	Alg EncryptionAlg `json:"alg,omitempty"`
+}
+
 type DirContent struct {
 	Files  []*File `json:"files,omitempty"`
 	Total  int     `json:"total"`

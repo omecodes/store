@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/omecodes/errors"
 	"io"
-	"path"
 )
 
 type ParamsHandler struct {
@@ -20,17 +19,9 @@ func (h *ParamsHandler) CreateDir(ctx context.Context, filename string) error {
 	}
 
 	sourceID, fPath := Split(filename)
-	if sourceID == "" {
-		return errors.Create(errors.BadRequest, "missing source reference")
+	if sourceID == "" || fPath == "" {
+		return errors.Create(errors.BadRequest, "wrong path format")
 	}
-
-	source, err := ResolveSource(ctx, sourceID)
-	if err != nil {
-		return err
-	}
-
-	filename = path.Join(source.URI, fPath)
-	ctx = ContextWithSource(ctx, source)
 
 	return h.next.CreateDir(ctx, filename)
 }
@@ -55,19 +46,11 @@ func (h *ParamsHandler) WriteFileContent(ctx context.Context, filename string, c
 	}
 
 	sourceID, fPath := Split(filename)
-	if sourceID == "" {
-		return errors.Create(errors.BadRequest, "missing source reference")
+	if sourceID == "" || fPath == "" {
+		return errors.Create(errors.BadRequest, "wrong path format")
 	}
 
-	source, err := ResolveSource(ctx, sourceID)
-	if err != nil {
-		return err
-	}
-
-	resolvedPath := path.Join(source.URI, fPath)
-	ctx = ContextWithSource(ctx, source)
-
-	return h.next.WriteFileContent(ctx, resolvedPath, content, size, opts)
+	return h.next.WriteFileContent(ctx, filename, content, size, opts)
 }
 
 func (h *ParamsHandler) ListDir(ctx context.Context, dirname string, opts ListDirOptions) (*DirContent, error) {
@@ -79,13 +62,8 @@ func (h *ParamsHandler) ListDir(ctx context.Context, dirname string, opts ListDi
 	}
 
 	sourceID, fPath := Split(dirname)
-	if sourceID != "" {
-		source, err := ResolveSource(ctx, sourceID)
-		if err != nil {
-			return nil, err
-		}
-		ctx = ContextWithSource(ctx, source)
-		dirname = path.Join(source.URI, fPath)
+	if sourceID == "" || fPath == "" {
+		return nil, errors.Create(errors.BadRequest, "wrong path format")
 	}
 
 	return h.next.ListDir(ctx, dirname, opts)
@@ -100,19 +78,11 @@ func (h *ParamsHandler) ReadFileContent(ctx context.Context, filename string, op
 	}
 
 	sourceID, fPath := Split(filename)
-	if sourceID == "" {
-		return nil, 0, errors.Create(errors.BadRequest, "missing source reference")
+	if sourceID == "" || fPath == "" {
+		return nil, 0, errors.Create(errors.BadRequest, "wrong path format")
 	}
 
-	source, err := ResolveSource(ctx, sourceID)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	resolvedPath := path.Join(source.URI, fPath)
-	ctx = ContextWithSource(ctx, source)
-
-	return h.next.ReadFileContent(ctx, resolvedPath, opts)
+	return h.next.ReadFileContent(ctx, filename, opts)
 }
 
 func (h *ParamsHandler) GetFileInfo(ctx context.Context, filename string, opts GetFileInfoOptions) (*File, error) {
@@ -124,19 +94,11 @@ func (h *ParamsHandler) GetFileInfo(ctx context.Context, filename string, opts G
 	}
 
 	sourceID, fPath := Split(filename)
-	if sourceID == "" {
-		return nil, errors.Create(errors.BadRequest, "missing source reference")
+	if sourceID == "" || fPath == "" {
+		return nil, errors.Create(errors.BadRequest, "wrong path format")
 	}
 
-	source, err := ResolveSource(ctx, sourceID)
-	if err != nil {
-		return nil, err
-	}
-
-	resolvedPath := path.Join(source.URI, fPath)
-	ctx = ContextWithSource(ctx, source)
-
-	return h.next.GetFileInfo(ctx, resolvedPath, opts)
+	return h.next.GetFileInfo(ctx, filename, opts)
 }
 
 func (h *ParamsHandler) DeleteFile(ctx context.Context, filename string, opts DeleteFileOptions) error {
@@ -148,17 +110,10 @@ func (h *ParamsHandler) DeleteFile(ctx context.Context, filename string, opts De
 	}
 
 	sourceID, fPath := Split(filename)
-	if sourceID == "" {
-		return errors.Create(errors.BadRequest, "missing source reference")
+	if sourceID == "" || fPath == "" {
+		return errors.Create(errors.BadRequest, "wrong path format")
 	}
 
-	source, err := ResolveSource(ctx, sourceID)
-	if err != nil {
-		return err
-	}
-
-	filename = path.Join(source.URI, fPath)
-	ctx = ContextWithSource(ctx, source)
 	return h.next.DeleteFile(ctx, filename, opts)
 }
 
@@ -181,18 +136,10 @@ func (h *ParamsHandler) SetFileMetaData(ctx context.Context, filename string, at
 		return err
 	}
 
-	sourceID, fPath := Split(filename)
+	sourceID, _ := Split(filename)
 	if sourceID == "" {
-		return errors.Create(errors.BadRequest, "missing source reference")
+		return errors.Create(errors.BadRequest, "wrong path format")
 	}
-
-	source, err := ResolveSource(ctx, sourceID)
-	if err != nil {
-		return err
-	}
-
-	filename = path.Join(source.URI, fPath)
-	ctx = ContextWithSource(ctx, source)
 
 	return h.next.SetFileMetaData(ctx, filename, attrs)
 }
@@ -216,18 +163,10 @@ func (h *ParamsHandler) GetFileAttributes(ctx context.Context, filename string, 
 		return nil, err
 	}
 
-	sourceID, fPath := Split(filename)
+	sourceID, _ := Split(filename)
 	if sourceID == "" {
-		return nil, errors.Create(errors.BadRequest, "missing source reference")
+		return nil, errors.Create(errors.BadRequest, "wrong path format")
 	}
-
-	source, err := ResolveSource(ctx, sourceID)
-	if err != nil {
-		return nil, err
-	}
-
-	filename = path.Join(source.URI, fPath)
-	ctx = ContextWithSource(ctx, source)
 
 	return h.next.GetFileAttributes(ctx, filename, name...)
 }
@@ -252,17 +191,9 @@ func (h *ParamsHandler) RenameFile(ctx context.Context, filename string, newName
 	}
 
 	sourceID, fPath := Split(filename)
-	if sourceID == "" {
-		return errors.Create(errors.BadRequest, "missing source reference")
+	if sourceID == "" || fPath == "" {
+		return errors.Create(errors.BadRequest, "wrong path format")
 	}
-
-	source, err := ResolveSource(ctx, sourceID)
-	if err != nil {
-		return err
-	}
-
-	filename = path.Join(source.URI, fPath)
-	ctx = ContextWithSource(ctx, source)
 
 	return h.next.RenameFile(ctx, filename, newName)
 }
@@ -287,17 +218,14 @@ func (h *ParamsHandler) MoveFile(ctx context.Context, filename string, dirname s
 	}
 
 	sourceID, fPath := Split(filename)
+	if sourceID == "" || fPath == "" {
+		return errors.Create(errors.BadRequest, "wrong path format")
+	}
+
+	sourceID, fPath = Split(dirname)
 	if sourceID == "" {
-		return errors.Create(errors.BadRequest, "missing source reference")
+		return errors.Create(errors.BadRequest, "wrong path format")
 	}
-
-	source, err := ResolveSource(ctx, sourceID)
-	if err != nil {
-		return err
-	}
-
-	filename = path.Join(source.URI, fPath)
-	ctx = ContextWithSource(ctx, source)
 
 	return h.next.MoveFile(ctx, filename, dirname)
 }
@@ -322,17 +250,14 @@ func (h *ParamsHandler) CopyFile(ctx context.Context, filename string, dirname s
 	}
 
 	sourceID, fPath := Split(filename)
+	if sourceID == "" || fPath == "" {
+		return errors.Create(errors.BadRequest, "wrong path format")
+	}
+
+	sourceID, fPath = Split(dirname)
 	if sourceID == "" {
-		return errors.Create(errors.BadRequest, "missing source reference")
+		return errors.Create(errors.BadRequest, "wrong path format")
 	}
-
-	source, err := ResolveSource(ctx, sourceID)
-	if err != nil {
-		return err
-	}
-
-	filename = path.Join(source.URI, fPath)
-	ctx = ContextWithSource(ctx, source)
 
 	return h.next.MoveFile(ctx, filename, dirname)
 }
@@ -357,17 +282,9 @@ func (h *ParamsHandler) OpenMultipartSession(ctx context.Context, filename strin
 	}
 
 	sourceID, fPath := Split(filename)
-	if sourceID == "" {
-		return "", errors.Create(errors.BadRequest, "missing source reference")
+	if sourceID == "" || fPath == "" {
+		return "", errors.Create(errors.BadRequest, "wrong path format")
 	}
-
-	source, err := ResolveSource(ctx, sourceID)
-	if err != nil {
-		return "", err
-	}
-
-	filename = path.Join(source.URI, fPath)
-	ctx = ContextWithSource(ctx, source)
 
 	return h.next.OpenMultipartSession(ctx, filename, info)
 }
@@ -390,13 +307,6 @@ func (h *ParamsHandler) AddContentPart(ctx context.Context, sessionID string, co
 		}
 		return err
 	}
-
-	source, err := ResolveSource(ctx, sessionID)
-	if err != nil {
-		return err
-	}
-	ctx = ContextWithSource(ctx, source)
-
 	return h.next.AddContentPart(ctx, sessionID, content, size, info)
 }
 
@@ -407,12 +317,5 @@ func (h *ParamsHandler) CloseMultipartSession(ctx context.Context, sessionID str
 			Details: "required",
 		})
 	}
-
-	source, err := ResolveSource(ctx, sessionID)
-	if err != nil {
-		return err
-	}
-	ctx = ContextWithSource(ctx, source)
-
 	return h.next.CloseMultipartSession(ctx, sessionID)
 }

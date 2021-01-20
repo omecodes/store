@@ -112,6 +112,22 @@ func (h *PolicyHandler) isAllowedToChmod(ctx context.Context, filename string) (
 	return h.evaluateRules(ctx, rules...)
 }
 
+func (h *PolicyHandler) CreateSource(ctx context.Context, source *Source) error {
+	return h.next.CreateSource(ctx, source)
+}
+
+func (h *PolicyHandler) ListSources(ctx context.Context) ([]*Source, error) {
+	return h.next.ListSources(ctx)
+}
+
+func (h *PolicyHandler) GetSource(ctx context.Context, sourceID string) (*Source, error) {
+	return h.next.GetSource(ctx, sourceID)
+}
+
+func (h *PolicyHandler) DeleteSource(ctx context.Context, sourceID string) error {
+	return h.next.DeleteSource(ctx, sourceID)
+}
+
 func (h *PolicyHandler) CreateDir(ctx context.Context, filename string) error {
 	source := GetSource(ctx)
 	if source == nil {

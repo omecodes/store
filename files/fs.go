@@ -23,7 +23,7 @@ type FS interface {
 }
 
 func NewFS(sourceType SourceType, uri string) (FS, error) {
-	if sourceType != TypeFS {
+	if sourceType != TypeDisk {
 		return nil, errors.Create(errors.NotImplemented, "file source type is not supported")
 	}
 	rootDir := strings.TrimPrefix(SchemeFS, uri)

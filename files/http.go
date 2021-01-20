@@ -12,6 +12,10 @@ import (
 	"strconv"
 )
 
+const (
+	pathVarId = "id"
+)
+
 func NewHTTPRouter() *mux.Router {
 	r := mux.NewRouter()
 
@@ -33,6 +37,11 @@ func NewHTTPRouter() *mux.Router {
 	r.PathPrefix("/tree/").Handler(http.StripPrefix("/tree", tr))
 	r.PathPrefix("/attr/").Handler(http.StripPrefix("/attr", ar))
 	r.PathPrefix("/data/").Handler(http.StripPrefix("/data", dr))
+
+	r.Path("/sources").Methods(http.MethodPut).HandlerFunc(createSource)
+	r.Path("/sources").Methods(http.MethodPost).HandlerFunc(ListSources)
+	r.Path("/sources/{id}").Methods(http.MethodGet).HandlerFunc(getSource)
+	r.Path("/sources/{id}").Methods(http.MethodDelete).HandlerFunc(deleteSource)
 
 	return r
 }
@@ -291,6 +300,81 @@ func downloadFile(w http.ResponseWriter, r *http.Request) {
 			logs.Error("failed to write file content", logs.Err(err))
 			return
 		}
+	}
+}
+
+func createSource(w http.ResponseWriter, r *http.Request) {
+	var source *Source
+	err := json.NewDecoder(r.Body).Decode(&source)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	route, err := NewRoute(ctx)
+	if err != nil {
+		w.WriteHeader(errors.HttpStatus(err))
+		return
+	}
+
+	err = route.CreateSource(ctx, source)
+	if err != nil {
+		w.WriteHeader(errors.HttpStatus(err))
+		return
+	}
+}
+
+func ListSources(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	route, err := NewRoute(ctx)
+	if err != nil {
+		w.WriteHeader(errors.HttpStatus(err))
+		return
+	}
+
+	sources, err := route.ListSources(ctx)
+	if err != nil {
+		w.WriteHeader(errors.HttpStatus(err))
+		return
+	}
+	_ = json.NewEncoder(w).Encode(sources)
+}
+
+func getSource(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	sourceID := vars[pathVarId]
+
+	ctx := r.Context()
+	route, err := NewRoute(ctx)
+	if err != nil {
+		w.WriteHeader(errors.HttpStatus(err))
+		return
+	}
+
+	source, err := route.GetSource(ctx, sourceID)
+	if err != nil {
+		w.WriteHeader(errors.HttpStatus(err))
+		return
+	}
+	_ = json.NewEncoder(w).Encode(source)
+}
+
+func deleteSource(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	sourceID := vars[pathVarId]
+
+	ctx := r.Context()
+	route, err := NewRoute(ctx)
+	if err != nil {
+		w.WriteHeader(errors.HttpStatus(err))
+		return
+	}
+
+	err = route.DeleteSource(ctx, sourceID)
+	if err != nil {
+		w.WriteHeader(errors.HttpStatus(err))
+		return
 	}
 }
 

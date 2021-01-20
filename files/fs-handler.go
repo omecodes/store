@@ -6,6 +6,10 @@ import (
 )
 
 type Handler interface {
+	CreateSource(ctx context.Context, source *Source) error
+	ListSources(ctx context.Context) ([]*Source, error)
+	GetSource(ctx context.Context, sourceID string) (*Source, error)
+	DeleteSource(ctx context.Context, sourceID string) error
 	CreateDir(ctx context.Context, filename string) error
 	ListDir(ctx context.Context, dirname string, opts ListDirOptions) (*DirContent, error)
 	WriteFileContent(ctx context.Context, filename string, content io.Reader, size int64, opts WriteOptions) error

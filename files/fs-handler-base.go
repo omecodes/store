@@ -9,6 +9,22 @@ type BaseHandler struct {
 	next Handler
 }
 
+func (h *BaseHandler) CreateSource(ctx context.Context, source *Source) error {
+	return h.next.CreateSource(ctx, source)
+}
+
+func (h *BaseHandler) ListSources(ctx context.Context) ([]*Source, error) {
+	return h.next.ListSources(ctx)
+}
+
+func (h *BaseHandler) GetSource(ctx context.Context, sourceID string) (*Source, error) {
+	return h.next.GetSource(ctx, sourceID)
+}
+
+func (h *BaseHandler) DeleteSource(ctx context.Context, sourceID string) error {
+	return h.next.DeleteSource(ctx, sourceID)
+}
+
 func (h *BaseHandler) CreateDir(ctx context.Context, filename string) error {
 	return h.next.CreateDir(ctx, filename)
 }

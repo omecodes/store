@@ -2,11 +2,45 @@ package files
 
 import (
 	"context"
+	"github.com/omecodes/errors"
 	"io"
 )
 
 type ExecHandler struct {
 	BaseHandler
+}
+
+func (h *ExecHandler) CreateSource(ctx context.Context, source *Source) error {
+	sourceManager := GetSourceManager(ctx)
+	if sourceManager == nil {
+		return errors.New("context missing source manager")
+	}
+	_, err := sourceManager.Save(source)
+	return err
+}
+
+func (h *ExecHandler) ListSources(ctx context.Context) ([]*Source, error) {
+	sourceManager := GetSourceManager(ctx)
+	if sourceManager == nil {
+		return nil, errors.New("context missing source manager")
+	}
+	return sourceManager.List()
+}
+
+func (h *ExecHandler) GetSource(ctx context.Context, sourceID string) (*Source, error) {
+	sourceManager := GetSourceManager(ctx)
+	if sourceManager == nil {
+		return nil, errors.New("context missing source manager")
+	}
+	return sourceManager.Get(sourceID)
+}
+
+func (h *ExecHandler) DeleteSource(ctx context.Context, sourceID string) error {
+	sourceManager := GetSourceManager(ctx)
+	if sourceManager == nil {
+		return errors.New("context missing source manager")
+	}
+	return sourceManager.Delete(sourceID)
 }
 
 func (h *ExecHandler) CreateDir(ctx context.Context, dirname string) error {

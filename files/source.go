@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+const activeUserVar = "{user}"
+
 type EncryptionAlg int
 
 const (
@@ -25,25 +27,23 @@ const (
 type SourceType int
 
 const (
-	TypeFS        = SourceType(1)
-	TypeRemote    = SourceType(2)
-	TypeSourceRef = SourceType(3)
+	TypeDisk      = SourceType(1)
+	TypeActive    = SourceType(2)
+	TypePartition = SourceType(3)
+	TypeObjects   = SourceType(4)
+	TypeReference = SourceType(5)
 )
 
-type EncryptionInfo struct {
-	Key []byte        `json:"key,omitempty"`
-	Alg EncryptionAlg `json:"alg,omitempty"`
-}
-
 type Source struct {
-	ID                  string          `json:"id,omitempty"`
-	Label               string          `json:"label,omitempty"`
-	Description         string          `json:"description,omitempty"`
-	Type                SourceType      `json:"type,omitempty"`
-	URI                 string          `json:"uri,omitempty"`
-	Encryption          *EncryptionInfo `json:"encryption,omitempty"`
-	PermissionOverrides *Permissions    `json:"permission_overrides,omitempty"`
-	ExpireTime          int64           `json:"expire_time,omitempty"`
+	ID                  string                 `json:"id,omitempty"`
+	Label               string                 `json:"label,omitempty"`
+	Description         string                 `json:"description,omitempty"`
+	Type                SourceType             `json:"type,omitempty"`
+	URI                 string                 `json:"uri,omitempty"`
+	Encryption          *EncryptionInfo        `json:"encryption,omitempty"`
+	PermissionOverrides *Permissions           `json:"permission_overrides,omitempty"`
+	ExpireTime          int64                  `json:"expire_time,omitempty"`
+	Info                map[string]interface{} `json:"info,omitempty"`
 }
 
 type SourceManager interface {
@@ -75,7 +75,7 @@ func ResolveSource(ctx context.Context, sourceID string) (*Source, error) {
 
 	sourceChain := []string{sourceID}
 	sourceType := source.Type
-	for sourceType == TypeSourceRef {
+	for sourceType == TypeReference {
 		u, err := url.Parse(source.URI)
 		if err != nil {
 			return nil, errors.Create(errors.Internal, "could not resolve source uri", errors.Info{Name: "source uri", Details: err.Error()})
