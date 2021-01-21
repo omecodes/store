@@ -19,6 +19,8 @@ const (
 
 type SourceType int
 
+type ctxSourceManager struct{}
+
 const (
 	TypeDisk      = SourceType(1)
 	TypeActive    = SourceType(2)
@@ -46,8 +48,16 @@ type SourceManager interface {
 	Delete(ctx context.Context, id string) error
 }
 
-func ResolveSource(ctx context.Context, sourceID string) (*Source, error) {
-	sourcesManager := GetSourceManager(ctx)
+func getSourceManager(ctx context.Context) SourceManager {
+	o := ctx.Value(ctxSourceManager{})
+	if o == nil {
+		return nil
+	}
+	return o.(SourceManager)
+}
+
+func resolveSource(ctx context.Context, sourceID string) (*Source, error) {
+	sourcesManager := getSourceManager(ctx)
 	source, err := sourcesManager.Get(ctx, sourceID)
 	if err != nil {
 		return nil, err

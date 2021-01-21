@@ -2,8 +2,9 @@ package files
 
 import (
 	"context"
-	"github.com/omecodes/errors"
 	"io"
+
+	"github.com/omecodes/errors"
 )
 
 type ExecHandler struct {
@@ -11,7 +12,7 @@ type ExecHandler struct {
 }
 
 func (h *ExecHandler) CreateSource(ctx context.Context, source *Source) error {
-	sourceManager := GetSourceManager(ctx)
+	sourceManager := getSourceManager(ctx)
 	if sourceManager == nil {
 		return errors.New("context missing source manager")
 	}
@@ -20,7 +21,7 @@ func (h *ExecHandler) CreateSource(ctx context.Context, source *Source) error {
 }
 
 func (h *ExecHandler) ListSources(ctx context.Context) ([]*Source, error) {
-	sourceManager := GetSourceManager(ctx)
+	sourceManager := getSourceManager(ctx)
 	if sourceManager == nil {
 		return nil, errors.New("context missing source manager")
 	}
@@ -28,7 +29,7 @@ func (h *ExecHandler) ListSources(ctx context.Context) ([]*Source, error) {
 }
 
 func (h *ExecHandler) GetSource(ctx context.Context, sourceID string) (*Source, error) {
-	sourceManager := GetSourceManager(ctx)
+	sourceManager := getSourceManager(ctx)
 	if sourceManager == nil {
 		return nil, errors.New("context missing source manager")
 	}
@@ -36,7 +37,7 @@ func (h *ExecHandler) GetSource(ctx context.Context, sourceID string) (*Source, 
 }
 
 func (h *ExecHandler) DeleteSource(ctx context.Context, sourceID string) error {
-	sourceManager := GetSourceManager(ctx)
+	sourceManager := getSourceManager(ctx)
 	if sourceManager == nil {
 		return errors.New("context missing source manager")
 	}
@@ -44,47 +45,91 @@ func (h *ExecHandler) DeleteSource(ctx context.Context, sourceID string) error {
 }
 
 func (h *ExecHandler) CreateDir(ctx context.Context, sourceID string, dirname string) error {
-	return Mkdir(ctx, sourceID, dirname)
+	fs, err := getFS(ctx, sourceID)
+	if err != nil {
+		return err
+	}
+	return fs.Mkdir(ctx, dirname)
 }
 
 func (h *ExecHandler) WriteFileContent(ctx context.Context, sourceID string, filename string, content io.Reader, size int64, opts WriteOptions) error {
-	return Write(ctx, sourceID, filename, content, opts.Append)
+	fs, err := getFS(ctx, sourceID)
+	if err != nil {
+		return err
+	}
+	return fs.Write(ctx, filename, content, opts.Append)
 }
 
 func (h *ExecHandler) ListDir(ctx context.Context, sourceID string, dirname string, opts ListDirOptions) (*DirContent, error) {
-	return Ls(ctx, sourceID, dirname, opts.Offset, opts.Count)
+	fs, err := getFS(ctx, sourceID)
+	if err != nil {
+		return nil, err
+	}
+	return fs.Ls(ctx, dirname, opts.Offset, opts.Count)
 }
 
 func (h *ExecHandler) ReadFileContent(ctx context.Context, sourceID string, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
-	return Read(ctx, sourceID, filename, opts.Range.Offset, opts.Range.Length)
+	fs, err := getFS(ctx, sourceID)
+	if err != nil {
+		return nil, 0, err
+	}
+	return fs.Read(ctx, filename, opts.Range.Offset, opts.Range.Length)
 }
 
 func (h *ExecHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileInfoOptions) (*File, error) {
-	return Info(ctx, sourceID, filename, opts.WithAttrs)
+	fs, err := getFS(ctx, sourceID)
+	if err != nil {
+		return nil, err
+	}
+	return fs.Info(ctx, filename, opts.WithAttrs)
 }
 
 func (h *ExecHandler) DeleteFile(ctx context.Context, sourceID string, filename string, opts DeleteFileOptions) error {
-	return DeleteFile(ctx, sourceID, filename, opts.Recursive)
+	fs, err := getFS(ctx, sourceID)
+	if err != nil {
+		return err
+	}
+	return fs.DeleteFile(ctx, filename, opts.Recursive)
 }
 
 func (h *ExecHandler) SetFileMetaData(ctx context.Context, sourceID string, filename string, attrs Attributes) error {
-	return SetAttributes(ctx, sourceID, filename, attrs)
+	fs, err := getFS(ctx, sourceID)
+	if err != nil {
+		return err
+	}
+	return fs.SetAttributes(ctx, filename, attrs)
 }
 
 func (h *ExecHandler) GetFileAttributes(ctx context.Context, sourceID string, filename string, names ...string) (Attributes, error) {
-	return GetAttributes(ctx, sourceID, filename, names...)
+	fs, err := getFS(ctx, sourceID)
+	if err != nil {
+		return nil, err
+	}
+	return fs.GetAttributes(ctx, filename, names...)
 }
 
 func (h *ExecHandler) RenameFile(ctx context.Context, sourceID string, filename string, newName string) error {
-	return Rename(ctx, sourceID, filename, newName)
+	fs, err := getFS(ctx, sourceID)
+	if err != nil {
+		return err
+	}
+	return fs.Rename(ctx, filename, newName)
 }
 
 func (h *ExecHandler) MoveFile(ctx context.Context, sourceID string, filename string, dirname string) error {
-	return Move(ctx, sourceID, filename, dirname)
+	fs, err := getFS(ctx, sourceID)
+	if err != nil {
+		return err
+	}
+	return fs.Rename(ctx, filename, dirname)
 }
 
 func (h *ExecHandler) CopyFile(ctx context.Context, sourceID string, filename string, dirname string) error {
-	return Copy(ctx, sourceID, filename, dirname)
+	fs, err := getFS(ctx, sourceID)
+	if err != nil {
+		return err
+	}
+	return fs.Rename(ctx, filename, dirname)
 }
 
 func (h *ExecHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info *MultipartSessionInfo) (string, error) {
