@@ -10,7 +10,35 @@ type ParamsHandler struct {
 	BaseHandler
 }
 
-func (h *ParamsHandler) CreateDir(ctx context.Context, filename string) error {
+func (h *ParamsHandler) CreateSource(ctx context.Context, source *Source) error {
+	if source == nil || source.Type == SourceType(0) || source.URI == "" {
+		return errors.Create(errors.BadRequest, "invalid source value")
+	}
+	return h.next.CreateSource(ctx, source)
+}
+
+func (h *ParamsHandler) GetSource(ctx context.Context, sourceID string) (*Source, error) {
+	if sourceID == "" {
+		return nil, errors.Create(errors.BadRequest, "source id is required")
+	}
+	return h.next.GetSource(ctx, sourceID)
+}
+
+func (h *ParamsHandler) DeleteSource(ctx context.Context, sourceID string) error {
+	if sourceID == "" {
+		return errors.Create(errors.BadRequest, "source id is required")
+	}
+	return h.next.DeleteSource(ctx, sourceID)
+}
+
+func (h *ParamsHandler) CreateDir(ctx context.Context, sourceID string, filename string) error {
+	if sourceID == "" {
+		return errors.Create(errors.BadRequest, "missing parameters", errors.Info{
+			Name:    "source",
+			Details: "required",
+		})
+	}
+
 	if filename == "" {
 		return errors.Create(errors.BadRequest, "missing parameters", errors.Info{
 			Name:    "filename",
@@ -23,10 +51,17 @@ func (h *ParamsHandler) CreateDir(ctx context.Context, filename string) error {
 		return errors.Create(errors.BadRequest, "wrong path format")
 	}
 
-	return h.next.CreateDir(ctx, filename)
+	return h.next.CreateDir(ctx, sourceID, filename)
 }
 
-func (h *ParamsHandler) WriteFileContent(ctx context.Context, filename string, content io.Reader, size int64, opts WriteOptions) error {
+func (h *ParamsHandler) WriteFileContent(ctx context.Context, sourceID string, filename string, content io.Reader, size int64, opts WriteOptions) error {
+	if sourceID == "" {
+		return errors.Create(errors.BadRequest, "missing parameters", errors.Info{
+			Name:    "source",
+			Details: "required",
+		})
+	}
+
 	if filename == "" || content == nil {
 		err := errors.Create(errors.BadRequest, "missing parameters")
 		if filename == "" {
@@ -45,15 +80,17 @@ func (h *ParamsHandler) WriteFileContent(ctx context.Context, filename string, c
 		return err
 	}
 
-	sourceID, fPath := Split(filename)
-	if sourceID == "" || fPath == "" {
-		return errors.Create(errors.BadRequest, "wrong path format")
-	}
-
-	return h.next.WriteFileContent(ctx, filename, content, size, opts)
+	return h.next.WriteFileContent(ctx, sourceID, filename, content, size, opts)
 }
 
-func (h *ParamsHandler) ListDir(ctx context.Context, dirname string, opts ListDirOptions) (*DirContent, error) {
+func (h *ParamsHandler) ListDir(ctx context.Context, sourceID string, dirname string, opts ListDirOptions) (*DirContent, error) {
+	if sourceID == "" {
+		return nil, errors.Create(errors.BadRequest, "missing parameters", errors.Info{
+			Name:    "source",
+			Details: "required",
+		})
+	}
+
 	if dirname == "" {
 		return nil, errors.Create(errors.BadRequest, "missing parameters", errors.Info{
 			Name:    "dirname",
@@ -61,15 +98,10 @@ func (h *ParamsHandler) ListDir(ctx context.Context, dirname string, opts ListDi
 		})
 	}
 
-	sourceID, fPath := Split(dirname)
-	if sourceID == "" || fPath == "" {
-		return nil, errors.Create(errors.BadRequest, "wrong path format")
-	}
-
-	return h.next.ListDir(ctx, dirname, opts)
+	return h.next.ListDir(ctx, sourceID, dirname, opts)
 }
 
-func (h *ParamsHandler) ReadFileContent(ctx context.Context, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
+func (h *ParamsHandler) ReadFileContent(ctx context.Context, sourceID string, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
 	if filename == "" {
 		return nil, 0, errors.Create(errors.BadRequest, "missing parameters", errors.Info{
 			Name:    "filename",
@@ -77,15 +109,17 @@ func (h *ParamsHandler) ReadFileContent(ctx context.Context, filename string, op
 		})
 	}
 
-	sourceID, fPath := Split(filename)
-	if sourceID == "" || fPath == "" {
-		return nil, 0, errors.Create(errors.BadRequest, "wrong path format")
-	}
-
-	return h.next.ReadFileContent(ctx, filename, opts)
+	return h.next.ReadFileContent(ctx, sourceID, filename, opts)
 }
 
-func (h *ParamsHandler) GetFileInfo(ctx context.Context, filename string, opts GetFileInfoOptions) (*File, error) {
+func (h *ParamsHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileInfoOptions) (*File, error) {
+	if sourceID == "" {
+		return nil, errors.Create(errors.BadRequest, "missing parameters", errors.Info{
+			Name:    "source",
+			Details: "required",
+		})
+	}
+
 	if filename == "" {
 		return nil, errors.Create(errors.BadRequest, "missing parameters", errors.Info{
 			Name:    "filename",
@@ -93,15 +127,17 @@ func (h *ParamsHandler) GetFileInfo(ctx context.Context, filename string, opts G
 		})
 	}
 
-	sourceID, fPath := Split(filename)
-	if sourceID == "" || fPath == "" {
-		return nil, errors.Create(errors.BadRequest, "wrong path format")
-	}
-
-	return h.next.GetFileInfo(ctx, filename, opts)
+	return h.next.GetFileInfo(ctx, sourceID, filename, opts)
 }
 
-func (h *ParamsHandler) DeleteFile(ctx context.Context, filename string, opts DeleteFileOptions) error {
+func (h *ParamsHandler) DeleteFile(ctx context.Context, sourceID string, filename string, opts DeleteFileOptions) error {
+	if sourceID == "" {
+		return errors.Create(errors.BadRequest, "missing parameters", errors.Info{
+			Name:    "source",
+			Details: "required",
+		})
+	}
+
 	if filename == "" {
 		return errors.Create(errors.BadRequest, "missing parameters", errors.Info{
 			Name:    "filename",
@@ -109,15 +145,17 @@ func (h *ParamsHandler) DeleteFile(ctx context.Context, filename string, opts De
 		})
 	}
 
-	sourceID, fPath := Split(filename)
-	if sourceID == "" || fPath == "" {
-		return errors.Create(errors.BadRequest, "wrong path format")
-	}
-
-	return h.next.DeleteFile(ctx, filename, opts)
+	return h.next.DeleteFile(ctx, sourceID, filename, opts)
 }
 
-func (h *ParamsHandler) SetFileMetaData(ctx context.Context, filename string, attrs Attributes) error {
+func (h *ParamsHandler) SetFileMetaData(ctx context.Context, sourceID string, filename string, attrs Attributes) error {
+	if sourceID == "" {
+		return errors.Create(errors.BadRequest, "missing parameters", errors.Info{
+			Name:    "source",
+			Details: "required",
+		})
+	}
+
 	if filename == "" || len(attrs) == 0 {
 		err := errors.Create(errors.BadRequest, "missing parameters")
 		if filename == "" {
@@ -136,15 +174,17 @@ func (h *ParamsHandler) SetFileMetaData(ctx context.Context, filename string, at
 		return err
 	}
 
-	sourceID, _ := Split(filename)
-	if sourceID == "" {
-		return errors.Create(errors.BadRequest, "wrong path format")
-	}
-
-	return h.next.SetFileMetaData(ctx, filename, attrs)
+	return h.next.SetFileMetaData(ctx, sourceID, filename, attrs)
 }
 
-func (h *ParamsHandler) GetFileAttributes(ctx context.Context, filename string, name ...string) (Attributes, error) {
+func (h *ParamsHandler) GetFileAttributes(ctx context.Context, sourceID string, filename string, name ...string) (Attributes, error) {
+	if sourceID == "" {
+		return nil, errors.Create(errors.BadRequest, "missing parameters", errors.Info{
+			Name:    "source",
+			Details: "required",
+		})
+	}
+
 	if filename == "" || len(name) == 0 {
 		err := errors.Create(errors.BadRequest, "missing parameters")
 		if filename == "" {
@@ -163,15 +203,17 @@ func (h *ParamsHandler) GetFileAttributes(ctx context.Context, filename string, 
 		return nil, err
 	}
 
-	sourceID, _ := Split(filename)
-	if sourceID == "" {
-		return nil, errors.Create(errors.BadRequest, "wrong path format")
-	}
-
-	return h.next.GetFileAttributes(ctx, filename, name...)
+	return h.next.GetFileAttributes(ctx, sourceID, filename, name...)
 }
 
-func (h *ParamsHandler) RenameFile(ctx context.Context, filename string, newName string) error {
+func (h *ParamsHandler) RenameFile(ctx context.Context, sourceID string, filename string, newName string) error {
+	if sourceID == "" {
+		return errors.Create(errors.BadRequest, "missing parameters", errors.Info{
+			Name:    "source",
+			Details: "required",
+		})
+	}
+
 	if filename == "" || newName == "" {
 		err := errors.Create(errors.BadRequest, "missing parameters")
 		if filename == "" {
@@ -195,10 +237,17 @@ func (h *ParamsHandler) RenameFile(ctx context.Context, filename string, newName
 		return errors.Create(errors.BadRequest, "wrong path format")
 	}
 
-	return h.next.RenameFile(ctx, filename, newName)
+	return h.next.RenameFile(ctx, sourceID, filename, newName)
 }
 
-func (h *ParamsHandler) MoveFile(ctx context.Context, filename string, dirname string) error {
+func (h *ParamsHandler) MoveFile(ctx context.Context, sourceID string, filename string, dirname string) error {
+	if sourceID == "" {
+		return errors.Create(errors.BadRequest, "missing parameters", errors.Info{
+			Name:    "source",
+			Details: "required",
+		})
+	}
+
 	if filename == "" || dirname == "" {
 		err := errors.Create(errors.BadRequest, "missing parameters")
 		if filename == "" {
@@ -217,20 +266,17 @@ func (h *ParamsHandler) MoveFile(ctx context.Context, filename string, dirname s
 		return err
 	}
 
-	sourceID, fPath := Split(filename)
-	if sourceID == "" || fPath == "" {
-		return errors.Create(errors.BadRequest, "wrong path format")
-	}
-
-	sourceID, fPath = Split(dirname)
-	if sourceID == "" {
-		return errors.Create(errors.BadRequest, "wrong path format")
-	}
-
-	return h.next.MoveFile(ctx, filename, dirname)
+	return h.next.MoveFile(ctx, sourceID, filename, dirname)
 }
 
-func (h *ParamsHandler) CopyFile(ctx context.Context, filename string, dirname string) error {
+func (h *ParamsHandler) CopyFile(ctx context.Context, sourceID string, filename string, dirname string) error {
+	if sourceID == "" {
+		return errors.Create(errors.BadRequest, "missing parameters", errors.Info{
+			Name:    "source",
+			Details: "required",
+		})
+	}
+
 	if filename == "" || dirname == "" {
 		err := errors.Create(errors.BadRequest, "missing parameters")
 		if filename == "" {
@@ -249,20 +295,17 @@ func (h *ParamsHandler) CopyFile(ctx context.Context, filename string, dirname s
 		return err
 	}
 
-	sourceID, fPath := Split(filename)
-	if sourceID == "" || fPath == "" {
-		return errors.Create(errors.BadRequest, "wrong path format")
-	}
-
-	sourceID, fPath = Split(dirname)
-	if sourceID == "" {
-		return errors.Create(errors.BadRequest, "wrong path format")
-	}
-
-	return h.next.MoveFile(ctx, filename, dirname)
+	return h.next.MoveFile(ctx, sourceID, filename, dirname)
 }
 
-func (h *ParamsHandler) OpenMultipartSession(ctx context.Context, filename string, info *MultipartSessionInfo) (string, error) {
+func (h *ParamsHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info *MultipartSessionInfo) (string, error) {
+	if sourceID == "" {
+		return "", errors.Create(errors.BadRequest, "missing parameters", errors.Info{
+			Name:    "source",
+			Details: "required",
+		})
+	}
+
 	if filename == "" || info == nil {
 		err := errors.Create(errors.BadRequest, "missing parameters")
 		if filename == "" {
@@ -281,12 +324,7 @@ func (h *ParamsHandler) OpenMultipartSession(ctx context.Context, filename strin
 		return "", err
 	}
 
-	sourceID, fPath := Split(filename)
-	if sourceID == "" || fPath == "" {
-		return "", errors.Create(errors.BadRequest, "wrong path format")
-	}
-
-	return h.next.OpenMultipartSession(ctx, filename, info)
+	return h.next.OpenMultipartSession(ctx, sourceID, filename, info)
 }
 
 func (h *ParamsHandler) AddContentPart(ctx context.Context, sessionID string, content io.Reader, size int64, info *ContentPartInfo) error {

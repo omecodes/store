@@ -2,6 +2,7 @@ package files
 
 import (
 	"github.com/omecodes/store/auth"
+	"strings"
 )
 
 type File struct {
@@ -37,8 +38,8 @@ type PermissionsOverrides struct {
 }
 
 type EncryptionInfo struct {
-	Key []byte        `json:"key,omitempty"`
-	Alg EncryptionAlg `json:"alg,omitempty"`
+	Key []byte `json:"key,omitempty"`
+	Alg string `json:"alg,omitempty"`
 }
 
 type DirContent struct {
@@ -90,3 +91,16 @@ type ContentPartInfo struct {
 }
 
 type AddContentPartOptions struct{}
+
+func Split(filename string) (string, string) {
+	if filename == "" || filename == "/" {
+		return "", ""
+	}
+
+	pathComponents := strings.Split(strings.TrimPrefix(filename, "/"), "/")
+	if len(pathComponents) < 2 {
+		return "", ""
+	}
+
+	return pathComponents[0], "/" + strings.Join(pathComponents[1:], "/")
+}

@@ -2,6 +2,7 @@ package files
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"database/sql"
 	"encoding/binary"
@@ -31,7 +32,7 @@ func (s *sourceSQLManager) generateID() (string, error) {
 	return string(idBytes), nil
 }
 
-func (s *sourceSQLManager) Save(source *Source) (string, error) {
+func (s *sourceSQLManager) Save(_ context.Context, source *Source) (string, error) {
 	var err error
 	if source.ID == "" {
 		source.ID, err = s.generateID()
@@ -51,7 +52,7 @@ func (s *sourceSQLManager) Save(source *Source) (string, error) {
 	})
 }
 
-func (s *sourceSQLManager) Get(id string) (*Source, error) {
+func (s *sourceSQLManager) Get(_ context.Context, id string) (*Source, error) {
 	strEncoded, err := s.bMap.Get(id)
 	if err != nil {
 		return nil, err
@@ -62,7 +63,7 @@ func (s *sourceSQLManager) Get(id string) (*Source, error) {
 	return source, err
 }
 
-func (s *sourceSQLManager) List() ([]*Source, error) {
+func (s *sourceSQLManager) List(_ context.Context) ([]*Source, error) {
 	cursor, err := s.bMap.List()
 	if err != nil {
 		return nil, err
@@ -92,6 +93,6 @@ func (s *sourceSQLManager) List() ([]*Source, error) {
 	return sources, nil
 }
 
-func (s *sourceSQLManager) Delete(id string) error {
+func (s *sourceSQLManager) Delete(_ context.Context, id string) error {
 	return s.bMap.Delete(id)
 }

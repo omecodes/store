@@ -52,7 +52,20 @@ func (h *PolicyHandler) evaluateRules(ctx context.Context, rules ...string) (boo
 	return out.Value().(bool), nil
 }
 
-func (h *PolicyHandler) isAllowedToRead(ctx context.Context, filename string) (bool, error) {
+func (h *PolicyHandler) assertIsAllowedToRead(ctx context.Context, sourceID string, filename string) (bool, error) {
+	source, err := h.next.GetSource(ctx, sourceID)
+	if source == nil {
+		return false, err
+	}
+
+	if source.PermissionOverrides != nil && len(source.PermissionOverrides.Read) > 0 {
+		var rules []string
+		for _, wr := range source.PermissionOverrides.Read {
+			rules = append(rules, wr.Rule)
+		}
+		return h.evaluateRules(ctx, rules...)
+	}
+
 	attrs, err := h.GetFileAttributes(ctx, filename, AttrPermissions)
 	if err != nil {
 		return false, err
@@ -72,7 +85,20 @@ func (h *PolicyHandler) isAllowedToRead(ctx context.Context, filename string) (b
 	return h.evaluateRules(ctx, rules...)
 }
 
-func (h *PolicyHandler) isAllowedToWrite(ctx context.Context, filename string) (bool, error) {
+func (h *PolicyHandler) assertIsAllowedToWrite(ctx context.Context, sourceID string, filename string) (bool, error) {
+	source, err := h.next.GetSource(ctx, sourceID)
+	if source == nil {
+		return false, err
+	}
+
+	if source.PermissionOverrides != nil && len(source.PermissionOverrides.Write) > 0 {
+		var rules []string
+		for _, wr := range source.PermissionOverrides.Write {
+			rules = append(rules, wr.Rule)
+		}
+		return h.evaluateRules(ctx, rules...)
+	}
+
 	attrs, err := h.GetFileAttributes(ctx, filename, AttrPermissions)
 	if err != nil {
 		return false, err
@@ -92,7 +118,20 @@ func (h *PolicyHandler) isAllowedToWrite(ctx context.Context, filename string) (
 	return h.evaluateRules(ctx, rules...)
 }
 
-func (h *PolicyHandler) isAllowedToChmod(ctx context.Context, filename string) (bool, error) {
+func (h *PolicyHandler) assertIsAllowedToChmod(ctx context.Context, sourceID string, filename string) (bool, error) {
+	source, err := h.next.GetSource(ctx, sourceID)
+	if source == nil {
+		return false, err
+	}
+
+	if source.PermissionOverrides != nil && len(source.PermissionOverrides.Chmod) > 0 {
+		var rules []string
+		for _, wr := range source.PermissionOverrides.Chmod {
+			rules = append(rules, wr.Rule)
+		}
+		return h.evaluateRules(ctx, rules...)
+	}
+
 	attrs, err := h.GetFileAttributes(ctx, filename, AttrPermissions)
 	if err != nil {
 		return false, err
@@ -128,235 +167,180 @@ func (h *PolicyHandler) DeleteSource(ctx context.Context, sourceID string) error
 	return h.next.DeleteSource(ctx, sourceID)
 }
 
-func (h *PolicyHandler) CreateDir(ctx context.Context, filename string) error {
-	source := GetSource(ctx)
-	if source == nil {
-		return errors.Create(errors.Internal, "missing source in context")
-	}
-
-	allowed, err := h.isAllowedToWrite(ctx, filename)
+func (h *PolicyHandler) CreateDir(ctx context.Context, sourceID string, filename string) error {
+	allowed, err := h.assertIsAllowedToWrite(ctx, sourceID, path.Dir(filename))
 	if err != nil {
 		return err
 	}
 
 	if !allowed {
-		return errors.Create(errors.Unauthorized, "not_allowed")
+		return errors.Create(errors.Unauthorized, "not allowed")
 	}
-
-	return h.next.CreateDir(ctx, filename)
+	return h.next.CreateDir(ctx, sourceID, filename)
 }
 
-func (h *PolicyHandler) WriteFileContent(ctx context.Context, filename string, content io.Reader, size int64, opts WriteOptions) error {
-	source := GetSource(ctx)
-	if source == nil {
-		return errors.Create(errors.Internal, "missing source in context")
-	}
-
-	allowed, err := h.isAllowedToWrite(ctx, filename)
+func (h *PolicyHandler) WriteFileContent(ctx context.Context, sourceID string, filename string, content io.Reader, size int64, opts WriteOptions) error {
+	allowed, err := h.assertIsAllowedToWrite(ctx, sourceID, path.Dir(filename))
 	if err != nil {
 		return err
 	}
 
 	if !allowed {
-		return errors.Create(errors.Unauthorized, "not_allowed")
+		return errors.Create(errors.Unauthorized, "not allowed")
 	}
-
-	return h.next.WriteFileContent(ctx, filename, content, size, opts)
+	return h.next.WriteFileContent(ctx, sourceID, filename, content, size, opts)
 }
 
-func (h *PolicyHandler) ListDir(ctx context.Context, dirname string, opts ListDirOptions) (*DirContent, error) {
-	source := GetSource(ctx)
-	if source == nil {
-		return nil, errors.Create(errors.Internal, "missing source in context")
-	}
-
-	allowed, err := h.isAllowedToRead(ctx, dirname)
+func (h *PolicyHandler) ListDir(ctx context.Context, sourceID string, dirname string, opts ListDirOptions) (*DirContent, error) {
+	allowed, err := h.assertIsAllowedToRead(ctx, sourceID, dirname)
 	if err != nil {
 		return nil, err
 	}
 
 	if !allowed {
-		return nil, errors.Create(errors.Unauthorized, "not_allowed")
+		return nil, errors.Create(errors.Unauthorized, "not allowed")
 	}
-	return h.next.ListDir(ctx, dirname, opts)
+	return h.next.ListDir(ctx, sourceID, dirname, opts)
 }
 
-func (h *PolicyHandler) ReadFileContent(ctx context.Context, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
-	source := GetSource(ctx)
-	if source == nil {
-		return nil, 0, errors.Create(errors.Internal, "missing source in context")
-	}
-
-	allowed, err := h.isAllowedToRead(ctx, filename)
+func (h *PolicyHandler) ReadFileContent(ctx context.Context, sourceID string, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
+	allowed, err := h.assertIsAllowedToRead(ctx, sourceID, filename)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	if !allowed {
-		return nil, 0, errors.Create(errors.Unauthorized, "not_allowed")
+		return nil, 0, errors.Create(errors.Unauthorized, "not allowed")
 	}
-
-	return h.next.ReadFileContent(ctx, filename, opts)
+	return h.next.ReadFileContent(ctx, sourceID, filename, opts)
 }
 
-func (h *PolicyHandler) GetFileInfo(ctx context.Context, filename string, opts GetFileInfoOptions) (*File, error) {
-	source := GetSource(ctx)
-	if source == nil {
-		return nil, errors.Create(errors.Internal, "missing source in context")
-	}
-
-	allowed, err := h.isAllowedToRead(ctx, filename)
+func (h *PolicyHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileInfoOptions) (*File, error) {
+	allowed, err := h.assertIsAllowedToWrite(ctx, sourceID, path.Dir(filename))
 	if err != nil {
 		return nil, err
 	}
 
 	if !allowed {
-		return nil, errors.Create(errors.Unauthorized, "not_allowed")
+		return nil, errors.Create(errors.Unauthorized, "not allowed")
 	}
-
-	return h.next.GetFileInfo(ctx, filename, opts)
+	return h.next.GetFileInfo(ctx, sourceID, filename, opts)
 }
 
-func (h *PolicyHandler) DeleteFile(ctx context.Context, filename string, opts DeleteFileOptions) error {
-	source := GetSource(ctx)
-	if source == nil {
-		return errors.Create(errors.Internal, "missing source in context")
-	}
-
-	allowed, err := h.isAllowedToWrite(ctx, filename)
+func (h *PolicyHandler) DeleteFile(ctx context.Context, sourceID string, filename string, opts DeleteFileOptions) error {
+	allowed, err := h.assertIsAllowedToWrite(ctx, sourceID, filename)
 	if err != nil {
 		return err
 	}
 
 	if !allowed {
-		return errors.Create(errors.Unauthorized, "not_allowed")
+		return errors.Create(errors.Unauthorized, "not allowed")
 	}
 
-	return h.next.DeleteFile(ctx, filename, opts)
+	return h.next.DeleteFile(ctx, sourceID, filename, opts)
 }
 
-func (h *PolicyHandler) SetFileMetaData(ctx context.Context, filename string, attrs Attributes) error {
-	source := GetSource(ctx)
-	if source == nil {
-		return errors.Create(errors.Internal, "missing source in context")
-	}
-
-	allowed, err := h.isAllowedToWrite(ctx, filename)
+func (h *PolicyHandler) SetFileMetaData(ctx context.Context, sourceID string, filename string, attrs Attributes) error {
+	allowed, err := h.assertIsAllowedToWrite(ctx, sourceID, filename)
 	if err != nil {
 		return err
 	}
 
 	if !allowed {
-		return errors.Create(errors.Unauthorized, "not_allowed")
+		return errors.Create(errors.Unauthorized, "not allowed")
 	}
 
-	return h.next.SetFileMetaData(ctx, filename, attrs)
+	return h.next.SetFileMetaData(ctx, sourceID, filename, attrs)
 }
 
-func (h *PolicyHandler) GetFileAttributes(ctx context.Context, filename string, name ...string) (Attributes, error) {
-	source := GetSource(ctx)
-	if source == nil {
-		return nil, errors.Create(errors.Internal, "missing source in context")
-	}
-
-	allowed, err := h.isAllowedToRead(ctx, filename)
+func (h *PolicyHandler) GetFileAttributes(ctx context.Context, sourceID string, filename string, name ...string) (Attributes, error) {
+	allowed, err := h.assertIsAllowedToRead(ctx, sourceID, filename)
 	if err != nil {
 		return nil, err
 	}
 
 	if !allowed {
-		return nil, errors.Create(errors.Unauthorized, "not_allowed")
+		return nil, errors.Create(errors.Unauthorized, "not allowed")
 	}
-
-	return h.next.GetFileAttributes(ctx, filename, name...)
+	return h.next.GetFileAttributes(ctx, sourceID, filename, name...)
 }
 
-func (h *PolicyHandler) RenameFile(ctx context.Context, filename string, newName string) error {
-	source := GetSource(ctx)
-	if source == nil {
-		return errors.Create(errors.Internal, "missing source in context")
-	}
-
-	allowed, err := h.isAllowedToRead(ctx, filename)
+func (h *PolicyHandler) RenameFile(ctx context.Context, sourceID string, filename string, newName string) error {
+	allowed, err := h.assertIsAllowedToRead(ctx, sourceID, filename)
 	if err != nil {
 		return err
 	}
+
 	if !allowed {
-		return errors.Create(errors.Unauthorized, "not_allowed")
+		return errors.Create(errors.Unauthorized, "not allowed")
 	}
 
-	allowed, err = h.isAllowedToWrite(ctx, path.Dir(filename))
+	allowed, err = h.assertIsAllowedToWrite(ctx, sourceID, path.Dir(filename))
 	if err != nil {
 		return err
 	}
+
 	if !allowed {
-		return errors.Create(errors.Unauthorized, "not_allowed")
+		return errors.Create(errors.Unauthorized, "not allowed")
 	}
 
-	return h.next.RenameFile(ctx, filename, newName)
+	return h.next.RenameFile(ctx, sourceID, filename, newName)
 }
 
-func (h *PolicyHandler) MoveFile(ctx context.Context, filename string, dirname string) error {
-	source := GetSource(ctx)
-	if source == nil {
-		return errors.Create(errors.Internal, "missing source in context")
-	}
-
-	allowed, err := h.isAllowedToRead(ctx, filename)
+func (h *PolicyHandler) MoveFile(ctx context.Context, sourceID string, filename string, dirname string) error {
+	allowed, err := h.assertIsAllowedToWrite(ctx, sourceID, filename)
 	if err != nil {
 		return err
 	}
+
 	if !allowed {
-		return errors.Create(errors.Unauthorized, "not_allowed")
+		return errors.Create(errors.Unauthorized, "not allowed")
 	}
 
-	allowed, err = h.isAllowedToWrite(ctx, path.Dir(dirname))
+	allowed, err = h.assertIsAllowedToWrite(ctx, sourceID, dirname)
 	if err != nil {
 		return err
 	}
+
 	if !allowed {
-		return errors.Create(errors.Unauthorized, "not_allowed")
+		return errors.Create(errors.Unauthorized, "not allowed")
 	}
 
-	return h.next.MoveFile(ctx, filename, dirname)
+	return h.next.MoveFile(ctx, filename, sourceID, dirname)
 }
 
-func (h *PolicyHandler) CopyFile(ctx context.Context, filename string, dirname string) error {
-	source := GetSource(ctx)
-	if source == nil {
-		return errors.Create(errors.Internal, "missing source in context")
-	}
-
-	allowed, err := h.isAllowedToRead(ctx, filename)
+func (h *PolicyHandler) CopyFile(ctx context.Context, sourceID string, filename string, dirname string) error {
+	allowed, err := h.assertIsAllowedToRead(ctx, sourceID, filename)
 	if err != nil {
 		return err
 	}
+
 	if !allowed {
-		return errors.Create(errors.Unauthorized, "not_allowed")
+		return errors.Create(errors.Unauthorized, "not allowed")
 	}
 
-	allowed, err = h.isAllowedToWrite(ctx, path.Dir(dirname))
+	allowed, err = h.assertIsAllowedToWrite(ctx, sourceID, dirname)
 	if err != nil {
 		return err
 	}
+
 	if !allowed {
-		return errors.Create(errors.Unauthorized, "not_allowed")
+		return errors.Create(errors.Unauthorized, "not allowed")
 	}
 
-	return h.next.CopyFile(ctx, filename, dirname)
+	return h.next.CopyFile(ctx, sourceID, filename, dirname)
 }
 
-func (h *PolicyHandler) OpenMultipartSession(ctx context.Context, filename string, info *MultipartSessionInfo) (string, error) {
-	allowed, err := h.isAllowedToWrite(ctx, path.Dir(filename))
+func (h *PolicyHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info *MultipartSessionInfo) (string, error) {
+	allowed, err := h.assertIsAllowedToWrite(ctx, sourceID, path.Dir(filename))
 	if err != nil {
 		return "", err
 	}
 
 	if !allowed {
-		return "", errors.Create(errors.Unauthorized, "not_allowed")
+		return "", errors.Create(errors.Unauthorized, "not allowed")
 	}
-
-	return h.next.OpenMultipartSession(ctx, filename, info)
+	return h.next.OpenMultipartSession(ctx, sourceID, filename, info)
 }
 
 func (h *PolicyHandler) AddContentPart(ctx context.Context, sessionID string, content io.Reader, size int64, info *ContentPartInfo) error {

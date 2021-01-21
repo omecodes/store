@@ -5,16 +5,9 @@ import (
 	"github.com/omecodes/errors"
 	"net/url"
 	"path"
-	"strings"
 )
 
 const activeUserVar = "{user}"
-
-type EncryptionAlg int
-
-const (
-	AESGCM = EncryptionAlg(1)
-)
 
 const (
 	SchemeFS     = "files"
@@ -47,28 +40,15 @@ type Source struct {
 }
 
 type SourceManager interface {
-	Save(source *Source) (string, error)
-	Get(id string) (*Source, error)
-	List() ([]*Source, error)
-	Delete(id string) error
-}
-
-func Split(filename string) (string, string) {
-	if filename == "" || filename == "/" {
-		return "", ""
-	}
-
-	pathComponents := strings.Split(strings.TrimPrefix(filename, "/"), "/")
-	if len(pathComponents) < 2 {
-		return "", ""
-	}
-
-	return pathComponents[0], "/" + strings.Join(pathComponents[1:], "/")
+	Save(ctx context.Context, source *Source) (string, error)
+	Get(ctx context.Context, id string) (*Source, error)
+	List(ctx context.Context) ([]*Source, error)
+	Delete(ctx context.Context, id string) error
 }
 
 func ResolveSource(ctx context.Context, sourceID string) (*Source, error) {
 	sourcesManager := GetSourceManager(ctx)
-	source, err := sourcesManager.Get(sourceID)
+	source, err := sourcesManager.Get(ctx, sourceID)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +62,7 @@ func ResolveSource(ctx context.Context, sourceID string) (*Source, error) {
 		}
 
 		refSourceID := u.Host
-		refSource, err := sourcesManager.Get(refSourceID)
+		refSource, err := sourcesManager.Get(ctx, refSourceID)
 		if err != nil {
 			return nil, err
 		}

@@ -15,7 +15,7 @@ func (h *ExecHandler) CreateSource(ctx context.Context, source *Source) error {
 	if sourceManager == nil {
 		return errors.New("context missing source manager")
 	}
-	_, err := sourceManager.Save(source)
+	_, err := sourceManager.Save(ctx, source)
 	return err
 }
 
@@ -24,7 +24,7 @@ func (h *ExecHandler) ListSources(ctx context.Context) ([]*Source, error) {
 	if sourceManager == nil {
 		return nil, errors.New("context missing source manager")
 	}
-	return sourceManager.List()
+	return sourceManager.List(ctx)
 }
 
 func (h *ExecHandler) GetSource(ctx context.Context, sourceID string) (*Source, error) {
@@ -32,7 +32,7 @@ func (h *ExecHandler) GetSource(ctx context.Context, sourceID string) (*Source, 
 	if sourceManager == nil {
 		return nil, errors.New("context missing source manager")
 	}
-	return sourceManager.Get(sourceID)
+	return sourceManager.Get(ctx, sourceID)
 }
 
 func (h *ExecHandler) DeleteSource(ctx context.Context, sourceID string) error {
@@ -40,54 +40,54 @@ func (h *ExecHandler) DeleteSource(ctx context.Context, sourceID string) error {
 	if sourceManager == nil {
 		return errors.New("context missing source manager")
 	}
-	return sourceManager.Delete(sourceID)
+	return sourceManager.Delete(ctx, sourceID)
 }
 
-func (h *ExecHandler) CreateDir(ctx context.Context, dirname string) error {
-	return Mkdir(ctx, dirname)
+func (h *ExecHandler) CreateDir(ctx context.Context, sourceID string, dirname string) error {
+	return Mkdir(ctx, sourceID, dirname)
 }
 
-func (h *ExecHandler) WriteFileContent(ctx context.Context, filename string, content io.Reader, size int64, opts WriteOptions) error {
-	return Write(ctx, filename, content, opts.Append)
+func (h *ExecHandler) WriteFileContent(ctx context.Context, sourceID string, filename string, content io.Reader, size int64, opts WriteOptions) error {
+	return Write(ctx, sourceID, filename, content, opts.Append)
 }
 
-func (h *ExecHandler) ListDir(ctx context.Context, dirname string, opts ListDirOptions) (*DirContent, error) {
-	return Ls(ctx, dirname, opts.Offset, opts.Count)
+func (h *ExecHandler) ListDir(ctx context.Context, sourceID string, dirname string, opts ListDirOptions) (*DirContent, error) {
+	return Ls(ctx, sourceID, dirname, opts.Offset, opts.Count)
 }
 
-func (h *ExecHandler) ReadFileContent(ctx context.Context, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
-	return Read(ctx, filename, opts.Range.Offset, opts.Range.Length)
+func (h *ExecHandler) ReadFileContent(ctx context.Context, sourceID string, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
+	return Read(ctx, sourceID, filename, opts.Range.Offset, opts.Range.Length)
 }
 
-func (h *ExecHandler) GetFileInfo(ctx context.Context, filename string, opts GetFileInfoOptions) (*File, error) {
-	return Info(ctx, filename, opts.WithAttrs)
+func (h *ExecHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileInfoOptions) (*File, error) {
+	return Info(ctx, sourceID, filename, opts.WithAttrs)
 }
 
-func (h *ExecHandler) DeleteFile(ctx context.Context, filename string, opts DeleteFileOptions) error {
-	return DeleteFile(ctx, filename, opts.Recursive)
+func (h *ExecHandler) DeleteFile(ctx context.Context, sourceID string, filename string, opts DeleteFileOptions) error {
+	return DeleteFile(ctx, sourceID, filename, opts.Recursive)
 }
 
-func (h *ExecHandler) SetFileMetaData(ctx context.Context, filename string, attrs Attributes) error {
-	return SetAttributes(ctx, filename, attrs)
+func (h *ExecHandler) SetFileMetaData(ctx context.Context, sourceID string, filename string, attrs Attributes) error {
+	return SetAttributes(ctx, sourceID, filename, attrs)
 }
 
-func (h *ExecHandler) GetFileAttributes(ctx context.Context, filename string, names ...string) (Attributes, error) {
-	return GetAttributes(ctx, filename, names...)
+func (h *ExecHandler) GetFileAttributes(ctx context.Context, sourceID string, filename string, names ...string) (Attributes, error) {
+	return GetAttributes(ctx, sourceID, filename, names...)
 }
 
-func (h *ExecHandler) RenameFile(ctx context.Context, filename string, newName string) error {
-	return Rename(ctx, filename, newName)
+func (h *ExecHandler) RenameFile(ctx context.Context, sourceID string, filename string, newName string) error {
+	return Rename(ctx, sourceID, filename, newName)
 }
 
-func (h *ExecHandler) MoveFile(ctx context.Context, filename string, dirname string) error {
-	return Move(ctx, filename, dirname)
+func (h *ExecHandler) MoveFile(ctx context.Context, sourceID string, filename string, dirname string) error {
+	return Move(ctx, sourceID, filename, dirname)
 }
 
-func (h *ExecHandler) CopyFile(ctx context.Context, filename string, dirname string) error {
-	return Copy(ctx, filename, dirname)
+func (h *ExecHandler) CopyFile(ctx context.Context, sourceID string, filename string, dirname string) error {
+	return Copy(ctx, sourceID, filename, dirname)
 }
 
-func (h *ExecHandler) OpenMultipartSession(ctx context.Context, filename string, info *MultipartSessionInfo) (string, error) {
+func (h *ExecHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info *MultipartSessionInfo) (string, error) {
 	panic("implement me")
 }
 

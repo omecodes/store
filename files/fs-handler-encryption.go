@@ -2,45 +2,40 @@ package files
 
 import (
 	"context"
-	"github.com/omecodes/libome/crypt"
 	"io"
+
+	"github.com/omecodes/libome/crypt"
 )
 
 type EncryptionHandler struct {
 	BaseHandler
 }
 
-func (h *EncryptionHandler) WriteFileContent(ctx context.Context, filename string, content io.Reader, size int64, opts WriteOptions) error {
-	var sourceID string
-	sourceID, filename = Split(filename)
-
+func (h *EncryptionHandler) WriteFileContent(ctx context.Context, sourceID string, filename string, content io.Reader, size int64, opts WriteOptions) error {
 	source, err := h.next.GetSource(ctx, sourceID)
 	if err != nil {
 		return err
 	}
 
 	if source.Encryption == nil {
-		return h.next.WriteFileContent(ctx, filename, content, size, opts)
+		return h.next.WriteFileContent(ctx, sourceID, filename, content, size, opts)
 	}
 
 	encryptStream := crypt.NewEncryptWrapper(nil, crypt.WithBlockSize(4096))
-	return h.next.WriteFileContent(ctx, filename, encryptStream.WrapReader(content), size, opts)
+	return h.next.WriteFileContent(ctx, sourceID, filename, encryptStream.WrapReader(content), size, opts)
 }
 
-func (h *EncryptionHandler) ReadFileContent(ctx context.Context, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
-	var sourceID string
-	sourceID, filename = Split(filename)
-
+func (h *EncryptionHandler) ReadFileContent(ctx context.Context, sourceID string, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
 	source, err := h.next.GetSource(ctx, sourceID)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	if source.Encryption == nil {
-		return h.next.ReadFileContent(ctx, filename, opts)
+		return h.next.ReadFileContent(ctx, sourceID, filename, opts)
 	}
 
-	readCloser, size, err := h.next.ReadFileContent(ctx, filename, opts)
+	readCloser, size, err := h.next.ReadFileContent(ctx, sourceID, filename, opts)
 	if err != nil {
 		return nil, 0, err
 	}

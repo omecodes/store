@@ -6,15 +6,12 @@ import (
 	"io"
 )
 
-type HashReader struct{}
-
-func NewEncryptReader(in io.Reader) io.Reader {
-	return nil
+func NewReaderHash(h hash.Hash) *readerHash {
+	return &readerHash{
+		result: "",
+		h:      h,
+	}
 }
-
-type WriterWrapper func(writer io.Writer) io.Writer
-
-type ReaderWrapper func(reader io.Reader) io.Reader
 
 type readerHash struct {
 	result string
@@ -22,27 +19,20 @@ type readerHash struct {
 	stream io.Reader
 }
 
-func (m *readerHash) Result(b []byte) string {
+func (m *readerHash) Sum(b []byte) string {
 	data := m.h.Sum(b)
 	return hex.EncodeToString(data)
 }
 
 func (m *readerHash) Read(p []byte) (n int, err error) {
 	n, err = m.stream.Read(p)
-	m.h.Write(p)
+	m.h.Write(p[:n])
 	return
 }
 
-func (m *readerHash) Wrap(reader io.Reader) io.Reader {
+func (m *readerHash) Reader(reader io.Reader) io.Reader {
 	m.stream = reader
 	return m
-}
-
-func NewReaderHash(h hash.Hash) *readerHash {
-	return &readerHash{
-		result: "",
-		h:      h,
-	}
 }
 
 func LimitReadCloser(readCloser io.ReadCloser, n int64) io.ReadCloser {
