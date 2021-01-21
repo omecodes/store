@@ -16,7 +16,7 @@ const (
 	pathVarId = "id"
 )
 
-func NewHTTPRouter() *mux.Router {
+func NewHTTPRouter(middleware ...Middleware) http.Handler {
 	r := mux.NewRouter()
 
 	tr := mux.NewRouter()
@@ -43,7 +43,14 @@ func NewHTTPRouter() *mux.Router {
 	r.Path("/sources/{id}").Methods(http.MethodGet).HandlerFunc(getSource)
 	r.Path("/sources/{id}").Methods(http.MethodDelete).HandlerFunc(deleteSource)
 
-	return r
+	var handler http.Handler
+
+	handler = r
+	for _, m := range middleware {
+		handler = m(handler)
+	}
+
+	return handler
 }
 
 func createFile(w http.ResponseWriter, r *http.Request) {
