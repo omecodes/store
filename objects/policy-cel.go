@@ -11,7 +11,7 @@ import (
 )
 
 type celParams struct {
-	auth *auth.Auth
+	auth *auth.User
 	data *Header
 }
 
@@ -31,10 +31,8 @@ func evaluate(ctx *context.Context, state *celParams, rule string) (bool, error)
 
 	vars := map[string]interface{}{
 		"auth": map[string]interface{}{
-			"uid":    state.auth.Uid,
-			"email":  state.auth.Email,
-			"worker": state.auth.Worker,
-			"scope":  state.auth.Scope,
+			"name":   state.auth.Name,
+			"access": state.auth.Access,
 			"group":  state.auth.Group,
 		},
 		"data": map[string]interface{}{
@@ -63,7 +61,7 @@ func assetActionAllowedOnObject(ctx *context.Context, collection string, objectI
 
 	authCEL := auth.Get(*ctx)
 	if authCEL == nil {
-		authCEL = &auth.Auth{}
+		authCEL = &auth.User{}
 	}
 
 	s := &celParams{

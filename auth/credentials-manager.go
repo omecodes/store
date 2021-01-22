@@ -12,22 +12,8 @@ import (
 	"github.com/omecodes/libome/crypt"
 )
 
-const (
-	TypeUser    = "user"
-	TypeWorker  = "worker"
-	TypeService = "service"
-)
-
-type APIAccess struct {
-	Key    string            `json:"key,omitempty"`
-	Secret string            `json:"secret,omitempty"`
-	Type   string            `json:"worker,omitempty"`
-	Meta   map[string]string `json:"meta,omitempty"`
-}
-
 type CredentialsManager interface {
-	VerifyAdminCredentials(passPhrase string) error
-
+	ValidateAdminAccess(password string) error
 	SaveAccess(access *APIAccess) error
 	GetAccess(key string) (*APIAccess, error)
 	GetAllAccesses() ([]*APIAccess, error)
@@ -62,7 +48,7 @@ type credentialsSQLManager struct {
 	adminInfo *crypt.Info
 }
 
-func (s *credentialsSQLManager) VerifyAdminCredentials(passPhrase string) error {
+func (s *credentialsSQLManager) ValidateAdminAccess(passPhrase string) error {
 	_, err := crypt.Reveal(passPhrase, s.adminInfo)
 	return err
 }

@@ -5,7 +5,7 @@ import (
 	se "github.com/omecodes/store/search-engine"
 )
 
-type ObjectsHandler interface {
+type Handler interface {
 	CreateCollection(ctx context.Context, collection *Collection) error
 	GetCollection(ctx context.Context, id string) (*Collection, error)
 	ListCollections(ctx context.Context) ([]*Collection, error)

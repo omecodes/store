@@ -7,7 +7,7 @@ import (
 	"github.com/omecodes/bome"
 )
 
-func NewSQLACLStore(db *sql.DB, dialect string, tableName string) (ACLStore, error) {
+func NewSQLACLStore(db *sql.DB, dialect string, tableName string) (ACLManager, error) {
 	store, err := bome.NewJSONDoubleMap(db, dialect, tableName)
 	return &sqlPermStore{
 		store: store,

@@ -3,7 +3,7 @@ package objects
 type CustomObjectsRouter struct {
 	paramsHandler *ParamsHandler
 	policyHandler *PolicyHandler
-	execHandler   ObjectsHandler
+	execHandler   Handler
 }
 
 type objectsHandlersOptions struct {
@@ -11,34 +11,34 @@ type objectsHandlersOptions struct {
 	policy *PolicyHandler
 }
 
-type ObjectsHandlerOption func(*objectsHandlersOptions)
+type HandlerOption func(*objectsHandlersOptions)
 
-func WithObjectsParamsHandler(handler *ParamsHandler) ObjectsHandlerOption {
+func WithObjectsParamsHandler(handler *ParamsHandler) HandlerOption {
 	return func(options *objectsHandlersOptions) {
 		options.params = handler
 	}
 }
 
-func WithObjectsPolicyHandler(handler *PolicyHandler) ObjectsHandlerOption {
+func WithObjectsPolicyHandler(handler *PolicyHandler) HandlerOption {
 	return func(options *objectsHandlersOptions) {
 		options.policy = handler
 	}
 }
 
-func WithDefaultObjectsParamsHandler() ObjectsHandlerOption {
+func WithDefaultObjectsParamsHandler() HandlerOption {
 	return func(options *objectsHandlersOptions) {
 		options.params = &ParamsHandler{}
 	}
 }
 
-func WithDefaultObjectsPolicyHandler() ObjectsHandlerOption {
+func WithDefaultObjectsPolicyHandler() HandlerOption {
 	return func(options *objectsHandlersOptions) {
 		options.policy = &PolicyHandler{}
 	}
 }
 
-func (r *CustomObjectsRouter) GetRoute(opts ...RouteOption) ObjectsHandler {
-	var handler ObjectsHandler
+func (r *CustomObjectsRouter) GetRoute(opts ...RouteOption) Handler {
+	var handler Handler
 
 	options := routesOptions{}
 	for _, o := range opts {
@@ -67,7 +67,7 @@ func (r *CustomObjectsRouter) GetRoute(opts ...RouteOption) ObjectsHandler {
 	return handler
 }
 
-func NewCustomObjectsRouter(exec ObjectsHandler, opts ...ObjectsHandlerOption) *CustomObjectsRouter {
+func NewCustomObjectsRouter(exec Handler, opts ...HandlerOption) *CustomObjectsRouter {
 	var options objectsHandlersOptions
 	for _, opt := range opts {
 		opt(&options)

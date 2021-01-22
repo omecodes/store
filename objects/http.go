@@ -3,7 +3,6 @@ package objects
 import (
 	"encoding/json"
 	"fmt"
-	se "github.com/omecodes/store/search-engine"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/store/auth"
+	se "github.com/omecodes/store/search-engine"
 )
 
 const (
@@ -341,13 +341,13 @@ func searchObjects(w http.ResponseWriter, r *http.Request) {
 func setSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	ai := auth.Get(ctx)
-	if ai == nil {
+	user := auth.Get(ctx)
+	if user == nil {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 
-	if ai.Uid != "admin" {
+	if user.Name != "admin" {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -378,13 +378,13 @@ func getSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	name := r.URL.Query().Get("name")
 
-	ai := auth.Get(ctx)
-	if ai == nil {
+	user := auth.Get(ctx)
+	if user == nil {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 
-	if ai.Uid != "admin" {
+	if user.Name != "admin" {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}

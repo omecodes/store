@@ -15,17 +15,3 @@ message Permission {
   string description = 3;
   string rule = 4;
 }
-
-message Context {
-  string type = 1;
-  string name = 2;
-}
-
-message Auth {
-  string uid = 1;
-  string email = 2;
-  bool worker = 3;
-  repeated string scope = 4;
-  string group = 5;
-  Context ctx = 6;
-}

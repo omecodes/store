@@ -7,7 +7,7 @@ import (
 )
 
 // NewGRPCObjectsClientHandler creates a router ObjectsHandler that embed that calls a gRPC service to perform final actions
-func NewGRPCObjectsClientHandler(nodeType uint32) ObjectsHandler {
+func NewGRPCObjectsClientHandler(nodeType uint32) Handler {
 	return &gRPCClientHandler{
 		nodeType: nodeType,
 	}

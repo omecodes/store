@@ -5,7 +5,7 @@ import (
 	se "github.com/omecodes/store/search-engine"
 )
 
-type Objects interface {
+type DB interface {
 	CreateCollection(ctx context.Context, collection *Collection) error
 
 	GetCollection(ctx context.Context, id string) (*Collection, error)

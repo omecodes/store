@@ -7,10 +7,10 @@ import (
 	"github.com/omecodes/store/cenv"
 )
 
-type ctxStore struct{}
+type ctxDB struct{}
 type ctxACLStore struct{}
 type ctxACL struct{}
-type ctxSettingsDB struct{}
+type ctxSettings struct{}
 type ctxCELPolicyEnv struct{}
 type ctxObjectHeader struct{}
 type ctxCELAclPrograms struct{}
@@ -30,46 +30,46 @@ func (u ContextUpdaterFunc) UpdateContext(ctx context.Context) context.Context {
 }
 
 // WithObjectsStore creates a context updater that adds store to a context
-func ContextWithStore(parent context.Context, objects Objects) context.Context {
-	return context.WithValue(parent, ctxStore{}, objects)
+func ContextWithStore(parent context.Context, db DB) context.Context {
+	return context.WithValue(parent, ctxDB{}, db)
 }
 
-func Get(ctx context.Context) Objects {
-	o := ctx.Value(ctxStore{})
+func Get(ctx context.Context) DB {
+	o := ctx.Value(ctxDB{})
 	if o == nil {
 		return nil
 	}
-	return o.(Objects)
+	return o.(DB)
 }
 
-func ContextWithACLStore(parent context.Context, store ACLStore) context.Context {
+func ContextWithACLStore(parent context.Context, store ACLManager) context.Context {
 	return context.WithValue(parent, ctxACLStore{}, store)
 }
 
-func GetACLStore(ctx context.Context) ACLStore {
+func GetACLStore(ctx context.Context) ACLManager {
 	o := ctx.Value(ctxACLStore{})
 	if o == nil {
 		return nil
 	}
-	return o.(ACLStore)
+	return o.(ACLManager)
 }
 
 // WithObjectsStore creates a context updater that adds ACL to a context
-func WithACLStore(store ACLStore) ContextUpdaterFunc {
+func WithACLStore(store ACLManager) ContextUpdaterFunc {
 	return func(ctx context.Context) context.Context {
 		return context.WithValue(ctx, ctxACL{}, store)
 	}
 }
 
 // WithSettings creates a context updater that adds permissions to a context
-func WithSettings(settings SettingsManager) ContextUpdaterFunc {
+func ContextWithSettings(settings SettingsManager) ContextUpdaterFunc {
 	return func(parent context.Context) context.Context {
-		return context.WithValue(parent, ctxSettingsDB{}, settings)
+		return context.WithValue(parent, ctxSettings{}, settings)
 	}
 }
 
 // WithRouterProvider updates context by adding a RouterProvider object in its values
-func WithRouterProvider(ctx context.Context, p ObjectsRouterProvider) context.Context {
+func WithRouterProvider(ctx context.Context, p RouterProvider) context.Context {
 	return context.WithValue(ctx, ctxRouterProvider{}, p)
 }
 
@@ -82,7 +82,7 @@ func CELPolicyEnv(ctx context.Context) *cel.Env {
 }
 
 func Settings(ctx context.Context) SettingsManager {
-	o := ctx.Value(ctxSettingsDB{})
+	o := ctx.Value(ctxSettings{})
 	if o == nil {
 		return nil
 	}
@@ -149,13 +149,13 @@ func LoadProgramForACLValidation(ctx *context.Context, expression string) (cel.P
 	return prg, nil
 }
 
-func NewRoute(ctx context.Context, opt ...RouteOption) (ObjectsHandler, error) {
+func NewRoute(ctx context.Context, opt ...RouteOption) (Handler, error) {
 	o := ctx.Value(ctxRouterProvider{})
 	if o == nil {
 		return nil, errors.New("no router provider")
 	}
 
-	p := o.(ObjectsRouterProvider)
+	p := o.(RouterProvider)
 	router := p.GetRouter(ctx)
 
 	return router.GetRoute(opt...), nil

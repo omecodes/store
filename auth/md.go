@@ -6,10 +6,8 @@ import (
 )
 
 const (
-	uuid   = "auth.user"
-	email  = "auth.user"
-	worker = "auth.is_worker"
-	scope  = "auth.scope"
+	uuid   = "user.name"
+	access = "user.access"
 	group  = "auth.group"
 )
 
@@ -22,7 +20,7 @@ func SetMetaWithExisting(ctx context.Context) context.Context {
 	return ctx
 }
 
-func FindInMD(ctx context.Context) *Auth {
+func FindInMD(ctx context.Context) *User {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil
@@ -30,22 +28,12 @@ func FindInMD(ctx context.Context) *Auth {
 	return FromMD(md)
 }
 
-func ToMD(a *Auth) metadata.MD {
+func ToMD(a *User) metadata.MD {
 	md := metadata.MD{}
-	md.Set(uuid, a.Uid)
+	md.Set(uuid, a.Name)
 
-	if a.Email != "" {
-		md.Set(email, a.Email)
-	}
-
-	if a.Worker {
-		md.Set(worker, "true")
-	} else {
-		md.Set(worker, "false")
-	}
-
-	if len(a.Scope) > 0 {
-		md.Set(scope, a.Scope...)
+	if a.Access != "" {
+		md.Set(access, a.Access)
 	}
 
 	if a.Group != "" {
@@ -54,26 +42,19 @@ func ToMD(a *Auth) metadata.MD {
 	return md
 }
 
-func FromMD(md metadata.MD) *Auth {
+func FromMD(md metadata.MD) *User {
 	userValues := md.Get(uuid)
 	if len(userValues) == 0 {
 		return nil
 	}
 
-	a := &Auth{}
-	a.Uid = userValues[0]
+	a := &User{}
+	a.Name = userValues[0]
 
-	emailValues := md.Get(email)
+	emailValues := md.Get(access)
 	if len(emailValues) > 0 {
-		a.Email = emailValues[0]
+		a.Access = emailValues[0]
 	}
-
-	workerValues := md.Get(worker)
-	if len(workerValues) > 0 {
-		a.Worker = workerValues[0] == "true"
-	}
-
-	a.Scope = md.Get(scope)
 
 	groupValues := md.Get(group)
 	if len(groupValues) > 0 {

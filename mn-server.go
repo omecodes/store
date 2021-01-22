@@ -46,12 +46,12 @@ type MNServer struct {
 	config      *MNConfig
 	autoCertDir string
 
-	objects                 objects.Objects
+	objects                 objects.DB
 	settings                objects.SettingsManager
 	accountsManager         accounts.Manager
 	authenticationProviders auth.ProviderManager
 	credentialsManager      auth.CredentialsManager
-	accessStore             objects.ACLStore
+	accessStore             objects.ACLManager
 
 	listener net.Listener
 	Errors   chan error
@@ -91,7 +91,7 @@ func (s *MNServer) init() error {
 		return err
 	}
 
-	s.objects, err = objects.NewSQLStore(s.db, bome.MySQL, "store")
+	s.objects, err = objects.NewSqlDB(s.db, bome.MySQL, "store")
 	if err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func (s *MNServer) init() error {
 	return nil
 }
 
-func (s *MNServer) GetRouter(ctx context.Context) objects.ObjectsRouter {
+func (s *MNServer) GetRouter(ctx context.Context) objects.Router {
 	return objects.DefaultRouter()
 }
 
@@ -170,9 +170,16 @@ func (s *MNServer) startDefaultAPIServer() error {
 	log.Info("starting HTTP server", log.Field("address", address))
 
 	middlewareList := []mux.MiddlewareFunc{
-		auth.DetectBasicMiddleware,
-		auth.DetectOauth2Middleware,
-		s.enrichContext,
+		objects.Middleware(
+			objects.WithACLManagerMiddleware(s.accessStore),
+			objects.WithRouterProviderMiddleware(s),
+			objects.WithDBMiddleware(s.objects),
+			objects.WithSettingsMiddleware(s.settings),
+		),
+		auth.Middleware(
+			auth.WithCredentialsManagerMiddleware(s.credentialsManager),
+			auth.WithProviderManagerMiddleware(s.authenticationProviders),
+		),
 		httpx.Logger("store").Handle,
 	}
 	var handler http.Handler
@@ -203,9 +210,16 @@ func (s *MNServer) startAutoCertAPIServer() error {
 	certManager.Cache = autocert.DirCache(s.autoCertDir)
 
 	middlewareList := []mux.MiddlewareFunc{
-		auth.DetectBasicMiddleware,
-		auth.DetectOauth2Middleware,
-		s.enrichContext,
+		objects.Middleware(
+			objects.WithACLManagerMiddleware(s.accessStore),
+			objects.WithRouterProviderMiddleware(s),
+			objects.WithDBMiddleware(s.objects),
+			objects.WithSettingsMiddleware(s.settings),
+		),
+		auth.Middleware(
+			auth.WithCredentialsManagerMiddleware(s.credentialsManager),
+			auth.WithProviderManagerMiddleware(s.authenticationProviders),
+		),
 		httpx.Logger("store").Handle,
 	}
 	var handler http.Handler
@@ -235,24 +249,7 @@ func (s *MNServer) startAutoCertAPIServer() error {
 			log.Error("listen to port 80 failed", log.Err(err))
 		}
 	}()
-
 	return nil
-}
-
-func (s *MNServer) enrichContext(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		ctx = accounts.ContextWithManager(ctx, s.accountsManager)
-		ctx = auth.ContextWithCredentialsManager(ctx, s.credentialsManager)
-		ctx = auth.ContextWithProviders(ctx, s.authenticationProviders)
-		ctx = objects.ContextWithACLStore(ctx, s.accessStore)
-		ctx = objects.ContextWithStore(ctx, s.objects)
-		ctx = objects.WithSettings(s.settings)(ctx)
-		ctx = objects.WithRouterProvider(ctx, s)
-
-		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
-	})
 }
 
 // Stop stops API server

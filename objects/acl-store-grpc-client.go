@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-func NewStoreClient() *gRPCClient {
+func NewACLGrpcClient() *gRPCClient {
 	return &gRPCClient{}
 }
 

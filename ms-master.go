@@ -189,10 +189,16 @@ func (s *MSServer) startAPIServer() error {
 	log.Info("starting HTTP server", log.Field("address", address))
 
 	middlewareList := []mux.MiddlewareFunc{
-		auth.DetectBasicMiddleware,
-		auth.DetectOauth2Middleware,
+		objects.Middleware(
+			objects.WithRouterProviderMiddleware(s),
+			objects.WithSettingsMiddleware(s.settings),
+			objects.WithGRPCRouterProvider(&objects.LoadBalancer{}),
+		),
+		auth.Middleware(
+			auth.WithCredentialsManagerMiddleware(s.credentialsManager),
+			auth.WithProviderManagerMiddleware(s.authenticationProviders),
+		),
 		httpx.Logger("OMS").Handle,
-		s.httpEnrichContext,
 	}
 	var handler http.Handler
 	handler = NewHttpUnit().MuxRouter()
@@ -222,8 +228,15 @@ func (s *MSServer) startProductionAPIServer() error {
 	certManager.Cache = autocert.DirCache(s.autoCertDir)
 
 	middlewareList := []mux.MiddlewareFunc{
-		auth.DetectBasicMiddleware,
-		auth.DetectOauth2Middleware,
+		objects.Middleware(
+			objects.WithRouterProviderMiddleware(s),
+			objects.WithSettingsMiddleware(s.settings),
+			objects.WithGRPCRouterProvider(&objects.LoadBalancer{}),
+		),
+		auth.Middleware(
+			auth.WithCredentialsManagerMiddleware(s.credentialsManager),
+			auth.WithProviderManagerMiddleware(s.authenticationProviders),
+		),
 		httpx.Logger("OMS").Handle,
 		s.httpEnrichContext,
 	}
@@ -254,7 +267,6 @@ func (s *MSServer) startProductionAPIServer() error {
 			log.Error("listen to port 80 failed", log.Err(err))
 		}
 	}()
-
 	return nil
 }
 
@@ -268,20 +280,13 @@ func (s *MSServer) httpEnrichContext(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		ctx = accounts.ContextWithManager(ctx, s.accountsManager)
-		ctx = auth.ContextWithCredentialsManager(ctx, s.credentialsManager)
-		ctx = auth.ContextWithProviders(ctx, s.authenticationProviders)
 		ctx = service.ContextWithBox(ctx, box)
-		ctx = objects.WithRouterProvider(ctx, objects.ObjectsRouterProvideFunc(s.GetRouter))
-		ctx = objects.WithSettings(s.settings)(ctx)
-		ctx = objects.WithRouterGrpcClientProvider(ctx, &objects.LoadBalancer{})
-
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
 }
 
-func (s *MSServer) GetRouter(ctx context.Context) objects.ObjectsRouter {
+func (s *MSServer) GetRouter(ctx context.Context) objects.Router {
 	return objects.NewCustomObjectsRouter(
 		objects.NewGRPCObjectsClientHandler(objects.ServiceTypeHandler),
 		objects.WithDefaultObjectsParamsHandler(),

@@ -32,14 +32,12 @@ func (h *PolicyHandler) evaluateRules(ctx context.Context, rules ...string) (boo
 	}
 
 	vars := map[string]interface{}{}
-	authInfo := auth.Get(ctx)
-	if authInfo != nil {
-		vars["auth"] = map[string]interface{}{
-			"uid":    authInfo.Uid,
-			"email":  authInfo.Email,
-			"worker": authInfo.Worker,
-			"scope":  authInfo.Scope,
-			"group":  authInfo.Group,
+	user := auth.Get(ctx)
+	if user != nil {
+		vars["user"] = map[string]interface{}{
+			"name":   user.Name,
+			"access": user.Access,
+			"group":  user.Group,
 		}
 	}
 

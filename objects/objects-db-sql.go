@@ -11,7 +11,7 @@ import (
 	se "github.com/omecodes/store/search-engine"
 )
 
-func NewSQLStore(db *sql.DB, dialect string, tablePrefix string) (Objects, error) {
+func NewSqlDB(db *sql.DB, dialect string, tablePrefix string) (DB, error) {
 	col, err := bome.NewJSONMap(db, dialect, tablePrefix+"_collections")
 	if err != nil {
 		return nil, err

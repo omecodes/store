@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-type ACLStore interface {
+type ACLManager interface {
 	SaveRules(ctx context.Context, collection string, objectID string, rules *PathAccessRules) error
 	GetRules(ctx context.Context, collection string, objectID string) (*PathAccessRules, error)
 	GetForPath(ctx context.Context, collection string, objectID string, path string) (*AccessRules, error)

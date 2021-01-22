@@ -2,33 +2,33 @@ package objects
 
 import "context"
 
-type ObjectsRouter interface {
+type Router interface {
 	// GetRoute returns a sequence of handler
-	GetRoute(opts ...RouteOption) ObjectsHandler
+	GetRoute(opts ...RouteOption) Handler
 }
 
-type ObjectsRouterProvider interface {
+type RouterProvider interface {
 	//GetRouter returns a router
-	GetRouter(ctx context.Context) ObjectsRouter
+	GetRouter(ctx context.Context) Router
 }
 
-type ObjectsRouterProvideFunc func(ctx context.Context) ObjectsRouter
+type RouterProvideFunc func(ctx context.Context) Router
 
-func (f ObjectsRouterProvideFunc) GetRouter(ctx context.Context) ObjectsRouter {
+func (f RouterProvideFunc) GetRouter(ctx context.Context) Router {
 	return f(ctx)
 }
 
-type ObjectsRouteProviderFunc func(opts ...RouteOption) ObjectsHandler
+type RouteProviderFunc func(opts ...RouteOption) Handler
 
-func (f ObjectsRouteProviderFunc) GetRoute(opts ...RouteOption) ObjectsHandler {
+func (f RouteProviderFunc) GetRoute(opts ...RouteOption) Handler {
 	return f(opts...)
 }
 
-func DefaultRouter() ObjectsRouter {
-	return ObjectsRouteProviderFunc(getObjectsRoute)
+func DefaultRouter() Router {
+	return RouteProviderFunc(getObjectsRoute)
 }
 
-func getObjectsRoute(opts ...RouteOption) (handler ObjectsHandler) {
+func getObjectsRoute(opts ...RouteOption) (handler Handler) {
 	routes := routesOptions{}
 
 	for _, o := range opts {

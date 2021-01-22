@@ -31,15 +31,15 @@ func NewMSNode(config *NodeConfig) *MSNode {
 type MSNode struct {
 	config      *NodeConfig
 	box         *service.Box
-	accessStore objects.ACLStore
-	objects     objects.Objects
+	accessStore objects.ACLManager
+	objects     objects.DB
 	reg         ome.Registry
 }
 
 func (n *MSNode) init() error {
 	var err error
-	n.accessStore = objects.NewStoreClient()
-	n.objects = objects.NewStoreGrpcClient()
+	n.accessStore = objects.NewACLGrpcClient()
+	n.objects = objects.NewDBGrpcClient()
 
 	n.box = service.CreateBox(
 		service.Dir(n.config.WorkingDir),
@@ -68,7 +68,7 @@ func (n *MSNode) updateGrpcContext(ctx context.Context) (context.Context, error)
 	return ctx, nil
 }
 
-func (n *MSNode) GetRouter(ctx context.Context) objects.ObjectsRouter {
+func (n *MSNode) GetRouter(ctx context.Context) objects.Router {
 	return objects.NewCustomObjectsRouter(
 		&objects.ExecHandler{},
 		objects.WithDefaultObjectsPolicyHandler(),

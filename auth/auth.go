@@ -5,7 +5,6 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
-	"net/http"
 	"strings"
 
 	"google.golang.org/grpc/metadata"
@@ -14,6 +13,12 @@ import (
 	"github.com/omecodes/errors"
 	ome "github.com/omecodes/libome"
 )
+
+type User struct {
+	Name   string `json:"name,omitempty"`
+	Access string `json:"access,omitempty"`
+	Group  string `json:"group,omitempty"`
+}
 
 func BasicContextUpdater(ctx context.Context) (context.Context, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
@@ -54,7 +59,6 @@ func OAuth2ContextUpdater(ctx context.Context) (context.Context, error) {
 		if authorization == "" {
 			return ctx, errors.Create(errors.BadRequest, "malformed authorization value")
 		}
-
 		return updateContextWithOauth2(ctx, authorization)
 	}
 	return ctx, nil
@@ -63,79 +67,49 @@ func OAuth2ContextUpdater(ctx context.Context) (context.Context, error) {
 func UpdateFromMeta(parent context.Context) (context.Context, error) {
 	a := FindInMD(parent)
 	if a != nil {
-		return context.WithValue(parent, ctxAuthentication{}, a), nil
+		return context.WithValue(parent, ctxUser{}, a), nil
 	}
 	return parent, nil
 }
 
-func DetectBasicMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authorization := r.Header.Get("Authorization")
-
-		if authorization != "" {
-			authorizationParts := strings.SplitN(authorization, " ", 2)
-			authType := strings.ToLower(authorizationParts[0])
-			if len(authorizationParts) > 1 {
-				authorization = authorizationParts[1]
-			}
-
-			if authType == "basic" {
-				if authorization == "" {
-					w.WriteHeader(http.StatusBadRequest)
-					return
-				}
-
-				ctx := r.Context()
-				ctx, err := updateContextWithBasic(ctx, authorization)
-				if err != nil {
-					if err2, ok := err.(*errors.Error); ok {
-						w.WriteHeader(err2.Code)
-						return
-					}
-					w.WriteHeader(http.StatusForbidden)
-					return
-				}
-				r = r.WithContext(ctx)
-			}
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-func DetectOauth2Middleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authorization := r.Header.Get("Authorization")
-
-		if authorization != "" {
-			authorizationParts := strings.SplitN(authorization, " ", 2)
-			authType := strings.ToLower(authorizationParts[0])
-			if len(authorizationParts) > 1 {
-				authorization = authorizationParts[1]
-			}
-
-			if authType == "bearer" {
-				if authorization == "" {
-					w.WriteHeader(http.StatusBadRequest)
-					return
-				}
-
-				ctx, err := updateContextWithOauth2(r.Context(), authorization)
-				if err != nil {
-					if err2, ok := err.(*errors.Error); ok {
-						w.WriteHeader(err2.Code)
-						return
-					}
-					w.WriteHeader(http.StatusForbidden)
-					return
-				}
-				r = r.WithContext(ctx)
-			}
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
 func updateContextWithBasic(ctx context.Context, authorization string) (context.Context, error) {
+	bytes, err := base64.StdEncoding.DecodeString(authorization)
+	if err != nil {
+		return ctx, errors.Create(errors.BadRequest, "authorization wrong encoding")
+	}
+
+	parts := strings.Split(string(bytes), ":")
+	if len(parts) != 2 {
+		return ctx, errors.Create(errors.BadRequest, "wrong basic authentication")
+	}
+
+	authUser := parts[0]
+	if authUser != "admin" {
+		return nil, errors.Create(errors.Forbidden, "forbidden")
+	}
+
+	var pass string
+	if len(parts) > 1 {
+		pass = parts[1]
+	}
+
+	manager := GetCredentialsManager(ctx)
+	if manager == nil {
+		return ctx, errors.Create(errors.Forbidden, "No manager basic authentication is not supported")
+	}
+
+	err = manager.ValidateAdminAccess(pass)
+	if err != nil {
+		log.Error("verifying admin authentication", log.Err(err))
+		return ctx, errors.Create(errors.Forbidden, "admin authentication failed")
+	}
+
+	return context.WithValue(ctx, ctxUser{}, &User{
+		Name: "admin",
+	}), nil
+}
+
+func updateContextWithProxyBasic(ctx context.Context, authorization string) (context.Context, error) {
 	bytes, err := base64.StdEncoding.DecodeString(authorization)
 	if err != nil {
 		return ctx, errors.Create(errors.BadRequest, "authorization value non base64 encoding")
@@ -157,34 +131,24 @@ func updateContextWithBasic(ctx context.Context, authorization string) (context.
 		return ctx, errors.Create(errors.Forbidden, "No manager basic authentication is not supported")
 	}
 
-	if authUser == "admin" {
-		err = manager.VerifyAdminCredentials(pass)
-		if err != nil {
-			log.Error("verifying admin authentication", log.Err(err))
-			return ctx, errors.Create(errors.Forbidden, "admin authentication failed")
-		}
+	sh := sha512.New()
+	_, err = sh.Write([]byte(pass))
+	if err != nil {
+		return ctx, errors.Create(errors.Internal, "password hashing failed")
+	}
+	hashed := sh.Sum(nil)
 
-	} else {
-		sh := sha512.New()
-		_, err = sh.Write([]byte(pass))
-		if err != nil {
-			return ctx, errors.Create(errors.Internal, "password hashing failed")
-		}
-		hashed := sh.Sum(nil)
-
-		access, err := manager.GetAccess(authUser)
-		if err != nil {
-			return ctx, err
-		}
-
-		if access.Secret != hex.EncodeToString(hashed) {
-			return ctx, errors.Create(errors.Forbidden, "authorization value non base64 encoding")
-		}
+	access, err := manager.GetAccess(authUser)
+	if err != nil {
+		return ctx, err
 	}
 
-	return context.WithValue(ctx, ctxAuthentication{}, &Auth{
-		Uid:    authUser,
-		Worker: "admin" != authUser,
+	if access.Secret != hex.EncodeToString(hashed) {
+		return ctx, errors.Create(errors.Forbidden, "authorization value non base64 encoding")
+	}
+
+	return context.WithValue(ctx, ctxUser{}, &User{
+		Access: access.Type,
 	}), nil
 }
 
@@ -214,10 +178,16 @@ func updateContextWithOauth2(ctx context.Context, authorization string) (context
 	}
 
 	ctx = context.WithValue(ctx, ctxJWt{}, jwt)
-	return context.WithValue(ctx, ctxAuthentication{}, &Auth{
-		Uid:    jwt.Claims.Sub,
-		Email:  jwt.Claims.Profile.Email,
-		Worker: false,
-		Scope:  strings.Split(jwt.Claims.Scope, ""),
-	}), nil
+	o := ctx.Value(ctxUser{})
+	if o != nil {
+		user := o.(*User)
+		user.Name = jwt.Claims.Sub
+		return ctx, nil
+
+	} else {
+		return context.WithValue(ctx, ctxUser{}, &User{
+			Name: jwt.Claims.Sub,
+		}), nil
+	}
+
 }

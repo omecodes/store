@@ -35,8 +35,8 @@ func NewMSStore(config *StoreConfig) *MSStore {
 type MSStore struct {
 	config      *StoreConfig
 	box         *service.Box
-	accessStore objects.ACLStore
-	objects     objects.Objects
+	accessStore objects.ACLManager
+	objects     objects.DB
 }
 
 func (s *MSStore) init() error {
@@ -52,7 +52,7 @@ func (s *MSStore) init() error {
 		return err
 	}
 
-	s.objects, err = objects.NewSQLStore(db, bome.MySQL, "objects")
+	s.objects, err = objects.NewSqlDB(db, bome.MySQL, "objects")
 	if err != nil {
 		return err
 	}
@@ -75,8 +75,8 @@ func (s *MSStore) updateGrpcContext(ctx context.Context) (context.Context, error
 	ctx = service.ContextWithBox(ctx, s.box)
 	ctx = objects.ContextWithACLStore(ctx, s.accessStore)
 	ctx = objects.ContextWithStore(ctx, s.objects)
-	ctx = objects.WithRouterProvider(ctx, objects.ObjectsRouterProvideFunc(
-		func(ctx context.Context) objects.ObjectsRouter {
+	ctx = objects.WithRouterProvider(ctx, objects.RouterProvideFunc(
+		func(ctx context.Context) objects.Router {
 			return objects.NewCustomObjectsRouter(&objects.ExecHandler{})
 		},
 	))

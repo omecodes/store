@@ -13,11 +13,11 @@ type PolicyHandler struct {
 }
 
 func (p *PolicyHandler) isAdmin(ctx context.Context) bool {
-	authCEL := auth.Get(ctx)
-	if authCEL == nil {
+	user := auth.Get(ctx)
+	if user == nil {
 		return false
 	}
-	return authCEL.Uid == "admin"
+	return user.Name == "admin"
 }
 
 func (p *PolicyHandler) CreateCollection(ctx context.Context, collection *Collection) error {
@@ -49,8 +49,8 @@ func (p *PolicyHandler) DeleteCollection(ctx context.Context, id string) error {
 }
 
 func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object *Object, accessSecurityRules *PathAccessRules, indexes []*se.TextIndex, opts PutOptions) (string, error) {
-	ai := auth.Get(ctx)
-	if ai == nil {
+	user := auth.Get(ctx)
+	if user == nil {
 		return "", errors.Forbidden
 	}
 
@@ -68,16 +68,16 @@ func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object
 		accessSecurityRules.AccessRules["$"] = docRules
 	}
 
-	userDefaultRule := fmt.Sprintf("auth.uid=='%s'", ai.Uid)
+	userDefaultRule := fmt.Sprintf("user.name=='%s'", user.Name)
 	readPerm := &auth.Permission{
 		Name:        "default-readers",
 		Label:       "Readers",
 		Description: "In addition of creator, admin and workers are allowed to read every objects",
-		Rule:        "auth.worker || auth.uid=='admin'",
+		Rule:        "user.access=='worker' || user.name=='admin'",
 	}
 
 	if len(docRules.Read) == 0 {
-		readPerm.Rule = userDefaultRule + " || auth.worker || auth.uid=='admin'"
+		readPerm.Rule = userDefaultRule + " || user.name=='worker' || user.name=='admin'"
 		docRules.Read = append(docRules.Read, readPerm)
 	} else {
 		docRules.Read = append(docRules.Read, readPerm)
@@ -87,10 +87,10 @@ func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object
 		Name:        "default-readers",
 		Label:       "Readers",
 		Description: "In addition of creator, admin and workers are allowed to write every objects",
-		Rule:        "auth.worker || auth.uid=='admin'",
+		Rule:        "user.access=='worker' || user.name=='admin'",
 	}
 	if len(docRules.Write) == 0 {
-		readPerm.Rule = userDefaultRule + " || auth.worker || auth.uid=='admin'"
+		readPerm.Rule = userDefaultRule + " || user.access=='worker' || user.name=='admin'"
 		docRules.Write = append(docRules.Write, writePerm)
 	} else {
 		docRules.Write = append(docRules.Write, writePerm)
@@ -100,13 +100,13 @@ func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object
 		Name:        "default-readers",
 		Label:       "Readers",
 		Description: "In addition of creator, admin and workers are allowed to write every objects",
-		Rule:        "auth.worker || auth.uid=='admin'",
+		Rule:        "user.access=='worker' || user.name=='admin'",
 	}
 	if len(docRules.Delete) == 0 {
 		docRules.Delete = append(docRules.Delete, deletePerm)
 	}
 
-	object.Header.CreatedBy = ai.Uid
+	object.Header.CreatedBy = user.Name
 	return p.BaseHandler.PutObject(ctx, collection, object, accessSecurityRules, indexes, opts)
 }
 

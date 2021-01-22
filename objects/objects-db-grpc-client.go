@@ -6,7 +6,7 @@ import (
 	se "github.com/omecodes/store/search-engine"
 )
 
-func NewStoreGrpcClient() Objects {
+func NewDBGrpcClient() DB {
 	return &dbClient{}
 }
 
