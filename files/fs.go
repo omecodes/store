@@ -57,7 +57,7 @@ func getFS(ctx context.Context, sourceID string) (FS, error) {
 
 	switch uri.Scheme {
 	case SchemeFS:
-		rootDir := strings.TrimPrefix(SchemeFS, source.URI)
+		rootDir := strings.TrimPrefix(source.URI, SchemeFS)
 		return &dirFS{root: rootDir}, nil
 
 	default:
