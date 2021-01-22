@@ -64,7 +64,7 @@ func (h *PolicyHandler) assertIsAllowedToRead(ctx context.Context, sourceID stri
 		return h.evaluateRules(ctx, rules...)
 	}
 
-	attrs, err := h.GetFileAttributes(ctx, filename, AttrPermissions)
+	attrs, err := h.next.GetFileAttributes(ctx, sourceID, filename, AttrPermissions)
 	if err != nil {
 		return false, err
 	}
@@ -97,7 +97,7 @@ func (h *PolicyHandler) assertIsAllowedToWrite(ctx context.Context, sourceID str
 		return h.evaluateRules(ctx, rules...)
 	}
 
-	attrs, err := h.GetFileAttributes(ctx, filename, AttrPermissions)
+	attrs, err := h.next.GetFileAttributes(ctx, sourceID, filename, AttrPermissions)
 	if err != nil {
 		return false, err
 	}
@@ -130,7 +130,7 @@ func (h *PolicyHandler) assertIsAllowedToChmod(ctx context.Context, sourceID str
 		return h.evaluateRules(ctx, rules...)
 	}
 
-	attrs, err := h.GetFileAttributes(ctx, filename, AttrPermissions)
+	attrs, err := h.next.GetFileAttributes(ctx, sourceID, filename, AttrPermissions)
 	if err != nil {
 		return false, err
 	}
