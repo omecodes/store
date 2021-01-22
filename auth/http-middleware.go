@@ -16,13 +16,13 @@ type middlewareOptions struct {
 
 type MiddlewareOption func(*middlewareOptions)
 
-func WithProviderManagerMiddleware(manager ProviderManager) MiddlewareOption {
+func MiddlewareWithProviderManager(manager ProviderManager) MiddlewareOption {
 	return func(options *middlewareOptions) {
 		options.providers = manager
 	}
 }
 
-func WithCredentialsManagerMiddleware(manager CredentialsManager) MiddlewareOption {
+func MiddlewareWithCredentials(manager CredentialsManager) MiddlewareOption {
 	return func(options *middlewareOptions) {
 		options.credentials = manager
 	}

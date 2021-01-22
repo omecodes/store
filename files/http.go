@@ -16,44 +16,7 @@ const (
 	pathVarId = "id"
 )
 
-func NewHTTPRouter(middleware ...Middleware) http.Handler {
-	r := mux.NewRouter()
-
-	tr := mux.NewRouter()
-	tr.Methods(http.MethodPut).HandlerFunc(createFile)
-	tr.Methods(http.MethodPost).HandlerFunc(listDir)
-	tr.Methods(http.MethodGet).HandlerFunc(getFileInfo)
-	tr.Methods(http.MethodDelete).HandlerFunc(deleteFile)
-	tr.Methods(http.MethodPatch).HandlerFunc(patchFileTree)
-
-	ar := mux.NewRouter()
-	ar.Methods(http.MethodGet).HandlerFunc(getFileAttributes)
-	ar.Methods(http.MethodPut).HandlerFunc(setFileAttributes)
-
-	dr := mux.NewRouter()
-	dr.Methods(http.MethodGet).HandlerFunc(downloadFile)
-	dr.Methods(http.MethodPut, http.MethodPost).HandlerFunc(uploadFile)
-
-	r.PathPrefix("/tree/").Handler(http.StripPrefix("/tree", tr))
-	r.PathPrefix("/attr/").Handler(http.StripPrefix("/attr", ar))
-	r.PathPrefix("/data/").Handler(http.StripPrefix("/data", dr))
-
-	r.Path("/sources").Methods(http.MethodPut).HandlerFunc(createSource)
-	r.Path("/sources").Methods(http.MethodPost).HandlerFunc(ListSources)
-	r.Path("/sources/{id}").Methods(http.MethodGet).HandlerFunc(getSource)
-	r.Path("/sources/{id}").Methods(http.MethodDelete).HandlerFunc(deleteSource)
-
-	var handler http.Handler
-
-	handler = r
-	for _, m := range middleware {
-		handler = m(handler)
-	}
-
-	return handler
-}
-
-func createFile(w http.ResponseWriter, r *http.Request) {
+func CreateFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
@@ -91,7 +54,7 @@ func createFile(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func listDir(w http.ResponseWriter, r *http.Request) {
+func ListDir(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
@@ -116,7 +79,7 @@ func listDir(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(content)
 }
 
-func getFileInfo(w http.ResponseWriter, r *http.Request) {
+func GetFileInfo(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
@@ -137,7 +100,7 @@ func getFileInfo(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(info)
 }
 
-func deleteFile(w http.ResponseWriter, r *http.Request) {
+func DeleteFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
@@ -157,7 +120,7 @@ func deleteFile(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func patchFileTree(w http.ResponseWriter, r *http.Request) {
+func PatchFileTree(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
@@ -185,7 +148,7 @@ func patchFileTree(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func setFileAttributes(w http.ResponseWriter, r *http.Request) {
+func SetFileAttributes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
@@ -209,7 +172,7 @@ func setFileAttributes(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getFileAttributes(w http.ResponseWriter, r *http.Request) {
+func GetFileAttributes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
@@ -230,7 +193,7 @@ func getFileAttributes(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(attributes)
 }
 
-func uploadFile(w http.ResponseWriter, r *http.Request) {
+func UploadFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 	route, err := NewRoute(ctx)
@@ -250,7 +213,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func downloadFile(w http.ResponseWriter, r *http.Request) {
+func DownloadFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
@@ -309,7 +272,7 @@ func downloadFile(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func createSource(w http.ResponseWriter, r *http.Request) {
+func CreateSource(w http.ResponseWriter, r *http.Request) {
 	var source *Source
 	err := json.NewDecoder(r.Body).Decode(&source)
 	if err != nil {
@@ -347,7 +310,7 @@ func ListSources(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(sources)
 }
 
-func getSource(w http.ResponseWriter, r *http.Request) {
+func GetSource(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	sourceID := vars[pathVarId]
 
@@ -366,7 +329,7 @@ func getSource(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(source)
 }
 
-func deleteSource(w http.ResponseWriter, r *http.Request) {
+func DeleteSource(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	sourceID := vars[pathVarId]
 

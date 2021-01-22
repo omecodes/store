@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"database/sql"
+	"fmt"
+	"github.com/omecodes/store/files"
 	"net"
 	"net/http"
 	"os"
@@ -24,23 +26,26 @@ import (
 
 // Config contains info to configure an instance of Server
 type MNConfig struct {
-	Dev        bool
-	Domains    []string
-	WorkingDir string
-	AdminInfo  string
-	DSN        string
+	Dev            bool
+	Domains        []string
+	FSRootDir      string
+	WorkingDir     string
+	WebAppsDir     string
+	StaticFilesDir string
+	AdminInfo      string
+	DSN            string
 }
 
-// NewMNServer is a server constructor
-func NewMNServer(config MNConfig) *MNServer {
-	s := new(MNServer)
+// NewServer is a server constructor
+func NewServer(config MNConfig) *Server {
+	s := new(Server)
 	s.config = &config
 	return s
 }
 
 // Server embeds an Ome data store
 // it also exposes an API server
-type MNServer struct {
+type Server struct {
 	initialized bool
 	options     []netx.ListenOption
 	config      *MNConfig
@@ -52,6 +57,7 @@ type MNServer struct {
 	authenticationProviders auth.ProviderManager
 	credentialsManager      auth.CredentialsManager
 	accessStore             objects.ACLManager
+	sourceManager           files.SourceManager
 
 	listener net.Listener
 	Errors   chan error
@@ -59,7 +65,7 @@ type MNServer struct {
 	db       *sql.DB
 }
 
-func (s *MNServer) init() error {
+func (s *Server) init() error {
 	if s.initialized {
 		return nil
 	}
@@ -138,15 +144,45 @@ func (s *MNServer) init() error {
 			return err
 		}
 	}
+
+	// Files initialization
+	if s.config.FSRootDir != "" {
+		s.sourceManager, err = files.NewSourceSQLManager(s.db, bome.MySQL, "store_files_sources")
+		if err != nil {
+			return err
+		}
+
+		ctx := context.Background()
+		source, err := s.sourceManager.Get(ctx, "fs-main-source")
+		if err != nil && !errors.IsNotFound(err) {
+			return err
+		}
+
+		if source == nil {
+			source = &files.Source{
+				ID:          "fs-main-source",
+				Label:       "File default source",
+				Description: "",
+				Type:        files.TypeDisk,
+				URI:         fmt.Sprintf("files://%s", s.config.FSRootDir),
+				ExpireTime:  -1,
+			}
+			_, err = s.sourceManager.Save(ctx, source)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
-func (s *MNServer) GetRouter(ctx context.Context) objects.Router {
+func (s *Server) GetRouter(ctx context.Context) objects.Router {
 	return objects.DefaultRouter()
 }
 
 // Start starts API server
-func (s *MNServer) Start() error {
+func (s *Server) Start() error {
 	err := s.init()
 	if err != nil {
 		return err
@@ -159,7 +195,7 @@ func (s *MNServer) Start() error {
 	return s.startDefaultAPIServer()
 }
 
-func (s *MNServer) startDefaultAPIServer() error {
+func (s *Server) startDefaultAPIServer() error {
 	var err error
 	s.listener, err = net.Listen("tcp", ":8080")
 	if err != nil {
@@ -171,19 +207,28 @@ func (s *MNServer) startDefaultAPIServer() error {
 
 	middlewareList := []mux.MiddlewareFunc{
 		objects.Middleware(
-			objects.WithACLManagerMiddleware(s.accessStore),
-			objects.WithRouterProviderMiddleware(s),
-			objects.WithDBMiddleware(s.objects),
-			objects.WithSettingsMiddleware(s.settings),
+			objects.MiddlewareWithACLManager(s.accessStore),
+			objects.MiddlewareWithRouterProvider(s),
+			objects.MIddlewareWithDB(s.objects),
+			objects.MiddlewareWithSettings(s.settings),
+		),
+		files.Middleware(
+			files.MiddlewareWithSourceManager(s.sourceManager),
 		),
 		auth.Middleware(
-			auth.WithCredentialsManagerMiddleware(s.credentialsManager),
-			auth.WithProviderManagerMiddleware(s.authenticationProviders),
+			auth.MiddlewareWithCredentials(s.credentialsManager),
+			auth.MiddlewareWithProviderManager(s.authenticationProviders),
 		),
 		httpx.Logger("store").Handle,
 	}
+
 	var handler http.Handler
-	handler = NewHttpUnit().MuxRouter()
+	handler = httpRouter(
+		WithObjects(),
+		WithStaticFiles(s.config.StaticFilesDir),
+		WithFiles(s.config.FSRootDir),
+		WithWebApp(s.config.WebAppsDir),
+	)
 
 	for _, m := range middlewareList {
 		handler = m.Middleware(handler)
@@ -201,7 +246,7 @@ func (s *MNServer) startDefaultAPIServer() error {
 	return nil
 }
 
-func (s *MNServer) startAutoCertAPIServer() error {
+func (s *Server) startAutoCertAPIServer() error {
 
 	certManager := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
@@ -211,19 +256,27 @@ func (s *MNServer) startAutoCertAPIServer() error {
 
 	middlewareList := []mux.MiddlewareFunc{
 		objects.Middleware(
-			objects.WithACLManagerMiddleware(s.accessStore),
-			objects.WithRouterProviderMiddleware(s),
-			objects.WithDBMiddleware(s.objects),
-			objects.WithSettingsMiddleware(s.settings),
+			objects.MiddlewareWithACLManager(s.accessStore),
+			objects.MiddlewareWithRouterProvider(s),
+			objects.MIddlewareWithDB(s.objects),
+			objects.MiddlewareWithSettings(s.settings),
+		),
+		files.Middleware(
+			files.MiddlewareWithSourceManager(s.sourceManager),
 		),
 		auth.Middleware(
-			auth.WithCredentialsManagerMiddleware(s.credentialsManager),
-			auth.WithProviderManagerMiddleware(s.authenticationProviders),
+			auth.MiddlewareWithCredentials(s.credentialsManager),
+			auth.MiddlewareWithProviderManager(s.authenticationProviders),
 		),
 		httpx.Logger("store").Handle,
 	}
 	var handler http.Handler
-	handler = NewHttpUnit().MuxRouter()
+	handler = httpRouter(
+		WithObjects(),
+		WithStaticFiles(s.config.StaticFilesDir),
+		WithFiles(s.config.FSRootDir),
+		WithWebApp(s.config.WebAppsDir),
+	)
 
 	for _, m := range middlewareList {
 		handler = m.Middleware(handler)
@@ -253,7 +306,7 @@ func (s *MNServer) startAutoCertAPIServer() error {
 }
 
 // Stop stops API server
-func (s *MNServer) Stop() {
+func (s *Server) Stop() {
 	_ = s.listener.Close()
 	_ = s.db.Close()
 }

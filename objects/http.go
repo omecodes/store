@@ -24,29 +24,7 @@ const (
 	pathItemCollection = "collection"
 )
 
-func NewHTTPRouter() *mux.Router {
-	r := mux.NewRouter()
-
-	r.Name("SetSettings").Methods(http.MethodPut).Path("/settings").Handler(http.HandlerFunc(setSettings))
-	r.Name("GetSettings").Methods(http.MethodGet).Path("/settings").Handler(http.HandlerFunc(getSettings))
-
-	r.Name("CreateCollection").Methods(http.MethodPut).Path("/collections").Handler(http.HandlerFunc(createCollection))
-	r.Name("ListCollections").Methods(http.MethodGet).Path("/collections").Handler(http.HandlerFunc(listCollections))
-	r.Name("DeleteCollection").Methods(http.MethodGet).Path("/collections/{id}").Handler(http.HandlerFunc(deleteCollection))
-	r.Name("GetCollection").Methods(http.MethodGet).Path("/collections/{id}").Handler(http.HandlerFunc(getCollection))
-
-	r.Name("PutObject").Methods(http.MethodPut).Path("/data/{collection}").Handler(http.HandlerFunc(putObject))
-	r.Name("PatchObject").Methods(http.MethodPatch).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(patchObject))
-	r.Name("MoveObject").Methods(http.MethodPost).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(moveObject))
-	r.Name("GetObject").Methods(http.MethodGet).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(getObject))
-	r.Name("DeleteObject").Methods(http.MethodDelete).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(deleteObject))
-	r.Name("GetObjects").Methods(http.MethodGet).Path("/data/{collection}").Handler(http.HandlerFunc(listObjects))
-	r.Name("SearchObjects").Methods(http.MethodPost).Path("/data/{collection}").Handler(http.HandlerFunc(searchObjects))
-
-	return r
-}
-
-func putObject(w http.ResponseWriter, r *http.Request) {
+func PutObject(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	vars := mux.Vars(r)
@@ -87,7 +65,7 @@ func putObject(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(fmt.Sprintf("{\"id\": \"%s\"}", id)))
 }
 
-func patchObject(w http.ResponseWriter, r *http.Request) {
+func PatchObject(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	contentType := r.Header.Get("Content-Type")
@@ -121,7 +99,7 @@ func patchObject(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func moveObject(w http.ResponseWriter, r *http.Request) {
+func MoveObject(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	contentType := r.Header.Get("Content-Type")
@@ -155,7 +133,7 @@ func moveObject(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getObject(w http.ResponseWriter, r *http.Request) {
+func GetObject(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	vars := mux.Vars(r)
@@ -187,7 +165,7 @@ func getObject(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func deleteObject(w http.ResponseWriter, r *http.Request) {
+func DeleteObject(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	vars := mux.Vars(r)
@@ -207,7 +185,7 @@ func deleteObject(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func listObjects(w http.ResponseWriter, r *http.Request) {
+func ListObjects(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var (
@@ -275,7 +253,7 @@ func listObjects(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write([]byte("}"))
 }
 
-func searchObjects(w http.ResponseWriter, r *http.Request) {
+func SearchObjects(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var query se.SearchQuery
@@ -338,7 +316,7 @@ func searchObjects(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write([]byte("}"))
 }
 
-func setSettings(w http.ResponseWriter, r *http.Request) {
+func SetSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	user := auth.Get(ctx)
@@ -374,7 +352,7 @@ func setSettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getSettings(w http.ResponseWriter, r *http.Request) {
+func GetSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	name := r.URL.Query().Get("name")
 
@@ -405,7 +383,7 @@ func getSettings(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(value))
 }
 
-func createCollection(w http.ResponseWriter, r *http.Request) {
+func CreateCollection(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var collection Collection
@@ -428,7 +406,7 @@ func createCollection(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func listCollections(w http.ResponseWriter, r *http.Request) {
+func ListCollections(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	route, err := NewRoute(ctx)
@@ -457,7 +435,7 @@ func listCollections(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(data)
 }
 
-func getCollection(w http.ResponseWriter, r *http.Request) {
+func GetCollection(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	route, err := NewRoute(ctx)
@@ -485,7 +463,7 @@ func getCollection(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(data)
 }
 
-func deleteCollection(w http.ResponseWriter, r *http.Request) {
+func DeleteCollection(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	route, err := NewRoute(ctx)

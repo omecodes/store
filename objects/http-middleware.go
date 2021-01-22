@@ -16,25 +16,25 @@ type middlewareOptions struct {
 
 type MiddlewareOption func(*middlewareOptions)
 
-func WithSettingsMiddleware(manager SettingsManager) MiddlewareOption {
+func MiddlewareWithSettings(manager SettingsManager) MiddlewareOption {
 	return func(options *middlewareOptions) {
 		options.settings = manager
 	}
 }
 
-func WithRouterProviderMiddleware(provider RouterProvider) MiddlewareOption {
+func MiddlewareWithRouterProvider(provider RouterProvider) MiddlewareOption {
 	return func(options *middlewareOptions) {
 		options.routerProvider = provider
 	}
 }
 
-func WithACLManagerMiddleware(manager ACLManager) MiddlewareOption {
+func MiddlewareWithACLManager(manager ACLManager) MiddlewareOption {
 	return func(options *middlewareOptions) {
 		options.acl = manager
 	}
 }
 
-func WithDBMiddleware(db DB) MiddlewareOption {
+func MIddlewareWithDB(db DB) MiddlewareOption {
 	return func(options *middlewareOptions) {
 		options.db = db
 	}

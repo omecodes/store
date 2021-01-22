@@ -2,20 +2,24 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path"
+	"path/filepath"
+
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/common/utils/prompt"
 	oms "github.com/omecodes/store"
 	"github.com/omecodes/store/cmd/admin"
 	"github.com/spf13/cobra"
-	"os"
-	"path"
-	"path/filepath"
 )
 
 var (
 	dev        bool
 	adminInfo  string
 	workingDir string
+	fsDir      string
+	resDir     string
+	webappsDir string
 	dsn        string
 	domains    []string
 	command    *cobra.Command
@@ -48,12 +52,54 @@ func init() {
 				}
 			}
 
-			s := oms.NewMNServer(oms.MNConfig{
-				WorkingDir: workingDir,
-				Domains:    domains,
-				Dev:        dev,
-				AdminInfo:  adminInfo,
-				DSN:        dsn,
+			if fsDir != "" {
+				fsDir, err = filepath.Abs(fsDir)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(-1)
+				}
+				err = os.MkdirAll(fsDir, os.ModePerm)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(-1)
+				}
+			}
+
+			if webappsDir != "" {
+				webappsDir, err = filepath.Abs(webappsDir)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(-1)
+				}
+				err = os.MkdirAll(webappsDir, os.ModePerm)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(-1)
+				}
+			}
+
+			if resDir != "" {
+				resDir, err = filepath.Abs(resDir)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(-1)
+				}
+				err = os.MkdirAll(resDir, os.ModePerm)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(-1)
+				}
+			}
+
+			s := oms.NewServer(oms.MNConfig{
+				Dev:            dev,
+				Domains:        domains,
+				FSRootDir:      fsDir,
+				WorkingDir:     workingDir,
+				WebAppsDir:     webappsDir,
+				StaticFilesDir: resDir,
+				AdminInfo:      adminInfo,
+				DSN:            dsn,
 			})
 
 			err = s.Start()
@@ -75,6 +121,9 @@ func init() {
 	flags.BoolVar(&dev, "dev", false, "Enable development mode")
 	flags.StringArrayVar(&domains, "domains", nil, "Domains name for auto cert")
 	flags.StringVar(&workingDir, "dir", "", "Data directory")
+	flags.StringVar(&fsDir, "fs", "./files", "Files root directory")
+	flags.StringVar(&resDir, "res", "./static", "Files root directory")
+	flags.StringVar(&webappsDir, "apps", "./apps", "Files root directory")
 	flags.StringVar(&adminInfo, "admin", "", "Admin password info")
 	flags.StringVar(&dsn, "dsn", "store:store@(127.0.0.1:3306)/store?charset=utf8", "MySQL database uri")
 	if err := cobra.MarkFlagRequired(flags, "admin"); err != nil {

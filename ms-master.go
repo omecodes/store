@@ -171,13 +171,14 @@ func (s *MSServer) startRegistry() (err error) {
 }
 
 func (s *MSServer) startAPIServer() error {
-	if !s.config.Dev {
-		return s.startProductionAPIServer()
-	}
 
 	err := s.init()
 	if err != nil {
 		return err
+	}
+
+	if !s.config.Dev {
+		return s.startProductionAPIServer()
 	}
 
 	s.listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", s.config.BindIP, s.config.APIPort))
@@ -190,18 +191,18 @@ func (s *MSServer) startAPIServer() error {
 
 	middlewareList := []mux.MiddlewareFunc{
 		objects.Middleware(
-			objects.WithRouterProviderMiddleware(s),
-			objects.WithSettingsMiddleware(s.settings),
+			objects.MiddlewareWithRouterProvider(s),
+			objects.MiddlewareWithSettings(s.settings),
 			objects.WithGRPCRouterProvider(&objects.LoadBalancer{}),
 		),
 		auth.Middleware(
-			auth.WithCredentialsManagerMiddleware(s.credentialsManager),
-			auth.WithProviderManagerMiddleware(s.authenticationProviders),
+			auth.MiddlewareWithCredentials(s.credentialsManager),
+			auth.MiddlewareWithProviderManager(s.authenticationProviders),
 		),
 		httpx.Logger("OMS").Handle,
 	}
 	var handler http.Handler
-	handler = NewHttpUnit().MuxRouter()
+	handler = httpRouter(WithObjects())
 
 	for _, m := range middlewareList {
 		handler = m.Middleware(handler)
@@ -229,19 +230,19 @@ func (s *MSServer) startProductionAPIServer() error {
 
 	middlewareList := []mux.MiddlewareFunc{
 		objects.Middleware(
-			objects.WithRouterProviderMiddleware(s),
-			objects.WithSettingsMiddleware(s.settings),
+			objects.MiddlewareWithRouterProvider(s),
+			objects.MiddlewareWithSettings(s.settings),
 			objects.WithGRPCRouterProvider(&objects.LoadBalancer{}),
 		),
 		auth.Middleware(
-			auth.WithCredentialsManagerMiddleware(s.credentialsManager),
-			auth.WithProviderManagerMiddleware(s.authenticationProviders),
+			auth.MiddlewareWithCredentials(s.credentialsManager),
+			auth.MiddlewareWithProviderManager(s.authenticationProviders),
 		),
 		httpx.Logger("OMS").Handle,
 		s.httpEnrichContext,
 	}
 	var handler http.Handler
-	handler = NewHttpUnit().MuxRouter()
+	handler = httpRouter(WithObjects())
 
 	for _, m := range middlewareList {
 		handler = m.Middleware(handler)
