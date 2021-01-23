@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/omecodes/store/common"
 	"os"
 	"path"
 	"path/filepath"
@@ -13,6 +12,7 @@ import (
 	"github.com/omecodes/common/utils/prompt"
 	"github.com/omecodes/store/apps/cli/admin"
 	"github.com/omecodes/store/apps/server"
+	"github.com/omecodes/store/common"
 )
 
 var (
@@ -123,9 +123,9 @@ func init() {
 	flags.BoolVar(&dev, "dev", false, "Enable development mode")
 	flags.StringArrayVar(&domains, "domains", nil, "Domains name for auto cert")
 	flags.StringVar(&workingDir, "dir", "", "Data directory")
-	flags.StringVar(&fsDir, "fs", "./files", "Files root directory")
-	flags.StringVar(&resDir, "res", "./static", "Files root directory")
-	flags.StringVar(&webappsDir, "apps", "./apps", "Files root directory")
+	flags.StringVar(&fsDir, "fs", "./files", "File storage root directory")
+	flags.StringVar(&resDir, "res", "./static", "Web resources files directory")
+	flags.StringVar(&webappsDir, "apps", "./apps", "Web app content directory")
 	flags.StringVar(&adminInfo, "admin", "", "Admin password info")
 	flags.StringVar(&dsn, "dsn", "store:store@(127.0.0.1:3306)/store?charset=utf8", "MySQL database uri")
 	if err := cobra.MarkFlagRequired(flags, "admin"); err != nil {
