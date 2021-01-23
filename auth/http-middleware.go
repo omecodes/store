@@ -46,7 +46,7 @@ func Middleware(opts ...MiddlewareOption) mux.MiddlewareFunc {
 			}
 
 			if options.providers != nil {
-				updatedContext = context.WithValue(r.Context(), ctxAuthenticationProviders{}, options.providers)
+				updatedContext = context.WithValue(updatedContext, ctxAuthenticationProviders{}, options.providers)
 			}
 
 			next.ServeHTTP(w, r.WithContext(updatedContext))
