@@ -23,7 +23,7 @@ var (
 	watchEnabled bool
 	watcher      *fsnotify.Watcher
 	Dir          string
-	dirs         map[string]string
+	dirs         = map[string]string{}
 )
 
 func addAppDir(dir string) {
@@ -55,8 +55,29 @@ func WatchDir() {
 		logs.Info("Webapp • app directory watching stopped")
 	}()
 
-	var err error
 	for watchEnabled {
+		dir, err := os.Open(Dir)
+		if err != nil {
+			logs.Error("Webapp • could not open directory", logs.Err(err))
+			<-time.After(time.Second * 3)
+			continue
+		}
+
+		files, err := dir.Readdir(-1)
+		if err != nil {
+			_ = dir.Close()
+			logs.Error("Webapp • could not open directory", logs.Err(err))
+			<-time.After(time.Second * 3)
+			continue
+		}
+
+		for _, file := range files {
+			if file.IsDir() {
+				addAppDir(filepath.Base(file.Name()))
+			}
+		}
+		_ = dir.Close()
+
 		watcher, err = fsnotify.NewWatcher()
 		if err != nil {
 			logs.Error("Webapp • could not create watcher", logs.Err(err))
@@ -126,12 +147,27 @@ var mimes = map[string]string{
 
 func ServeApps(w http.ResponseWriter, r *http.Request) {
 	filename := r.URL.Path
-	for _, routerPath := range appList() {
-		if strings.HasPrefix(filename, routerPath) {
-			filename = strings.Replace(filename, routerPath, "", 1)
+
+	found := false
+	requestedAppName := false
+	for _, appDir := range appList() {
+		if strings.HasPrefix(filename, appDir) {
+			found = true
+			requestedAppName = strings.HasSuffix(filename, appDir)
 			break
 		}
 	}
+
+	if !found {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	if requestedAppName {
+		filename = path.Join(filename, "index.html")
+	}
+
+	filename = filepath.Join(Dir, filename)
 
 	contentType, f, size, err := getFileContent(r.Context(), filename)
 	if err != nil {

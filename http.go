@@ -68,10 +68,10 @@ func httpRouter(opts ...RouteOption) *mux.Router {
 	}
 
 	if options.wApps {
-		r.PathPrefix("/apps/").Subrouter().
+		r.PathPrefix("/app/").Subrouter().
 			Name("ServeWebApps").
 			Methods(http.MethodGet).
-			Handler(http.StripPrefix("/apps", http.HandlerFunc(webapp.ServeApps)))
+			Handler(http.StripPrefix("/app/", http.HandlerFunc(webapp.ServeApps)))
 	}
 
 	if options.files {
