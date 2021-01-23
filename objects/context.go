@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/google/cel-go/cel"
 	"github.com/omecodes/common/errors"
-	"github.com/omecodes/store/cenv"
+	"github.com/omecodes/store/common/cenv"
 )
 
 type ctxDB struct{}

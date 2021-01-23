@@ -9,7 +9,7 @@ import (
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/auth"
-	"github.com/omecodes/store/cenv"
+	"github.com/omecodes/store/common/cenv"
 )
 
 type PolicyHandler struct {
