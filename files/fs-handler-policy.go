@@ -51,6 +51,11 @@ func (h *PolicyHandler) evaluateRules(ctx context.Context, rules ...string) (boo
 }
 
 func (h *PolicyHandler) assertIsAllowedToRead(ctx context.Context, sourceID string, filename string) (bool, error) {
+	user := auth.Get(ctx)
+	if user != nil && user.Name == "admin" {
+		return true, nil
+	}
+
 	source, err := h.next.GetSource(ctx, sourceID)
 	if source == nil {
 		return false, err
@@ -84,6 +89,11 @@ func (h *PolicyHandler) assertIsAllowedToRead(ctx context.Context, sourceID stri
 }
 
 func (h *PolicyHandler) assertIsAllowedToWrite(ctx context.Context, sourceID string, filename string) (bool, error) {
+	user := auth.Get(ctx)
+	if user != nil && user.Name == "admin" {
+		return true, nil
+	}
+
 	source, err := h.next.GetSource(ctx, sourceID)
 	if source == nil {
 		return false, err
@@ -117,6 +127,11 @@ func (h *PolicyHandler) assertIsAllowedToWrite(ctx context.Context, sourceID str
 }
 
 func (h *PolicyHandler) assertIsAllowedToChmod(ctx context.Context, sourceID string, filename string) (bool, error) {
+	user := auth.Get(ctx)
+	if user != nil && user.Name == "admin" {
+		return true, nil
+	}
+
 	source, err := h.next.GetSource(ctx, sourceID)
 	if source == nil {
 		return false, err
