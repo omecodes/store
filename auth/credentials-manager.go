@@ -95,8 +95,9 @@ func (s *credentialsSQLManager) GetAllAccesses() ([]*APIAccess, error) {
 			return nil, err
 		}
 
+		entry := o.(*bome.MapEntry)
 		var access *APIAccess
-		err = json.Unmarshal([]byte(o.(string)), &access)
+		err = json.Unmarshal([]byte(entry.Value), &access)
 		if err != nil {
 			return nil, err
 		}
