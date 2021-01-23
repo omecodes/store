@@ -9,7 +9,7 @@ import (
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/common/utils/prompt"
 	oms "github.com/omecodes/store"
-	"github.com/omecodes/store/cmd/admin"
+	"github.com/omecodes/store/cli/admin"
 	"github.com/spf13/cobra"
 )
 
@@ -145,7 +145,7 @@ func init() {
 		},
 	}
 	command.AddCommand(versionCMD)
-	command.AddCommand(admin.Cmd)
+	command.AddCommand(admin.CMD())
 }
 
 func main() {

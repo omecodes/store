@@ -82,7 +82,7 @@ func init() {
 	}
 
 	cmd.AddCommand(startCMD)
-	cmd.AddCommand(admin.Cmd)
+	cmd.AddCommand(admin.rootCMD)
 	cmd.AddCommand(versionCMD)
 }
 
