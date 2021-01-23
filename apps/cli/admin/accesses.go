@@ -91,9 +91,20 @@ func saveAccess(cmd *cobra.Command, args []string) {
 		h := sha512.New()
 		secret := h.Sum([]byte(access.Secret))
 		access.Secret = hex.EncodeToString(secret)
+
+		err = putAccess(password, access)
+		fmt.Println(err)
 	}
 }
 
 func getAllAccesses(cmd *cobra.Command, args []string) {
+	var err error
+	if password == "" {
+		password, err = prompt.Password("password")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(-1)
+		}
+	}
 
 }

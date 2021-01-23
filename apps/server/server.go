@@ -1,10 +1,12 @@
-package oms
+package server
 
 import (
 	"context"
 	"crypto/tls"
 	"database/sql"
 	"fmt"
+	"github.com/omecodes/store/files"
+	"github.com/omecodes/store/webapp"
 	"net"
 	"net/http"
 	"os"
@@ -16,53 +18,59 @@ import (
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/httpx"
+	"github.com/omecodes/common/netx"
 	"github.com/omecodes/common/utils/log"
-	"github.com/omecodes/discover"
-	ome "github.com/omecodes/libome"
-	"github.com/omecodes/libome/ports"
-	"github.com/omecodes/service"
-	sca "github.com/omecodes/services-ca"
 	"github.com/omecodes/store/accounts"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/objects"
 )
 
-type MsConfig struct {
-	Name         string
-	BindIP       string
-	Domains      []string
-	RegistryPort int
-	CAPort       int
-	APIPort      int
-	DBUri        string
-	AdminInfo    string
-	WorkingDir   string
-	Dev          bool
+// Config contains info to configure an instance of Server
+type Config struct {
+	Dev            bool
+	Domains        []string
+	FSRootDir      string
+	WorkingDir     string
+	WebAppsDir     string
+	StaticFilesDir string
+	AdminInfo      string
+	DSN            string
 }
 
-func NewMSServer(cfg MsConfig) *MSServer {
-	return &MSServer{config: cfg}
+// New is a server constructor
+func New(config Config) *Server {
+	s := new(Server)
+	s.config = &config
+	return s
 }
 
-type MSServer struct {
-	config         MsConfig
-	listener       net.Listener
-	adminPassword  string
-	workerPassword string
-	Errors         chan error
-	loadBalancer   *objects.BaseHandler
-	registry       ome.Registry
-	caServer       *sca.Server
-	autoCertDir    string
-	db             *sql.DB
+// Server embeds an Ome data store
+// it also exposes an API server
+type Server struct {
+	initialized bool
+	options     []netx.ListenOption
+	config      *Config
+	autoCertDir string
 
-	authenticationProviders auth.ProviderManager
-	credentialsManager      auth.CredentialsManager
+	objects                 objects.DB
 	settings                objects.SettingsManager
 	accountsManager         accounts.Manager
+	authenticationProviders auth.ProviderManager
+	credentialsManager      auth.CredentialsManager
+	accessStore             objects.ACLManager
+	sourceManager           files.SourceManager
+
+	listener net.Listener
+	Errors   chan error
+	server   *http.Server
+	db       *sql.DB
 }
 
-func (s *MSServer) init() error {
+func (s *Server) init() error {
+	if s.initialized {
+		return nil
+	}
+	s.initialized = true
 
 	if !s.config.Dev {
 		s.autoCertDir = filepath.Join(s.config.WorkingDir, "autocert")
@@ -72,15 +80,25 @@ func (s *MSServer) init() error {
 		}
 	}
 
-	s.db = GetDB("mysql", s.config.DBUri)
+	s.db = GetDB("mysql", s.config.DSN)
 
 	var err error
+	s.accessStore, err = objects.NewSQLACLStore(s.db, bome.MySQL, "store_acl")
+	if err != nil {
+		return err
+	}
+
 	s.settings, err = objects.NewSQLSettings(s.db, bome.MySQL, "store_settings")
 	if err != nil {
 		return err
 	}
 
 	s.accountsManager, err = accounts.NewSQLManager(s.db, bome.MySQL, "store")
+	if err != nil {
+		return err
+	}
+
+	s.objects, err = objects.NewSqlDB(s.db, bome.MySQL, "store")
 	if err != nil {
 		return err
 	}
@@ -128,60 +146,64 @@ func (s *MSServer) init() error {
 		}
 	}
 
+	// Files initialization
+	if s.config.FSRootDir != "" {
+		s.sourceManager, err = files.NewSourceSQLManager(s.db, bome.MySQL, "store_files_sources")
+		if err != nil {
+			return err
+		}
+
+		ctx := context.Background()
+		source, err := s.sourceManager.Get(ctx, "main")
+		if err != nil && !errors.IsNotFound(err) {
+			return err
+		}
+
+		if source == nil {
+			source = &files.Source{
+				ID:          "main",
+				Label:       "Default file source",
+				Description: "",
+				Type:        files.TypeDisk,
+				URI:         fmt.Sprintf("files://%s", s.config.FSRootDir),
+				ExpireTime:  -1,
+			}
+			_, err = s.sourceManager.Save(ctx, source)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if s.config.WebAppsDir != "" {
+		webapp.Dir = s.config.WebAppsDir
+		go webapp.WatchDir()
+	}
+
 	return nil
 }
 
-func (s *MSServer) getServiceSecret(name string) (string, error) {
-	return "ome", nil
+func (s *Server) GetRouter(ctx context.Context) objects.Router {
+	return objects.DefaultRouter()
 }
 
-func (s *MSServer) startCA() error {
-	workingDir := filepath.Join(s.config.WorkingDir, "ca")
-	err := os.MkdirAll(workingDir, os.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	port := s.config.CAPort
-	if port == 0 {
-		port = ports.CA
-	}
-
-	cfg := &sca.ServerConfig{
-		Manager:    sca.CredentialsManagerFunc(s.getServiceSecret),
-		Domain:     s.config.Domains[0],
-		Port:       port,
-		BindIP:     s.config.BindIP,
-		WorkingDir: workingDir,
-	}
-	s.caServer = sca.NewServer(cfg)
-	return s.caServer.Start()
-}
-
-func (s *MSServer) startRegistry() (err error) {
-	s.registry, err = discover.Serve(&discover.ServerConfig{
-		Name:                 s.config.Name,
-		StoreDir:             s.config.WorkingDir,
-		BindAddress:          fmt.Sprintf("%s:%d", s.config.BindIP, s.config.RegistryPort),
-		CertFilename:         "ca/ca.crt",
-		KeyFilename:          "ca/ca.key",
-		ClientCACertFilename: "ca/ca.crt",
-	})
-	return
-}
-
-func (s *MSServer) startAPIServer() error {
-
+// Start starts API server
+func (s *Server) Start() error {
 	err := s.init()
 	if err != nil {
 		return err
 	}
 
 	if !s.config.Dev {
-		return s.startProductionAPIServer()
+		return s.startAutoCertAPIServer()
 	}
 
-	s.listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", s.config.BindIP, s.config.APIPort))
+	return s.startDefaultAPIServer()
+}
+
+func (s *Server) startDefaultAPIServer() error {
+	var err error
+	s.listener, err = net.Listen("tcp", ":8080")
 	if err != nil {
 		return err
 	}
@@ -191,37 +213,52 @@ func (s *MSServer) startAPIServer() error {
 
 	middlewareList := []mux.MiddlewareFunc{
 		objects.Middleware(
+			objects.MiddlewareWithACLManager(s.accessStore),
 			objects.MiddlewareWithRouterProvider(s),
+			objects.MIddlewareWithDB(s.objects),
 			objects.MiddlewareWithSettings(s.settings),
-			objects.WithGRPCRouterProvider(&objects.LoadBalancer{}),
+		),
+		files.Middleware(
+			files.MiddlewareWithSourceManager(s.sourceManager),
+		),
+		accounts.Middleware(
+			accounts.MiddlewareWithAccountManager(s.accountsManager),
 		),
 		auth.Middleware(
 			auth.MiddlewareWithCredentials(s.credentialsManager),
 			auth.MiddlewareWithProviderManager(s.authenticationProviders),
 		),
-		httpx.Logger("OMS").Handle,
+		httpx.Logger("store").Handle,
 	}
+
 	var handler http.Handler
-	handler = httpRouter(WithObjects())
+	handler = httpRouter(
+		WithObjects(),
+		WithStaticFiles(s.config.StaticFilesDir),
+		WithFiles(s.config.FSRootDir != ""),
+		WithWebApp(s.config.WebAppsDir != ""),
+		WithAccounts(true),
+		WithAuth(true),
+	)
 
 	for _, m := range middlewareList {
 		handler = m.Middleware(handler)
 	}
 
 	go func() {
-		srv := &http.Server{
+		s.server = &http.Server{
 			Addr:    address,
 			Handler: handler,
 		}
-		if err := srv.Serve(s.listener); err != nil {
+		if err := s.server.Serve(s.listener); err != nil {
 			s.Errors <- err
 		}
 	}()
-
 	return nil
 }
 
-func (s *MSServer) startProductionAPIServer() error {
+func (s *Server) startAutoCertAPIServer() error {
+
 	certManager := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
 		HostPolicy: autocert.HostWhitelist(s.config.Domains...),
@@ -230,19 +267,33 @@ func (s *MSServer) startProductionAPIServer() error {
 
 	middlewareList := []mux.MiddlewareFunc{
 		objects.Middleware(
+			objects.MiddlewareWithACLManager(s.accessStore),
 			objects.MiddlewareWithRouterProvider(s),
+			objects.MIddlewareWithDB(s.objects),
 			objects.MiddlewareWithSettings(s.settings),
-			objects.WithGRPCRouterProvider(&objects.LoadBalancer{}),
+		),
+		files.Middleware(
+			files.MiddlewareWithSourceManager(s.sourceManager),
+		),
+		accounts.Middleware(
+			accounts.MiddlewareWithAccountManager(s.accountsManager),
 		),
 		auth.Middleware(
 			auth.MiddlewareWithCredentials(s.credentialsManager),
 			auth.MiddlewareWithProviderManager(s.authenticationProviders),
 		),
-		httpx.Logger("OMS").Handle,
-		s.httpEnrichContext,
+		httpx.Logger("store").Handle,
 	}
+
 	var handler http.Handler
-	handler = httpRouter(WithObjects())
+	handler = httpRouter(
+		WithObjects(),
+		WithStaticFiles(s.config.StaticFilesDir),
+		WithFiles(s.config.FSRootDir != ""),
+		WithWebApp(s.config.WebAppsDir != ""),
+		WithAccounts(true),
+		WithAuth(true),
+	)
 
 	for _, m := range middlewareList {
 		handler = m.Middleware(handler)
@@ -271,59 +322,10 @@ func (s *MSServer) startProductionAPIServer() error {
 	return nil
 }
 
-func (s *MSServer) httpEnrichContext(next http.Handler) http.Handler {
-	box := service.CreateBox(
-		service.Registry(s.registry),
-		service.CertFile("ca/ca.crt"),
-		service.KeyFIle("ca/ca.key"),
-		service.CACertFile("ca/ca.crt"),
-	)
+// Stop stops API server
+func (s *Server) Stop() {
+	webapp.StopWatch()
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		ctx = service.ContextWithBox(ctx, box)
-		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (s *MSServer) GetRouter(ctx context.Context) objects.Router {
-	return objects.NewCustomObjectsRouter(
-		objects.NewGRPCObjectsClientHandler(objects.ServiceTypeHandler),
-		objects.WithDefaultObjectsParamsHandler(),
-	)
-}
-
-func (s *MSServer) Start() error {
-	err := s.init()
-	if err != nil {
-		return err
-	}
-
-	err = s.startCA()
-	if err != nil {
-		log.Error("MS Sore • could not start CA", log.Err(err))
-		return errors.Internal
-	}
-
-	err = s.startRegistry()
-	if err != nil {
-		log.Error("MS Sore • could not start CA", log.Err(err))
-		return errors.Internal
-	}
-
-	return s.startAPIServer()
-}
-
-func (s *MSServer) Stop() error {
-	if closer, ok := s.registry.(interface {
-		Close() error
-	}); ok {
-		if err := closer.Close(); err != nil {
-			return err
-		}
-	}
-
+	_ = s.listener.Close()
 	_ = s.db.Close()
-	return s.caServer.Stop()
 }

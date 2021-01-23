@@ -1,4 +1,4 @@
-package oms
+package server
 
 import (
 	"context"

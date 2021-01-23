@@ -1,4 +1,4 @@
-package oms
+package server
 
 import (
 	"github.com/omecodes/store/accounts"
