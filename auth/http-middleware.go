@@ -74,11 +74,7 @@ func detectBasic(next http.Handler) http.Handler {
 				ctx := r.Context()
 				ctx, err := updateContextWithBasic(ctx, authorization)
 				if err != nil {
-					if err2, ok := err.(*errors.Error); ok {
-						w.WriteHeader(err2.Code)
-						return
-					}
-					w.WriteHeader(http.StatusForbidden)
+					w.WriteHeader(errors.HTTPStatus(err))
 					return
 				}
 				r = r.WithContext(ctx)
@@ -108,11 +104,7 @@ func detectProxyBasic(next http.Handler) http.Handler {
 				ctx := r.Context()
 				ctx, err := updateContextWithProxyBasic(ctx, authorization)
 				if err != nil {
-					if err2, ok := err.(*errors.Error); ok {
-						w.WriteHeader(err2.Code)
-						return
-					}
-					w.WriteHeader(http.StatusForbidden)
+					w.WriteHeader(errors.HTTPStatus(err))
 					return
 				}
 				r = r.WithContext(ctx)
@@ -140,11 +132,7 @@ func detectOauth2(next http.Handler) http.Handler {
 
 				ctx, err := updateContextWithOauth2(r.Context(), authorization)
 				if err != nil {
-					if err2, ok := err.(*errors.Error); ok {
-						w.WriteHeader(err2.Code)
-						return
-					}
-					w.WriteHeader(http.StatusForbidden)
+					w.WriteHeader(errors.HTTPStatus(err))
 					return
 				}
 				r = r.WithContext(ctx)
