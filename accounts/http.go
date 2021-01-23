@@ -1,7 +1,6 @@
 package accounts
 
 import (
-	"context"
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/omecodes/errors"
@@ -12,20 +11,16 @@ import (
 
 const pathItemName = "name"
 
-func GetMiddleware(manager Manager) mux.MiddlewareFunc {
-	return middleware(manager)
-}
-
 func NewHttpHandler() (handler http.Handler) {
 	r := mux.NewRouter()
-	r.Name("GetAccount").Methods(http.MethodGet).Path("/accounts/{name}").Handler(http.HandlerFunc(getAccount))
-	r.Name("FindAccount").Methods(http.MethodPost).Path("/accounts").Handler(http.HandlerFunc(findAccount))
-	r.Name("CreateAccount").Methods(http.MethodPut).Path("/accounts").Handler(http.HandlerFunc(createAccount))
+	r.Name("GetAccount").Methods(http.MethodGet).Path("/accounts/{name}").Handler(http.HandlerFunc(GetAccount))
+	r.Name("FindAccount").Methods(http.MethodPost).Path("/accounts").Handler(http.HandlerFunc(FindAccount))
+	r.Name("CreateAccount").Methods(http.MethodPut).Path("/accounts").Handler(http.HandlerFunc(CreateAccount))
 	handler = r
 	return
 }
 
-func findAccount(w http.ResponseWriter, r *http.Request) {
+func FindAccount(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	jwt := auth.JWT(ctx)
 
@@ -46,7 +41,7 @@ func findAccount(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(account)
 }
 
-func createAccount(w http.ResponseWriter, r *http.Request) {
+func CreateAccount(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	jwt := auth.JWT(ctx)
 
@@ -83,7 +78,7 @@ func createAccount(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getAccount(w http.ResponseWriter, r *http.Request) {
+func GetAccount(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userInfo := auth.Get(ctx)
 
@@ -110,14 +105,4 @@ func getAccount(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(account)
-}
-
-func middleware(manager Manager) mux.MiddlewareFunc {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			updatedContext := context.WithValue(r.Context(), ctxManager{}, manager)
-			r = r.WithContext(updatedContext)
-			next.ServeHTTP(w, r)
-		})
-	}
 }

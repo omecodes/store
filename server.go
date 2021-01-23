@@ -221,6 +221,9 @@ func (s *Server) startDefaultAPIServer() error {
 		files.Middleware(
 			files.MiddlewareWithSourceManager(s.sourceManager),
 		),
+		accounts.Middleware(
+			accounts.MiddlewareWithAccountManager(s.accountsManager),
+		),
 		auth.Middleware(
 			auth.MiddlewareWithCredentials(s.credentialsManager),
 			auth.MiddlewareWithProviderManager(s.authenticationProviders),
@@ -234,6 +237,8 @@ func (s *Server) startDefaultAPIServer() error {
 		WithStaticFiles(s.config.StaticFilesDir),
 		WithFiles(s.config.FSRootDir != ""),
 		WithWebApp(s.config.WebAppsDir != ""),
+		WithAccounts(true),
+		WithAuth(true),
 	)
 
 	for _, m := range middlewareList {
@@ -270,6 +275,9 @@ func (s *Server) startAutoCertAPIServer() error {
 		files.Middleware(
 			files.MiddlewareWithSourceManager(s.sourceManager),
 		),
+		accounts.Middleware(
+			accounts.MiddlewareWithAccountManager(s.accountsManager),
+		),
 		auth.Middleware(
 			auth.MiddlewareWithCredentials(s.credentialsManager),
 			auth.MiddlewareWithProviderManager(s.authenticationProviders),
@@ -283,6 +291,8 @@ func (s *Server) startAutoCertAPIServer() error {
 		WithStaticFiles(s.config.StaticFilesDir),
 		WithFiles(s.config.FSRootDir != ""),
 		WithWebApp(s.config.WebAppsDir != ""),
+		WithAccounts(true),
+		WithAuth(true),
 	)
 
 	for _, m := range middlewareList {

@@ -13,18 +13,18 @@ const pathItemId = "id"
 
 func NewHttpHandler() (handler http.Handler) {
 	r := mux.NewRouter()
-	r.Name("SaveAuthProvider≈").Methods(http.MethodPut).Path("/auth/providers").Handler(http.HandlerFunc(saveProvider))
-	r.Name("GetAuthProvider").Methods(http.MethodGet).Path("/auth/providers/{name}").Handler(http.HandlerFunc(getProvider))
-	r.Name("DeleteAuthProvider").Methods(http.MethodDelete).Path("/auth/providers/{name}").Handler(http.HandlerFunc(deleteProvider))
-	r.Name("ListProviders").Methods(http.MethodGet).Path("/auth/providers").Handler(http.HandlerFunc(listProviders))
-	r.Name("CreateAccess").Methods(http.MethodPut).Path("/auth/access").Handler(http.HandlerFunc(createAccess))
-	r.Name("ListAccesses").Methods(http.MethodGet).Path("/auth/accesses").Handler(http.HandlerFunc(listAccesses))
-	r.Name("DeleteAccess").Methods(http.MethodDelete).Path("/auth/access/{key}").Handler(http.HandlerFunc(deleteAccess))
+	r.Name("SaveAuthProvider≈").Methods(http.MethodPut).Path("/auth/providers").Handler(http.HandlerFunc(SaveProvider))
+	r.Name("GetAuthProvider").Methods(http.MethodGet).Path("/auth/providers/{name}").Handler(http.HandlerFunc(GetProvider))
+	r.Name("DeleteAuthProvider").Methods(http.MethodDelete).Path("/auth/providers/{name}").Handler(http.HandlerFunc(DeleteProvider))
+	r.Name("ListProviders").Methods(http.MethodGet).Path("/auth/providers").Handler(http.HandlerFunc(ListProviders))
+	r.Name("CreateAccess").Methods(http.MethodPut).Path("/auth/access").Handler(http.HandlerFunc(CreateAccess))
+	r.Name("ListAccesses").Methods(http.MethodGet).Path("/auth/accesses").Handler(http.HandlerFunc(ListAccesses))
+	r.Name("DeleteAccess").Methods(http.MethodDelete).Path("/auth/access/{key}").Handler(http.HandlerFunc(DeleteAccess))
 	handler = r
 	return
 }
 
-func saveProvider(w http.ResponseWriter, r *http.Request) {
+func SaveProvider(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user := Get(ctx)
 
@@ -59,7 +59,7 @@ func saveProvider(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getProvider(w http.ResponseWriter, r *http.Request) {
+func GetProvider(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user := Get(ctx)
 
@@ -94,7 +94,7 @@ func getProvider(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func deleteProvider(w http.ResponseWriter, r *http.Request) {
+func DeleteProvider(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user := Get(ctx)
 
@@ -119,7 +119,7 @@ func deleteProvider(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func listProviders(w http.ResponseWriter, r *http.Request) {
+func ListProviders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user := Get(ctx)
 
@@ -150,7 +150,7 @@ func listProviders(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func createAccess(w http.ResponseWriter, r *http.Request) {
+func CreateAccess(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user := Get(ctx)
 
@@ -181,7 +181,7 @@ func createAccess(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func listAccesses(w http.ResponseWriter, r *http.Request) {
+func ListAccesses(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user := Get(ctx)
 
@@ -210,7 +210,7 @@ func listAccesses(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func deleteAccess(w http.ResponseWriter, r *http.Request) {
+func DeleteAccess(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user := Get(ctx)
 

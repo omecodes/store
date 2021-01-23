@@ -1,18 +1,24 @@
 package oms
 
 import (
+	"github.com/omecodes/store/accounts"
+	"github.com/omecodes/store/auth"
+	"net/http"
+
 	"github.com/gorilla/mux"
+
 	"github.com/omecodes/store/files"
 	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/webapp"
-	"net/http"
 )
 
 type routeOptions struct {
-	files     bool
-	objects   bool
-	wApps     bool
-	staticDir string
+	files        bool
+	objects      bool
+	wApps        bool
+	staticDir    string
+	withAuth     bool
+	withAccounts bool
 }
 
 type RouteOption func(options *routeOptions)
@@ -41,6 +47,18 @@ func WithStaticFiles(staticDir string) RouteOption {
 	}
 }
 
+func WithAuth(enabled bool) RouteOption {
+	return func(options *routeOptions) {
+		options.withAuth = true
+	}
+}
+
+func WithAccounts(enabled bool) RouteOption {
+	return func(options *routeOptions) {
+		options.withAccounts = true
+	}
+}
+
 func httpRouter(opts ...RouteOption) *mux.Router {
 	var options routeOptions
 	for _, opt := range opts {
@@ -48,6 +66,22 @@ func httpRouter(opts ...RouteOption) *mux.Router {
 	}
 
 	r := mux.NewRouter()
+
+	if options.withAccounts {
+		r.Name("GetAccount").Methods(http.MethodGet).Path("/accounts/{name}").Handler(http.HandlerFunc(accounts.GetAccount))
+		r.Name("FindAccount").Methods(http.MethodPost).Path("/accounts").Handler(http.HandlerFunc(accounts.FindAccount))
+		r.Name("CreateAccount").Methods(http.MethodPut).Path("/accounts").Handler(http.HandlerFunc(accounts.CreateAccount))
+	}
+
+	if options.withAuth {
+		r.Name("SaveAuthProvider≈").Methods(http.MethodPut).Path("/auth/providers").Handler(http.HandlerFunc(auth.SaveProvider))
+		r.Name("GetAuthProvider").Methods(http.MethodGet).Path("/auth/providers/{name}").Handler(http.HandlerFunc(auth.GetProvider))
+		r.Name("DeleteAuthProvider").Methods(http.MethodDelete).Path("/auth/providers/{name}").Handler(http.HandlerFunc(auth.DeleteProvider))
+		r.Name("ListProviders").Methods(http.MethodGet).Path("/auth/providers").Handler(http.HandlerFunc(auth.ListProviders))
+		r.Name("CreateAccess").Methods(http.MethodPut).Path("/auth/access").Handler(http.HandlerFunc(auth.CreateAccess))
+		r.Name("ListAccesses").Methods(http.MethodGet).Path("/auth/accesses").Handler(http.HandlerFunc(auth.ListAccesses))
+		r.Name("DeleteAccess").Methods(http.MethodDelete).Path("/auth/access/{key}").Handler(http.HandlerFunc(auth.DeleteAccess))
+	}
 
 	if options.objects {
 		r.Name("SetSettings").Methods(http.MethodPut).Path("/objects/settings").Handler(http.HandlerFunc(objects.SetSettings))
