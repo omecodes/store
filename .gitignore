@@ -17,3 +17,5 @@
 # vendor/
 
 cmd/wdir/*
+
+build
