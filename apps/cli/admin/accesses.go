@@ -50,7 +50,7 @@ var accessCMD = &cobra.Command{
 }
 
 var saveAccessCMD = &cobra.Command{
-	Use:   "save",
+	Use:   "set",
 	Short: "save accesses",
 	Run:   saveAccess,
 }
@@ -107,4 +107,9 @@ func getAllAccesses(cmd *cobra.Command, args []string) {
 		}
 	}
 
+	err = getAccesses(password, output)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
 }
