@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/omecodes/store/files"
+	"github.com/omecodes/store/webapp"
 	"net"
 	"net/http"
 	"os"
@@ -24,8 +25,8 @@ import (
 	"github.com/omecodes/store/objects"
 )
 
-// Config contains info to configure an instance of Server
-type MNConfig struct {
+// ServerConfig contains info to configure an instance of Server
+type ServerConfig struct {
 	Dev            bool
 	Domains        []string
 	FSRootDir      string
@@ -37,7 +38,7 @@ type MNConfig struct {
 }
 
 // NewServer is a server constructor
-func NewServer(config MNConfig) *Server {
+func NewServer(config ServerConfig) *Server {
 	s := new(Server)
 	s.config = &config
 	return s
@@ -48,7 +49,7 @@ func NewServer(config MNConfig) *Server {
 type Server struct {
 	initialized bool
 	options     []netx.ListenOption
-	config      *MNConfig
+	config      *ServerConfig
 	autoCertDir string
 
 	objects                 objects.DB
@@ -153,15 +154,15 @@ func (s *Server) init() error {
 		}
 
 		ctx := context.Background()
-		source, err := s.sourceManager.Get(ctx, "fs-main-source")
+		source, err := s.sourceManager.Get(ctx, "main")
 		if err != nil && !errors.IsNotFound(err) {
 			return err
 		}
 
 		if source == nil {
 			source = &files.Source{
-				ID:          "fs-main-source",
-				Label:       "File default source",
+				ID:          "main",
+				Label:       "Default file source",
 				Description: "",
 				Type:        files.TypeDisk,
 				URI:         fmt.Sprintf("files://%s", s.config.FSRootDir),
@@ -172,6 +173,11 @@ func (s *Server) init() error {
 				return err
 			}
 		}
+	}
+
+	if s.config.WebAppsDir != "" {
+		webapp.Dir = s.config.WebAppsDir
+		go webapp.WatchDir()
 	}
 
 	return nil
@@ -226,8 +232,8 @@ func (s *Server) startDefaultAPIServer() error {
 	handler = httpRouter(
 		WithObjects(),
 		WithStaticFiles(s.config.StaticFilesDir),
-		WithFiles(s.config.FSRootDir),
-		WithWebApp(s.config.WebAppsDir),
+		WithFiles(s.config.FSRootDir != ""),
+		WithWebApp(s.config.WebAppsDir != ""),
 	)
 
 	for _, m := range middlewareList {
@@ -270,12 +276,13 @@ func (s *Server) startAutoCertAPIServer() error {
 		),
 		httpx.Logger("store").Handle,
 	}
+
 	var handler http.Handler
 	handler = httpRouter(
 		WithObjects(),
 		WithStaticFiles(s.config.StaticFilesDir),
-		WithFiles(s.config.FSRootDir),
-		WithWebApp(s.config.WebAppsDir),
+		WithFiles(s.config.FSRootDir != ""),
+		WithWebApp(s.config.WebAppsDir != ""),
 	)
 
 	for _, m := range middlewareList {
@@ -307,6 +314,8 @@ func (s *Server) startAutoCertAPIServer() error {
 
 // Stop stops API server
 func (s *Server) Stop() {
+	webapp.StopWatch()
+
 	_ = s.listener.Close()
 	_ = s.db.Close()
 }

@@ -4,27 +4,28 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/omecodes/store/files"
 	"github.com/omecodes/store/objects"
+	"github.com/omecodes/store/webapp"
 	"net/http"
 )
 
 type routeOptions struct {
-	filesDir  string
+	files     bool
 	objects   bool
-	appsDir   string
+	wApps     bool
 	staticDir string
 }
 
 type RouteOption func(options *routeOptions)
 
-func WithFiles(rootDir string) RouteOption {
+func WithFiles(withFiles bool) RouteOption {
 	return func(options *routeOptions) {
-		options.filesDir = rootDir
+		options.files = withFiles
 	}
 }
 
-func WithWebApp(appsDir string) RouteOption {
+func WithWebApp(withApps bool) RouteOption {
 	return func(options *routeOptions) {
-		options.appsDir = appsDir
+		options.wApps = withApps
 	}
 }
 
@@ -66,10 +67,14 @@ func httpRouter(opts ...RouteOption) *mux.Router {
 		r.Name("SearchObjects").Methods(http.MethodPost).Path("/objects/data/{collection}").Handler(http.HandlerFunc(objects.SearchObjects))
 	}
 
-	if options.appsDir != "" {
+	if options.wApps {
+		r.PathPrefix("/apps/").Subrouter().
+			Name("ServeWebApps").
+			Methods(http.MethodGet).
+			Handler(http.StripPrefix("/apps", http.HandlerFunc(webapp.ServeApps)))
 	}
 
-	if options.filesDir != "" {
+	if options.files {
 		treeRoute := r.PathPrefix("/files/tree/").Subrouter()
 		treeRoute.Name("CreateFile").Methods(http.MethodPut).Handler(http.StripPrefix("/files/tree/", http.HandlerFunc(files.CreateFile)))
 		treeRoute.Name("ListDir").Methods(http.MethodPost).Handler(http.StripPrefix("/files/tree/", http.HandlerFunc(files.ListDir)))

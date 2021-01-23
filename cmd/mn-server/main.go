@@ -91,7 +91,7 @@ func init() {
 				}
 			}
 
-			s := oms.NewServer(oms.MNConfig{
+			s := oms.NewServer(oms.ServerConfig{
 				Dev:            dev,
 				Domains:        domains,
 				FSRootDir:      fsDir,
