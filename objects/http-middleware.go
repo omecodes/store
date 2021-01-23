@@ -34,7 +34,7 @@ func MiddlewareWithACLManager(manager ACLManager) MiddlewareOption {
 	}
 }
 
-func MIddlewareWithDB(db DB) MiddlewareOption {
+func MiddlewareWithDB(db DB) MiddlewareOption {
 	return func(options *middlewareOptions) {
 		options.db = db
 	}

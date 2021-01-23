@@ -215,7 +215,7 @@ func (s *Server) startDefaultAPIServer() error {
 		objects.Middleware(
 			objects.MiddlewareWithACLManager(s.accessStore),
 			objects.MiddlewareWithRouterProvider(s),
-			objects.MIddlewareWithDB(s.objects),
+			objects.MiddlewareWithDB(s.objects),
 			objects.MiddlewareWithSettings(s.settings),
 		),
 		files.Middleware(
@@ -269,7 +269,7 @@ func (s *Server) startAutoCertAPIServer() error {
 		objects.Middleware(
 			objects.MiddlewareWithACLManager(s.accessStore),
 			objects.MiddlewareWithRouterProvider(s),
-			objects.MIddlewareWithDB(s.objects),
+			objects.MiddlewareWithDB(s.objects),
 			objects.MiddlewareWithSettings(s.settings),
 		),
 		files.Middleware(
