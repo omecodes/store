@@ -1,139 +1,101 @@
 package server
 
 import (
-	"github.com/omecodes/store/accounts"
-	"github.com/omecodes/store/auth"
 	"net/http"
+	"path"
 
 	"github.com/gorilla/mux"
 
+	"github.com/omecodes/store/accounts"
+	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/files"
 	"github.com/omecodes/store/objects"
-	"github.com/omecodes/store/webapp"
 )
 
-type routeOptions struct {
-	files        bool
-	objects      bool
-	wApps        bool
-	staticDir    string
-	withAuth     bool
-	withAccounts bool
+func filesRouter(r *mux.Router, pathPrefix string, middleware ...mux.MiddlewareFunc) http.Handler {
+	treePrefix := path.Join(pathPrefix, "/tree/")
+
+	treeRoute := r.PathPrefix(treePrefix).Subrouter()
+	treeRoute.Name("CreateFile").Methods(http.MethodPut).Handler(http.StripPrefix(treePrefix, http.HandlerFunc(files.CreateFile)))
+	treeRoute.Name("ListDir").Methods(http.MethodPost).Handler(http.StripPrefix(treePrefix, http.HandlerFunc(files.ListDir)))
+	treeRoute.Name("GetFileInfo").Methods(http.MethodGet).Handler(http.StripPrefix(treePrefix, http.HandlerFunc(files.GetFileInfo)))
+	treeRoute.Name("DeleteFile").Methods(http.MethodDelete).Handler(http.StripPrefix(treePrefix, http.HandlerFunc(files.DeleteFile)))
+	treeRoute.Name("PatchTree").Methods(http.MethodPatch).Handler(http.StripPrefix(treePrefix, http.HandlerFunc(files.PatchFileTree)))
+
+	attrPrefix := path.Join(pathPrefix, "/tree/")
+	attrRoute := r.PathPrefix(attrPrefix).Subrouter()
+	attrRoute.Name("GetFileAttributes").Methods(http.MethodGet).Handler(http.StripPrefix(attrPrefix, http.HandlerFunc(files.GetFileAttributes)))
+	attrRoute.Name("SetFileAttributes").Methods(http.MethodPut).Handler(http.StripPrefix(attrPrefix, http.HandlerFunc(files.SetFileAttributes)))
+
+	dataPrefix := path.Join(pathPrefix, "/data/")
+	dataRoute := r.PathPrefix(attrPrefix).Subrouter()
+	dataRoute.Name("Download").Methods(http.MethodGet).Handler(http.StripPrefix(dataPrefix, http.HandlerFunc(files.DownloadFile)))
+	dataRoute.Name("Upload").Methods(http.MethodPut, http.MethodPost).Handler(http.StripPrefix(dataPrefix, http.HandlerFunc(files.UploadFile)))
+
+	sourcePrefix := path.Join(pathPrefix, "/sources/")
+	r.Name("CreateSource").Path(sourcePrefix).Methods(http.MethodPut).HandlerFunc(files.CreateSource)
+	r.Name("ListSources").Path(path.Join(pathPrefix, "/sources/")).Methods(http.MethodGet).HandlerFunc(files.ListSources)
+	r.Name("GetSource").Path(path.Join(sourcePrefix, "{id}")).Methods(http.MethodGet).HandlerFunc(files.GetSource)
+	r.Name("DeleterSource").Path(path.Join(sourcePrefix, "{id}")).Methods(http.MethodDelete).HandlerFunc(files.DeleteSource)
+
+	var handler http.Handler
+	handler = r
+	for _, m := range middleware {
+		handler = m(handler)
+	}
+	return handler
 }
 
-type RouteOption func(options *routeOptions)
+func objectsRouter(r *mux.Router, pathPrefix string, middleware ...mux.MiddlewareFunc) http.Handler {
+	r.Name("SetSettings").Methods(http.MethodPut).Path(path.Join(pathPrefix, "settings")).Handler(http.HandlerFunc(objects.SetSettings))
+	r.Name("GetSettings").Methods(http.MethodGet).Path(path.Join(pathPrefix, "settings")).Handler(http.HandlerFunc(objects.GetSettings))
 
-func WithFiles(withFiles bool) RouteOption {
-	return func(options *routeOptions) {
-		options.files = withFiles
+	r.Name("CreateCollection").Methods(http.MethodPut).Path(path.Join(pathPrefix, "collections")).Handler(http.HandlerFunc(objects.CreateCollection))
+	r.Name("ListCollections").Methods(http.MethodGet).Path(path.Join(pathPrefix, "collections")).Handler(http.HandlerFunc(objects.ListCollections))
+	r.Name("DeleteCollection").Methods(http.MethodGet).Path(path.Join(pathPrefix, "collections", "{id}")).Handler(http.HandlerFunc(objects.DeleteCollection))
+	r.Name("GetCollection").Methods(http.MethodGet).Path(path.Join(pathPrefix, "collections", "{id}")).Handler(http.HandlerFunc(objects.GetCollection))
+
+	r.Name("PutObject").Methods(http.MethodPut).Path(path.Join(pathPrefix, "data", "{collection}")).Handler(http.HandlerFunc(objects.PutObject))
+	r.Name("PatchObject").Methods(http.MethodPatch).Path(path.Join(pathPrefix, "data", "{collection}", "{id}")).Handler(http.HandlerFunc(objects.PatchObject))
+	r.Name("MoveObject").Methods(http.MethodPost).Path(path.Join(pathPrefix, "data", "{collection}", "{id}")).Handler(http.HandlerFunc(objects.MoveObject))
+	r.Name("GetObject").Methods(http.MethodGet).Path(path.Join(pathPrefix, "data", "{collection}", "{id}")).Handler(http.HandlerFunc(objects.GetObject))
+	r.Name("DeleteObject").Methods(http.MethodDelete).Path(path.Join(pathPrefix, "data", "{collection}", "{id}")).Handler(http.HandlerFunc(objects.DeleteObject))
+	r.Name("GetObjects").Methods(http.MethodGet).Path(path.Join(pathPrefix, "data", "{collection}")).Handler(http.HandlerFunc(objects.ListObjects))
+	r.Name("SearchObjects").Methods(http.MethodPost).Path(path.Join(pathPrefix, "data", "{collection}")).Handler(http.HandlerFunc(objects.SearchObjects))
+
+	var handler http.Handler
+	handler = r
+	for _, m := range middleware {
+		handler = m(handler)
 	}
+	return handler
 }
 
-func WithWebApp(withApps bool) RouteOption {
-	return func(options *routeOptions) {
-		options.wApps = withApps
+func authRouter(r *mux.Router, pathPrefix string, middleware ...mux.MiddlewareFunc) http.Handler {
+	r.Name("SaveAuthProvider").Methods(http.MethodPut).Path(path.Join(pathPrefix, "providers")).Handler(http.HandlerFunc(auth.SaveProvider))
+	r.Name("GetAuthProvider").Methods(http.MethodGet).Path(path.Join(pathPrefix, "providers", "{name}")).Handler(http.HandlerFunc(auth.GetProvider))
+	r.Name("DeleteAuthProvider").Methods(http.MethodDelete).Path(path.Join(pathPrefix, "providers", "{name}")).Handler(http.HandlerFunc(auth.DeleteProvider))
+	r.Name("ListProviders").Methods(http.MethodGet).Path(path.Join(pathPrefix, "providers")).Handler(http.HandlerFunc(auth.ListProviders))
+	r.Name("CreateAccess").Methods(http.MethodPut).Path(path.Join(pathPrefix, "access")).Handler(http.HandlerFunc(auth.CreateAccess))
+	r.Name("ListAccesses").Methods(http.MethodGet).Path(path.Join(pathPrefix, "accesses")).Handler(http.HandlerFunc(auth.ListAccesses))
+	r.Name("DeleteAccess").Methods(http.MethodDelete).Path(path.Join(pathPrefix, "providers", "{key}")).Handler(http.HandlerFunc(auth.DeleteAccess))
+
+	var handler http.Handler
+	handler = r
+	for _, m := range middleware {
+		handler = m(handler)
 	}
+	return handler
 }
 
-func WithObjects() RouteOption {
-	return func(options *routeOptions) {
-		options.objects = true
+func accountRouter(r *mux.Router, pathPrefix string, middleware ...mux.MiddlewareFunc) http.Handler {
+	r.Name("GetAccount").Methods(http.MethodGet).Path(path.Join(pathPrefix, "accounts", "{name}")).Handler(http.HandlerFunc(accounts.GetAccount))
+	r.Name("FindAccount").Methods(http.MethodPost).Path(path.Join(pathPrefix, "accounts", "{name}")).Handler(http.HandlerFunc(accounts.FindAccount))
+	r.Name("CreateAccount").Methods(http.MethodPut).Path(path.Join(pathPrefix, "accounts", "{name}")).Handler(http.HandlerFunc(accounts.CreateAccount))
+	var handler http.Handler
+	handler = r
+	for _, m := range middleware {
+		handler = m(handler)
 	}
-}
-
-func WithStaticFiles(staticDir string) RouteOption {
-	return func(options *routeOptions) {
-		options.staticDir = staticDir
-	}
-}
-
-func WithAuth(enabled bool) RouteOption {
-	return func(options *routeOptions) {
-		options.withAuth = true
-	}
-}
-
-func WithAccounts(enabled bool) RouteOption {
-	return func(options *routeOptions) {
-		options.withAccounts = true
-	}
-}
-
-func httpRouter(opts ...RouteOption) *mux.Router {
-	var options routeOptions
-	for _, opt := range opts {
-		opt(&options)
-	}
-
-	r := mux.NewRouter()
-
-	if options.withAccounts {
-		r.Name("GetAccount").Methods(http.MethodGet).Path("/accounts/{name}").Handler(http.HandlerFunc(accounts.GetAccount))
-		r.Name("FindAccount").Methods(http.MethodPost).Path("/accounts").Handler(http.HandlerFunc(accounts.FindAccount))
-		r.Name("CreateAccount").Methods(http.MethodPut).Path("/accounts").Handler(http.HandlerFunc(accounts.CreateAccount))
-	}
-
-	if options.withAuth {
-		r.Name("SaveAuthProvider≈").Methods(http.MethodPut).Path("/auth/providers").Handler(http.HandlerFunc(auth.SaveProvider))
-		r.Name("GetAuthProvider").Methods(http.MethodGet).Path("/auth/providers/{name}").Handler(http.HandlerFunc(auth.GetProvider))
-		r.Name("DeleteAuthProvider").Methods(http.MethodDelete).Path("/auth/providers/{name}").Handler(http.HandlerFunc(auth.DeleteProvider))
-		r.Name("ListProviders").Methods(http.MethodGet).Path("/auth/providers").Handler(http.HandlerFunc(auth.ListProviders))
-		r.Name("CreateAccess").Methods(http.MethodPut).Path("/auth/access").Handler(http.HandlerFunc(auth.CreateAccess))
-		r.Name("ListAccesses").Methods(http.MethodGet).Path("/auth/accesses").Handler(http.HandlerFunc(auth.ListAccesses))
-		r.Name("DeleteAccess").Methods(http.MethodDelete).Path("/auth/access/{key}").Handler(http.HandlerFunc(auth.DeleteAccess))
-	}
-
-	if options.objects {
-		r.Name("SetSettings").Methods(http.MethodPut).Path("/objects/settings").Handler(http.HandlerFunc(objects.SetSettings))
-		r.Name("GetSettings").Methods(http.MethodGet).Path("/objects/settings").Handler(http.HandlerFunc(objects.GetSettings))
-
-		r.Name("CreateCollection").Methods(http.MethodPut).Path("/objects/collections").Handler(http.HandlerFunc(objects.CreateCollection))
-		r.Name("ListCollections").Methods(http.MethodGet).Path("/objects/collections").Handler(http.HandlerFunc(objects.ListCollections))
-		r.Name("DeleteCollection").Methods(http.MethodGet).Path("/objects/collections/{id}").Handler(http.HandlerFunc(objects.DeleteCollection))
-		r.Name("GetCollection").Methods(http.MethodGet).Path("/objects/collections/{id}").Handler(http.HandlerFunc(objects.GetCollection))
-
-		r.Name("PutObject").Methods(http.MethodPut).Path("/objects/data/{collection}").Handler(http.HandlerFunc(objects.PutObject))
-		r.Name("PatchObject").Methods(http.MethodPatch).Path("/objects/data/{collection}/{id}").Handler(http.HandlerFunc(objects.PatchObject))
-		r.Name("MoveObject").Methods(http.MethodPost).Path("/objects/data/{collection}/{id}").Handler(http.HandlerFunc(objects.MoveObject))
-		r.Name("GetObject").Methods(http.MethodGet).Path("/objects/data/{collection}/{id}").Handler(http.HandlerFunc(objects.GetObject))
-		r.Name("DeleteObject").Methods(http.MethodDelete).Path("/objects/data/{collection}/{id}").Handler(http.HandlerFunc(objects.DeleteObject))
-		r.Name("GetObjects").Methods(http.MethodGet).Path("/objects/data/{collection}").Handler(http.HandlerFunc(objects.ListObjects))
-		r.Name("SearchObjects").Methods(http.MethodPost).Path("/objects/data/{collection}").Handler(http.HandlerFunc(objects.SearchObjects))
-	}
-
-	if options.wApps {
-		r.PathPrefix("/app/").Subrouter().
-			Name("ServeWebApps").
-			Methods(http.MethodGet).
-			Handler(http.StripPrefix("/app/", http.HandlerFunc(webapp.ServeApps)))
-	}
-
-	if options.files {
-		treeRoute := r.PathPrefix("/files/tree/").Subrouter()
-		treeRoute.Name("CreateFile").Methods(http.MethodPut).Handler(http.StripPrefix("/files/tree/", http.HandlerFunc(files.CreateFile)))
-		treeRoute.Name("ListDir").Methods(http.MethodPost).Handler(http.StripPrefix("/files/tree/", http.HandlerFunc(files.ListDir)))
-		treeRoute.Name("GetFileInfo").Methods(http.MethodGet).Handler(http.StripPrefix("/files/tree/", http.HandlerFunc(files.GetFileInfo)))
-		treeRoute.Name("DeleteFile").Methods(http.MethodDelete).Handler(http.StripPrefix("/files/tree/", http.HandlerFunc(files.DeleteFile)))
-		treeRoute.Name("PatchTree").Methods(http.MethodPatch).Handler(http.StripPrefix("/files/tree/", http.HandlerFunc(files.PatchFileTree)))
-
-		attrRoute := r.PathPrefix("/files/attr/").Subrouter()
-		attrRoute.Name("GetFileAttributes").Methods(http.MethodGet).Handler(http.StripPrefix("/files/attr/", http.HandlerFunc(files.GetFileAttributes)))
-		attrRoute.Name("SetFileAttributes").Methods(http.MethodPut).Handler(http.StripPrefix("/files/attr/", http.HandlerFunc(files.SetFileAttributes)))
-
-		dataRoute := r.PathPrefix("/files/data/").Subrouter()
-		dataRoute.Name("Download").Methods(http.MethodGet).Handler(http.StripPrefix("/files/data/", http.HandlerFunc(files.DownloadFile)))
-		dataRoute.Name("Upload").Methods(http.MethodPut, http.MethodPost).Handler(http.StripPrefix("/files/data/", http.HandlerFunc(files.UploadFile)))
-
-		r.Name("CreateSource").Path("/files/sources").Methods(http.MethodPut).HandlerFunc(files.CreateSource)
-		r.Name("ListSources").Path("/files/sources").Methods(http.MethodGet).HandlerFunc(files.ListSources)
-		r.Name("GetSource").Path("/files/sources/{id}").Methods(http.MethodGet).HandlerFunc(files.GetSource)
-		r.Name("DeleterSource").Path("/files/sources/{id}").Methods(http.MethodDelete).HandlerFunc(files.DeleteSource)
-	}
-
-	if options.staticDir != "" {
-		staticFilesRouter := http.FileServer(http.Dir(options.staticDir))
-		r.NotFoundHandler = staticFilesRouter
-	}
-
-	return r
+	return handler
 }

@@ -211,44 +211,12 @@ func (s *Server) startDefaultAPIServer() error {
 	address := s.listener.Addr().String()
 	log.Info("starting HTTP server", log.Field("address", address))
 
-	middlewareList := []mux.MiddlewareFunc{
-		objects.Middleware(
-			objects.MiddlewareWithACLManager(s.accessStore),
-			objects.MiddlewareWithRouterProvider(s),
-			objects.MiddlewareWithDB(s.objects),
-			objects.MiddlewareWithSettings(s.settings),
-		),
-		files.Middleware(
-			files.MiddlewareWithSourceManager(s.sourceManager),
-		),
-		accounts.Middleware(
-			accounts.MiddlewareWithAccountManager(s.accountsManager),
-		),
-		auth.Middleware(
-			auth.MiddlewareWithCredentials(s.credentialsManager),
-			auth.MiddlewareWithProviderManager(s.authenticationProviders),
-		),
-		httpx.Logger("store").Handle,
-	}
-
-	var handler http.Handler
-	handler = httpRouter(
-		WithObjects(),
-		WithStaticFiles(s.config.StaticFilesDir),
-		WithFiles(s.config.FSRootDir != ""),
-		WithWebApp(s.config.WebAppsDir != ""),
-		WithAccounts(true),
-		WithAuth(true),
-	)
-
-	for _, m := range middlewareList {
-		handler = m.Middleware(handler)
-	}
+	r := s.httpRouter()
 
 	go func() {
 		s.server = &http.Server{
 			Addr:    address,
-			Handler: handler,
+			Handler: r,
 		}
 		if err := s.server.Serve(s.listener); err != nil {
 			s.Errors <- err
@@ -265,46 +233,15 @@ func (s *Server) startAutoCertAPIServer() error {
 	}
 	certManager.Cache = autocert.DirCache(s.autoCertDir)
 
-	middlewareList := []mux.MiddlewareFunc{
-		objects.Middleware(
-			objects.MiddlewareWithACLManager(s.accessStore),
-			objects.MiddlewareWithRouterProvider(s),
-			objects.MiddlewareWithDB(s.objects),
-			objects.MiddlewareWithSettings(s.settings),
-		),
-		files.Middleware(
-			files.MiddlewareWithSourceManager(s.sourceManager),
-		),
-		accounts.Middleware(
-			accounts.MiddlewareWithAccountManager(s.accountsManager),
-		),
-		auth.Middleware(
-			auth.MiddlewareWithCredentials(s.credentialsManager),
-			auth.MiddlewareWithProviderManager(s.authenticationProviders),
-		),
-		httpx.Logger("store").Handle,
-	}
+	r := s.httpRouter()
 
-	var handler http.Handler
-	handler = httpRouter(
-		WithObjects(),
-		WithStaticFiles(s.config.StaticFilesDir),
-		WithFiles(s.config.FSRootDir != ""),
-		WithWebApp(s.config.WebAppsDir != ""),
-		WithAccounts(true),
-		WithAuth(true),
-	)
-
-	for _, m := range middlewareList {
-		handler = m.Middleware(handler)
-	}
 	// create the server itself
 	srv := &http.Server{
 		Addr: ":https",
 		TLSConfig: &tls.Config{
 			GetCertificate: certManager.GetCertificate,
 		},
-		Handler: handler,
+		Handler: r,
 	}
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
@@ -320,6 +257,70 @@ func (s *Server) startAutoCertAPIServer() error {
 		}
 	}()
 	return nil
+}
+
+func (s *Server) httpRouter() *mux.Router {
+
+	r := mux.NewRouter()
+	filesRouter(
+		r.PathPrefix("/files").Subrouter(), "/files",
+		files.Middleware(
+			files.MiddlewareWithSourceManager(s.sourceManager),
+		),
+		accounts.Middleware(
+			accounts.MiddlewareWithAccountManager(s.accountsManager),
+		),
+		auth.Middleware(
+			auth.MiddlewareWithCredentials(s.credentialsManager),
+			auth.MiddlewareWithProviderManager(s.authenticationProviders),
+		),
+		httpx.Logger("files").Handle,
+	)
+
+	objectsRouter(
+		r.PathPrefix("/files").Subrouter(), "/files",
+		objects.Middleware(
+			objects.MiddlewareWithACLManager(s.accessStore),
+			objects.MiddlewareWithRouterProvider(s),
+			objects.MiddlewareWithDB(s.objects),
+			objects.MiddlewareWithSettings(s.settings),
+		),
+		accounts.Middleware(
+			accounts.MiddlewareWithAccountManager(s.accountsManager),
+		),
+		auth.Middleware(
+			auth.MiddlewareWithCredentials(s.credentialsManager),
+			auth.MiddlewareWithProviderManager(s.authenticationProviders),
+		),
+		httpx.Logger("objects").Handle,
+	)
+
+	authRouter(
+		r.PathPrefix("/auth").Subrouter(), "/auth",
+		auth.Middleware(
+			auth.MiddlewareWithCredentials(s.credentialsManager),
+			auth.MiddlewareWithProviderManager(s.authenticationProviders),
+		),
+		httpx.Logger("auth").Handle,
+	)
+
+	accountRouter(
+		r.PathPrefix("/accounts").Subrouter(), "/accounts",
+		accounts.Middleware(
+			accounts.MiddlewareWithAccountManager(s.accountsManager),
+		),
+		httpx.Logger("accounts").Handle,
+	)
+
+	r.PathPrefix("/app/").Subrouter().
+		Name("ServeWebApps").
+		Methods(http.MethodGet).
+		Handler(http.StripPrefix("/app/", http.HandlerFunc(webapp.ServeApps)))
+
+	staticFilesRouter := http.FileServer(http.Dir(s.config.StaticFilesDir))
+	r.NotFoundHandler = staticFilesRouter
+
+	return r
 }
 
 // Stop stops API server
