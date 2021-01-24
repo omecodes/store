@@ -9,10 +9,10 @@ var (
 
 	password string
 
-	server    string
-	input     string
-	output    string
-	accessIDs []string
+	server string
+	input  string
+	output string
+	ids    []string
 
 	passwordLen int
 	rounds      int
@@ -23,14 +23,15 @@ var (
 func init() {
 	rootCMD = &cobra.Command{
 		Use:   "admin",
-		Short: "Admin command tool",
+		Short: "Admin command line tool",
 		Run: func(cmd *cobra.Command, args []string) {
 			_ = cmd.Help()
 		},
 	}
 
 	rootCMD.AddCommand(authCMD)
-	rootCMD.AddCommand(accessCMD)
+	rootCMD.AddCommand(objectsCMD)
+	rootCMD.AddCommand(filesCMD)
 }
 
 func CMD() *cobra.Command {
