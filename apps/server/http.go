@@ -125,7 +125,7 @@ func httpRouter(opts ...RouteOption) *mux.Router {
 		dataRoute.Name("Upload").Methods(http.MethodPut, http.MethodPost).Handler(http.StripPrefix("/files/data/", http.HandlerFunc(files.UploadFile)))
 
 		r.Name("CreateSource").Path("/files/sources").Methods(http.MethodPut).HandlerFunc(files.CreateSource)
-		r.Name("ListSources").Path("/files/sources").Methods(http.MethodPost).HandlerFunc(files.ListSources)
+		r.Name("ListSources").Path("/files/sources").Methods(http.MethodGet).HandlerFunc(files.ListSources)
 		r.Name("GetSource").Path("/files/sources/{id}").Methods(http.MethodGet).HandlerFunc(files.GetSource)
 		r.Name("DeleterSource").Path("/files/sources/{id}").Methods(http.MethodDelete).HandlerFunc(files.DeleteSource)
 	}
