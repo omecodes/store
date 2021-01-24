@@ -9,11 +9,10 @@ var (
 
 	password string
 
-	server       string
-	input        string
-	output       string
-	accessKey    string
-	accessSecret string
+	server    string
+	input     string
+	output    string
+	accessIDs []string
 
 	passwordLen int
 	rounds      int

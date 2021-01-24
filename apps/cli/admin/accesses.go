@@ -5,7 +5,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/omecodes/libome/crypt"
 	"github.com/omecodes/store/auth"
+	"github.com/omecodes/store/common"
 	"io"
 	"os"
 
@@ -37,8 +39,22 @@ func init() {
 		os.Exit(-1)
 	}
 
+	flags = deleteAccessesCMD.PersistentFlags()
+	flags.StringVar(&server, "server", "", "Server address")
+	flags.StringVar(&password, "password", "", "admin password")
+	flags.StringArrayVar(&accessIDs, "id", nil, "Access ID")
+	if err := cobra.MarkFlagRequired(flags, "server"); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+	if err := cobra.MarkFlagRequired(flags, "id"); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+
 	accessCMD.AddCommand(saveAccessCMD)
 	accessCMD.AddCommand(getAccessesCMD)
+	accessCMD.AddCommand(deleteAccessesCMD)
 }
 
 var accessCMD = &cobra.Command{
@@ -59,6 +75,12 @@ var getAccessesCMD = &cobra.Command{
 	Use:   "get",
 	Short: "Get all accesses",
 	Run:   getAllAccesses,
+}
+
+var deleteAccessesCMD = &cobra.Command{
+	Use:   "del",
+	Short: "Delete accesses",
+	Run:   deleteAccesses,
 }
 
 func saveAccess(cmd *cobra.Command, args []string) {
@@ -89,9 +111,31 @@ func saveAccess(cmd *cobra.Command, args []string) {
 			return
 		}
 
+		key, info, err := crypt.Generate(password, 16)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(-1)
+		}
+
+		encrypted, err := crypt.AESGCMEncrypt(key, []byte(access.Secret))
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(-1)
+		}
+
+		encodedInfo, err := json.Marshal(info)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(-1)
+		}
+
 		h := sha512.New()
 		secret := h.Sum([]byte(access.Secret))
 		access.Secret = hex.EncodeToString(secret)
+
+		access.Info = make(map[string]string)
+		access.Info[common.AccessInfoEncryptedSecret] = hex.EncodeToString(encrypted)
+		access.Info[common.AccessInfoSecretEncryptParams] = hex.EncodeToString(encodedInfo)
 
 		err = putAccess(password, access)
 		if err != nil {
@@ -114,5 +158,23 @@ func getAllAccesses(cmd *cobra.Command, args []string) {
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
+	}
+}
+
+func deleteAccesses(cmd *cobra.Command, args []string) {
+	var err error
+	if password == "" {
+		password, err = prompt.Password("password")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(-1)
+		}
+	}
+
+	for _, id := range accessIDs {
+		err = deleteAccess(password, id)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }

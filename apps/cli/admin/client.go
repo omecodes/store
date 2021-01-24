@@ -107,3 +107,35 @@ func getAccesses(adminPassword string, outputFilename string) error {
 
 	return nil
 }
+
+func deleteAccess(adminPassword string, accessID string) error {
+	endpoint := fmt.Sprintf("%s/auth/access/%s", server, accessID)
+	if !strings.HasPrefix(endpoint, "http") {
+		endpoint = "https://" + endpoint
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, endpoint, nil)
+	if err != nil {
+		return err
+	}
+	req.SetBasicAuth("admin", adminPassword)
+	req.Header.Set("Content-Type", "application/json")
+	req.Close = true
+
+	client := &http.Client{}
+
+	rsp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
+
+	if rsp.StatusCode != 200 {
+		return errors.New(rsp.Status)
+	}
+
+	return nil
+}
