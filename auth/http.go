@@ -9,7 +9,8 @@ import (
 	"github.com/omecodes/libome/logs"
 )
 
-const pathItemId = "id"
+const pathItemKey = "key"
+const pathItemName = "name"
 
 func NewHttpHandler() (handler http.Handler) {
 	r := mux.NewRouter()
@@ -77,9 +78,9 @@ func GetProvider(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	provider, err := providers.Get(vars[pathItemId])
+	provider, err := providers.Get(vars[pathItemName])
 	if err != nil {
-		logs.Error("failed to get provider", logs.Details("id", vars[pathItemId]), logs.Err(err))
+		logs.Error("failed to get provider", logs.Details("id", vars[pathItemName]), logs.Err(err))
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
@@ -111,7 +112,7 @@ func DeleteProvider(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	name := vars[pathItemId]
+	name := vars[pathItemName]
 	err := providers.Delete(name)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -139,7 +140,7 @@ func ListProviders(w http.ResponseWriter, r *http.Request) {
 
 	providerList, err := providers.GetAll(user.Name != "admin")
 	if err != nil {
-		logs.Error("failed to get provider", logs.Details("id", vars[pathItemId]), logs.Err(err))
+		logs.Error("failed to get provider", logs.Details("id", vars[pathItemName]), logs.Err(err))
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
@@ -220,7 +221,7 @@ func DeleteAccess(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	name := vars[pathItemId]
+	name := vars[pathItemKey]
 
 	manager := GetCredentialsManager(ctx)
 	if manager == nil {
@@ -229,15 +230,10 @@ func DeleteAccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	access, err := manager.GetAccess(name)
+	err := manager.DeleteAccess(name)
 	if err != nil {
 		logs.Error("could not get access", logs.Err(err))
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		return
-	}
-
-	err = json.NewEncoder(w).Encode(access)
-	if err != nil {
-		logs.Error("failed to send provider as response", logs.Err(err))
 	}
 }
