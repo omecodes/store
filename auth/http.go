@@ -12,17 +12,22 @@ import (
 const pathItemKey = "key"
 const pathItemName = "name"
 
-func NewHttpHandler() (handler http.Handler) {
+func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	r := mux.NewRouter()
-	r.Name("SaveAuthProvider≈").Methods(http.MethodPut).Path("/auth/providers").Handler(http.HandlerFunc(SaveProvider))
-	r.Name("GetAuthProvider").Methods(http.MethodGet).Path("/auth/providers/{name}").Handler(http.HandlerFunc(GetProvider))
-	r.Name("DeleteAuthProvider").Methods(http.MethodDelete).Path("/auth/providers/{name}").Handler(http.HandlerFunc(DeleteProvider))
-	r.Name("ListProviders").Methods(http.MethodGet).Path("/auth/providers").Handler(http.HandlerFunc(ListProviders))
-	r.Name("CreateAccess").Methods(http.MethodPut).Path("/auth/access").Handler(http.HandlerFunc(CreateAccess))
-	r.Name("ListAccesses").Methods(http.MethodGet).Path("/auth/accesses").Handler(http.HandlerFunc(ListAccesses))
-	r.Name("DeleteAccess").Methods(http.MethodDelete).Path("/auth/access/{key}").Handler(http.HandlerFunc(DeleteAccess))
+	r.Name("SaveAuthProvider").Methods(http.MethodPut).Path("/providers").Handler(http.HandlerFunc(SaveProvider))
+	r.Name("GetAuthProvider").Methods(http.MethodGet).Path("/providers/{name}").Handler(http.HandlerFunc(GetProvider))
+	r.Name("DeleteAuthProvider").Methods(http.MethodDelete).Path("/providers/{name}").Handler(http.HandlerFunc(DeleteProvider))
+	r.Name("ListProviders").Methods(http.MethodGet).Path("/providers").Handler(http.HandlerFunc(ListProviders))
+	r.Name("CreateAccess").Methods(http.MethodPut).Path("/access").Handler(http.HandlerFunc(CreateAccess))
+	r.Name("ListAccesses").Methods(http.MethodGet).Path("/accesses").Handler(http.HandlerFunc(ListAccesses))
+	r.Name("DeleteAccess").Methods(http.MethodDelete).Path("/providers/{key}").Handler(http.HandlerFunc(DeleteAccess))
+
+	var handler http.Handler
 	handler = r
-	return
+	for _, m := range middleware {
+		handler = m(handler)
+	}
+	return handler
 }
 
 func SaveProvider(w http.ResponseWriter, r *http.Request) {

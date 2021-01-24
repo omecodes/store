@@ -24,6 +24,33 @@ const (
 	pathItemCollection = "collection"
 )
 
+func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
+	r := mux.NewRouter()
+
+	r.Name("SetSettings").Methods(http.MethodPut).Path("/settings").Handler(http.HandlerFunc(SetSettings))
+	r.Name("GetSettings").Methods(http.MethodGet).Path("/settings").Handler(http.HandlerFunc(GetSettings))
+
+	r.Name("CreateCollection").Methods(http.MethodPut).Path("/collections").Handler(http.HandlerFunc(CreateCollection))
+	r.Name("ListCollections").Methods(http.MethodGet).Path("/collections").Handler(http.HandlerFunc(ListCollections))
+	r.Name("DeleteCollection").Methods(http.MethodGet).Path("/collections/{id}").Handler(http.HandlerFunc(DeleteCollection))
+	r.Name("GetCollection").Methods(http.MethodGet).Path("/collections/{id}").Handler(http.HandlerFunc(GetCollection))
+
+	r.Name("PutObject").Methods(http.MethodPut).Path("/data/{collection}").Handler(http.HandlerFunc(PutObject))
+	r.Name("PatchObject").Methods(http.MethodPatch).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(PatchObject))
+	r.Name("MoveObject").Methods(http.MethodPost).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(MoveObject))
+	r.Name("GetObject").Methods(http.MethodGet).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(GetObject))
+	r.Name("DeleteObject").Methods(http.MethodDelete).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(DeleteObject))
+	r.Name("GetObjects").Methods(http.MethodGet).Path("/data/{collection}").Handler(http.HandlerFunc(ListObjects))
+	r.Name("SearchObjects").Methods(http.MethodPost).Path("/data/{collection}").Handler(http.HandlerFunc(SearchObjects))
+
+	var handler http.Handler
+	handler = r
+	for _, m := range middleware {
+		handler = m(handler)
+	}
+	return handler
+}
+
 func PutObject(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

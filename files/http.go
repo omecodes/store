@@ -16,6 +16,37 @@ const (
 	pathVarId = "id"
 )
 
+func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
+	r := mux.NewRouter()
+
+	treeRoute := r.PathPrefix("/tree/").Subrouter()
+	treeRoute.Name("CreateFile").Methods(http.MethodPut).Handler(http.StripPrefix("/tree/", http.HandlerFunc(CreateFile)))
+	treeRoute.Name("ListDir").Methods(http.MethodPost).Handler(http.StripPrefix("/tree/", http.HandlerFunc(ListDir)))
+	treeRoute.Name("GetFileInfo").Methods(http.MethodGet).Handler(http.StripPrefix("/tree/", http.HandlerFunc(GetFileInfo)))
+	treeRoute.Name("DeleteFile").Methods(http.MethodDelete).Handler(http.StripPrefix("/tree/", http.HandlerFunc(DeleteFile)))
+	treeRoute.Name("PatchTree").Methods(http.MethodPatch).Handler(http.StripPrefix("/tree/", http.HandlerFunc(PatchFileTree)))
+
+	attrRoute := r.PathPrefix("/attr/").Subrouter()
+	attrRoute.Name("GetFileAttributes").Methods(http.MethodGet).Handler(http.StripPrefix("/attr/", http.HandlerFunc(GetFileAttributes)))
+	attrRoute.Name("SetFileAttributes").Methods(http.MethodPut).Handler(http.StripPrefix("/attr/", http.HandlerFunc(SetFileAttributes)))
+
+	dataRoute := r.PathPrefix("/data/").Subrouter()
+	dataRoute.Name("Download").Methods(http.MethodGet).Handler(http.StripPrefix("/data/", http.HandlerFunc(DownloadFile)))
+	dataRoute.Name("Upload").Methods(http.MethodPut, http.MethodPost).Handler(http.StripPrefix("/data/", http.HandlerFunc(UploadFile)))
+
+	r.Name("CreateSource").Path("/sources").Methods(http.MethodPut).HandlerFunc(CreateSource)
+	r.Name("ListSources").Path("/sources").Methods(http.MethodGet).HandlerFunc(ListSources)
+	r.Name("GetSource").Path("/sources/{id}").Methods(http.MethodGet).HandlerFunc(GetSource)
+	r.Name("DeleterSource").Path("/sources/{id}").Methods(http.MethodDelete).HandlerFunc(DeleteSource)
+
+	var handler http.Handler
+	handler = r
+	for _, m := range middleware {
+		handler = m(handler)
+	}
+	return handler
+}
+
 func CreateFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)

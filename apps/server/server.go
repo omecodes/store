@@ -262,14 +262,10 @@ func (s *Server) startAutoCertAPIServer() error {
 func (s *Server) httpRouter() *mux.Router {
 
 	r := mux.NewRouter()
-	filesRouter(
-		r.PathPrefix("/files").Subrouter(), "/files",
-		files.Middleware(
-			files.MiddlewareWithSourceManager(s.sourceManager),
-		),
-		accounts.Middleware(
-			accounts.MiddlewareWithAccountManager(s.accountsManager),
-		),
+
+	filesRouter := files.MuxRouter(
+		files.Middleware(files.MiddlewareWithSourceManager(s.sourceManager)),
+		accounts.Middleware(accounts.MiddlewareWithAccountManager(s.accountsManager)),
 		auth.Middleware(
 			auth.MiddlewareWithCredentials(s.credentialsManager),
 			auth.MiddlewareWithProviderManager(s.authenticationProviders),
@@ -277,8 +273,10 @@ func (s *Server) httpRouter() *mux.Router {
 		httpx.Logger("files").Handle,
 	)
 
-	objectsRouter(
-		r.PathPrefix("/files").Subrouter(), "/files",
+	r.PathPrefix("/files/").Subrouter().Name("ServeFiles").
+		Handler(http.StripPrefix("/files", filesRouter))
+
+	objectsRouter := objects.MuxRouter(
 		objects.Middleware(
 			objects.MiddlewareWithACLManager(s.accessStore),
 			objects.MiddlewareWithRouterProvider(s),
@@ -294,23 +292,27 @@ func (s *Server) httpRouter() *mux.Router {
 		),
 		httpx.Logger("objects").Handle,
 	)
+	r.PathPrefix("/objects/").Subrouter().Name("ServeObjects").
+		Handler(http.StripPrefix("/objects", objectsRouter))
 
-	authRouter(
-		r.PathPrefix("/auth").Subrouter(), "/auth",
+	authRouter := auth.MuxRouter(
 		auth.Middleware(
 			auth.MiddlewareWithCredentials(s.credentialsManager),
 			auth.MiddlewareWithProviderManager(s.authenticationProviders),
 		),
 		httpx.Logger("auth").Handle,
 	)
+	r.PathPrefix("/auth/").Subrouter().Name("ManageAuthentication").
+		Handler(http.StripPrefix("/auth", authRouter))
 
-	accountRouter(
-		r.PathPrefix("/accounts").Subrouter(), "/accounts",
+	accountsRouter := accounts.MuxRouter(
 		accounts.Middleware(
 			accounts.MiddlewareWithAccountManager(s.accountsManager),
 		),
 		httpx.Logger("accounts").Handle,
 	)
+	r.PathPrefix("/accounts/").Subrouter().Name("ManageAccounts").
+		Handler(http.StripPrefix("/accounts", accountsRouter))
 
 	r.PathPrefix("/app/").Subrouter().
 		Name("ServeWebApps").

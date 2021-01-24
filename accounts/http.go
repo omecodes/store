@@ -11,13 +11,17 @@ import (
 
 const pathItemName = "name"
 
-func NewHttpHandler() (handler http.Handler) {
+func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	r := mux.NewRouter()
 	r.Name("GetAccount").Methods(http.MethodGet).Path("/accounts/{name}").Handler(http.HandlerFunc(GetAccount))
-	r.Name("FindAccount").Methods(http.MethodPost).Path("/accounts").Handler(http.HandlerFunc(FindAccount))
-	r.Name("CreateAccount").Methods(http.MethodPut).Path("/accounts").Handler(http.HandlerFunc(CreateAccount))
+	r.Name("FindAccount").Methods(http.MethodPost).Path("/accounts/{name}").Handler(http.HandlerFunc(FindAccount))
+	r.Name("CreateAccount").Methods(http.MethodPut).Path("/accounts/{name}").Handler(http.HandlerFunc(CreateAccount))
+	var handler http.Handler
 	handler = r
-	return
+	for _, m := range middleware {
+		handler = m(handler)
+	}
+	return handler
 }
 
 func FindAccount(w http.ResponseWriter, r *http.Request) {
