@@ -30,14 +30,9 @@ type FSProvider interface {
 }
 
 func getFS(ctx context.Context, sourceID string) (FS, error) {
-	sm := getSourceManager(ctx)
-	if sm == nil {
-		return nil, errors.New("context missing source manager")
-	}
-
-	source, err := sm.Get(ctx, sourceID)
+	source, err := resolveSource(ctx, sourceID)
 	if err != nil {
-		return nil, errors.Create(errors.Internal, "missing source in context")
+		return nil, err
 	}
 
 	o := ctx.Value(ctxFsProvider{})
