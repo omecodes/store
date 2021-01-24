@@ -81,9 +81,10 @@ func saveAccess(cmd *cobra.Command, args []string) {
 		_ = file.Close()
 	}()
 
+	decoder := json.NewDecoder(file)
 	for {
 		var access *auth.APIAccess
-		err = json.NewDecoder(file).Decode(&access)
+		err = decoder.Decode(&access)
 		if err == io.EOF {
 			return
 		}
@@ -93,7 +94,9 @@ func saveAccess(cmd *cobra.Command, args []string) {
 		access.Secret = hex.EncodeToString(secret)
 
 		err = putAccess(password, access)
-		fmt.Println(err)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 
