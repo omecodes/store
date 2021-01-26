@@ -107,6 +107,7 @@ func init() {
 
 	flags := runCMD.PersistentFlags()
 	flags.BoolVar(&dev, "dev", false, "Enable development mode")
+	flags.BoolVar(&autoCert, "autocert", false, "Run with ACME autocert")
 	flags.StringArrayVar(&domains, "domains", nil, "Domains name for auto cert")
 	flags.StringVar(&workingDir, "dir", "./", "Data directory")
 	flags.StringVar(&fsDir, "fs", "./files", "File storage root directory")
