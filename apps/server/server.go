@@ -5,8 +5,6 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"fmt"
-	"github.com/omecodes/store/files"
-	"github.com/omecodes/store/webapp"
 	"net"
 	"net/http"
 	"os"
@@ -22,19 +20,20 @@ import (
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/accounts"
 	"github.com/omecodes/store/auth"
+	"github.com/omecodes/store/files"
 	"github.com/omecodes/store/objects"
+	"github.com/omecodes/store/webapp"
 )
 
 // Config contains info to configure an instance of Server
 type Config struct {
-	Dev            bool
-	Domains        []string
-	FSRootDir      string
-	WorkingDir     string
-	WebAppsDir     string
-	StaticFilesDir string
-	AdminInfo      string
-	DSN            string
+	Dev        bool
+	Domains    []string
+	FSRootDir  string
+	WorkingDir string
+	WebDir     string
+	AdminInfo  string
+	DSN        string
 }
 
 // New is a server constructor
@@ -165,7 +164,7 @@ func (s *Server) init() error {
 				Label:       "Default file source",
 				Description: "",
 				Type:        files.TypeDisk,
-				URI:         fmt.Sprintf("files://%s", s.config.FSRootDir),
+				URI:         fmt.Sprintf("files://%s", files.NormalizePath(s.config.FSRootDir)),
 				ExpireTime:  -1,
 			}
 			_, err = s.sourceManager.Save(ctx, source)
@@ -175,8 +174,8 @@ func (s *Server) init() error {
 		}
 	}
 
-	if s.config.WebAppsDir != "" {
-		webapp.Dir = s.config.WebAppsDir
+	if s.config.WebDir != "" {
+		webapp.Dir = s.config.WebDir
 		go webapp.WatchDir()
 	}
 
@@ -260,9 +259,7 @@ func (s *Server) startAutoCertAPIServer() error {
 }
 
 func (s *Server) httpRouter() *mux.Router {
-
 	r := mux.NewRouter()
-
 	filesRouter := files.MuxRouter(
 		files.Middleware(files.MiddlewareWithSourceManager(s.sourceManager)),
 		accounts.Middleware(accounts.MiddlewareWithAccountManager(s.accountsManager)),
@@ -273,8 +270,8 @@ func (s *Server) httpRouter() *mux.Router {
 		httpx.Logger("files").Handle,
 	)
 
-	r.PathPrefix("/files/").Subrouter().Name("ServeFiles").
-		Handler(http.StripPrefix("/files", filesRouter))
+	r.PathPrefix("/api/files/").Subrouter().Name("ServeFiles").
+		Handler(http.StripPrefix("/api/files", filesRouter))
 
 	objectsRouter := objects.MuxRouter(
 		objects.Middleware(
@@ -292,8 +289,8 @@ func (s *Server) httpRouter() *mux.Router {
 		),
 		httpx.Logger("objects").Handle,
 	)
-	r.PathPrefix("/objects/").Subrouter().Name("ServeObjects").
-		Handler(http.StripPrefix("/objects", objectsRouter))
+	r.PathPrefix("/api/objects/").Subrouter().Name("ServeObjects").
+		Handler(http.StripPrefix("/api/objects", objectsRouter))
 
 	authRouter := auth.MuxRouter(
 		auth.Middleware(
@@ -302,8 +299,8 @@ func (s *Server) httpRouter() *mux.Router {
 		),
 		httpx.Logger("auth").Handle,
 	)
-	r.PathPrefix("/auth/").Subrouter().Name("ManageAuthentication").
-		Handler(http.StripPrefix("/auth", authRouter))
+	r.PathPrefix("/api/auth/").Subrouter().Name("ManageAuthentication").
+		Handler(http.StripPrefix("/api/auth", authRouter))
 
 	accountsRouter := accounts.MuxRouter(
 		accounts.Middleware(
@@ -311,15 +308,10 @@ func (s *Server) httpRouter() *mux.Router {
 		),
 		httpx.Logger("accounts").Handle,
 	)
-	r.PathPrefix("/accounts/").Subrouter().Name("ManageAccounts").
-		Handler(http.StripPrefix("/accounts", accountsRouter))
+	r.PathPrefix("/api/accounts/").Subrouter().Name("ManageAccounts").
+		Handler(http.StripPrefix("/api/accounts", accountsRouter))
 
-	r.PathPrefix("/app/").Subrouter().
-		Name("ServeWebApps").
-		Methods(http.MethodGet).
-		Handler(http.StripPrefix("/app/", http.HandlerFunc(webapp.ServeApps)))
-
-	staticFilesRouter := http.FileServer(http.Dir(s.config.StaticFilesDir))
+	staticFilesRouter := http.HandlerFunc(webapp.ServeApps)
 	r.NotFoundHandler = staticFilesRouter
 
 	return r

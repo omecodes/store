@@ -20,8 +20,7 @@ var (
 	adminInfo  string
 	workingDir string
 	fsDir      string
-	resDir     string
-	webappsDir string
+	wwwDir     string
 	dsn        string
 	domains    []string
 	command    *cobra.Command
@@ -67,26 +66,13 @@ func init() {
 				}
 			}
 
-			if webappsDir != "" {
-				webappsDir, err = filepath.Abs(webappsDir)
+			if wwwDir != "" {
+				wwwDir, err = filepath.Abs(wwwDir)
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(-1)
 				}
-				err = os.MkdirAll(webappsDir, os.ModePerm)
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(-1)
-				}
-			}
-
-			if resDir != "" {
-				resDir, err = filepath.Abs(resDir)
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(-1)
-				}
-				err = os.MkdirAll(resDir, os.ModePerm)
+				err = os.MkdirAll(wwwDir, os.ModePerm)
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(-1)
@@ -94,14 +80,13 @@ func init() {
 			}
 
 			s := server.New(server.Config{
-				Dev:            dev,
-				Domains:        domains,
-				FSRootDir:      fsDir,
-				WorkingDir:     workingDir,
-				WebAppsDir:     webappsDir,
-				StaticFilesDir: resDir,
-				AdminInfo:      adminInfo,
-				DSN:            dsn,
+				Dev:        dev,
+				Domains:    domains,
+				FSRootDir:  fsDir,
+				WorkingDir: workingDir,
+				WebDir:     wwwDir,
+				AdminInfo:  adminInfo,
+				DSN:        dsn,
 			})
 
 			err = s.Start()
@@ -122,10 +107,9 @@ func init() {
 	flags := runCMD.PersistentFlags()
 	flags.BoolVar(&dev, "dev", false, "Enable development mode")
 	flags.StringArrayVar(&domains, "domains", nil, "Domains name for auto cert")
-	flags.StringVar(&workingDir, "dir", "", "Data directory")
+	flags.StringVar(&workingDir, "dir", "./", "Data directory")
 	flags.StringVar(&fsDir, "fs", "./files", "File storage root directory")
-	flags.StringVar(&resDir, "res", "./static", "Web resources files directory")
-	flags.StringVar(&webappsDir, "apps", "./apps", "Web app content directory")
+	flags.StringVar(&wwwDir, "web-dir", "./www", "Web apps directory (apache www equivalent)")
 	flags.StringVar(&adminInfo, "admin", "", "Admin password info")
 	flags.StringVar(&dsn, "dsn", "store:store@(127.0.0.1:3306)/store?charset=utf8", "MySQL database uri")
 	if err := cobra.MarkFlagRequired(flags, "admin"); err != nil {
