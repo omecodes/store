@@ -8,134 +8,12 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
-	"sync"
-	"time"
-
-	"github.com/fsnotify/fsnotify"
 
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
 )
 
-var (
-	globalMutex  = &sync.RWMutex{}
-	watchEnabled bool
-	watcher      *fsnotify.Watcher
-	Dir          string
-	dirs         = map[string]string{}
-)
-
-func addAppDir(dir string) {
-	globalMutex.Lock()
-	defer globalMutex.Unlock()
-	dirs[dir] = ""
-}
-
-func removeAppDir(dir string) {
-	globalMutex.Lock()
-	defer globalMutex.Unlock()
-	delete(dirs, dir)
-}
-
-func appList() []string {
-	globalMutex.RLock()
-	defer globalMutex.RUnlock()
-
-	var list []string
-	for k, _ := range dirs {
-		list = append(list, k)
-	}
-	return list
-}
-
-func WatchDir() {
-	watchEnabled = true
-	defer func() {
-		logs.Info("Webapp • app directory watching stopped")
-	}()
-
-	for watchEnabled {
-		dir, err := os.Open(Dir)
-		if err != nil {
-			logs.Error("Webapp • could not open directory", logs.Err(err))
-			<-time.After(time.Second * 3)
-			continue
-		}
-
-		files, err := dir.Readdir(-1)
-		if err != nil {
-			_ = dir.Close()
-			logs.Error("Webapp • could not open directory", logs.Err(err))
-			<-time.After(time.Second * 3)
-			continue
-		}
-
-		for _, file := range files {
-			if file.IsDir() {
-				addAppDir(filepath.Base(file.Name()))
-			}
-		}
-		_ = dir.Close()
-
-		watcher, err = fsnotify.NewWatcher()
-		if err != nil {
-			logs.Error("Webapp • could not create watcher", logs.Err(err))
-			<-time.After(time.Second * 3)
-			continue
-		}
-
-		err = watcher.Add(Dir)
-		if err != nil {
-			logs.Error("Webapp • could not watch", logs.Details("dir", Dir), logs.Err(err))
-			<-time.After(time.Second * 3)
-			continue
-		}
-
-		done := false
-		for !done {
-			select {
-			case event, open := <-watcher.Events:
-				if done = !open; done {
-					break
-				}
-
-				if event.Op == fsnotify.Create {
-					filename := filepath.Join(Dir, event.Name)
-					stats, err := os.Stat(filename)
-					if err == nil {
-						if stats.IsDir() {
-							addAppDir(filepath.Base(filename))
-						}
-					}
-
-				} else if event.Op == fsnotify.Remove {
-					filename := filepath.Join(Dir, event.Name)
-					stats, err := os.Stat(filename)
-					if err == nil {
-						if stats.IsDir() {
-							removeAppDir(filepath.Base(filename))
-						}
-					}
-				}
-
-			case err, _ := <-watcher.Errors:
-				done = true
-				logs.Error("Webapp • dir watch", logs.Err(err))
-				break
-			}
-		}
-	}
-}
-
-func StopWatch() {
-	watchEnabled = false
-	if watcher != nil {
-		if err := watcher.Close(); err != nil {
-			logs.Error("close watcher", logs.Err(err))
-		}
-	}
-}
+var Dir string
 
 var mimes = map[string]string{
 	".js":   "text/javascript",
@@ -147,27 +25,6 @@ var mimes = map[string]string{
 
 func ServeApps(w http.ResponseWriter, r *http.Request) {
 	filename := r.URL.Path
-
-	found := false
-	requestedAppName := false
-	for _, appDir := range appList() {
-		if strings.HasPrefix(filename, appDir) {
-			found = true
-			requestedAppName = strings.HasSuffix(filename, appDir)
-			break
-		}
-	}
-
-	if !found {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	if requestedAppName {
-		filename = path.Join(filename, "index.html")
-	}
-
-	filename = filepath.Join(Dir, filename)
 
 	contentType, f, size, err := getFileContent(r.Context(), filename)
 	if err != nil {
@@ -206,9 +63,11 @@ func ServeApps(w http.ResponseWriter, r *http.Request) {
 
 func getFileContent(_ context.Context, filename string) (string, io.ReadCloser, int64, error) {
 
-	if !strings.HasPrefix(filename, "/") {
-		filename = "/" + filename
+	if path.Ext(filename) == "" {
+		filename = path.Join(filename, "index.html")
 	}
+
+	filename = filepath.Join(Dir, filename)
 
 	size := int64(0)
 	contentType := ""
