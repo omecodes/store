@@ -52,7 +52,7 @@ var genAdminAuthCMD = &cobra.Command{
 
 		encoded := base64.RawStdEncoding.EncodeToString(data)
 
-		err = ioutil.WriteFile(name, []byte(encoded), os.ModePerm)
+		err = ioutil.WriteFile("admin-auth", []byte(encoded), os.ModePerm)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)

@@ -10,7 +10,6 @@ import (
 
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/common/utils/prompt"
-	"github.com/omecodes/store/apps/cli/admin"
 	"github.com/omecodes/store/apps/server"
 	"github.com/omecodes/store/common"
 )
@@ -131,7 +130,6 @@ func init() {
 		},
 	}
 	command.AddCommand(versionCMD)
-	command.AddCommand(admin.CMD())
 }
 
 func main() {
