@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"golang.org/x/crypto/acme/autocert"
@@ -28,6 +29,7 @@ import (
 // Config contains info to configure an instance of Server
 type Config struct {
 	Dev        bool
+	AutoCert   bool
 	Domains    []string
 	FSRootDir  string
 	WorkingDir string
@@ -188,11 +190,15 @@ func (s *Server) Start() error {
 		return err
 	}
 
-	if !s.config.Dev {
+	if s.config.Dev {
+		return s.startDefaultAPIServer()
+	}
+
+	if s.config.AutoCert {
 		return s.startAutoCertAPIServer()
 	}
 
-	return s.startDefaultAPIServer()
+	return s.startSecureAPIServer()
 }
 
 func (s *Server) startDefaultAPIServer() error {
@@ -243,6 +249,40 @@ func (s *Server) startAutoCertAPIServer() error {
 	go func() {
 		h := certManager.HTTPHandler(nil)
 		if err := http.ListenAndServe(":80", h); err != nil {
+			log.Error("listen to port 80 failed", log.Err(err))
+		}
+	}()
+	return nil
+}
+
+func (s *Server) startSecureAPIServer() error {
+	r := s.httpRouter()
+	srv := &http.Server{
+		Addr:    ":443",
+		Handler: r,
+	}
+	go func() {
+		if err := srv.ListenAndServeTLS("store.crt", "store.key"); err != nil {
+			s.Errors <- err
+		}
+	}()
+
+	log.Info("starting HTTP Listener on Port 80")
+	go func() {
+		if err := http.ListenAndServe(":80", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			redirectURL := fmt.Sprintf("https://%s", s.config.Domains[0])
+			b := strings.Builder{}
+
+			b.WriteString(fmt.Sprintf("<head>\n"))
+			b.WriteString(fmt.Sprintf("\t<meta http-equiv=\"refresh\" content=\"0; URL=%s\" />\n", redirectURL))
+			b.WriteString(fmt.Sprintf("</head>"))
+			contentBytes := []byte(b.String())
+
+			w.Header().Set("Content-Type", "text/html")
+			w.Header().Set("Location", redirectURL)
+			w.WriteHeader(http.StatusPermanentRedirect)
+			_, _ = w.Write(contentBytes)
+		})); err != nil {
 			log.Error("listen to port 80 failed", log.Err(err))
 		}
 	}()

@@ -16,6 +16,7 @@ import (
 
 var (
 	dev        bool
+	autoCert   bool
 	adminInfo  string
 	workingDir string
 	fsDir      string
@@ -80,6 +81,7 @@ func init() {
 
 			s := server.New(server.Config{
 				Dev:        dev,
+				AutoCert:   autoCert,
 				Domains:    domains,
 				FSRootDir:  fsDir,
 				WorkingDir: workingDir,
