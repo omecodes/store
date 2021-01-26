@@ -220,16 +220,12 @@ func (s *Server) startDefaultAPIServer() error {
 }
 
 func (s *Server) startAutoCertAPIServer() error {
-
 	certManager := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
 		HostPolicy: autocert.HostWhitelist(s.config.Domains...),
 	}
 	certManager.Cache = autocert.DirCache(s.autoCertDir)
-
 	r := s.httpRouter()
-
-	// create the server itself
 	srv := &http.Server{
 		Addr: ":https",
 		TLSConfig: &tls.Config{
@@ -238,7 +234,7 @@ func (s *Server) startAutoCertAPIServer() error {
 		Handler: r,
 	}
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
+		if err := srv.ListenAndServeTLS("", ""); err != nil {
 			s.Errors <- err
 		}
 	}()
