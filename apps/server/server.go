@@ -173,12 +173,7 @@ func (s *Server) init() error {
 			}
 		}
 	}
-
-	if s.config.WebDir != "" {
-		webapp.Dir = s.config.WebDir
-		go webapp.WatchDir()
-	}
-
+	webapp.Dir = s.config.WebDir
 	return nil
 }
 
@@ -319,8 +314,6 @@ func (s *Server) httpRouter() *mux.Router {
 
 // Stop stops API server
 func (s *Server) Stop() {
-	webapp.StopWatch()
-
 	_ = s.listener.Close()
 	_ = s.db.Close()
 }
