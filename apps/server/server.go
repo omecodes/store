@@ -262,7 +262,7 @@ func (s *Server) startSecureAPIServer() error {
 		Handler: r,
 	}
 	go func() {
-		if err := srv.ListenAndServeTLS("store.crt", "store.key"); err != nil {
+		if err := srv.ListenAndServeTLS("store-cert.pem", "store-key.pem"); err != nil {
 			s.Errors <- err
 		}
 	}()
