@@ -227,7 +227,7 @@ func (s *Server) startAutoCertAPIServer() error {
 	certManager.Cache = autocert.DirCache(s.autoCertDir)
 	r := s.httpRouter()
 	srv := &http.Server{
-		Addr: ":https",
+		Addr: ":443",
 		TLSConfig: &tls.Config{
 			GetCertificate: certManager.GetCertificate,
 		},
