@@ -1,7 +1,8 @@
-package server
+package micro
 
 import (
 	"context"
+	"github.com/omecodes/store/common"
 
 	"google.golang.org/grpc"
 
@@ -58,7 +59,7 @@ func (n *MSNode) init() error {
 }
 
 func (n *MSNode) updateGrpcContext(ctx context.Context) (context.Context, error) {
-	ctx = WithRegistry(ctx, n.reg)
+	ctx = common.WithRegistry(ctx, n.reg)
 	ctx = objects.ContextWithACLStore(ctx, n.accessStore)
 	ctx = objects.ContextWithStore(ctx, n.objects)
 	ctx = service.ContextWithBox(ctx, n.box)

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/omecodes/store/apps/cli/admin"
+	"github.com/omecodes/store/cli/admin"
 )
 
 func main() {
