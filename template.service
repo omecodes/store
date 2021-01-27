@@ -8,7 +8,6 @@ AssertFileIsExecutable=$STORE_BIN
 [Service]
 WorkingDirectory=
 User=
-PermissionsStartOnly=true
 AmbientCapabilities=CAP_NET_BIND_SERVICE #only if listening on port 80 o 443
 ExecStart=$STORE_BIN run --admin= --domains= --dsn=
 Restart=on-failure
