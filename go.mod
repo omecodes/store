@@ -6,22 +6,20 @@ require (
 	github.com/PaesslerAG/gval v1.1.0 // indirect
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/antlr/antlr4 v0.0.0-20210114010855-d34d2e1c271a // indirect
-	github.com/fsnotify/fsnotify v1.4.7
-	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.4.3
 	github.com/google/cel-go v0.7.0
 	github.com/google/uuid v1.1.5
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.1.0
 	github.com/iancoleman/strcase v0.1.3
-	github.com/mattn/go-sqlite3 v2.0.3+incompatible
+	github.com/lunixbochs/vtclean v1.0.0 // indirect
+	github.com/mattn/go-colorable v0.1.8 // indirect
+	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/omecodes/bome v0.0.0-20210106205629-28fe97eb70d7
 	github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08
-	github.com/omecodes/discover v0.0.0-20210119195912-fc755694fab9
 	github.com/omecodes/errors v0.0.0-20210113230812-4f98b9fc3d3c
 	github.com/omecodes/libome v0.0.0-20210118230551-aff816f21c74
 	github.com/omecodes/service v0.0.0-20210119200004-85aec6812c6b
-	github.com/omecodes/services-ca v0.0.0-20210119200320-e05b356709b1
 	github.com/pkg/xattr v0.4.3
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0 // indirect
