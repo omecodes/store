@@ -10,6 +10,10 @@ type ctxJWt struct{}
 type ctxCredentialsManager struct{}
 type ctxAuthenticationProviders struct{}
 
+func ContextWithAuh(parent context.Context, user *User) context.Context {
+	return context.WithValue(parent, ctxUser{}, user)
+}
+
 func Get(ctx context.Context) *User {
 	o := ctx.Value(ctxUser{})
 	if o == nil {
