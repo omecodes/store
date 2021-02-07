@@ -10,7 +10,42 @@ func NewSQLSettings(db *sql.DB, dialect string, tableName string) (SettingsManag
 	if err != nil {
 		return nil, err
 	}
-	return &settingsSQL{bMap: m}, nil
+
+	settings := &settingsSQL{bMap: m}
+	_, err = settings.Get(SettingsDataMaxSizePath)
+	if err != nil {
+		if !bome.IsNotFound(err) {
+			return nil, err
+		}
+		err = settings.Set(SettingsDataMaxSizePath, DefaultSettings[SettingsDataMaxSizePath])
+		if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
+			return nil, err
+		}
+	}
+
+	_, err = settings.Get(SettingsDataMaxSizePath)
+	if err != nil {
+		if !bome.IsNotFound(err) {
+			return nil, err
+		}
+		err = settings.Set(SettingsCreateDataSecurityRule, DefaultSettings[SettingsCreateDataSecurityRule])
+		if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
+			return nil, err
+		}
+	}
+
+	_, err = settings.Get(SettingsObjectListMaxCount)
+	if err != nil {
+		if !bome.IsNotFound(err) {
+			return nil, err
+		}
+		err = settings.Set(SettingsObjectListMaxCount, DefaultSettings[SettingsObjectListMaxCount])
+		if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
+			return nil, err
+		}
+	}
+
+	return settings, nil
 }
 
 type settingsSQL struct {
