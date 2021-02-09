@@ -5,10 +5,10 @@ go 1.15
 require (
 	github.com/PaesslerAG/gval v1.1.0 // indirect
 	github.com/PaesslerAG/jsonpath v0.1.1
-	github.com/antlr/antlr4 v0.0.0-20210114010855-d34d2e1c271a // indirect
+	github.com/antlr/antlr4 v0.0.0-20210203043838-a60c32d36933 // indirect
 	github.com/golang/protobuf v1.4.3
-	github.com/google/cel-go v0.7.0
-	github.com/google/uuid v1.1.5
+	github.com/google/cel-go v0.7.1
+	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.1.0
 	github.com/iancoleman/strcase v0.1.3
@@ -23,13 +23,14 @@ require (
 	github.com/pkg/xattr v0.4.3
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0 // indirect
-	github.com/tidwall/gjson v1.6.7
+	github.com/tidwall/gjson v1.6.8
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
-	golang.org/x/oauth2 v0.0.0-20210113205817-d3ed898aa8a3
+	golang.org/x/oauth2 v0.0.0-20210201163806-010130855d6c
+	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
 	golang.org/x/text v0.3.5
 	golang.org/x/tools v0.0.0-20210108195828-e2f9c7f1fc8e // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20210119180700-e258113e47cc
+	google.golang.org/genproto v0.0.0-20210207032614-bba0dbe2a9ea
 	google.golang.org/grpc v1.35.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
