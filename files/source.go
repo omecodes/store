@@ -48,6 +48,10 @@ type SourceManager interface {
 	Delete(ctx context.Context, id string) error
 }
 
+func ContextWithSourceManager(parent context.Context, manager SourceManager) context.Context {
+	return context.WithValue(parent, ctxSourceManager{}, manager)
+}
+
 func getSourceManager(ctx context.Context) SourceManager {
 	o := ctx.Value(ctxSourceManager{})
 	if o == nil {
