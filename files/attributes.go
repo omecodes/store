@@ -51,15 +51,19 @@ func (h *AttributesHolder) AddReadPermissions(permission *Permissions) {
 
 }
 
-func (h *AttributesHolder) GetPermissions() (*Permissions, error) {
+func (h *AttributesHolder) GetPermissions() (*Permissions, bool, error) {
 	if h.permissions == nil {
 		encoded := h.Attributes[AttrPermissions]
+		if encoded == "" {
+			return nil, false, nil
+		}
+
 		err := json.Unmarshal([]byte(encoded), &h.permissions)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 	}
-	return h.permissions, nil
+	return h.permissions, true, nil
 }
 
 func (h *AttributesHolder) GetAttributes() (Attributes, error) {

@@ -80,9 +80,13 @@ func (h *PolicyHandler) assertIsAllowedToRead(ctx context.Context, sourceID stri
 	}
 
 	attrsHolder := HoldAttributes(attrs)
-	perms, err := attrsHolder.GetPermissions()
+	perms, found, err := attrsHolder.GetPermissions()
 	if err != nil {
 		return err
+	}
+
+	if !found {
+		return errors.Create(errors.Forbidden, "access to this resources is forbidden")
 	}
 
 	var rules []string
@@ -118,9 +122,13 @@ func (h *PolicyHandler) assertIsAllowedToWrite(ctx context.Context, sourceID str
 	}
 
 	attrsHolder := HoldAttributes(attrs)
-	perms, err := attrsHolder.GetPermissions()
+	perms, found, err := attrsHolder.GetPermissions()
 	if err != nil {
 		return err
+	}
+
+	if !found {
+		return errors.Create(errors.Forbidden, "access to this resources is forbidden")
 	}
 
 	var rules []string
@@ -156,9 +164,13 @@ func (h *PolicyHandler) assertIsAllowedToChmod(ctx context.Context, sourceID str
 	}
 
 	attrsHolder := HoldAttributes(attrs)
-	perms, err := attrsHolder.GetPermissions()
+	perms, found, err := attrsHolder.GetPermissions()
 	if err != nil {
 		return err
+	}
+
+	if !found {
+		return errors.Create(errors.Forbidden, "access to this resources is forbidden")
 	}
 
 	var rules []string
@@ -224,9 +236,13 @@ func (h *PolicyHandler) assertAllowedToChmodSource(ctx context.Context, source *
 	}
 
 	attrsHolder := HoldAttributes(attrs)
-	perms, err := attrsHolder.GetPermissions()
+	perms, found, err := attrsHolder.GetPermissions()
 	if err != nil {
 		return err
+	}
+
+	if !found {
+		return errors.Create(errors.Forbidden, "access to this resources is forbidden")
 	}
 
 	var rules []string
