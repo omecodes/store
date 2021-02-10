@@ -55,14 +55,14 @@ func GetACLStore(ctx context.Context) ACLManager {
 }
 
 // WithObjectsStore creates a context updater that adds ACL to a context
-func WithACLStore(store ACLManager) ContextUpdaterFunc {
+func WithACLStoreContextUpdater(store ACLManager) ContextUpdaterFunc {
 	return func(ctx context.Context) context.Context {
 		return context.WithValue(ctx, ctxACL{}, store)
 	}
 }
 
 // WithSettings creates a context updater that adds permissions to a context
-func ContextWithSettings(settings SettingsManager) ContextUpdaterFunc {
+func WithSettingsContextUpdater(settings SettingsManager) ContextUpdaterFunc {
 	return func(parent context.Context) context.Context {
 		return context.WithValue(parent, ctxSettings{}, settings)
 	}
@@ -79,6 +79,10 @@ func CELPolicyEnv(ctx context.Context) *cel.Env {
 		return nil
 	}
 	return o.(*cel.Env)
+}
+
+func ContextWithSettings(parent context.Context, manager SettingsManager) context.Context {
+	return context.WithValue(parent, ctxSettings{}, manager)
 }
 
 func Settings(ctx context.Context) SettingsManager {
