@@ -258,7 +258,7 @@ func (h *PolicyHandler) CreateSource(ctx context.Context, source *Source) error 
 	if err != nil {
 		return err
 	}
-	return nil
+	return h.next.CreateSource(ctx, source)
 }
 
 func (h *PolicyHandler) ListSources(ctx context.Context) ([]*Source, error) {
