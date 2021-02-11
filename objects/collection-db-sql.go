@@ -143,11 +143,8 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 	for _, index := range textIndexes {
 		result := gjson.Get(object.Data, strings.TrimPrefix(index.Path, "$."))
 		if !result.Exists() {
-			log.Error("Save: Text index references path that does not exists", log.Err(err))
-			if err2 := tx.Rollback(); err2 != nil {
-				log.Error("Save: rollback failed", log.Err(err2))
-			}
-			return errors.BadInput
+			log.Error("Save: Text index references path that does not exists", log.Field("path", index.Path))
+			continue
 		}
 
 		if result.Type != gjson.String {
@@ -176,33 +173,29 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 	if s.info.NumberIndex != nil {
 		result := gjson.Get(object.Data, strings.TrimPrefix(s.info.NumberIndex.Path, "$."))
 		if !result.Exists() {
-			log.Error("Save: Number index references path that does not exists", log.Err(err))
-			if err2 := tx.Rollback(); err2 != nil {
-				log.Error("Save: rollback failed", log.Err(err2))
+			log.Error("Save: Number index references path that does not exists", log.Field("path", s.info.NumberIndex.Path))
+		} else {
+			if result.Type != gjson.Number {
+				log.Error("Save: Number index supports only number field", log.Err(err))
+				if err2 := tx.Rollback(); err2 != nil {
+					log.Error("Save: rollback failed", log.Err(err2))
+				}
+				return errors.BadInput
 			}
-			return errors.BadInput
-		}
 
-		if result.Type != gjson.Number {
-			log.Error("Save: Number index supports only number field", log.Err(err))
-			if err2 := tx.Rollback(); err2 != nil {
-				log.Error("Save: rollback failed", log.Err(err2))
+			mp := &se.NumberMapping{
+				Number:   result.Int(),
+				Name:     s.info.NumberIndex.Alias,
+				ObjectId: object.Header.Id,
 			}
-			return errors.BadInput
-		}
-
-		mp := &se.NumberMapping{
-			Number:   result.Int(),
-			Name:     s.info.NumberIndex.Alias,
-			ObjectId: object.Header.Id,
-		}
-		err = s.engine.CreateNumberMapping(mp)
-		if err != nil {
-			log.Error("Save: failed to create number mapping", log.Err(err))
-			if err2 := tx.Rollback(); err2 != nil {
-				log.Error("Save: rollback failed", log.Err(err2))
+			err = s.engine.CreateNumberMapping(mp)
+			if err != nil {
+				log.Error("Save: failed to create number mapping", log.Err(err))
+				if err2 := tx.Rollback(); err2 != nil {
+					log.Error("Save: rollback failed", log.Err(err2))
+				}
+				return errors.BadInput
 			}
-			return errors.BadInput
 		}
 	}
 
@@ -211,11 +204,8 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 		for path, alias := range s.info.FieldsIndex.Aliases {
 			result := gjson.Get(object.Data, strings.TrimPrefix(path, "$."))
 			if !result.Exists() {
-				log.Error("Save: Field index references path that does not exists", log.Err(err))
-				if err2 := tx.Rollback(); err2 != nil {
-					log.Error("Save: rollback failed", log.Err(err2))
-				}
-				return errors.BadInput
+				log.Error("Save: Field index references path that does not exists", log.Field("path", path))
+				continue
 			}
 
 			if result.Type == gjson.JSON {
