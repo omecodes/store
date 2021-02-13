@@ -53,7 +53,7 @@ type settingsSQL struct {
 }
 
 func (s *settingsSQL) Set(name string, value string) error {
-	return s.bMap.Save(&bome.MapEntry{
+	return s.bMap.Upsert(&bome.MapEntry{
 		Key:   name,
 		Value: value,
 	})
