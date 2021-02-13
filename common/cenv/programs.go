@@ -4,6 +4,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/interpreter/functions"
+	"github.com/omecodes/libome/logs"
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"strings"
 )
@@ -15,8 +16,8 @@ func acl() (*cel.Env, error) {
 		var err error
 		aclEnv, err = cel.NewEnv(
 			cel.Declarations(
-				decls.NewVar("auth", decls.NewMapType(decls.String, decls.Dyn)),
-				decls.NewVar("data", decls.NewMapType(decls.String, decls.Dyn)),
+				decls.NewVar("user", decls.NewMapType(decls.String, decls.Dyn)),
+				decls.NewVar("object", decls.NewMapType(decls.String, decls.Dyn)),
 				decls.NewFunction("now",
 					decls.NewOverload(
 						"now_uint",
@@ -40,6 +41,7 @@ func GetProgram(expression string) (cel.Program, error) {
 
 	ast, issues := env.Compile(expression)
 	if issues != nil && issues.Err() != nil {
+		logs.Error("could not compile expression", logs.Details("issues", issues.String()), logs.Err(issues.Err()))
 		return nil, issues.Err()
 	}
 

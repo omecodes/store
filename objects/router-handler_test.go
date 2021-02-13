@@ -7,6 +7,7 @@ import (
 	"github.com/omecodes/bome"
 	"github.com/omecodes/store/auth"
 	. "github.com/smartystreets/goconvey/convey"
+	"io"
 	"testing"
 	"time"
 )
@@ -33,7 +34,7 @@ var (
 							Name:        "public",
 							Label:       "Readable",
 							Description: "Readable by everybody",
-							Rule:        "true",
+							Rule:        "user.name!='' && user.access=='client'",
 						},
 					},
 					Write: []*auth.Permission{
@@ -41,7 +42,7 @@ var (
 							Name:        "restricted-write",
 							Label:       "Restricted Write",
 							Description: "Only creator can write",
-							Rule:        "user.name==o.header.creator",
+							Rule:        "user.name==object.header.creator",
 						},
 					},
 					Delete: []*auth.Permission{
@@ -49,7 +50,7 @@ var (
 							Name:        "restricted-delete",
 							Label:       "Restricted Delete",
 							Description: "Only creator can delete",
-							Rule:        "user.name==o.header.creator",
+							Rule:        "user.name==object.header.creator",
 						},
 					},
 				},
@@ -74,7 +75,7 @@ var (
 							Name:        "public",
 							Label:       "Readable",
 							Description: "Readable by everybody",
-							Rule:        "true",
+							Rule:        "user.name!='' && user.access=='client'",
 						},
 					},
 					Write: []*auth.Permission{
@@ -115,7 +116,7 @@ var (
 							Name:        "public",
 							Label:       "Readable",
 							Description: "Readable by everybody",
-							Rule:        "true",
+							Rule:        "user.name!='' && user.access=='client'",
 						},
 					},
 					Write: []*auth.Permission{
@@ -713,6 +714,136 @@ func TestHandler_GetObject(t *testing.T) {
 	})
 }
 
+func TestHandler_GetObjectHeader1(t *testing.T) {
+	Convey("OBJECTS GET HEADER: one cannot get object header if collection or target object id is not set", t, func() {
+		initDB()
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		_, err := handler.GetObjectHeader(getContext(), "", "some-object")
+		So(err, ShouldNotBeNil)
+
+		_, err = handler.GetObjectHeader(getContext(), "juventus", "")
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_GetObjectHeader(t *testing.T) {
+	Convey("OBJECTS GET HEADER: one cannot get object if collection or target object id is not set", t, func() {
+		initDB()
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		psgCtx := userContextInRegisteredClient(getContext(), "pochettino")
+
+		header, err := handler.GetObjectHeader(psgCtx, "juventus", "cr7")
+		So(err, ShouldBeNil)
+		So(header.Id, ShouldEqual, "cr7")
+	})
+}
+
+func TestHandler_ListObjects1(t *testing.T) {
+	Convey("OBJECTS LIST: one cannot get collections object list if no id is specified", t, func() {
+		initDB()
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		_, err := handler.ListObjects(getContext(), "", ListOptions{})
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_ListObjects2(t *testing.T) {
+	Convey("OBJECTS LIST: one cannot get collections object list if settings manager is not set in context", t, func() {
+		initDB()
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		_, err := handler.ListObjects(getContextWithNoSettings(), "juventus", ListOptions{})
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_ListObjects3(t *testing.T) {
+	Convey("OBJECTS LIST: one cannot get collections object list if 'SettingsObjectListMaxCount' is not set in settings or have no numeric value", t, func() {
+		initDB()
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		// saving current value
+		value, err := settings.Get(SettingsObjectListMaxCount)
+		So(err, ShouldBeNil)
+
+		err = settings.Delete(SettingsObjectListMaxCount)
+		So(err, ShouldBeNil)
+
+		_, err = handler.ListObjects(getContext(), "juventus", ListOptions{})
+		So(err, ShouldNotBeNil)
+
+		err = settings.Set(SettingsObjectListMaxCount, "no-number")
+		So(err, ShouldBeNil)
+
+		_, err = handler.ListObjects(getContext(), "juventus", ListOptions{})
+		So(err, ShouldNotBeNil)
+
+		err = settings.Set(SettingsObjectListMaxCount, value)
+		So(err, ShouldBeNil)
+	})
+}
+
+func TestHandler_ListObjects4(t *testing.T) {
+	Convey("OBJECTS LIST: unauthenticated user cannot get collections object list", t, func() {
+		initDB()
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		c, err := handler.ListObjects(getContext(), "juventus", ListOptions{})
+		So(err, ShouldBeNil)
+
+		defer func() {
+			_ = c.Close()
+		}()
+
+		count := 0
+		for {
+			_, err = c.Browse()
+			if err != nil {
+				So(err, ShouldEqual, io.EOF)
+				break
+			}
+			count++
+		}
+		So(count, ShouldEqual, 0)
+	})
+}
+
+func TestBaseHandler_ListObjects(t *testing.T) {
+	Convey("OBJECTS LIST: authenticated user list objects from collection", t, func() {
+		initDB()
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		userCtx := userContextInRegisteredClient(getContext(), "pirlo")
+		c, err := handler.ListObjects(userCtx, "juventus", ListOptions{})
+		So(err, ShouldBeNil)
+
+		defer func() {
+			_ = c.Close()
+		}()
+
+		count := 0
+		for {
+			_, err = c.Browse()
+			if err != nil {
+				So(err, ShouldEqual, io.EOF)
+				break
+			}
+			count++
+		}
+		So(count, ShouldEqual, 1)
+	})
+}
+
 func TestHandler_DeleteCollection(t *testing.T) {
 	Convey("COLLECTION - DELETE: Only admin is allowed to delete a collection", t, func() {
 		initDB()
@@ -720,21 +851,17 @@ func TestHandler_DeleteCollection(t *testing.T) {
 		router := DefaultRouter()
 		handler := router.GetHandler()
 
-		// Try to retrieve collection info from non authenticated user
-		err := handler.DeleteCollection(getContext(), "objects")
+		err := handler.DeleteCollection(getContext(), "juventus")
 		So(err, ShouldNotBeNil)
 
-		// Retrieve new created collection from user1 context
-		user1Context := userContext(getContext(), "user1")
-		err = handler.DeleteCollection(user1Context, "objects")
+		user1Context := userContext(getContext(), "pirlo")
+		err = handler.DeleteCollection(user1Context, "juventus")
 		So(err, ShouldNotBeNil)
 
-		// Retrieve new created collection from user1 context
-		user1Context = userContextInRegisteredClient(getContext(), "user1")
-		err = handler.DeleteCollection(user1Context, "objects")
+		user1Context = userContextInRegisteredClient(getContext(), "pirlo")
+		err = handler.DeleteCollection(user1Context, "juventus")
 		So(err, ShouldNotBeNil)
 
-		// Retrieve new created collection from admin context
 		adminContext := userContext(getContext(), "admin")
 
 		err = handler.DeleteCollection(adminContext, "juventus")

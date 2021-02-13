@@ -3,7 +3,6 @@ package objects
 import (
 	"context"
 	"github.com/google/cel-go/cel"
-	"github.com/omecodes/store/common/cenv"
 )
 
 type ctxDB struct{}
@@ -11,8 +10,6 @@ type ctxACLStore struct{}
 type ctxACL struct{}
 type ctxSettings struct{}
 type ctxCELPolicyEnv struct{}
-type ctxObjectHeader struct{}
-type ctxCELAclPrograms struct{}
 type ctxRouterProvider struct{}
 
 // ContextUpdater is a convenience for context enriching object
@@ -90,63 +87,6 @@ func Settings(ctx context.Context) SettingsManager {
 		return nil
 	}
 	return o.(SettingsManager)
-}
-
-func GetObjectHeader(ctx *context.Context, collection string, objectID string) (*Header, error) {
-	var m map[string]*Header
-	o := (*ctx).Value(ctxObjectHeader{})
-	if o != nil {
-		m = o.(map[string]*Header)
-		if m != nil {
-			header, found := m[objectID]
-			if found {
-				return header, nil
-			}
-		}
-	}
-
-	if m == nil {
-		m = map[string]*Header{}
-	}
-
-	handler := GetRouterHandler(*ctx, SkipParamsCheck(), SkipPoliciesCheck())
-
-	header, err := handler.GetObjectHeader(*ctx, collection, objectID)
-	if err != nil {
-		return nil, err
-	}
-
-	m[objectID] = header
-	*ctx = context.WithValue(*ctx, ctxObjectHeader{}, m)
-	return header, nil
-}
-
-func LoadProgramForACLValidation(ctx *context.Context, expression string) (cel.Program, error) {
-	var m map[string]cel.Program
-
-	o := (*ctx).Value(ctxCELAclPrograms{})
-	if o != nil {
-		m = o.(map[string]cel.Program)
-		if m != nil {
-			prg, found := m[expression]
-			if found {
-				return prg, nil
-			}
-		}
-	}
-
-	if m == nil {
-		m = map[string]cel.Program{}
-	}
-
-	prg, err := cenv.GetProgram(expression)
-	if err != nil {
-		return nil, err
-	}
-
-	m[expression] = prg
-	*ctx = context.WithValue(*ctx, ctxCELAclPrograms{}, m)
-	return prg, nil
 }
 
 func GetRouterHandler(ctx context.Context, opt ...RouteOption) Handler {

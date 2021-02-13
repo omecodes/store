@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/omecodes/common/errors"
+	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/auth"
+	"github.com/omecodes/store/common/cenv"
 	se "github.com/omecodes/store/search-engine"
+	"strings"
 )
 
 type PolicyHandler struct {
@@ -18,6 +21,127 @@ func (p *PolicyHandler) isAdmin(ctx context.Context) bool {
 		return false
 	}
 	return user.Name == "admin"
+}
+
+type celParams struct {
+	auth *auth.User
+	data *Header
+}
+
+func (p *PolicyHandler) evaluate(ctx context.Context, state *celParams, rule string) (bool, error) {
+	if rule == "" || rule == "false" || rule == "(false)" {
+		return false, nil
+	}
+
+	if rule == "true" || rule == "(true)" {
+		return true, nil
+	}
+
+	prg, err := cenv.GetProgram(rule)
+	if err != nil {
+		return false, err
+	}
+
+	vars := map[string]interface{}{
+		"user": map[string]interface{}{
+			"name":   state.auth.Name,
+			"access": state.auth.Access,
+			"group":  state.auth.Group,
+		},
+		"object": map[string]interface{}{
+			"id":         state.data.Id,
+			"created_by": state.data.CreatedBy,
+			"created_at": state.data.CreatedAt,
+			"size":       state.data.Size,
+		},
+	}
+
+	out, details, err := prg.Eval(vars)
+	if err != nil {
+		log.Error("cel execution", log.Field("details", details))
+		return false, err
+	}
+
+	return out.Value().(bool), nil
+}
+
+func (p *PolicyHandler) getAccessRule(ctx context.Context, collection string, objectID string, action auth.AllowedTo, path string) (string, error) {
+	accessStore := GetACLStore(ctx)
+	if accessStore == nil {
+		log.Error("ACL-Read-Check: missing access store in context")
+		return "", errors.Internal
+	}
+
+	ruleCollection, err := accessStore.GetRules(ctx, collection, objectID)
+	if err != nil {
+		return "", err
+	}
+
+	if path == "" {
+		path = "$"
+	}
+
+	rules, found := ruleCollection.AccessRules[path]
+	if !found {
+		log.Error("ACL: could not find access security rule", log.Field("object", objectID), log.Field("path", path))
+		return "", errors.Forbidden
+	}
+
+	var actionRules []*auth.Permission
+	switch action {
+	case auth.AllowedTo_read:
+		actionRules = rules.Read
+	case auth.AllowedTo_write:
+		actionRules = rules.Write
+	case auth.AllowedTo_delete:
+		actionRules = rules.Delete
+
+	default:
+		log.Error("ACL: no rule for this action", log.Field("action", action.String()))
+		return "", errors.Internal
+	}
+
+	var formattedRules []string
+	for _, exp := range actionRules {
+		formattedRules = append(formattedRules, "("+exp.Rule+")")
+	}
+	rule := strings.Join(formattedRules, " || ")
+
+	return rule, nil
+}
+
+func (p *PolicyHandler) assetActionAllowedOnObject(ctx context.Context, collection string, objectID string, action auth.AllowedTo, path string) error {
+	header, err := p.next.GetObjectHeader(ctx, collection, objectID)
+	if err != nil {
+		return err
+	}
+
+	authCEL := auth.Get(ctx)
+	if authCEL == nil {
+		authCEL = &auth.User{}
+	}
+
+	s := &celParams{
+		data: header,
+		auth: authCEL,
+	}
+
+	rule, err := p.getAccessRule(ctx, collection, objectID, action, path)
+	if err != nil {
+		return err
+	}
+
+	allowed, err := p.evaluate(ctx, s, rule)
+	if err != nil {
+		log.Error("failed to evaluate access rule", log.Err(err))
+		return errors.Internal
+	}
+
+	if !allowed {
+		return errors.Unauthorized
+	}
+
+	return nil
 }
 
 func (p *PolicyHandler) CreateCollection(ctx context.Context, collection *Collection) error {
@@ -66,6 +190,7 @@ func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object
 		return "", errors.Forbidden
 	}
 
+	// if no security rules are provided, collection security rules will be used
 	if accessSecurityRules == nil {
 		collectionInfo, err := p.next.GetCollection(ctx, collection)
 		if err != nil {
@@ -73,57 +198,53 @@ func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object
 		}
 		accessSecurityRules = collectionInfo.DefaultAccessSecurityRules
 	}
-
 	docRules := accessSecurityRules.AccessRules["$"]
 	if docRules == nil {
 		docRules = &AccessRules{}
 		accessSecurityRules.AccessRules["$"] = docRules
 	}
 
-	userDefaultRule := fmt.Sprintf("user.name=='%s'", user.Name)
+	creatorRule := fmt.Sprintf("user.name=='%s' && user.access=='client'", user.Name)
+
 	readPerm := &auth.Permission{
 		Name:        "default-readers",
 		Label:       "Readers",
-		Description: "In addition of creator, admin and workers are allowed to read every objects",
+		Description: "In addition of creator, admin and workers are allowed to read the object",
 		Rule:        "user.access=='worker' || user.name=='admin'",
 	}
-
 	if len(docRules.Read) == 0 {
-		readPerm.Rule = userDefaultRule + " || user.name=='worker' || user.name=='admin'"
-		docRules.Read = append(docRules.Read, readPerm)
-	} else {
-		docRules.Read = append(docRules.Read, readPerm)
+		readPerm.Rule = creatorRule + " || user.name=='worker' || user.name=='admin'"
 	}
+	docRules.Read = append(docRules.Read, readPerm)
 
 	writePerm := &auth.Permission{
 		Name:        "default-readers",
 		Label:       "Readers",
-		Description: "In addition of creator, admin and workers are allowed to write every objects",
+		Description: "In addition of creator, admin and workers are allowed to edit the object",
 		Rule:        "user.access=='worker' || user.name=='admin'",
 	}
 	if len(docRules.Write) == 0 {
-		readPerm.Rule = userDefaultRule + " || user.access=='worker' || user.name=='admin'"
-		docRules.Write = append(docRules.Write, writePerm)
-	} else {
-		docRules.Write = append(docRules.Write, writePerm)
+		writePerm.Rule = creatorRule + " || user.access=='worker' || user.name=='admin'"
 	}
+	docRules.Write = append(docRules.Write, writePerm)
 
 	deletePerm := &auth.Permission{
 		Name:        "default-readers",
 		Label:       "Readers",
-		Description: "In addition of creator, admin and workers are allowed to write every objects",
+		Description: "In addition of creator, admin and workers are allowed to write the object",
 		Rule:        "user.access=='worker' || user.name=='admin'",
 	}
 	if len(docRules.Delete) == 0 {
-		docRules.Delete = append(docRules.Delete, deletePerm)
+		deletePerm.Rule = creatorRule + " || user.access=='worker' || user.name=='admin'"
 	}
+	docRules.Delete = append(docRules.Delete, deletePerm)
 
 	object.Header.CreatedBy = user.Name
 	return p.BaseHandler.PutObject(ctx, collection, object, accessSecurityRules, indexes, opts)
 }
 
 func (p *PolicyHandler) GetObject(ctx context.Context, collection string, id string, opts GetOptions) (*Object, error) {
-	err := assetActionAllowedOnObject(&ctx, collection, id, auth.AllowedTo_read, opts.At)
+	err := p.assetActionAllowedOnObject(ctx, collection, id, auth.AllowedTo_read, opts.At)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +252,7 @@ func (p *PolicyHandler) GetObject(ctx context.Context, collection string, id str
 }
 
 func (p *PolicyHandler) PatchObject(ctx context.Context, collection string, patch *Patch, opts PatchOptions) error {
-	err := assetActionAllowedOnObject(&ctx, collection, patch.ObjectId, auth.AllowedTo_delete, "")
+	err := p.assetActionAllowedOnObject(ctx, collection, patch.ObjectId, auth.AllowedTo_delete, "")
 	if err != nil {
 		return err
 	}
@@ -139,12 +260,12 @@ func (p *PolicyHandler) PatchObject(ctx context.Context, collection string, patc
 }
 
 func (p *PolicyHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *PathAccessRules, opts MoveOptions) error {
-	err := assetActionAllowedOnObject(&ctx, collection, objectID, auth.AllowedTo_read, "")
+	err := p.assetActionAllowedOnObject(ctx, collection, objectID, auth.AllowedTo_read, "")
 	if err != nil {
 		return err
 	}
 
-	err = assetActionAllowedOnObject(&ctx, collection, objectID, auth.AllowedTo_delete, "")
+	err = p.assetActionAllowedOnObject(ctx, collection, objectID, auth.AllowedTo_delete, "")
 	if err != nil {
 		return err
 	}
@@ -161,7 +282,7 @@ func (p *PolicyHandler) MoveObject(ctx context.Context, collection string, objec
 }
 
 func (p *PolicyHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*Header, error) {
-	err := assetActionAllowedOnObject(&ctx, collection, id, auth.AllowedTo_read, "")
+	err := p.assetActionAllowedOnObject(ctx, collection, id, auth.AllowedTo_read, "")
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +291,7 @@ func (p *PolicyHandler) GetObjectHeader(ctx context.Context, collection string, 
 }
 
 func (p *PolicyHandler) DeleteObject(ctx context.Context, collection string, id string) error {
-	err := assetActionAllowedOnObject(&ctx, collection, id, auth.AllowedTo_delete, "")
+	err := p.assetActionAllowedOnObject(ctx, collection, id, auth.AllowedTo_delete, "")
 	if err != nil {
 		return err
 	}
@@ -180,7 +301,7 @@ func (p *PolicyHandler) DeleteObject(ctx context.Context, collection string, id 
 func (p *PolicyHandler) ListObjects(ctx context.Context, collection string, opts ListOptions) (*Cursor, error) {
 	var err error
 
-	cursor, err := p.BaseHandler.ListObjects(ctx, collection, opts)
+	cursor, err := p.next.ListObjects(ctx, collection, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -193,14 +314,29 @@ func (p *PolicyHandler) ListObjects(ctx context.Context, collection string, opts
 				return nil, err
 			}
 
-			err = assetActionAllowedOnObject(&ctx, collection, o.Header.Id, auth.AllowedTo_read, opts.At)
+			authCEL := auth.Get(ctx)
+			if authCEL == nil {
+				authCEL = &auth.User{}
+			}
+
+			s := &celParams{
+				data: o.Header,
+				auth: authCEL,
+			}
+
+			rule, err := p.getAccessRule(ctx, collection, o.Header.Id, auth.AllowedTo_read, opts.At)
 			if err != nil {
-				if err == errors.Unauthorized {
-					continue
-				}
 				return nil, err
 			}
 
+			allowed, err := p.evaluate(ctx, s, rule)
+			if err != nil {
+				return nil, errors.Internal
+			}
+
+			if !allowed {
+				continue
+			}
 			return o, nil
 		}
 	})
@@ -227,14 +363,30 @@ func (p *PolicyHandler) SearchObjects(ctx context.Context, collection string, qu
 				return nil, err
 			}
 
-			err = assetActionAllowedOnObject(&ctx, collection, o.Header.Id, auth.AllowedTo_read, "")
+			authCEL := auth.Get(ctx)
+			if authCEL == nil {
+				authCEL = &auth.User{}
+			}
+
+			s := &celParams{
+				data: o.Header,
+				auth: authCEL,
+			}
+
+			rule, err := p.getAccessRule(ctx, collection, o.Header.Id, auth.AllowedTo_read, "")
 			if err != nil {
-				if err == errors.Unauthorized {
-					continue
-				}
 				return nil, err
 			}
 
+			allowed, err := p.evaluate(ctx, s, rule)
+			if err != nil {
+				log.Error("failed to evaluate access rule", log.Err(err))
+				return nil, errors.Internal
+			}
+
+			if !allowed {
+				continue
+			}
 			return o, nil
 		}
 	})

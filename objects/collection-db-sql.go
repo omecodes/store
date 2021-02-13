@@ -395,11 +395,11 @@ func (s *sqlCollection) List(ctx context.Context, opts ListOptions) (*Cursor, er
 		if !cursor.HasNext() {
 			return nil, io.EOF
 		}
-		next, err := cursor.Next()
-		if err != nil {
-			return nil, err
+		next, e := cursor.Next()
+		if e != nil {
+			return nil, e
 		}
-		return next.(*Object), err
+		return next.(*Object), nil
 	})
 	return NewCursor(browser, closer), nil
 }
