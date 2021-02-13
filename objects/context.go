@@ -3,7 +3,6 @@ package objects
 import (
 	"context"
 	"github.com/google/cel-go/cel"
-	"github.com/omecodes/common/errors"
 	"github.com/omecodes/store/common/cenv"
 )
 
@@ -110,12 +109,9 @@ func GetObjectHeader(ctx *context.Context, collection string, objectID string) (
 		m = map[string]*Header{}
 	}
 
-	route, err := NewRoute(*ctx, SkipParamsCheck(), SkipPoliciesCheck())
-	if err != nil {
-		return nil, err
-	}
+	handler := GetRouterHandler(*ctx, SkipParamsCheck(), SkipPoliciesCheck())
 
-	header, err := route.GetObjectHeader(*ctx, collection, objectID)
+	header, err := handler.GetObjectHeader(*ctx, collection, objectID)
 	if err != nil {
 		return nil, err
 	}
@@ -153,14 +149,12 @@ func LoadProgramForACLValidation(ctx *context.Context, expression string) (cel.P
 	return prg, nil
 }
 
-func NewRoute(ctx context.Context, opt ...RouteOption) (Handler, error) {
+func GetRouterHandler(ctx context.Context, opt ...RouteOption) Handler {
 	o := ctx.Value(ctxRouterProvider{})
-	if o == nil {
-		return nil, errors.New("no router provider")
+	if o != nil {
+		p := o.(RouterProvider)
+		router := p.GetRouter(ctx)
+		return router.GetHandler(opt...)
 	}
-
-	p := o.(RouterProvider)
-	router := p.GetRouter(ctx)
-
-	return router.GetHandler(opt...), nil
+	return DefaultRouter().GetHandler(opt...)
 }

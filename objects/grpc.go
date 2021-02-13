@@ -20,50 +20,33 @@ type gRPCGatewayHandler struct {
 }
 
 func (h *gRPCGatewayHandler) CreateCollection(ctx context.Context, request *CreateCollectionRequest) (*CreateCollectionResponse, error) {
-	route, err := NewRoute(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	err = route.CreateCollection(ctx, request.Collection)
+	handler := GetRouterHandler(ctx)
+	err := handler.CreateCollection(ctx, request.Collection)
 	return &CreateCollectionResponse{}, err
 }
 
 func (h *gRPCGatewayHandler) GetCollection(ctx context.Context, request *GetCollectionRequest) (*GetCollectionResponse, error) {
-	route, err := NewRoute(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	collection, err := route.GetCollection(ctx, request.Id)
+	handler := GetRouterHandler(ctx)
+	collection, err := handler.GetCollection(ctx, request.Id)
 	return &GetCollectionResponse{Collection: collection}, err
 }
 
 func (h *gRPCGatewayHandler) ListCollections(ctx context.Context, _ *ListCollectionsRequest) (*ListCollectionsResponse, error) {
-	route, err := NewRoute(ctx)
-	if err != nil {
-		return nil, err
-	}
+	handler := GetRouterHandler(ctx)
 
-	collections, err := route.ListCollections(ctx)
+	collections, err := handler.ListCollections(ctx)
 	return &ListCollectionsResponse{Collections: collections}, err
 }
 
 func (h *gRPCGatewayHandler) DeleteCollection(ctx context.Context, request *DeleteCollectionRequest) (*DeleteCollectionResponse, error) {
-	route, err := NewRoute(ctx)
-	if err != nil {
-		return nil, err
-	}
+	handler := GetRouterHandler(ctx)
 
-	err = route.DeleteCollection(ctx, request.Id)
+	err := handler.DeleteCollection(ctx, request.Id)
 	return &DeleteCollectionResponse{}, err
 }
 
 func (h *gRPCGatewayHandler) PutObject(ctx context.Context, request *PutObjectRequest) (*PutObjectResponse, error) {
-	route, err := NewRoute(ctx)
-	if err != nil {
-		return nil, err
-	}
+	handler := GetRouterHandler(ctx)
 
 	if request.AccessSecurityRules == nil {
 		request.AccessSecurityRules = &PathAccessRules{}
@@ -72,7 +55,7 @@ func (h *gRPCGatewayHandler) PutObject(ctx context.Context, request *PutObjectRe
 		request.AccessSecurityRules.AccessRules = map[string]*AccessRules{}
 	}
 
-	id, err := route.PutObject(ctx, "", request.Object, request.AccessSecurityRules, request.Indexes, PutOptions{})
+	id, err := handler.PutObject(ctx, "", request.Object, request.AccessSecurityRules, request.Indexes, PutOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -83,29 +66,20 @@ func (h *gRPCGatewayHandler) PutObject(ctx context.Context, request *PutObjectRe
 }
 
 func (h *gRPCGatewayHandler) PatchObject(ctx context.Context, request *PatchObjectRequest) (*PatchObjectResponse, error) {
-	route, err := NewRoute(ctx)
-	if err != nil {
-		return nil, err
-	}
+	handler := GetRouterHandler(ctx)
 
-	return &PatchObjectResponse{}, route.PatchObject(ctx, "", request.Patch, PatchOptions{})
+	return &PatchObjectResponse{}, handler.PatchObject(ctx, "", request.Patch, PatchOptions{})
 }
 
 func (h *gRPCGatewayHandler) MoveObject(ctx context.Context, request *MoveObjectRequest) (*MoveObjectResponse, error) {
-	route, err := NewRoute(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return &MoveObjectResponse{}, route.MoveObject(ctx, request.SourceCollection, request.ObjectId, request.TargetCollection, request.AccessSecurityRules, MoveOptions{})
+	handler := GetRouterHandler(ctx)
+	return &MoveObjectResponse{}, handler.MoveObject(ctx, request.SourceCollection, request.ObjectId, request.TargetCollection, request.AccessSecurityRules, MoveOptions{})
 }
 
 func (h *gRPCGatewayHandler) GetObject(ctx context.Context, request *GetObjectRequest) (*GetObjectResponse, error) {
-	route, err := NewRoute(ctx)
-	if err != nil {
-		return nil, err
-	}
+	handler := GetRouterHandler(ctx)
 
-	object, err := route.GetObject(ctx, "", request.ObjectId, GetOptions{
+	object, err := handler.GetObject(ctx, "", request.ObjectId, GetOptions{
 		At:   request.At,
 		Info: request.InfoOnly,
 	})
@@ -116,21 +90,15 @@ func (h *gRPCGatewayHandler) GetObject(ctx context.Context, request *GetObjectRe
 }
 
 func (h *gRPCGatewayHandler) DeleteObject(ctx context.Context, request *DeleteObjectRequest) (*DeleteObjectResponse, error) {
-	route, err := NewRoute(ctx)
-	if err != nil {
-		return nil, err
-	}
-	err = route.DeleteObject(ctx, "", request.ObjectId)
+	handler := GetRouterHandler(ctx)
+	err := handler.DeleteObject(ctx, "", request.ObjectId)
 	return &DeleteObjectResponse{}, err
 }
 
 func (h *gRPCGatewayHandler) ObjectInfo(ctx context.Context, request *ObjectInfoRequest) (*ObjectInfoResponse, error) {
-	route, err := NewRoute(ctx)
-	if err != nil {
-		return nil, err
-	}
+	handler := GetRouterHandler(ctx)
 
-	header, err := route.GetObjectHeader(ctx, "", request.ObjectId)
+	header, err := handler.GetObjectHeader(ctx, "", request.ObjectId)
 	if err != nil {
 		return nil, err
 	}
@@ -141,17 +109,14 @@ func (h *gRPCGatewayHandler) ObjectInfo(ctx context.Context, request *ObjectInfo
 func (h *gRPCGatewayHandler) ListObjects(request *ListObjectsRequest, stream HandlerUnit_ListObjectsServer) error {
 	ctx := stream.Context()
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		return err
-	}
+	handler := GetRouterHandler(ctx)
 
 	opts := ListOptions{
 		At:     request.At,
 		Offset: request.Offset,
 	}
 
-	cursor, err := route.ListObjects(ctx, request.Collection, opts)
+	cursor, err := handler.ListObjects(ctx, request.Collection, opts)
 	if err != nil {
 		return err
 	}
@@ -181,12 +146,9 @@ func (h *gRPCGatewayHandler) ListObjects(request *ListObjectsRequest, stream Han
 func (h *gRPCGatewayHandler) SearchObjects(request *SearchObjectsRequest, stream HandlerUnit_SearchObjectsServer) error {
 	ctx := stream.Context()
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		return err
-	}
+	handler := GetRouterHandler(ctx)
 
-	cursor, err := route.SearchObjects(ctx, request.Collection, request.Query)
+	cursor, err := handler.SearchObjects(ctx, request.Collection, request.Query)
 	if err != nil {
 		return err
 	}

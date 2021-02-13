@@ -35,7 +35,7 @@ func (p *ParamsHandler) DeleteCollection(ctx context.Context, id string) error {
 }
 
 func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object *Object, accessSecurityRules *PathAccessRules, indexes []*se.TextIndex, opts PutOptions) (string, error) {
-	if collection == "" || object == nil || object.Header == nil || object.Header.Size == 0 {
+	if collection == "" || object == nil || object.Header == nil || len(object.Data) == 0 {
 		return "", errors.BadInput
 	}
 
@@ -56,6 +56,8 @@ func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object
 		return "", errors.Internal
 	}
 
+	object.Header.Size = int64(len(object.Data))
+
 	if object.Header.Size > maxLength {
 		log.Error("could not process request. Object too big", log.Field("max", maxLength), log.Field("received", object.Header.Size))
 		return "", errors.BadInput
@@ -70,6 +72,10 @@ func (p *ParamsHandler) PatchObject(ctx context.Context, collection string, patc
 	}
 
 	settings := Settings(ctx)
+	if settings == nil {
+		return errors.Internal
+	}
+
 	s, err := settings.Get(SettingsDataMaxSizePath)
 	if err != nil {
 		log.Error("could not get data max length from settings", log.Err(err))

@@ -16,11 +16,11 @@ type celParams struct {
 }
 
 func evaluate(ctx *context.Context, state *celParams, rule string) (bool, error) {
-	if rule == "" || rule == "false" {
+	if rule == "" || rule == "false" || rule == "(false)" {
 		return false, nil
 	}
 
-	if rule == "true" {
+	if rule == "true" || rule == "(true)" {
 		return true, nil
 	}
 

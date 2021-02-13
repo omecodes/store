@@ -76,13 +76,8 @@ func PutObject(w http.ResponseWriter, r *http.Request) {
 	}
 	putRequest.Object.Header.Size = int64(len(putRequest.Object.Data))
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	id, err := route.PutObject(ctx, collection, putRequest.Object, putRequest.AccessSecurityRules, putRequest.Indexes, PutOptions{})
+	handler := GetRouterHandler(ctx)
+	id, err := handler.PutObject(ctx, collection, putRequest.Object, putRequest.AccessSecurityRules, putRequest.Indexes, PutOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -113,13 +108,9 @@ func PatchObject(w http.ResponseWriter, r *http.Request) {
 	collection := vars[pathItemCollection]
 	patch.ObjectId = vars[pathItemId]
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	handler := GetRouterHandler(ctx)
 
-	err = route.PatchObject(ctx, collection, &patch, PatchOptions{})
+	err = handler.PatchObject(ctx, collection, &patch, PatchOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -147,13 +138,9 @@ func MoveObject(w http.ResponseWriter, r *http.Request) {
 	collection := vars[pathItemCollection]
 	objectId := vars[pathItemId]
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	handler := GetRouterHandler(ctx)
 
-	err = route.MoveObject(ctx, collection, objectId, request.TargetCollection, request.AccessSecurityRules, MoveOptions{})
+	err = handler.MoveObject(ctx, collection, objectId, request.TargetCollection, request.AccessSecurityRules, MoveOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -170,13 +157,9 @@ func GetObject(w http.ResponseWriter, r *http.Request) {
 	header := r.URL.Query().Get(queryHeader)
 	at := r.URL.Query().Get(queryAt)
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	handler := GetRouterHandler(ctx)
 
-	object, err := route.GetObject(ctx, collection, id, GetOptions{
+	object, err := handler.GetObject(ctx, collection, id, GetOptions{
 		At:   at,
 		Info: header == "true",
 	})
@@ -199,13 +182,9 @@ func DeleteObject(w http.ResponseWriter, r *http.Request) {
 	collection := vars[pathItemCollection]
 	id := vars[pathItemId]
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	handler := GetRouterHandler(ctx)
 
-	err = route.DeleteObject(ctx, collection, id)
+	err := handler.DeleteObject(ctx, collection, id)
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -232,13 +211,9 @@ func ListObjects(w http.ResponseWriter, r *http.Request) {
 
 	opts.At = r.URL.Query().Get(queryAt)
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	handler := GetRouterHandler(ctx)
 
-	cursor, err := route.ListObjects(ctx, collection, opts)
+	cursor, err := handler.ListObjects(ctx, collection, opts)
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -294,13 +269,9 @@ func SearchObjects(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	collection := vars[pathItemCollection]
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	handler := GetRouterHandler(ctx)
 
-	cursor, err := route.SearchObjects(ctx, collection, &query)
+	cursor, err := handler.SearchObjects(ctx, collection, &query)
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -420,13 +391,9 @@ func CreateCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	handler := GetRouterHandler(ctx)
 
-	err = route.CreateCollection(ctx, &collection)
+	err = handler.CreateCollection(ctx, &collection)
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -436,13 +403,9 @@ func CreateCollection(w http.ResponseWriter, r *http.Request) {
 func ListCollections(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	handler := GetRouterHandler(ctx)
 
-	collections, err := route.ListCollections(ctx)
+	collections, err := handler.ListCollections(ctx)
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -465,16 +428,12 @@ func ListCollections(w http.ResponseWriter, r *http.Request) {
 func GetCollection(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	handler := GetRouterHandler(ctx)
 
 	vars := mux.Vars(r)
 	id := vars[pathItemId]
 
-	collection, err := route.GetCollection(ctx, id)
+	collection, err := handler.GetCollection(ctx, id)
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -493,16 +452,12 @@ func GetCollection(w http.ResponseWriter, r *http.Request) {
 func DeleteCollection(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	handler := GetRouterHandler(ctx)
 
 	vars := mux.Vars(r)
 	id := vars[pathItemId]
 
-	err = route.DeleteCollection(ctx, id)
+	err := handler.DeleteCollection(ctx, id)
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
