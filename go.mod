@@ -16,7 +16,7 @@ require (
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
-	github.com/omecodes/bome v0.0.0-20210213161649-d5e5aaca4b18
+	github.com/omecodes/bome v0.0.0-20210213184932-612057270586
 	github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08
 	github.com/omecodes/discover v0.0.0-20210213111105-c5af043d728b // indirect
 	github.com/omecodes/errors v0.0.0-20210113230812-4f98b9fc3d3c
