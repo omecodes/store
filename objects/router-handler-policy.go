@@ -28,16 +28,28 @@ func (p *PolicyHandler) CreateCollection(ctx context.Context, collection *Collec
 }
 
 func (p *PolicyHandler) GetCollection(ctx context.Context, id string) (*Collection, error) {
-	if !p.isAdmin(ctx) {
+	user := auth.Get(ctx)
+	if user == nil {
 		return nil, errors.Forbidden
 	}
+
+	if user.Name == "" || user.Name != "admin" && user.Access != "client" {
+		return nil, errors.Forbidden
+	}
+
 	return p.BaseHandler.GetCollection(ctx, id)
 }
 
 func (p *PolicyHandler) ListCollections(ctx context.Context) ([]*Collection, error) {
-	if !p.isAdmin(ctx) {
+	user := auth.Get(ctx)
+	if user == nil {
 		return nil, errors.Forbidden
 	}
+
+	if user.Name == "" || user.Name != "admin" && user.Access != "client" {
+		return nil, errors.Forbidden
+	}
+
 	return p.BaseHandler.ListCollections(ctx)
 }
 

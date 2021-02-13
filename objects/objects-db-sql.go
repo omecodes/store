@@ -7,7 +7,7 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
-	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/libome/logs"
 	se "github.com/omecodes/store/search-engine"
 )
 
@@ -105,7 +105,7 @@ func (ms *sqlStore) ListCollections(ctx context.Context) ([]*Collection, error) 
 
 	defer func() {
 		if cer := cursor.Close(); cer != nil {
-			log.Error("DB cursor closing", log.Err(err))
+			logs.Error("DB cursor closing", logs.Err(err))
 		}
 	}()
 

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/omecodes/bome"
 	"github.com/omecodes/common/errors"
-	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/common/utime"
 	se "github.com/omecodes/store/search-engine"
 	"github.com/tidwall/gjson"
@@ -34,23 +34,25 @@ func NewSQLCollection(collection *Collection, db *sql.DB, dialect string, tableN
 		SetDialect(dialect).
 		SetConn(db).
 		SetTableName(headersTableName).
-		JSONMap(bome.WithForeignKey(bome.ForeignKey{
+		AddForeignKeys(&bome.ForeignKey{
 			Name: "fk_objects_header_id",
 			Table: &bome.Keys{
 				Table:  headersTableName,
 				Fields: []string{"name"},
 			},
 			References: &bome.Keys{
-				Table:  objects.Table(),
-				Fields: objects.Keys(),
+				Table:  objectsTableName,
+				Fields: []string{"name"},
 			},
 			OnDeleteCascade: true,
-		}))
+		}).
+		JSONMap()
 	if err != nil {
 		return nil, err
 	}
 
-	indexStore, err := se.NewSQLIndexStore(db, dialect, "store_"+tableName+"_index")
+	indexTablePrefix := "store_" + tableName + "_index"
+	indexStore, err := se.NewSQLIndexStore(db, dialect, indexTablePrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -89,9 +91,13 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 		object.Header.CreatedAt = utime.Now()
 	}
 
-	txCtx, objects, err := s.objects.Transaction(ctx)
+	var err error
+	var objects *bome.JSONMap
+	var headers *bome.JSONMap
+
+	ctx, objects, err = s.objects.Transaction(ctx)
 	if err != nil {
-		log.Error("Save: could not start objects DB transaction", log.Err(err))
+		logs.Error("Save: could not start objects DB transaction", logs.Err(err))
 		return errors.Internal
 	}
 
@@ -101,9 +107,9 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 		Value: object.Data,
 	})
 	if err != nil {
-		log.Error("Save: failed to save object data", log.Err(err))
-		if err := bome.Rollback(txCtx); err != nil {
-			log.Error("Save: rollback failed", log.Err(err))
+		logs.Error("Save: failed to save object data", logs.Err(err))
+		if err := bome.Rollback(ctx); err != nil {
+			logs.Error("Save: rollback failed", logs.Err(err))
 		}
 		return errors.Internal
 	}
@@ -111,9 +117,9 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 	// Then retrieve saved size
 	size, err := objects.Map.Size(object.Header.Id)
 	if err != nil {
-		log.Error("Patch: failed to get object size", log.Field("id", object.Header.Id), log.Err(err))
+		logs.Error("Patch: failed to get object size", logs.Details("id", object.Header.Id), logs.Err(err))
 		if err := objects.Rollback(); err != nil {
-			log.Error("Patch: rollback failed", log.Err(err))
+			logs.Error("Patch: rollback failed", logs.Err(err))
 		}
 		return err
 	}
@@ -122,23 +128,31 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 	object.Header.Size = size
 	headersData, err := json.Marshal(object.Header)
 	if err != nil {
-		log.Error("Save: could not get object header", log.Err(err))
-		if err2 := bome.Rollback(txCtx); err2 != nil {
-			log.Error("Save: rollback failed", log.Err(err2))
+		logs.Error("Save: could not get object header", logs.Err(err))
+		if err2 := bome.Rollback(ctx); err2 != nil {
+			logs.Error("Save: rollback failed", logs.Err(err2))
 		}
 		return errors.BadInput
 	}
 
 	// Save object header
-	_, headers, _ := s.headers.Transaction(txCtx)
+	ctx, headers, err = s.headers.Transaction(ctx)
+	if err != nil {
+		logs.Error("Save: failed to continue transactions with headers", logs.Err(err))
+		if err2 := bome.Rollback(ctx); err2 != nil {
+			logs.Error("Save: rollback failed", logs.Err(err2))
+		}
+		return err
+	}
+
 	err = headers.Save(&bome.MapEntry{
 		Key:   object.Header.Id,
 		Value: string(headersData),
 	})
 	if err != nil {
-		log.Error("Save: failed to save object headers", log.Err(err))
-		if err2 := bome.Rollback(txCtx); err2 != nil {
-			log.Error("Save: rollback failed", log.Err(err2))
+		logs.Error("Save: failed to save object headers", logs.Err(err))
+		if err2 := bome.Rollback(ctx); err2 != nil {
+			logs.Error("Save: rollback failed", logs.Err(err2))
 		}
 		return err
 	}
@@ -147,14 +161,14 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 	for _, index := range textIndexes {
 		result := gjson.Get(object.Data, strings.TrimPrefix(index.Path, "$."))
 		if !result.Exists() {
-			log.Error("Save: Text index references path that does not exists", log.Field("path", index.Path))
+			logs.Error("Save: Text index references path that does not exists", logs.Details("path", index.Path))
 			continue
 		}
 
 		if result.Type != gjson.String {
-			log.Error("Save: Text index supports only text field", log.Err(err))
+			logs.Error("Save: Text index supports only text field", logs.Err(err))
 			if err2 := headers.Rollback(); err2 != nil {
-				log.Error("Save: rollback failed", log.Err(err2))
+				logs.Error("Save: rollback failed", logs.Err(err2))
 			}
 			return errors.BadInput
 		}
@@ -166,9 +180,9 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 		}
 		err = s.engine.CreateTextMapping(mp)
 		if err != nil {
-			log.Error("Save: failed to create text mapping", log.Field("path", index.Path), log.Field("data", object.Data), log.Err(err))
-			if err2 := bome.Rollback(txCtx); err2 != nil {
-				log.Error("Save: rollback failed", log.Err(err2))
+			logs.Error("Save: failed to create text mapping", logs.Details("path", index.Path), logs.Details("data", object.Data), logs.Err(err))
+			if err2 := bome.Rollback(ctx); err2 != nil {
+				logs.Error("Save: rollback failed", logs.Err(err2))
 			}
 			return errors.BadInput
 		}
@@ -177,12 +191,12 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 	if s.info.NumberIndex != nil {
 		result := gjson.Get(object.Data, strings.TrimPrefix(s.info.NumberIndex.Path, "$."))
 		if !result.Exists() {
-			log.Error("Save: Number index references path that does not exists", log.Field("path", s.info.NumberIndex.Path))
+			logs.Error("Save: Number index references path that does not exists", logs.Details("path", s.info.NumberIndex.Path))
 		} else {
 			if result.Type != gjson.Number {
-				log.Error("Save: Number index supports only number field", log.Err(err))
-				if err2 := bome.Rollback(txCtx); err2 != nil {
-					log.Error("Save: rollback failed", log.Err(err2))
+				logs.Error("Save: Number index supports only number field", logs.Err(err))
+				if err2 := bome.Rollback(ctx); err2 != nil {
+					logs.Error("Save: rollback failed", logs.Err(err2))
 				}
 				return errors.BadInput
 			}
@@ -194,9 +208,9 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 			}
 			err = s.engine.CreateNumberMapping(mp)
 			if err != nil {
-				log.Error("Save: failed to create number mapping", log.Err(err))
-				if err2 := bome.Rollback(txCtx); err2 != nil {
-					log.Error("Save: rollback failed", log.Err(err2))
+				logs.Error("Save: failed to create number mapping", logs.Err(err))
+				if err2 := bome.Rollback(ctx); err2 != nil {
+					logs.Error("Save: rollback failed", logs.Err(err2))
 				}
 				return errors.BadInput
 			}
@@ -208,14 +222,14 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 		for path, alias := range s.info.FieldsIndex.Aliases {
 			result := gjson.Get(object.Data, strings.TrimPrefix(path, "$."))
 			if !result.Exists() {
-				log.Error("Save: Field index references path that does not exists", log.Field("path", path))
+				logs.Error("Save: Field index references path that does not exists", logs.Details("path", path))
 				continue
 			}
 
 			if result.Type == gjson.JSON {
-				log.Error("Save: Text index supports only text text, number and boolean", log.Err(err))
-				if err2 := bome.Rollback(txCtx); err2 != nil {
-					log.Error("Save: rollback failed", log.Err(err2))
+				logs.Error("Save: Text index supports only text text, number and boolean", logs.Err(err))
+				if err2 := bome.Rollback(ctx); err2 != nil {
+					logs.Error("Save: rollback failed", logs.Err(err2))
 				}
 				return errors.BadInput
 			}
@@ -224,9 +238,9 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 
 		value, err := json.Marshal(props)
 		if err != nil {
-			log.Error("Save: could not create properties index", log.Err(err))
-			if err2 := bome.Rollback(txCtx); err2 != nil {
-				log.Error("Save: rollback failed", log.Err(err2))
+			logs.Error("Save: could not create properties index", logs.Err(err))
+			if err2 := bome.Rollback(ctx); err2 != nil {
+				logs.Error("Save: rollback failed", logs.Err(err2))
 			}
 			return errors.BadInput
 		}
@@ -237,20 +251,20 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 		}
 		err = s.engine.CreatePropertiesMapping(mp)
 		if err != nil {
-			log.Error("Save: failed to create fields mapping", log.Err(err))
-			if err2 := bome.Rollback(txCtx); err2 != nil {
-				log.Error("Save: rollback failed", log.Err(err2))
+			logs.Error("Save: failed to create fields mapping", logs.Err(err))
+			if err2 := bome.Rollback(ctx); err2 != nil {
+				logs.Error("Save: rollback failed", logs.Err(err2))
 			}
 			return errors.BadInput
 		}
 	}
 
-	err = bome.Commit(txCtx)
+	err = bome.Commit(ctx)
 	if err != nil {
-		log.Error("Save: operations commit failed", log.Err(err))
+		logs.Error("Save: operations commit failed", logs.Err(err))
 		return errors.Internal
 	}
-	log.Debug("Save: object saved", log.Field("id", object.Header.Id))
+	logs.Debug("Save: object saved", logs.Details("id", object.Header.Id))
 	return nil
 }
 
@@ -260,21 +274,21 @@ func (s *sqlCollection) Patch(ctx context.Context, patch *Patch) error {
 
 	txCtx, objects, err := s.objects.Transaction(ctx)
 	if err != nil {
-		log.Error("Patch: could not start objects DB transaction", log.Err(err))
+		logs.Error("Patch: could not start objects DB transaction", logs.Err(err))
 		return errors.Internal
 	}
 
 	err = objects.EditAt(patch.ObjectId, patch.At, bome.RawExpr(value))
 	if err != nil {
-		log.Error("Update: object patch failed", log.Field("id", patch.ObjectId), log.Err(err))
+		logs.Error("Update: object patch failed", logs.Details("id", patch.ObjectId), logs.Err(err))
 		return errors.Internal
 	}
 
 	size, err := objects.Map.Size(patch.ObjectId)
 	if err != nil {
-		log.Error("Patch: failed to get object size", log.Field("id", patch.ObjectId), log.Err(err))
+		logs.Error("Patch: failed to get object size", logs.Details("id", patch.ObjectId), logs.Err(err))
 		if err := bome.Rollback(txCtx); err != nil {
-			log.Error("Patch: rollback failed", log.Err(err))
+			logs.Error("Patch: rollback failed", logs.Err(err))
 		}
 		return err
 	}
@@ -282,44 +296,44 @@ func (s *sqlCollection) Patch(ctx context.Context, patch *Patch) error {
 	_, headers, _ := s.headers.Transaction(txCtx)
 	err = headers.EditAt(patch.ObjectId, "$.size", bome.IntExpr(size))
 	if err != nil {
-		log.Error("Patch: failed to save object headers", log.Err(err))
+		logs.Error("Patch: failed to save object headers", logs.Err(err))
 		if err := bome.Rollback(txCtx); err != nil {
-			log.Error("Patch: rollback failed", log.Err(err))
+			logs.Error("Patch: rollback failed", logs.Err(err))
 		}
 		return errors.Internal
 	}
 
 	err = bome.Commit(txCtx)
 	if err != nil {
-		log.Error("Patch: operations commit failed", log.Err(err))
+		logs.Error("Patch: operations commit failed", logs.Err(err))
 		return errors.Internal
 	}
 
-	log.Debug("Patch: object updated", log.Field("id", patch.ObjectId))
+	logs.Debug("Patch: object updated", logs.Details("id", patch.ObjectId))
 	return nil
 }
 
 func (s *sqlCollection) Delete(ctx context.Context, objectID string) error {
 	go func() {
 		if der := s.engine.DeleteObjectMappings(objectID); der != nil {
-			log.Error("failed to delete object index mappings", log.Err(der))
+			logs.Error("failed to delete object index mappings", logs.Err(der))
 		}
 	}()
 
 	err := s.objects.Delete(objectID)
 	if err != nil {
-		log.Error("Delete: object deletion failed", log.Err(err))
+		logs.Error("Delete: object deletion failed", logs.Err(err))
 		return errors.Internal
 	}
 
-	log.Debug("Delete: object deleted", log.Field("id", objectID))
+	logs.Debug("Delete: object deleted", logs.Details("id", objectID))
 	return nil
 }
 
 func (s *sqlCollection) Get(ctx context.Context, objectID string, opts GetOptions) (*Object, error) {
 	hv, err := s.headers.Get(objectID)
 	if err != nil {
-		log.Error("Get: could not get object header", log.Field("id", objectID), log.Err(err))
+		logs.Error("Get: could not get object header", logs.Details("id", objectID), logs.Err(err))
 		if bome.IsNotFound(err) {
 			return nil, err
 		}
@@ -332,7 +346,7 @@ func (s *sqlCollection) Get(ctx context.Context, objectID string, opts GetOption
 
 	err = json.Unmarshal([]byte(hv), o.Header)
 	if err != nil {
-		log.Error("Get: could not decode object header", log.Err(err))
+		logs.Error("Get: could not decode object header", logs.Err(err))
 		return nil, errors.Internal
 	}
 
@@ -348,7 +362,7 @@ func (s *sqlCollection) Get(ctx context.Context, objectID string, opts GetOption
 		}
 	}
 
-	log.Debug("Get: loaded object", log.Field("id", objectID))
+	logs.Debug("Get: loaded object", logs.Details("id", objectID))
 	return o, nil
 }
 
@@ -361,7 +375,7 @@ func (s *sqlCollection) Info(ctx context.Context, id string) (*Header, error) {
 	var info Header
 	err = json.Unmarshal([]byte(value), &info)
 	if err != nil {
-		log.Error("List: failed to decode object header", log.Field("encoded", value), log.Err(err))
+		logs.Error("List: failed to decode object header", logs.Details("encoded", value), logs.Err(err))
 		return nil, errors.Internal
 	}
 	return &info, nil
@@ -408,15 +422,15 @@ func (s *sqlCollection) Search(ctx context.Context, query *se.SearchQuery) (*Cur
 func (s *sqlCollection) Clear() error {
 	ctx, objects, err := s.objects.Transaction(context.Background())
 	if err != nil {
-		log.Error("Clear: could not start transaction in objects DB", log.Err(err))
+		logs.Error("Clear: could not start transaction in objects DB", logs.Err(err))
 		return errors.Internal
 	}
 
 	err = objects.Clear()
 	if err != nil {
-		log.Error("Clear: could not clear objects", log.Err(err))
+		logs.Error("Clear: could not clear objects", logs.Err(err))
 		if err := bome.Rollback(ctx); err != nil {
-			log.Error("Clear: operations rollback failed", log.Err(err))
+			logs.Error("Clear: operations rollback failed", logs.Err(err))
 		}
 		return errors.Internal
 	}
@@ -424,18 +438,18 @@ func (s *sqlCollection) Clear() error {
 	_, headers, _ := s.headers.Transaction(ctx)
 	err = headers.Clear()
 	if err != nil {
-		log.Error("Clear: could not clear objects headers", log.Err(err))
+		logs.Error("Clear: could not clear objects headers", logs.Err(err))
 		if err := bome.Rollback(ctx); err != nil {
-			log.Error("Clear: operations rollback failed", log.Err(err))
+			logs.Error("Clear: operations rollback failed", logs.Err(err))
 		}
 		return errors.Internal
 	}
 
 	if err := bome.Commit(ctx); err != nil {
-		log.Error("Clear: operations commit failed", log.Err(err))
+		logs.Error("Clear: operations commit failed", logs.Err(err))
 	}
 
-	log.Debug("Clear: objects store has been cleared")
+	logs.Debug("Clear: objects store has been cleared")
 	return nil
 }
 
