@@ -6,7 +6,7 @@ import (
 )
 
 func NewSQLSettings(db *sql.DB, dialect string, tableName string) (SettingsManager, error) {
-	m, err := bome.NewMap(db, dialect, tableName)
+	m, err := bome.Build().SetConn(db).SetDialect(dialect).SetTableName(tableName).Map()
 	if err != nil {
 		return nil, err
 	}

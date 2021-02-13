@@ -11,12 +11,20 @@ import (
 )
 
 func NewSQLManager(db *sql.DB, dialect string, tablePrefix string) (Manager, error) {
-	accounts, err := bome.NewJSONMap(db, dialect, tablePrefix+"_accounts")
+	accounts, err := bome.Build().
+		SetConn(db).
+		SetDialect(dialect).
+		SetTableName(tablePrefix + "_accounts").
+		JSONMap()
 	if err != nil {
 		return nil, err
 	}
 
-	sources, err := bome.NewDoubleMap(db, dialect, tablePrefix+"_account_sources")
+	sources, err := bome.Build().
+		SetConn(db).
+		SetDialect(dialect).
+		SetTableName(tablePrefix + "_account_sources").
+		DoubleMap()
 	if err != nil {
 		return nil, err
 	}
@@ -40,17 +48,17 @@ func (s *sqlManager) Create(ctx context.Context, account *Account) error {
 		return err
 	}
 
-	tx, err := s.accounts.BeginTransaction()
+	txCtx, accounts, err := s.accounts.Transaction(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = tx.Save(&bome.MapEntry{
+	err = accounts.Save(&bome.MapEntry{
 		Key:   account.Login,
 		Value: string(encoded),
 	})
 	if err != nil {
-		if rer := tx.Rollback(); rer != nil {
+		if rer := bome.Rollback(txCtx); rer != nil {
 			log.Error("Transaction rollback failed", log.Err(err))
 		}
 		return errors.AppendDetails(err, errors.Info{
@@ -59,14 +67,14 @@ func (s *sqlManager) Create(ctx context.Context, account *Account) error {
 		})
 	}
 
-	stx := s.sources.ContinueTransaction(tx.TX())
-	err = stx.Save(&bome.DoubleMapEntry{
+	_, sources, _ := s.sources.Transaction(txCtx)
+	err = sources.Save(&bome.DoubleMapEntry{
 		FirstKey:  account.Source.Provider,
 		SecondKey: account.Source.Name,
 		Value:     account.Login,
 	})
 	if err != nil {
-		if rer := tx.Rollback(); rer != nil {
+		if rer := bome.Rollback(txCtx); rer != nil {
 			log.Error("Transaction rollback failed", log.Err(err))
 		}
 		return errors.AppendDetails(err, errors.Info{
@@ -111,7 +119,7 @@ func (s *sqlManager) Find(ctx context.Context, provider string, originalName str
 
 func (s *sqlManager) Search(ctx context.Context, pattern string) ([]string, error) {
 	query := fmt.Sprintf("select value from %s_accounts where name like ?", s.tablePrefix)
-	cursor, err := s.accounts.RawQuery(query, bome.StringScanner, fmt.Sprintf("%%%s%%", pattern))
+	cursor, err := s.accounts.Query(query, bome.StringScanner, fmt.Sprintf("%%%s%%", pattern))
 	if err != nil {
 		return nil, errors.AppendDetails(err, errors.Info{
 			Name:    "am",

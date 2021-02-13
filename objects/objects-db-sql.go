@@ -12,7 +12,11 @@ import (
 )
 
 func NewSqlDB(db *sql.DB, dialect string, tablePrefix string) (DB, error) {
-	col, err := bome.NewJSONMap(db, dialect, tablePrefix+"_collections")
+	col, err := bome.Build().
+		SetDialect(dialect).
+		SetConn(db).
+		SetTableName(tablePrefix + "_collections").
+		JSONMap()
 	if err != nil {
 		return nil, err
 	}

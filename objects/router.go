@@ -4,7 +4,7 @@ import "context"
 
 type Router interface {
 	// GetRoute returns a sequence of handler
-	GetRoute(opts ...RouteOption) Handler
+	GetHandler(opts ...RouteOption) Handler
 }
 
 type RouterProvider interface {
@@ -20,15 +20,15 @@ func (f RouterProvideFunc) GetRouter(ctx context.Context) Router {
 
 type RouteProviderFunc func(opts ...RouteOption) Handler
 
-func (f RouteProviderFunc) GetRoute(opts ...RouteOption) Handler {
+func (f RouteProviderFunc) GetHandler(opts ...RouteOption) Handler {
 	return f(opts...)
 }
 
 func DefaultRouter() Router {
-	return RouteProviderFunc(getObjectsRoute)
+	return RouteProviderFunc(getHandler)
 }
 
-func getObjectsRoute(opts ...RouteOption) (handler Handler) {
+func getHandler(opts ...RouteOption) (handler Handler) {
 	routes := routesOptions{}
 
 	for _, o := range opts {

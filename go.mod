@@ -14,13 +14,16 @@ require (
 	github.com/iancoleman/strcase v0.1.3
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
+	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
-	github.com/omecodes/bome v0.0.0-20210106205629-28fe97eb70d7
+	github.com/omecodes/bome v0.0.0-20210213110029-97a3dd98070f
 	github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08
+	github.com/omecodes/discover v0.0.0-20210213111105-c5af043d728b // indirect
 	github.com/omecodes/errors v0.0.0-20210113230812-4f98b9fc3d3c
 	github.com/omecodes/libome v0.0.0-20210118230551-aff816f21c74
 	github.com/omecodes/service v0.0.0-20210119200004-85aec6812c6b
 	github.com/pkg/xattr v0.4.3
+	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/tidwall/gjson v1.6.8

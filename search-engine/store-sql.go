@@ -89,22 +89,22 @@ func NewSQLIndexStore(db *sql.DB, dialect string, tablePrefix string) (Store, er
 
 	s.db.SetTablePrefix(tablePrefix)
 
-	err = s.db.RawExec(wordsTablesDef).Error
+	err = s.db.Exec(wordsTablesDef).Error
 	if err == nil {
-		err = s.db.RawExec(numbersTablesDef).Error
+		err = s.db.Exec(numbersTablesDef).Error
 		if err == nil {
-			err = s.db.RawExec(propsTablesDef).Error
+			err = s.db.Exec(propsTablesDef).Error
 		}
 	}
 	return s, err
 }
 
 type sqlStore struct {
-	db *bome.Bome
+	db *bome.DB
 }
 
 func (s *sqlStore) SaveWordMapping(word string, id string) error {
-	err := s.db.RawExec(insertWord, word, id).Error
+	err := s.db.Exec(insertWord, word, id).Error
 	if bome.IsPrimaryKeyConstraintError(err) {
 		return nil
 	}
@@ -112,7 +112,7 @@ func (s *sqlStore) SaveWordMapping(word string, id string) error {
 }
 
 func (s *sqlStore) SaveNumberMapping(num int64, id string) error {
-	err := s.db.RawExec(insertNumber, num, id).Error
+	err := s.db.Exec(insertNumber, num, id).Error
 	if bome.IsPrimaryKeyConstraintError(err) {
 		return nil
 	}
@@ -120,7 +120,7 @@ func (s *sqlStore) SaveNumberMapping(num int64, id string) error {
 }
 
 func (s *sqlStore) SavePropertiesMapping(id string, value string) error {
-	err := s.db.RawExec(insertProps, id, value).Error
+	err := s.db.Exec(insertProps, id, value).Error
 	if bome.IsPrimaryKeyConstraintError(err) {
 		return nil
 	}
@@ -128,11 +128,11 @@ func (s *sqlStore) SavePropertiesMapping(id string, value string) error {
 }
 
 func (s *sqlStore) DeleteObjectMappings(id string) error {
-	err := s.db.RawExec(deleteObjectNumberMapping, id).Error
+	err := s.db.Exec(deleteObjectNumberMapping, id).Error
 	if err == nil {
-		err = s.db.RawExec(deleteObjectNumberMapping, id).Error
+		err = s.db.Exec(deleteObjectNumberMapping, id).Error
 		if err == nil {
-			s.db.RawExec(deleteProps, id)
+			s.db.Exec(deleteProps, id)
 		}
 	}
 	return err
@@ -148,7 +148,7 @@ func (s *sqlStore) performSearch(query *SearchQuery) (Cursor, error) {
 	case *SearchQuery_Text:
 		expr, scorers := evaluateWordSearchingQuery(q.Text)
 		sqlQuery := "select * from " + wordsTableName + " where " + expr
-		c, err := s.db.RawQuery(sqlQuery, bome.MapEntryScanner)
+		c, err := s.db.Query(sqlQuery, bome.MapEntryScanner)
 		if err != nil {
 			return nil, err
 		}
@@ -183,12 +183,12 @@ func (s *sqlStore) performSearch(query *SearchQuery) (Cursor, error) {
 
 	case *SearchQuery_Number:
 		sqlQuery := "select id from " + numbersTableName + " where " + evaluateNumberSearchingQuery(q.Number)
-		c, err := s.db.RawQuery(sqlQuery, bome.StringScanner)
+		c, err := s.db.Query(sqlQuery, bome.StringScanner)
 		return &aggregatedStrIdsCursor{cursor: c}, err
 
 	case *SearchQuery_Fields:
 		sqlQuery := "select id from " + propsTableName + " where " + evaluatePropertiesSearchingQuery(q.Fields)
-		c, err := s.db.RawQuery(sqlQuery, bome.StringScanner)
+		c, err := s.db.Query(sqlQuery, bome.StringScanner)
 		return &dbStringCursorWrapper{cursor: c}, err
 	}
 

@@ -13,7 +13,11 @@ import (
 )
 
 func NewSourceSQLManager(db *sql.DB, dialect string, tableName string) (*sourceSQLManager, error) {
-	m, err := bome.NewMap(db, dialect, tableName)
+	m, err := bome.Build().
+		SetConn(db).
+		SetDialect(dialect).
+		SetTableName(tableName).
+		Map()
 	return &sourceSQLManager{bMap: m}, err
 }
 

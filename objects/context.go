@@ -162,5 +162,5 @@ func NewRoute(ctx context.Context, opt ...RouteOption) (Handler, error) {
 	p := o.(RouterProvider)
 	router := p.GetRouter(ctx)
 
-	return router.GetRoute(opt...), nil
+	return router.GetHandler(opt...), nil
 }

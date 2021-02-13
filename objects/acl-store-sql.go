@@ -8,7 +8,7 @@ import (
 )
 
 func NewSQLACLStore(db *sql.DB, dialect string, tableName string) (ACLManager, error) {
-	store, err := bome.NewJSONDoubleMap(db, dialect, tableName)
+	store, err := bome.Build().SetConn(db).SetDialect(dialect).SetTableName(tableName).JSONDoubleMap()
 	return &sqlPermStore{
 		store: store,
 	}, err

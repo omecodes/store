@@ -37,7 +37,7 @@ func WithDefaultObjectsPolicyHandler() HandlerOption {
 	}
 }
 
-func (r *CustomObjectsRouter) GetRoute(opts ...RouteOption) Handler {
+func (r *CustomObjectsRouter) GetHandler(opts ...RouteOption) Handler {
 	var handler Handler
 
 	options := routesOptions{}

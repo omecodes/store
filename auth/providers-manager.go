@@ -25,7 +25,11 @@ type ProviderManager interface {
 }
 
 func NewProviderSQLManager(db *sql.DB, dialect string, tableName string) (*sqlProviderManager, error) {
-	store, err := bome.NewJSONMap(db, dialect, tableName)
+	store, err := bome.Build().
+		SetConn(db).
+		SetDialect(dialect).
+		SetTableName(tableName).
+		JSONMap()
 	if err != nil {
 		return nil, err
 	}

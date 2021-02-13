@@ -21,7 +21,11 @@ type CredentialsManager interface {
 }
 
 func NewCredentialsSQLManager(db *sql.DB, dialect string, prefix string, adminInfo string) (*credentialsSQLManager, error) {
-	store, err := bome.NewJSONMap(db, dialect, prefix+"_api_accesses")
+	store, err := bome.Build().
+		SetConn(db).
+		SetDialect(dialect).
+		SetTableName(prefix + "_api_accesses").
+		JSONMap()
 	if err != nil {
 		return nil, err
 	}
