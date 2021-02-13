@@ -83,17 +83,11 @@ func userContextInRegisteredClient(ctx context.Context, name string) context.Con
 
 func initDB() {
 	if db == nil {
-		conn, err := sql.Open("sqlite3", "test.db")
+		conn, err := sql.Open("sqlite3", ":memory:")
 		So(err, ShouldBeNil)
 
 		db, err = NewSqlDB(conn, bome.SQLite3, "store")
 		So(err, ShouldBeNil)
-		/*
-			conn, err := sql.Open(bome.MySQL, "bome:bome@tcp(localhost:3306)/bome?charset=utf8")
-			So(err, ShouldBeNil)
-			db, err = NewSqlDB(conn, bome.MySQL, "store")
-			So(err, ShouldBeNil)
-		*/
 	}
 
 	if settings == nil {
@@ -273,7 +267,7 @@ func TestHandler_PutObject(t *testing.T) {
 		data := `{"name": "user1", "age": 30, "city": "Paris"}`
 		object := &Object{
 			Header: &Header{
-				Id:        "",
+				Id:        "object1",
 				CreatedBy: "user1",
 				CreatedAt: time.Now().UnixNano(),
 				Size:      int64(len(data)),
