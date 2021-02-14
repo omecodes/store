@@ -8,7 +8,7 @@ type ctxRouterProvider struct{}
 
 type Router interface {
 	// GetRoute returns a sequence of handler
-	GetRoute(opts ...RouteOption) Handler
+	GetHandler(opts ...RouteOption) Handler
 }
 
 type RouterProvider interface {
@@ -24,7 +24,7 @@ func (f RouterProvideFunc) GetRouter(ctx context.Context) Router {
 
 type RouteProviderFunc func(opts ...RouteOption) Handler
 
-func (f RouteProviderFunc) GetRoute(opts ...RouteOption) Handler {
+func (f RouteProviderFunc) GetHandler(opts ...RouteOption) Handler {
 	return f(opts...)
 }
 
@@ -87,14 +87,14 @@ func SkipEncryption() RouteOption {
 	}
 }
 
-func NewRoute(ctx context.Context, opt ...RouteOption) (Handler, error) {
+func GetRouteHandler(ctx context.Context, opt ...RouteOption) Handler {
 	o := ctx.Value(ctxRouterProvider{})
 	if o == nil {
-		return DefaultFilesRouter().GetRoute(opt...), nil
+		return DefaultFilesRouter().GetHandler(opt...)
 	}
 
 	p := o.(RouterProvider)
 	router := p.GetRouter(ctx)
 
-	return router.GetRoute(opt...), nil
+	return router.GetHandler(opt...)
 }

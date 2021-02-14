@@ -59,26 +59,16 @@ func CreateFile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		route, err := NewRoute(ctx)
-		if err != nil {
-			w.WriteHeader(errors.HttpStatus(err))
-			return
-		}
-
-		err = route.CopyFile(ctx, sourceID, filename, strings.TrimPrefix(location.Filename, sourceID))
+		handler := GetRouteHandler(ctx)
+		err = handler.CopyFile(ctx, sourceID, filename, strings.TrimPrefix(location.Filename, sourceID))
 		if err != nil {
 			w.WriteHeader(errors.HttpStatus(err))
 			return
 		}
 	}
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
-		return
-	}
-
-	err = route.CreateDir(ctx, sourceID, filename)
+	handler := GetRouteHandler(ctx)
+	err := handler.CreateDir(ctx, sourceID, filename)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -96,13 +86,8 @@ func ListDir(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
-		return
-	}
-
-	content, err := route.ListDir(ctx, sourceID, filename, opts)
+	handler := GetRouteHandler(ctx)
+	content, err := handler.ListDir(ctx, sourceID, filename, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -117,13 +102,8 @@ func GetFileInfo(w http.ResponseWriter, r *http.Request) {
 	var opts GetFileInfoOptions
 	opts.WithAttrs = r.URL.Query().Get("attrs") == "true"
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
-		return
-	}
-
-	info, err := route.GetFileInfo(ctx, sourceID, filename, opts)
+	handler := GetRouteHandler(ctx)
+	info, err := handler.GetFileInfo(ctx, sourceID, filename, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -138,13 +118,8 @@ func DeleteFile(w http.ResponseWriter, r *http.Request) {
 	var opts DeleteFileOptions
 	opts.Recursive = r.URL.Query().Get("recursive") == "true"
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
-		return
-	}
-
-	err = route.DeleteFile(ctx, sourceID, filename, opts)
+	handler := GetRouteHandler(ctx)
+	err := handler.DeleteFile(ctx, sourceID, filename, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -162,16 +137,11 @@ func PatchFileTree(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
-		return
-	}
-
+	handler := GetRouteHandler(ctx)
 	if patchInfo.Rename {
-		err = route.RenameFile(ctx, sourceID, filename, strings.TrimPrefix(patchInfo.Value, sourceID))
+		err = handler.RenameFile(ctx, sourceID, filename, strings.TrimPrefix(patchInfo.Value, sourceID))
 	} else {
-		err = route.MoveFile(ctx, sourceID, filename, strings.TrimPrefix(patchInfo.Value, sourceID))
+		err = handler.MoveFile(ctx, sourceID, filename, strings.TrimPrefix(patchInfo.Value, sourceID))
 	}
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
@@ -190,13 +160,8 @@ func SetFileAttributes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
-		return
-	}
-
-	err = route.SetFileMetaData(ctx, sourceID, filename, attributes)
+	handler := GetRouteHandler(ctx)
+	err = handler.SetFileMetaData(ctx, sourceID, filename, attributes)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -209,13 +174,8 @@ func GetFileAttributes(w http.ResponseWriter, r *http.Request) {
 
 	name := r.URL.Query().Get("name")
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
-		return
-	}
-
-	attributes, err := route.GetFileAttributes(ctx, sourceID, filename, name)
+	handler := GetRouteHandler(ctx)
+	attributes, err := handler.GetFileAttributes(ctx, sourceID, filename, name)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -227,17 +187,13 @@ func GetFileAttributes(w http.ResponseWriter, r *http.Request) {
 func UploadFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
-		return
-	}
 
+	handler := GetRouteHandler(ctx)
 	opts := WriteOptions{}
 	opts.Append = r.URL.Query().Get("append") == "true"
 	opts.Hash = r.Header.Get("X-Content-Hash")
 
-	err = route.WriteFileContent(ctx, sourceID, filename, r.Body, r.ContentLength, opts)
+	err := handler.WriteFileContent(ctx, sourceID, filename, r.Body, r.ContentLength, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -248,11 +204,7 @@ func DownloadFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
-		return
-	}
+	var err error
 
 	opts := ReadOptions{}
 	opts.Range.Offset, err = Int64QueryParam(r, "offset")
@@ -267,7 +219,8 @@ func DownloadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, size, err := route.ReadFileContent(ctx, sourceID, filename, opts)
+	handler := GetRouteHandler(ctx)
+	file, size, err := handler.ReadFileContent(ctx, sourceID, filename, opts)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -312,13 +265,9 @@ func CreateSource(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
-		return
-	}
 
-	err = route.CreateSource(ctx, source)
+	handler := GetRouteHandler(ctx)
+	err = handler.CreateSource(ctx, source)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -327,13 +276,9 @@ func CreateSource(w http.ResponseWriter, r *http.Request) {
 
 func ListSources(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
-		return
-	}
 
-	sources, err := route.ListSources(ctx)
+	handler := GetRouteHandler(ctx)
+	sources, err := handler.ListSources(ctx)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -346,13 +291,9 @@ func GetSource(w http.ResponseWriter, r *http.Request) {
 	sourceID := vars[pathVarId]
 
 	ctx := r.Context()
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
-		return
-	}
 
-	source, err := route.GetSource(ctx, sourceID)
+	handler := GetRouteHandler(ctx)
+	source, err := handler.GetSource(ctx, sourceID)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -365,13 +306,9 @@ func DeleteSource(w http.ResponseWriter, r *http.Request) {
 	sourceID := vars[pathVarId]
 
 	ctx := r.Context()
-	route, err := NewRoute(ctx)
-	if err != nil {
-		w.WriteHeader(errors.HttpStatus(err))
-		return
-	}
 
-	err = route.DeleteSource(ctx, sourceID)
+	handler := GetRouteHandler(ctx)
+	err := handler.DeleteSource(ctx, sourceID)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
