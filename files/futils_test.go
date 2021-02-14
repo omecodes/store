@@ -1,6 +1,11 @@
+// +build windows
+
 package files
 
-import "testing"
+import (
+	"github.com/omecodes/libome/logs"
+	"testing"
+)
 
 func TestNormalizationPath(t *testing.T) {
 	p := "C:\\Users\\gopher\\Documents"

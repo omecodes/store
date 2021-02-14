@@ -33,6 +33,7 @@ type Source struct {
 	ID                  string                 `json:"id,omitempty"`
 	Label               string                 `json:"label,omitempty"`
 	Description         string                 `json:"description,omitempty"`
+	CreatedBy           string                 `json:"created_by,omitempty"`
 	Type                SourceType             `json:"type,omitempty"`
 	URI                 string                 `json:"uri,omitempty"`
 	Encryption          *EncryptionInfo        `json:"encryption,omitempty"`

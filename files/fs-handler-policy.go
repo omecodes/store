@@ -266,6 +266,10 @@ func (h *PolicyHandler) ListSources(ctx context.Context) ([]*Source, error) {
 }
 
 func (h *PolicyHandler) GetSource(ctx context.Context, sourceID string) (*Source, error) {
+	err := h.assertIsAllowedToRead(ctx, sourceID, "/")
+	if err != nil {
+		return nil, err
+	}
 	return h.next.GetSource(ctx, sourceID)
 }
 
