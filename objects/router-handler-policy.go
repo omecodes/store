@@ -3,10 +3,10 @@ package objects
 import (
 	"context"
 	"fmt"
+	"github.com/omecodes/libome/logs"
 	"strings"
 
 	"github.com/omecodes/common/errors"
-	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/common/cenv"
 	se "github.com/omecodes/store/search-engine"
@@ -59,7 +59,7 @@ func (p *PolicyHandler) evaluate(ctx context.Context, state *celParams, rule str
 
 	out, details, err := prg.Eval(vars)
 	if err != nil {
-		log.Error("cel execution", log.Field("details", details))
+		logs.Error("cel execution", logs.Details("details", details))
 		return false, err
 	}
 
@@ -69,7 +69,7 @@ func (p *PolicyHandler) evaluate(ctx context.Context, state *celParams, rule str
 func (p *PolicyHandler) getAccessRule(ctx context.Context, collection string, objectID string, action auth.AllowedTo, path string) (string, error) {
 	accessStore := GetACLStore(ctx)
 	if accessStore == nil {
-		log.Error("ACL-Read-Check: missing access store in context")
+		logs.Error("ACL-Read-Check: missing access store in context")
 		return "", errors.Internal
 	}
 
@@ -84,7 +84,7 @@ func (p *PolicyHandler) getAccessRule(ctx context.Context, collection string, ob
 
 	rules, found := ruleCollection.AccessRules[path]
 	if !found {
-		log.Error("ACL: could not find access security rule", log.Field("object", objectID), log.Field("path", path))
+		logs.Error("ACL: could not find access security rule", logs.Details("object", objectID), logs.Details("path", path))
 		rules, found = ruleCollection.AccessRules["$"]
 		if !found {
 			return "", errors.Forbidden
@@ -101,7 +101,7 @@ func (p *PolicyHandler) getAccessRule(ctx context.Context, collection string, ob
 		actionRules = rules.Delete
 
 	default:
-		log.Error("ACL: no rule for this action", log.Field("action", action.String()))
+		logs.Error("ACL: no rule for this action", logs.Details("action", action.String()))
 		return "", errors.Internal
 	}
 
@@ -137,7 +137,7 @@ func (p *PolicyHandler) assetActionAllowedOnObject(ctx context.Context, collecti
 
 	allowed, err := p.evaluate(ctx, s, rule)
 	if err != nil {
-		log.Error("failed to evaluate access rule", log.Err(err))
+		logs.Error("failed to evaluate access rule", logs.Err(err))
 		return errors.Internal
 	}
 
@@ -384,7 +384,7 @@ func (p *PolicyHandler) SearchObjects(ctx context.Context, collection string, qu
 
 			allowed, err := p.evaluate(ctx, s, rule)
 			if err != nil {
-				log.Error("failed to evaluate access rule", log.Err(err))
+				logs.Error("failed to evaluate access rule", logs.Err(err))
 				return nil, errors.Internal
 			}
 

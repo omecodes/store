@@ -3,7 +3,7 @@ package objects
 import (
 	"context"
 	"github.com/omecodes/common/errors"
-	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/libome/logs"
 	se "github.com/omecodes/store/search-engine"
 	"io"
 	"strconv"
@@ -46,20 +46,20 @@ func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object
 
 	s, err := settings.Get(SettingsDataMaxSizePath)
 	if err != nil {
-		log.Error("could not get data max length from settings", log.Err(err))
+		logs.Error("could not get data max length from settings", logs.Err(err))
 		return "", errors.Internal
 	}
 
 	maxLength, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		log.Error("could not get data max length from settings", log.Err(err))
+		logs.Error("could not get data max length from settings", logs.Err(err))
 		return "", errors.Internal
 	}
 
 	object.Header.Size = int64(len(object.Data))
 
 	if object.Header.Size > maxLength {
-		log.Error("could not process request. Object too big", log.Field("max", maxLength), log.Field("received", object.Header.Size))
+		logs.Error("could not process request. Object too big", logs.Details("max", maxLength), logs.Details("received", object.Header.Size))
 		return "", errors.BadInput
 	}
 
@@ -78,18 +78,18 @@ func (p *ParamsHandler) PatchObject(ctx context.Context, collection string, patc
 
 	s, err := settings.Get(SettingsDataMaxSizePath)
 	if err != nil {
-		log.Error("could not get data max length from settings", log.Err(err))
+		logs.Error("could not get data max length from settings", logs.Err(err))
 		return errors.Internal
 	}
 
 	maxLength, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		log.Error("could not get data max length from settings", log.Err(err))
+		logs.Error("could not get data max length from settings", logs.Err(err))
 		return errors.Internal
 	}
 
 	if int64(len(patch.Data)) > maxLength {
-		log.Error("could not process request. Object too big", log.Field("max", maxLength), log.Field("received", len(patch.Data)))
+		logs.Error("could not process request. Object too big", logs.Details("max", maxLength), logs.Details("received", len(patch.Data)))
 		return errors.BadInput
 	}
 
@@ -136,13 +136,13 @@ func (p *ParamsHandler) ListObjects(ctx context.Context, collection string, opts
 
 	s, err := settings.Get(SettingsObjectListMaxCount)
 	if err != nil {
-		log.Error("could not get data max length from settings", log.Err(err))
+		logs.Error("could not get data max length from settings", logs.Err(err))
 		return nil, errors.Internal
 	}
 
 	maxLength, err := strconv.Atoi(s)
 	if err != nil {
-		log.Error("could not get data max length from settings", log.Err(err))
+		logs.Error("could not get data max length from settings", logs.Err(err))
 		return nil, errors.Internal
 	}
 

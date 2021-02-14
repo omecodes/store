@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/omecodes/bome"
-	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/errors"
+	"github.com/omecodes/libome/logs"
 )
 
 func NewSQLManager(db *sql.DB, dialect string, tablePrefix string) (Manager, error) {
@@ -59,7 +59,7 @@ func (s *sqlManager) Create(ctx context.Context, account *Account) error {
 	})
 	if err != nil {
 		if rer := bome.Rollback(txCtx); rer != nil {
-			log.Error("Transaction rollback failed", log.Err(err))
+			logs.Error("Transaction rollback failed", logs.Err(err))
 		}
 		return errors.AppendDetails(err, errors.Info{
 			Name:    "am",
@@ -75,7 +75,7 @@ func (s *sqlManager) Create(ctx context.Context, account *Account) error {
 	})
 	if err != nil {
 		if rer := bome.Rollback(txCtx); rer != nil {
-			log.Error("Transaction rollback failed", log.Err(err))
+			logs.Error("Transaction rollback failed", logs.Err(err))
 		}
 		return errors.AppendDetails(err, errors.Info{
 			Name:    "am",
@@ -129,7 +129,7 @@ func (s *sqlManager) Search(ctx context.Context, pattern string) ([]string, erro
 
 	defer func() {
 		if cer := cursor.Close(); cer != nil {
-			log.Error("cursor close", log.Err(cer))
+			logs.Error("cursor close", logs.Err(cer))
 		}
 	}()
 

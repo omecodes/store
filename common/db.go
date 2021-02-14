@@ -2,7 +2,7 @@ package common
 
 import (
 	"database/sql"
-	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/libome/logs"
 	"os"
 	"time"
 )
@@ -12,7 +12,7 @@ func GetDB(driver string, dbURI string) *sql.DB {
 
 	db, err := sql.Open(driver, dbURI)
 	if err != nil {
-		log.Error("failed to open database", log.Field("uri", dbURI), log.Err(err))
+		logs.Error("failed to open database", logs.Details("uri", dbURI), logs.Err(err))
 		os.Exit(-1)
 	}
 
@@ -21,8 +21,8 @@ func GetDB(driver string, dbURI string) *sql.DB {
 		if err != nil {
 			if !showedFailure {
 				showedFailure = true
-				log.Error("Database ping failed", log.Err(err))
-				log.Info("retrying to connect...")
+				logs.Error("Database ping failed", logs.Err(err))
+				logs.Info("retrying to connect...")
 			}
 
 			<-time.After(time.Second * 3)

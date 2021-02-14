@@ -63,9 +63,9 @@ func DiskStatus(disk string) (DiskUsage, error) {
 		Used: all - free,
 	}
 
-	/*log.Printf("Available  %dmb", lpFreeBytesAvailable/1024/1024.0)
-	log.Printf("Total      %dmb", lpTotalNumberOfBytes/1024/1024.0)
-	log.Printf("Free       %dmb", lpTotalNumberOfFreeBytes/1024/1024.0)*/
+	/*logs.Printf("Available  %dmb", lpFreeBytesAvailable/1024/1024.0)
+	logs.Printf("Total      %dmb", lpTotalNumberOfBytes/1024/1024.0)
+	logs.Printf("Free       %dmb", lpTotalNumberOfFreeBytes/1024/1024.0)*/
 	return ds, nil
 }
 

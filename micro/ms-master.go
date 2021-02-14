@@ -187,7 +187,7 @@ func (s *MSServer) startAPIServer() error {
 	}
 
 	address := s.listener.Addr().String()
-	log.Info("starting HTTP server", log.Field("address", address))
+	logs.Info("starting HTTP server", logs.Details("address", address))
 
 	middlewareList := []mux.MiddlewareFunc{
 		objects.Middleware(
@@ -261,11 +261,11 @@ func (s *MSServer) startProductionAPIServer() error {
 		}
 	}()
 
-	log.Info("starting HTTP Listener on Port 80")
+	logs.Info("starting HTTP Listener on Port 80")
 	go func() {
 		h := certManager.HTTPHandler(nil)
 		if err := http.ListenAndServe(":80", h); err != nil {
-			log.Error("listen to port 80 failed", log.Err(err))
+			logs.Error("listen to port 80 failed", logs.Err(err))
 		}
 	}()
 	return nil
@@ -302,13 +302,13 @@ func (s *MSServer) Start() error {
 
 	err = s.startCA()
 	if err != nil {
-		log.Error("MS Sore • could not start CA", log.Err(err))
+		logs.Error("MS Sore • could not start CA", logs.Err(err))
 		return errors.Internal
 	}
 
 	err = s.startRegistry()
 	if err != nil {
-		log.Error("MS Sore • could not start CA", log.Err(err))
+		logs.Error("MS Sore • could not start CA", logs.Err(err))
 		return errors.Internal
 	}
 

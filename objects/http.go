@@ -3,6 +3,7 @@ package objects
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/omecodes/libome/logs"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/gorilla/mux"
-	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/store/auth"
 	se "github.com/omecodes/store/search-engine"
@@ -66,7 +66,7 @@ func PutObject(w http.ResponseWriter, r *http.Request) {
 	var putRequest PutObjectRequest
 	err := jsonpb.Unmarshal(r.Body, &putRequest)
 	if err != nil {
-		log.Error("failed to decode request body", log.Err(err))
+		logs.Error("failed to decode request body", logs.Err(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -99,7 +99,7 @@ func PatchObject(w http.ResponseWriter, r *http.Request) {
 	var patch Patch
 	err := jsonpb.Unmarshal(r.Body, &patch)
 	if err != nil {
-		log.Error("failed to decode request body", log.Err(err))
+		logs.Error("failed to decode request body", logs.Err(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -129,7 +129,7 @@ func MoveObject(w http.ResponseWriter, r *http.Request) {
 	var request MoveObjectRequest
 	err := jsonpb.Unmarshal(r.Body, &request)
 	if err != nil {
-		log.Error("failed to decode request body", log.Err(err))
+		logs.Error("failed to decode request body", logs.Err(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -171,7 +171,7 @@ func GetObject(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write([]byte(object.Data))
 	if err != nil {
-		log.Error("failed to write response", log.Err(err))
+		logs.Error("failed to write response", logs.Err(err))
 	}
 }
 
@@ -204,7 +204,7 @@ func ListObjects(w http.ResponseWriter, r *http.Request) {
 
 	opts.Offset, err = Int64QueryParam(r, queryOffset)
 	if err != nil {
-		log.Error("could not parse param 'before'")
+		logs.Error("could not parse param 'before'")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -221,7 +221,7 @@ func ListObjects(w http.ResponseWriter, r *http.Request) {
 
 	defer func() {
 		if cErr := cursor.Close(); cErr != nil {
-			log.Error("cursor closed with an error", log.Err(cErr))
+			logs.Error("cursor closed with an error", logs.Err(cErr))
 		}
 	}()
 	w.Header().Add("Content-Type", "application/json")
@@ -248,7 +248,7 @@ func ListObjects(w http.ResponseWriter, r *http.Request) {
 		item = item + fmt.Sprintf("\"%s\": %s", object.Header.Id, object.Data)
 		_, err = w.Write([]byte(item))
 		if err != nil {
-			log.Error("GetObjects: failed to write result item", log.Err(err))
+			logs.Error("GetObjects: failed to write result item", logs.Err(err))
 			return
 		}
 	}
@@ -261,7 +261,7 @@ func SearchObjects(w http.ResponseWriter, r *http.Request) {
 	var query se.SearchQuery
 	err := jsonpb.Unmarshal(r.Body, &query)
 	if err != nil {
-		log.Error("could not parse search query")
+		logs.Error("could not parse search query")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -278,7 +278,7 @@ func SearchObjects(w http.ResponseWriter, r *http.Request) {
 	}
 	defer func() {
 		if cErr := cursor.Close(); cErr != nil {
-			log.Error("cursor closed with an error", log.Err(cErr))
+			logs.Error("cursor closed with an error", logs.Err(cErr))
 		}
 	}()
 	w.Header().Add("Content-Type", "application/json")
@@ -307,7 +307,7 @@ func SearchObjects(w http.ResponseWriter, r *http.Request) {
 		_, err = w.Write([]byte(item))
 		if err != nil {
 			_, err = w.Write([]byte("}"))
-			log.Error("GetObjects: failed to write result item", log.Err(err))
+			logs.Error("GetObjects: failed to write result item", logs.Err(err))
 			return
 		}
 	}
@@ -332,7 +332,7 @@ func SetSettings(w http.ResponseWriter, r *http.Request) {
 
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Error("could not read request body", log.Err(err))
+		logs.Error("could not read request body", logs.Err(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -345,7 +345,7 @@ func SetSettings(w http.ResponseWriter, r *http.Request) {
 
 	err = settings.Set(name, string(data))
 	if err != nil {
-		log.Error("failed to set settings", log.Err(err))
+		logs.Error("failed to set settings", logs.Err(err))
 		w.WriteHeader(errors.HTTPStatus(err))
 	}
 }
@@ -373,7 +373,7 @@ func GetSettings(w http.ResponseWriter, r *http.Request) {
 
 	value, err := settings.Get(name)
 	if err != nil {
-		log.Error("failed to set settings", log.Err(err))
+		logs.Error("failed to set settings", logs.Err(err))
 		w.WriteHeader(errors.HTTPStatus(err))
 	}
 

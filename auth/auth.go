@@ -5,11 +5,11 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
+	"github.com/omecodes/libome/logs"
 	"strings"
 
 	"google.golang.org/grpc/metadata"
 
-	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/errors"
 	ome "github.com/omecodes/libome"
 )
@@ -100,7 +100,7 @@ func updateContextWithBasic(ctx context.Context, authorization string) (context.
 
 	err = manager.ValidateAdminAccess(pass)
 	if err != nil {
-		log.Error("verifying admin authentication", log.Err(err))
+		logs.Error("verifying admin authentication", logs.Err(err))
 		return ctx, errors.Create(errors.Forbidden, "admin authentication failed")
 	}
 

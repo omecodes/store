@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"github.com/omecodes/bome"
-	"github.com/omecodes/common/utils/log"
+	"github.com/omecodes/libome/logs"
 	"golang.org/x/oauth2"
 )
 
@@ -71,7 +71,7 @@ func (s *sqlProviderManager) GetAll(hideConfig bool) ([]*Provider, error) {
 
 	defer func() {
 		if cer := c.Close(); cer != nil {
-			log.Error("AUTH providers list cursor close", log.Err(err))
+			logs.Error("AUTH providers list cursor close", logs.Err(err))
 		}
 	}()
 

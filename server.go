@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"fmt"
+	"github.com/omecodes/libome/logs"
 	"net"
 	"net/http"
 	"os"
@@ -18,7 +19,6 @@ import (
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/httpx"
 	"github.com/omecodes/common/netx"
-	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/accounts"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/common"
@@ -210,7 +210,7 @@ func (s *Server) startDefaultAPIServer() error {
 	}
 
 	address := s.listener.Addr().String()
-	log.Info("starting HTTP server", log.Field("address", address))
+	logs.Info("starting HTTP server", logs.Details("address", address))
 
 	r := s.httpRouter()
 
@@ -246,11 +246,11 @@ func (s *Server) startAutoCertAPIServer() error {
 		}
 	}()
 
-	log.Info("starting HTTP Listener on Port 80")
+	logs.Info("starting HTTP Listener on Port 80")
 	go func() {
 		h := certManager.HTTPHandler(nil)
 		if err := http.ListenAndServe(":80", h); err != nil {
-			log.Error("listen to port 80 failed", log.Err(err))
+			logs.Error("listen to port 80 failed", logs.Err(err))
 		}
 	}()
 	return nil
@@ -268,7 +268,7 @@ func (s *Server) startSecureAPIServer() error {
 		}
 	}()
 
-	log.Info("starting HTTP Listener on Port 80")
+	logs.Info("starting HTTP Listener on Port 80")
 	go func() {
 		if err := http.ListenAndServe(":80", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			redirectURL := fmt.Sprintf("https://%s", s.config.Domains[0])
@@ -284,7 +284,7 @@ func (s *Server) startSecureAPIServer() error {
 			w.WriteHeader(http.StatusPermanentRedirect)
 			_, _ = w.Write(contentBytes)
 		})); err != nil {
-			log.Error("listen to port 80 failed", log.Err(err))
+			logs.Error("listen to port 80 failed", logs.Err(err))
 		}
 	}()
 	return nil

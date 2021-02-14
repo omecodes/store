@@ -3,8 +3,8 @@ package se
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/errors"
+	"github.com/omecodes/libome/logs"
 	"io"
 	"strings"
 )
@@ -93,7 +93,7 @@ func (e *Engine) Search(query *SearchQuery) ([]string, error) {
 
 	defer func() {
 		if cer := c.Close(); cer != nil {
-			log.Error("cursor closing error", log.Err(cer))
+			logs.Error("cursor closing error", logs.Err(cer))
 		}
 	}()
 

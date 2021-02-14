@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store"
 	"os"
 	"path"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/common/utils/prompt"
 	"github.com/omecodes/store/common"
 )
@@ -100,7 +100,7 @@ func init() {
 			select {
 			case <-prompt.QuitSignal():
 			case err = <-s.Errors:
-				log.Error("server error", log.Err(err))
+				logs.Error("server error", logs.Err(err))
 			}
 		},
 	}
