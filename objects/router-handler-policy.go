@@ -3,12 +3,13 @@ package objects
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/common/cenv"
 	se "github.com/omecodes/store/search-engine"
-	"strings"
 )
 
 type PolicyHandler struct {
@@ -84,7 +85,10 @@ func (p *PolicyHandler) getAccessRule(ctx context.Context, collection string, ob
 	rules, found := ruleCollection.AccessRules[path]
 	if !found {
 		log.Error("ACL: could not find access security rule", log.Field("object", objectID), log.Field("path", path))
-		return "", errors.Forbidden
+		rules, found = ruleCollection.AccessRules["$"]
+		if !found {
+			return "", errors.Forbidden
+		}
 	}
 
 	var actionRules []*auth.Permission
@@ -252,7 +256,7 @@ func (p *PolicyHandler) GetObject(ctx context.Context, collection string, id str
 }
 
 func (p *PolicyHandler) PatchObject(ctx context.Context, collection string, patch *Patch, opts PatchOptions) error {
-	err := p.assetActionAllowedOnObject(ctx, collection, patch.ObjectId, auth.AllowedTo_delete, "")
+	err := p.assetActionAllowedOnObject(ctx, collection, patch.ObjectId, auth.AllowedTo_write, "")
 	if err != nil {
 		return err
 	}

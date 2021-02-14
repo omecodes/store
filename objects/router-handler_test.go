@@ -6,6 +6,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/omecodes/bome"
 	"github.com/omecodes/store/auth"
+	se "github.com/omecodes/store/search-engine"
 	. "github.com/smartystreets/goconvey/convey"
 	"io"
 	"testing"
@@ -34,7 +35,7 @@ var (
 							Name:        "public",
 							Label:       "Readable",
 							Description: "Readable by everybody",
-							Rule:        "user.name!='' && user.access=='client'",
+							Rule:        "user.name==object.created_by && user.access=='client'",
 						},
 					},
 					Write: []*auth.Permission{
@@ -42,7 +43,7 @@ var (
 							Name:        "restricted-write",
 							Label:       "Restricted Write",
 							Description: "Only creator can write",
-							Rule:        "user.name==object.header.creator",
+							Rule:        "user.name==object.created_by && user.access=='client'",
 						},
 					},
 					Delete: []*auth.Permission{
@@ -50,7 +51,7 @@ var (
 							Name:        "restricted-delete",
 							Label:       "Restricted Delete",
 							Description: "Only creator can delete",
-							Rule:        "user.name==object.header.creator",
+							Rule:        "user.name==object.created_by && user.access=='client'",
 						},
 					},
 				},
@@ -75,7 +76,7 @@ var (
 							Name:        "public",
 							Label:       "Readable",
 							Description: "Readable by everybody",
-							Rule:        "user.name!='' && user.access=='client'",
+							Rule:        "user.name==object.created_by && user.access=='client'",
 						},
 					},
 					Write: []*auth.Permission{
@@ -83,7 +84,7 @@ var (
 							Name:        "restricted-write",
 							Label:       "Restricted Write",
 							Description: "Only creator can write",
-							Rule:        "user.name==o.header.creator",
+							Rule:        "user.name==object.created_by && user.access=='client'",
 						},
 					},
 					Delete: []*auth.Permission{
@@ -91,7 +92,7 @@ var (
 							Name:        "restricted-delete",
 							Label:       "Restricted Delete",
 							Description: "Only creator can delete",
-							Rule:        "user.name==o.header.creator",
+							Rule:        "user.name==object.created_by && user.access=='client'",
 						},
 					},
 				},
@@ -116,7 +117,7 @@ var (
 							Name:        "public",
 							Label:       "Readable",
 							Description: "Readable by everybody",
-							Rule:        "user.name!='' && user.access=='client'",
+							Rule:        "user.name==object.created_by && user.access=='client'",
 						},
 					},
 					Write: []*auth.Permission{
@@ -124,7 +125,7 @@ var (
 							Name:        "restricted-write",
 							Label:       "Restricted Write",
 							Description: "Only creator can write",
-							Rule:        "user.name==o.header.creator",
+							Rule:        "user.name==object.created_by && user.access=='client'",
 						},
 					},
 					Delete: []*auth.Permission{
@@ -132,7 +133,7 @@ var (
 							Name:        "restricted-delete",
 							Label:       "Restricted Delete",
 							Description: "Only creator can delete",
-							Rule:        "user.name==o.header.creator",
+							Rule:        "user.name==object.created_by && user.access=='client'",
 						},
 					},
 				},
@@ -198,8 +199,8 @@ func Test_DBInitialization(t *testing.T) {
 	})
 }
 
-func TestHandler_CreateCollection(t *testing.T) {
-	Convey("COLLECTION - CREATE: a collection MUST have at least an id AND default access security rules", t, func() {
+func TestHandler_CreateCollection1(t *testing.T) {
+	Convey("COLLECTION - CREATE: cannot create a collection if id or security rules are not provided", t, func() {
 		initDB()
 
 		router := DefaultRouter()
@@ -230,7 +231,7 @@ func TestHandler_CreateCollection(t *testing.T) {
 								Name:        "restricted-write",
 								Label:       "Restricted Write",
 								Description: "Only creator can write",
-								Rule:        "user.name==o.header.creator",
+								Rule:        "user.name==object.created_by",
 							},
 						},
 						Delete: []*auth.Permission{
@@ -238,7 +239,7 @@ func TestHandler_CreateCollection(t *testing.T) {
 								Name:        "restricted-delete",
 								Label:       "Restricted Delete",
 								Description: "Only creator can delete",
-								Rule:        "user.name==o.header.creator",
+								Rule:        "user.name==object.created_by",
 							},
 						},
 					},
@@ -269,8 +270,21 @@ func TestHandler_CreateCollection(t *testing.T) {
 	})
 }
 
-func TestHandler_CreateCollection1(t *testing.T) {
-	Convey("COLLECTION - CREATE: Only admin is allowed to create collection", t, func() {
+func TestHandler_CreateCollection2(t *testing.T) {
+	Convey("COLLECTION - CREATE: cannot create a collection if user is not admin", t, func() {
+		initDB()
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		// Try to create collection as admin
+		adminContext := userContext(getContext(), "user1")
+		err := handler.CreateCollection(adminContext, juveTeam)
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_CreateCollection(t *testing.T) {
+	Convey("COLLECTION - CREATE: can create a collection if user is admin", t, func() {
 		initDB()
 
 		router := DefaultRouter()
@@ -292,8 +306,41 @@ func TestHandler_CreateCollection1(t *testing.T) {
 	})
 }
 
+func TestHandler_GetCollection1(t *testing.T) {
+	Convey("COLLECTION - GET: cannot get a collection info if id is not provided", t, func() {
+		initDB()
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		// Retrieve new created collection from admin context
+		adminContext := userContext(getContext(), "admin")
+		col, err := handler.GetCollection(adminContext, "")
+		So(err, ShouldNotBeNil)
+		So(col, ShouldBeNil)
+		So(err.Error(), ShouldContainSubstring, "bad input")
+	})
+}
+
+func TestHandler_GetCollection2(t *testing.T) {
+	Convey("COLLECTION - GET: cannot get collection info if user is not admin or not authenticated from a registered client application", t, func() {
+		initDB()
+
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		// Try to retrieve collection info from non authenticated context
+		_, err := handler.GetCollection(getContext(), "paris-sg")
+		So(err, ShouldNotBeNil)
+
+		// Getting collection using a user from non registered client application
+		user1Context := userContext(getContext(), "user1")
+		_, err = handler.GetCollection(user1Context, "paris-sg")
+		So(err, ShouldNotBeNil)
+	})
+}
+
 func TestHandler_GetCollection(t *testing.T) {
-	Convey("COLLECTION - GET: Only admin and user from within a verified client can get collection info", t, func() {
+	Convey("COLLECTION - GET: can get collection info if user is admin or authenticated from a registered client application", t, func() {
 		initDB()
 
 		router := DefaultRouter()
@@ -331,23 +378,65 @@ func TestHandler_GetCollection(t *testing.T) {
 	})
 }
 
-func TestHandler_GetCollection1(t *testing.T) {
-	Convey("COLLECTION - GET: id parameter is required to load collection", t, func() {
+func TestHandler_ListCollection1(t *testing.T) {
+	Convey("COLLECTION - LIST: cannot list collections if non authenticated or user is authenticated from an unregistered client application", t, func() {
 		initDB()
+
 		router := DefaultRouter()
 		handler := router.GetHandler()
 
+		// Try to retrieve collection info from non authenticated context
+		_, err := handler.ListCollections(getContext())
+		So(err, ShouldNotBeNil)
+
+		// Retrieve new created collection from user1 context from non registered client application
+		user1Context := userContext(getContext(), "user1")
+		_, err = handler.ListCollections(user1Context)
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_ListCollection(t *testing.T) {
+	Convey("COLLECTION - LIST: can list collections if user is admin or authenticated a registered client application", t, func() {
+		initDB()
+
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		// Try to retrieve collection info from non authenticated user
+		col, err := handler.GetCollection(getContext(), "objects")
+		So(err, ShouldNotBeNil)
+		So(err.Error(), ShouldContainSubstring, "forbidden")
+		So(col, ShouldBeNil)
+
+		// Retrieve new created collection from user1 context
+		user1Context := userContext(getContext(), "user1")
+		col, err = handler.GetCollection(user1Context, "objects")
+		So(err, ShouldNotBeNil)
+		So(err.Error(), ShouldContainSubstring, "forbidden")
+		So(col, ShouldBeNil)
+
+		// Retrieve new created collection from user1 context
+		user1Context = userContextInRegisteredClient(getContext(), "user1")
+		col, err = handler.GetCollection(user1Context, "juventus")
+		So(err, ShouldBeNil)
+		So(col.Id, ShouldEqual, "juventus")
+
 		// Retrieve new created collection from admin context
 		adminContext := userContext(getContext(), "admin")
-		col, err := handler.GetCollection(adminContext, "")
-		So(err, ShouldNotBeNil)
-		So(col, ShouldBeNil)
-		So(err.Error(), ShouldContainSubstring, "bad input")
+		col, err = handler.GetCollection(adminContext, "juventus")
+		So(err, ShouldBeNil)
+		So(col.Id, ShouldEqual, "juventus")
+
+		// Retrieve all the created collection from admin context
+		cols, err := handler.ListCollections(adminContext)
+		So(err, ShouldBeNil)
+		So(cols, ShouldHaveLength, 3)
 	})
 }
 
 func TestHandler_PutObject1(t *testing.T) {
-	Convey("OBJECTS CREATE: one cannot create objects without settings manager in context", t, func() {
+	Convey("OBJECTS - PUT: cannot create objects if context has no settings manager", t, func() {
 		initDB()
 
 		router := DefaultRouter()
@@ -371,7 +460,7 @@ func TestHandler_PutObject1(t *testing.T) {
 }
 
 func TestHandler_PutObject2(t *testing.T) {
-	Convey("OBJECTS CREATE: one cannot create is collection one of the following is not specified: collection, header or object data", t, func() {
+	Convey("OBJECTS - PUT: cannot put object if one of the items is not specified: collection, header, object data", t, func() {
 		initDB()
 
 		router := DefaultRouter()
@@ -408,7 +497,7 @@ func TestHandler_PutObject2(t *testing.T) {
 }
 
 func TestHandler_PutObject3(t *testing.T) {
-	Convey("OBJECTS CREATE: one could not create object if settings 'SettingsDataMaxSizePath' is not set or has value other than number", t, func() {
+	Convey("OBJECTS - PUT: cannot create object if there is no 'SettingsDataMaxSizePath' is settings or has non numeric value", t, func() {
 		initDB()
 
 		router := DefaultRouter()
@@ -450,7 +539,7 @@ func TestHandler_PutObject3(t *testing.T) {
 }
 
 func TestHandler_PutObject4(t *testing.T) {
-	Convey("OBJECTS CREATE: one could not create object with data size is greater than 'SettingsDataMaxSizePath' value", t, func() {
+	Convey("OBJECTS - CREATE: cannot create object with data size greater than 'SettingsDataMaxSizePath' value", t, func() {
 		initDB()
 
 		router := DefaultRouter()
@@ -482,8 +571,30 @@ func TestHandler_PutObject4(t *testing.T) {
 	})
 }
 
+func TestHandler_PutObject5(t *testing.T) {
+	Convey("OBJECTS - CREATE: cannot create object if context is not authenticated", t, func() {
+		initDB()
+
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		data := `{"name": "Cristiano Ronaldo", "age": 35, "city": "Turin"}`
+		object := &Object{
+			Header: &Header{
+				Id:        "cr7",
+				CreatedAt: time.Now().UnixNano(),
+				Size:      int64(len(data)),
+			},
+			Data: data,
+		}
+
+		_, err := handler.PutObject(getContext(), "juventus", object, nil, nil, PutOptions{})
+		So(err, ShouldNotBeNil)
+	})
+}
+
 func TestHandler_PutObject(t *testing.T) {
-	Convey("OBJECTS CREATE: authenticated user from verified clients can put objects", t, func() {
+	Convey("OBJECTS - CREATE: can create object if user is authenticated from registered client application", t, func() {
 		initDB()
 
 		router := DefaultRouter()
@@ -533,7 +644,7 @@ func TestHandler_PutObject(t *testing.T) {
 }
 
 func TestHandler_PatchObject1(t *testing.T) {
-	Convey("OBJECTS PATCH: one cannot patch objects without settings manager in context", t, func() {
+	Convey("OBJECTS - PATCH: cannot patch object if context has no settings manager", t, func() {
 		initDB()
 
 		router := DefaultRouter()
@@ -551,7 +662,7 @@ func TestHandler_PatchObject1(t *testing.T) {
 }
 
 func TestHandler_PatchObject2(t *testing.T) {
-	Convey("OBJECTS CREATE: one cannot patch is collection one of the following is not specified: collection, patch or object data", t, func() {
+	Convey("OBJECTS - PATCH: cannot patch object if one of the items is not specified: collection, header, object data", t, func() {
 		initDB()
 
 		router := DefaultRouter()
@@ -588,7 +699,7 @@ func TestHandler_PatchObject2(t *testing.T) {
 }
 
 func TestHandler_PatchObject3(t *testing.T) {
-	Convey("OBJECTS PATCH: one cannot patch object if settings 'SettingsDataMaxSizePath' is not set or has value other than number", t, func() {
+	Convey("OBJECTS - PATCH: cannot create object if there is no 'SettingsDataMaxSizePath' is settings or has non numeric value", t, func() {
 		initDB()
 
 		router := DefaultRouter()
@@ -625,7 +736,7 @@ func TestHandler_PatchObject3(t *testing.T) {
 }
 
 func TestHandler_PatchObject4(t *testing.T) {
-	Convey("OBJECTS PATCH: one could not patch object with data size is greater than 'SettingsDataMaxSizePath' value", t, func() {
+	Convey("OBJECTS - PATCH: cannot patch object with data size greater than 'SettingsDataMaxSizePath' value", t, func() {
 		initDB()
 
 		router := DefaultRouter()
@@ -653,41 +764,59 @@ func TestHandler_PatchObject4(t *testing.T) {
 }
 
 func TestHandler_PatchObject(t *testing.T) {
-	Convey("OBJECTS CREATE: patch object", t, func() {
+	Convey("OBJECTS - PATCH: can patch object if context satisfies one of the object WRITE access rules", t, func() {
 		initDB()
 
 		router := DefaultRouter()
 		handler := router.GetHandler()
 		patch := &Patch{
-			ObjectId: "m10",
+			ObjectId: "n10",
 			At:       "$.age",
 			Data:     "30",
 		}
 
-		// saving current value
-		value, err := settings.Get(SettingsDataMaxSizePath)
+		psgCtx := userContextInRegisteredClient(getContext(), "pochettino")
+		err := handler.PatchObject(psgCtx, "paris-sg", patch, PatchOptions{})
 		So(err, ShouldBeNil)
 
-		err = settings.Set(SettingsDataMaxSizePath, "5")
+		object, err := handler.GetObject(psgCtx, "paris-sg", "n10", GetOptions{At: "$.age"})
 		So(err, ShouldBeNil)
+		So(object.Data, ShouldEqual, "30")
+	})
+}
 
-		user1Context := userContextInRegisteredClient(getContext(), "user1")
-		err = handler.PatchObject(user1Context, "objects", patch, PatchOptions{})
+func TestHandler_MoveObject1(t *testing.T) {
+	Convey("OBJECTS - MOVE: cannot move object if one of the items is not provided: collection-id, object-id, target-collection-id", t, func() {
+		initDB()
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		err := handler.MoveObject(getContext(), "", "some-object-id", "paris-sg", nil, MoveOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settings.Set(SettingsDataMaxSizePath, value)
-		So(err, ShouldBeNil)
+		err = handler.MoveObject(getContext(), "source-collection", "", "paris-sg", nil, MoveOptions{})
+		So(err, ShouldNotBeNil)
+
+		err = handler.MoveObject(getContext(), "source-collection", "some-object-id", "", nil, MoveOptions{})
+		So(err, ShouldNotBeNil)
 	})
 }
 
 func TestHandler_MoveObject(t *testing.T) {
-	Convey("", t, func() {
+	Convey("OBJECTS - MOVE: can move object if user is admin or is an authenticated user from a registered application and can create object in target collection", t, func() {
+		initDB()
+		router := DefaultRouter()
+		handler := router.GetHandler()
 
+		adminContext := userContextInRegisteredClient(getContext(), "admin")
+
+		err := handler.MoveObject(adminContext, "barcelona", "m10", "paris-sg", nil, MoveOptions{})
+		So(err, ShouldBeNil)
 	})
 }
 
 func TestHandler_GetObject1(t *testing.T) {
-	Convey("OBJECTS GET: one cannot get object if collection or target object id is not set", t, func() {
+	Convey("OBJECTS - GET: cannot get object if one of the items is not provided: collection-id, object-id", t, func() {
 		initDB()
 		router := DefaultRouter()
 		handler := router.GetHandler()
@@ -700,14 +829,25 @@ func TestHandler_GetObject1(t *testing.T) {
 	})
 }
 
-func TestHandler_GetObject(t *testing.T) {
-	Convey("OBJECTS GET: one cannot get object if collection or target object id is not set", t, func() {
+func TestHandler_GetObject2(t *testing.T) {
+	Convey("OBJECTS - GET: cannot get object info if user is not admin or the one who put it (according to collection rules)", t, func() {
 		initDB()
 		router := DefaultRouter()
 		handler := router.GetHandler()
 
 		psgCtx := userContextInRegisteredClient(getContext(), "pochettino")
+		_, err := handler.GetObject(psgCtx, "juventus", "cr7", GetOptions{})
+		So(err, ShouldNotBeNil)
+	})
+}
 
+func TestHandler_GetObject(t *testing.T) {
+	Convey("OBJECTS - GET: can get object if user is admin or context satisfies one of the READ rule of the object", t, func() {
+		initDB()
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		psgCtx := userContextInRegisteredClient(getContext(), "pirlo")
 		object, err := handler.GetObject(psgCtx, "juventus", "cr7", GetOptions{})
 		So(err, ShouldBeNil)
 		So(object.Header.Id, ShouldEqual, "cr7")
@@ -715,7 +855,7 @@ func TestHandler_GetObject(t *testing.T) {
 }
 
 func TestHandler_GetObjectHeader1(t *testing.T) {
-	Convey("OBJECTS GET HEADER: one cannot get object header if collection or target object id is not set", t, func() {
+	Convey("OBJECTS - HEADER: cannot get object header if one of the following items is not provided: collection-d, object-id", t, func() {
 		initDB()
 		router := DefaultRouter()
 		handler := router.GetHandler()
@@ -728,13 +868,26 @@ func TestHandler_GetObjectHeader1(t *testing.T) {
 	})
 }
 
-func TestHandler_GetObjectHeader(t *testing.T) {
-	Convey("OBJECTS GET HEADER: one cannot get object if collection or target object id is not set", t, func() {
+func TestHandler_GetObjectHeader2(t *testing.T) {
+	Convey("OBJECTS - HEADER: cannot get object header if user is not admin and the user is not the one who put the data", t, func() {
 		initDB()
 		router := DefaultRouter()
 		handler := router.GetHandler()
 
-		psgCtx := userContextInRegisteredClient(getContext(), "pochettino")
+		barcelonaCtx := userContextInRegisteredClient(getContext(), "koemann")
+		header, err := handler.GetObjectHeader(barcelonaCtx, "juventus", "cr7")
+		So(err, ShouldNotBeNil)
+		So(header, ShouldBeNil)
+	})
+}
+
+func TestHandler_GetObjectHeader(t *testing.T) {
+	Convey("OBJECTS - HEADER: can get object header if user is admin or context satisfies one of the READ rule of the object", t, func() {
+		initDB()
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		psgCtx := userContextInRegisteredClient(getContext(), "pirlo")
 
 		header, err := handler.GetObjectHeader(psgCtx, "juventus", "cr7")
 		So(err, ShouldBeNil)
@@ -743,7 +896,7 @@ func TestHandler_GetObjectHeader(t *testing.T) {
 }
 
 func TestHandler_ListObjects1(t *testing.T) {
-	Convey("OBJECTS LIST: one cannot get collections object list if no id is specified", t, func() {
+	Convey("OBJECTS - LIST: cannot get a collection objects if no id is specified", t, func() {
 		initDB()
 		router := DefaultRouter()
 		handler := router.GetHandler()
@@ -754,7 +907,7 @@ func TestHandler_ListObjects1(t *testing.T) {
 }
 
 func TestHandler_ListObjects2(t *testing.T) {
-	Convey("OBJECTS LIST: one cannot get collections object list if settings manager is not set in context", t, func() {
+	Convey("OBJECTS - LIST: cannot get a collection objects if context has no settings manager", t, func() {
 		initDB()
 		router := DefaultRouter()
 		handler := router.GetHandler()
@@ -765,7 +918,7 @@ func TestHandler_ListObjects2(t *testing.T) {
 }
 
 func TestHandler_ListObjects3(t *testing.T) {
-	Convey("OBJECTS LIST: one cannot get collections object list if 'SettingsObjectListMaxCount' is not set in settings or have no numeric value", t, func() {
+	Convey("OBJECTS - LIST: cannot get a collection objects if 'SettingsObjectListMaxCount' value is not in settings or has non numeric value", t, func() {
 		initDB()
 		router := DefaultRouter()
 		handler := router.GetHandler()
@@ -792,7 +945,7 @@ func TestHandler_ListObjects3(t *testing.T) {
 }
 
 func TestHandler_ListObjects4(t *testing.T) {
-	Convey("OBJECTS LIST: unauthenticated user cannot get collections object list", t, func() {
+	Convey("OBJECTS - LIST: cannot get a collection objects if user is not authenticated", t, func() {
 		initDB()
 		router := DefaultRouter()
 		handler := router.GetHandler()
@@ -817,8 +970,19 @@ func TestHandler_ListObjects4(t *testing.T) {
 	})
 }
 
-func TestBaseHandler_ListObjects(t *testing.T) {
-	Convey("OBJECTS LIST: authenticated user list objects from collection", t, func() {
+func TestHandler_ListObjects5(t *testing.T) {
+	Convey("OBJECTS - LIST: cannot list objects if no collection matches the provided id", t, func() {
+		initDB()
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		_, err := handler.ListObjects(getContext(), "some-collection-id", ListOptions{})
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_ListObjects(t *testing.T) {
+	Convey("OBJECTS - LIST: can list a collection objects if user is authenticated from a registered client application", t, func() {
 		initDB()
 		router := DefaultRouter()
 		handler := router.GetHandler()
@@ -844,8 +1008,63 @@ func TestBaseHandler_ListObjects(t *testing.T) {
 	})
 }
 
-func TestHandler_DeleteCollection(t *testing.T) {
-	Convey("COLLECTION - DELETE: Only admin is allowed to delete a collection", t, func() {
+func TestHandler_SearchObjects(t *testing.T) {
+	Convey("OBJECTS - SEARCH: cannot search if one the following parameters is not provided: collection-id, query", t, func() {
+		initDB()
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		_, err := handler.SearchObjects(getContext(), "", &se.SearchQuery{})
+		So(err, ShouldNotBeNil)
+
+		_, err = handler.SearchObjects(getContext(), "some-collection-id", nil)
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_DeleteObject1(t *testing.T) {
+	Convey("OBJECTS - DELETE: cannot delete if one the followings parameters is not provided: collection-id, object-id", t, func() {
+		initDB()
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		err := handler.DeleteObject(getContext(), "", "some-object")
+		So(err, ShouldNotBeNil)
+
+		err = handler.DeleteObject(getContext(), "juventus", "")
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_DeleteObject(t *testing.T) {
+	Convey("OBJECTS - HEADER: can delete an object if user is admin or or the context satisfies one of DELETE rules if the object", t, func() {
+		initDB()
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		psgCtx := userContextInRegisteredClient(getContext(), "pochettino")
+
+		err := handler.DeleteObject(psgCtx, "paris-sg", "n10")
+		So(err, ShouldBeNil)
+	})
+}
+
+func TestHandler_DeleteCollection1(t *testing.T) {
+	Convey("COLLECTION - DELETE: cannot delete a collection if id is not provided", t, func() {
+		initDB()
+
+		router := DefaultRouter()
+		handler := router.GetHandler()
+
+		// Retrieve new created collection from admin context
+		adminContext := userContext(getContext(), "admin")
+		err := handler.DeleteCollection(adminContext, "")
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_DeleteCollection2(t *testing.T) {
+	Convey("COLLECTION - DELETE: cannot delete a collection if user is not admin", t, func() {
 		initDB()
 
 		router := DefaultRouter()
@@ -861,10 +1080,19 @@ func TestHandler_DeleteCollection(t *testing.T) {
 		user1Context = userContextInRegisteredClient(getContext(), "pirlo")
 		err = handler.DeleteCollection(user1Context, "juventus")
 		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_DeleteCollection(t *testing.T) {
+	Convey("COLLECTION - DELETE: can collection if the user is admin", t, func() {
+		initDB()
+
+		router := DefaultRouter()
+		handler := router.GetHandler()
 
 		adminContext := userContext(getContext(), "admin")
 
-		err = handler.DeleteCollection(adminContext, "juventus")
+		err := handler.DeleteCollection(adminContext, "juventus")
 		So(err, ShouldBeNil)
 		err = handler.DeleteCollection(adminContext, "barcelona")
 		So(err, ShouldBeNil)
@@ -875,19 +1103,5 @@ func TestHandler_DeleteCollection(t *testing.T) {
 		cols, err := handler.ListCollections(adminContext)
 		So(err, ShouldBeNil)
 		So(cols, ShouldHaveLength, 0)
-	})
-}
-
-func TestHandler_DeleteCollection1(t *testing.T) {
-	Convey("COLLECTION - DELETE: requires the collection id", t, func() {
-		initDB()
-
-		router := DefaultRouter()
-		handler := router.GetHandler()
-
-		// Retrieve new created collection from admin context
-		adminContext := userContext(getContext(), "admin")
-		err := handler.DeleteCollection(adminContext, "")
-		So(err, ShouldNotBeNil)
 	})
 }
