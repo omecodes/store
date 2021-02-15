@@ -63,6 +63,9 @@ func getSourceManager(ctx context.Context) SourceManager {
 
 func resolveSource(ctx context.Context, sourceID string) (*Source, error) {
 	sourcesManager := getSourceManager(ctx)
+	if sourcesManager == nil {
+		return nil, errors.Create(errors.Internal, "missing source manager in context")
+	}
 	source, err := sourcesManager.Get(ctx, sourceID)
 	if err != nil {
 		return nil, err
