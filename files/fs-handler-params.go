@@ -46,24 +46,16 @@ func (h *ParamsHandler) CreateDir(ctx context.Context, sourceID string, filename
 		})
 	}
 
-	sourceID, fPath := Split(filename)
-	if sourceID == "" || fPath == "" {
-		return errors.Create(errors.BadRequest, "wrong path format")
-	}
-
 	return h.next.CreateDir(ctx, sourceID, filename)
 }
 
 func (h *ParamsHandler) WriteFileContent(ctx context.Context, sourceID string, filename string, content io.Reader, size int64, opts WriteOptions) error {
-	if sourceID == "" {
-		return errors.Create(errors.BadRequest, "missing parameters", errors.Info{
+	if sourceID == "" || filename == "" || content == nil {
+		err := errors.Create(errors.BadRequest, "missing parameters", errors.Info{
 			Name:    "source",
 			Details: "required",
 		})
-	}
 
-	if filename == "" || content == nil {
-		err := errors.Create(errors.BadRequest, "missing parameters")
 		if filename == "" {
 			err.AppendDetails(errors.Info{
 				Name:    "filename",

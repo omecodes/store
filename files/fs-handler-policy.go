@@ -262,11 +262,20 @@ func (h *PolicyHandler) CreateSource(ctx context.Context, source *Source) error 
 }
 
 func (h *PolicyHandler) ListSources(ctx context.Context) ([]*Source, error) {
-	user := auth.Get(ctx)
-	if user == nil {
-		return nil, errors.Create(errors.Forbidden, "")
+	sources, err := h.next.ListSources(ctx)
+	if err != nil {
+		return nil, err
 	}
-	return h.next.ListSources(ctx)
+
+	var allowedSources []*Source
+	for _, source := range sources {
+		err = h.assertIsAllowedToRead(ctx, source.ID, "/")
+		if err != nil {
+			continue
+		}
+		allowedSources = append(allowedSources, source)
+	}
+	return allowedSources, nil
 }
 
 func (h *PolicyHandler) GetSource(ctx context.Context, sourceID string) (*Source, error) {

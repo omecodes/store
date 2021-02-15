@@ -22,7 +22,7 @@ func initDB() {
 	if sourceManager == nil {
 		db, err := sql.Open(bome.SQLite3, ":memory:")
 		So(err, ShouldBeNil)
-		sourceManager, err = NewSourceSQLManager(db, bome.SQLite3, "sources")
+		sourceManager, err = NewSourceSQLManager(db, bome.SQLite3, "store")
 		So(err, ShouldBeNil)
 	}
 }
@@ -110,6 +110,7 @@ func TestHandler_CreateSource3(t *testing.T) {
 			ID:          "main",
 			Label:       "Root source",
 			Description: "Root source",
+			CreatedBy:   "admin",
 			Type:        TypeDisk,
 			URI:         "files://" + workingDir,
 			ExpireTime:  -1,
@@ -154,8 +155,38 @@ func TestHandler_CreateSource5(t *testing.T) {
 			Label:       "Root source",
 			Description: "Root source",
 			Type:        TypeDisk,
-			URI:         "files://" + workingDir,
+			URI:         SchemeFS + "://" + workingDir,
 			ExpireTime:  -1,
+			PermissionOverrides: &Permissions{
+				Filename: "/user1",
+				Read: []*auth.Permission{
+					{
+						Name:         "admin-can-read",
+						Label:        "Admin can read",
+						Description:  "Admin has permission to read all file in this source",
+						Rule:         "user.name=='admin'",
+						RelatedUsers: []string{"admin"},
+					},
+				},
+				Write: []*auth.Permission{
+					{
+						Name:         "admin-write-perm",
+						Label:        "Admin write permission",
+						Description:  "Admin has permission to read all file in this source",
+						Rule:         "user.name=='admin'",
+						RelatedUsers: []string{"admin"},
+					},
+				},
+				Chmod: []*auth.Permission{
+					{
+						Name:         "admin-chmod-perm",
+						Label:        "admin chmod permission",
+						Description:  "admin has permission to chmod all file in this source",
+						Rule:         "user.name=='admin'",
+						RelatedUsers: []string{"admin"},
+					},
+				},
+			},
 		}
 		userContext := getContextWithUserFromClient("admin")
 		err := handler.CreateSource(userContext, mainSource)
@@ -239,5 +270,160 @@ func TestHandler_GetSource4(t *testing.T) {
 		source, err := handler.GetSource(adminContext(), "main")
 		So(err, ShouldBeNil)
 		So(source.ID, ShouldEqual, "main")
+	})
+}
+
+func TestHandler_CreateDir1(t *testing.T) {
+	Convey("FILES - MKDIR: cannot create a directory if one the following parameters is not set: sourceID, filename", t, func() {
+		initDir()
+		initDir()
+
+		router := DefaultFilesRouter()
+		handler := router.GetHandler()
+
+		err := handler.CreateDir(getContext(), "", "user1")
+		So(err, ShouldNotBeNil)
+
+		err = handler.CreateDir(getContext(), "main", "")
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_CreateDir2(t *testing.T) {
+	Convey("FILES - MKDIR: cannot create a directory in a restricted source if context has no user", t, func() {
+		initDir()
+		initDir()
+
+		router := DefaultFilesRouter()
+		handler := router.GetHandler()
+
+		err := handler.CreateDir(getContext(), "main", "user1")
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_CreateDir3(t *testing.T) {
+	Convey("FILES - MKDIR: cannot create a directory if context user has no access to target source", t, func() {
+		initDir()
+		initDir()
+
+		router := DefaultFilesRouter()
+		handler := router.GetHandler()
+
+		userContext := getContextWithUserFromClient("ome")
+		err := handler.CreateDir(userContext, "main", "user1")
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_CreateDir4(t *testing.T) {
+	Convey("FILES - MKDIR: can create a directory if context user is admin or has has rights permissions in parent", t, func() {
+		initDir()
+		initDir()
+
+		router := DefaultFilesRouter()
+		handler := router.GetHandler()
+
+		err := handler.CreateDir(adminContext(), "main", "user1")
+		So(err, ShouldBeNil)
+	})
+}
+
+func TestHandler_CreateDir5(t *testing.T) {
+	Convey("FILES - MKDIR: can create a directory if context has no source manager", t, func() {
+		initDir()
+		initDir()
+
+		router := DefaultFilesRouter()
+		handler := router.GetHandler()
+
+		adminContext := getContextWithUserFromClientAndNoSourceManager("admin")
+		err := handler.CreateDir(adminContext, "main", "user1")
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_CreateSource7(t *testing.T) {
+	Convey("SOURCE - CREATE: can create source (share) for another user", t, func() {
+		initDB()
+		initDir()
+
+		router := DefaultFilesRouter()
+		handler := router.GetHandler()
+
+		user1Source := &Source{
+			ID:          "user1-source",
+			Label:       "User1 Files",
+			Description: "",
+			CreatedBy:   "admin",
+			Type:        TypeReference,
+			URI:         SchemeSource + "://main/user1",
+			PermissionOverrides: &Permissions{
+				Filename: "/user1",
+				Read: []*auth.Permission{
+					{
+						Name:         "user1-can-read",
+						Label:        "User1 can read",
+						Description:  "User1 has permission to read all file in this source",
+						Rule:         "user.name=='user1'",
+						RelatedUsers: []string{"user1"},
+					},
+				},
+				Write: []*auth.Permission{
+					{
+						Name:         "user1-write-perm",
+						Label:        "User1 write permission",
+						Description:  "User1 has permission to read all file in this source",
+						Rule:         "user.name=='user1'",
+						RelatedUsers: []string{"user1"},
+					},
+				},
+				Chmod: []*auth.Permission{
+					{
+						Name:         "user1-chmod-perm",
+						Label:        "User1 chmod permission",
+						Description:  "User1 has permission to chmod all file in this source",
+						Rule:         "user.name=='user1'",
+						RelatedUsers: []string{"user1"},
+					},
+				},
+			},
+			ExpireTime: -1,
+		}
+
+		err := handler.CreateSource(adminContext(), user1Source)
+		So(err, ShouldBeNil)
+	})
+}
+
+func TestHandler_ListSource1(t *testing.T) {
+	Convey("SOURCES LIST: cannot list source if context has no source manager", t, func() {
+		initDB()
+		initDir()
+
+		router := DefaultFilesRouter()
+		handler := router.GetHandler()
+
+		sources, err := handler.ListSources(getContextWithUserFromClientAndNoSourceManager("admin"))
+		So(err, ShouldNotBeNil)
+		So(sources, ShouldBeNil)
+	})
+}
+
+func TestHandler_ListSource2(t *testing.T) {
+	Convey("SOURCES LIST: can list sources which one of the READ rule is satisfied by the context user", t, func() {
+		initDB()
+		initDir()
+
+		router := DefaultFilesRouter()
+		handler := router.GetHandler()
+
+		sources, err := handler.ListSources(adminContext())
+		So(err, ShouldBeNil)
+		So(sources, ShouldHaveLength, 1)
+
+		sources, err = handler.ListSources(getContextWithUserFromClient("user1"))
+		So(err, ShouldBeNil)
+		So(sources, ShouldHaveLength, 1)
 	})
 }

@@ -250,18 +250,36 @@ func (d *dirFS) SetAttributes(_ context.Context, filename string, attrs Attribut
 
 func (d *dirFS) GetAttributes(_ context.Context, filename string, names ...string) (Attributes, error) {
 	fullFilename := filepath.Join(d.root, filename)
+	logs.Info("Getting file attributes", logs.Details("path", fullFilename))
+
+	resolvedFilename := UnNormalizePath(fullFilename)
+
+	attributeNames, err := xattr.List(resolvedFilename)
+	if err != nil {
+		return nil, err
+	}
+
+	var intersection []string
+	for _, attrName := range attributeNames {
+		for _, name := range names {
+			if name == attrName {
+				intersection = append(intersection, name)
+			}
+		}
+	}
 
 	attributes := Attributes{}
-	for _, name := range names {
+	for _, name := range intersection {
 		if strings.HasPrefix(name, AttrPrefix) {
-			attrsBytes, err := xattr.Get(UnNormalizePath(fullFilename), name)
+			attrsBytes, err := xattr.Get(filename, name)
 			if err != nil {
-				logs.Error("failed to get file attribute", logs.Details("file", filename), logs.Details("attribute", name), logs.Err(err))
+				logs.Error("failed to get file attribute", logs.Details("file", resolvedFilename), logs.Details("attribute", name), logs.Err(err))
 				return nil, errors.Create(errors.Internal, "could not get file attribute", errors.Info{Name: "file", Details: filename})
 			}
 			attributes[name] = string(attrsBytes)
 		}
 	}
+
 	return attributes, nil
 }
 

@@ -2,10 +2,10 @@ package files
 
 import (
 	"context"
-	"github.com/omecodes/store/auth"
 	"io"
 
 	"github.com/omecodes/errors"
+	"github.com/omecodes/store/auth"
 )
 
 type ExecHandler struct {
@@ -26,6 +26,7 @@ func (h *ExecHandler) ListSources(ctx context.Context) ([]*Source, error) {
 	if sourceManager == nil {
 		return nil, errors.New("context missing source manager")
 	}
+
 	a := auth.Get(ctx)
 	return sourceManager.UserSources(ctx, a.Name)
 }
