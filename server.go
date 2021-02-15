@@ -150,7 +150,7 @@ func (s *Server) init() error {
 
 	// Files initialization
 	if s.config.FSRootDir != "" {
-		s.sourceManager, err = files.NewSourceSQLManager(s.db, bome.MySQL, "store_files_sources")
+		s.sourceManager, err = files.NewSourceSQLManager(s.db, bome.MySQL, "store_")
 		if err != nil {
 			return err
 		}
