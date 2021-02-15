@@ -100,3 +100,7 @@ func (s *sourceSQLManager) List(_ context.Context) ([]*Source, error) {
 func (s *sourceSQLManager) Delete(_ context.Context, id string) error {
 	return s.bMap.Delete(id)
 }
+
+func (s *sourceSQLManager) UserSources(ctx context.Context, username string) ([]*Source, error) {
+	return nil, nil
+}

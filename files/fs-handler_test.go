@@ -3,6 +3,7 @@ package files
 import (
 	"context"
 	"database/sql"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -32,6 +33,9 @@ func initDir() {
 		var err error
 		workingDir, err = filepath.Abs(workingDir)
 		So(err, ShouldBeNil)
+
+		err = os.MkdirAll(workingDir, os.ModePerm)
+		So(err == nil || os.IsExist(err), ShouldBeTrue)
 	}
 }
 

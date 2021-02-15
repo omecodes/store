@@ -45,8 +45,8 @@ type Source struct {
 type SourceManager interface {
 	Save(ctx context.Context, source *Source) (string, error)
 	Get(ctx context.Context, id string) (*Source, error)
-	List(ctx context.Context) ([]*Source, error)
 	Delete(ctx context.Context, id string) error
+	UserSources(ctx context.Context, username string) ([]*Source, error)
 }
 
 func ContextWithSourceManager(parent context.Context, manager SourceManager) context.Context {

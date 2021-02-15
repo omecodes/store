@@ -262,6 +262,10 @@ func (h *PolicyHandler) CreateSource(ctx context.Context, source *Source) error 
 }
 
 func (h *PolicyHandler) ListSources(ctx context.Context) ([]*Source, error) {
+	user := auth.Get(ctx)
+	if user == nil {
+		return nil, errors.Create(errors.Forbidden, "")
+	}
 	return h.next.ListSources(ctx)
 }
 
