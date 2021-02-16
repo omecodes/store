@@ -2,11 +2,10 @@ package files
 
 import (
 	"context"
-	"fmt"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
 	"net/url"
-	"path"
+	"strings"
 )
 
 const activeUserVar = "{user}"
@@ -93,13 +92,8 @@ func resolveSource(ctx context.Context, sourceID string) (*Source, error) {
 				return nil, errors.Create(errors.Internal, "source cycle references")
 			}
 		}
-
 		sourceChain = append(sourceChain, refSourceID)
-		u1, err := url.Parse(resolvedSource.URI)
-		if err != nil {
-			return nil, errors.Create(errors.Internal, "could not resolve source uri", errors.Info{Name: "source uri", Details: err.Error()})
-		}
-		resolvedSource.URI = fmt.Sprintf("%s://%s%s", u1.Scheme, u1.Host, path.Join(u.Path, u1.Path))
+		resolvedSource.URI = strings.TrimSuffix(resolvedSource.URI, "/") + u.Path
 
 		logs.Info("resolved source", logs.Details("uri", resolvedSource.URI))
 	}

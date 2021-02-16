@@ -39,6 +39,17 @@ func initDir() {
 	}
 }
 
+func clearDir() {
+	if workingDir != "" {
+		workingDir = "./.test-work"
+		var err error
+		workingDir, err = filepath.Abs(workingDir)
+		So(err, ShouldBeNil)
+
+		_ = os.RemoveAll(workingDir)
+	}
+}
+
 func getContext() context.Context {
 	ctx := context.Background()
 	return ContextWithSourceManager(ctx, sourceManager)
@@ -441,3 +452,9 @@ func TestHandler_CreateDir6(t *testing.T) {
 		So(err, ShouldBeNil)
 	})
 }
+
+/*func TestHandler_Clean(t *testing.T) {
+	Convey("", t, func() {
+		clearDir()
+	})
+} */

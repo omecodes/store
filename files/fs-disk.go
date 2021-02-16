@@ -21,8 +21,11 @@ func (d *diskFS) Mkdir(_ context.Context, dirname string) error {
 	fullDirname := filepath.Join(d.root, dirname)
 	logs.Info("FS: Create Dir", logs.Details("path", fullDirname))
 
-	err := os.MkdirAll(UnNormalizePath(fullDirname), os.ModePerm)
-	if err != nil {
+	denormalizedPath := UnNormalizePath(fullDirname)
+	logs.Info("FS: Denormalized path", logs.Details("path", denormalizedPath))
+
+	err := os.Mkdir(denormalizedPath, os.ModePerm)
+	if err != nil && !os.IsExist(err) {
 		logs.Error("failed to create directory", logs.Details("file", dirname), logs.Err(err))
 
 		if os.IsNotExist(err) {
@@ -37,7 +40,7 @@ func (d *diskFS) Mkdir(_ context.Context, dirname string) error {
 				errors.Info{Name: "file", Details: dirname},
 			)
 		}
-		return errors.Create(errors.Internal, "could not create directory", errors.Info{Name: "file", Details: dirname})
+		return errors.Create(errors.Internal, "could not create directory")
 	}
 	return nil
 }
