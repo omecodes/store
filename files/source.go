@@ -2,7 +2,9 @@ package files
 
 import (
 	"context"
+	"fmt"
 	"github.com/omecodes/errors"
+	"github.com/omecodes/libome/logs"
 	"net/url"
 	"path"
 )
@@ -71,17 +73,18 @@ func resolveSource(ctx context.Context, sourceID string) (*Source, error) {
 		return nil, err
 	}
 
+	resolvedSource := source
 	sourceChain := []string{sourceID}
-	sourceType := source.Type
-	for sourceType == TypeReference {
+	for resolvedSource.Type == TypeReference {
 		u, err := url.Parse(source.URI)
 		if err != nil {
 			return nil, errors.Create(errors.Internal, "could not resolve source uri", errors.Info{Name: "source uri", Details: err.Error()})
 		}
 
 		refSourceID := u.Host
-		refSource, err := sourcesManager.Get(ctx, refSourceID)
+		resolvedSource, err = sourcesManager.Get(ctx, refSourceID)
 		if err != nil {
+			logs.Error("could not load source", logs.Details("source", refSourceID), logs.Err(err))
 			return nil, err
 		}
 
@@ -90,11 +93,16 @@ func resolveSource(ctx context.Context, sourceID string) (*Source, error) {
 				return nil, errors.Create(errors.Internal, "source cycle references")
 			}
 		}
-		sourceChain = append(sourceChain, refSourceID)
 
-		source.URI = path.Join(refSource.URI, u.Path)
-		sourceType = source.Type
+		sourceChain = append(sourceChain, refSourceID)
+		u1, err := url.Parse(resolvedSource.URI)
+		if err != nil {
+			return nil, errors.Create(errors.Internal, "could not resolve source uri", errors.Info{Name: "source uri", Details: err.Error()})
+		}
+		resolvedSource.URI = fmt.Sprintf("%s://%s%s", u1.Scheme, u1.Host, path.Join(u.Path, u1.Path))
+
+		logs.Info("resolved source", logs.Details("uri", resolvedSource.URI))
 	}
 
-	return source, nil
+	return resolvedSource, nil
 }
