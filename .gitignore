@@ -20,3 +20,4 @@ cmd/wdir/*
 
 build
 .work
+files/.test-work
