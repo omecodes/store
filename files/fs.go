@@ -2,6 +2,7 @@ package files
 
 import (
 	"context"
+	"github.com/omecodes/libome/logs"
 	"io"
 	"net/url"
 	"strings"
@@ -35,6 +36,8 @@ func getFS(ctx context.Context, sourceID string) (FS, error) {
 		return nil, err
 	}
 
+	logs.Info("FS: resolved source", logs.Details("uri", source.URI))
+
 	o := ctx.Value(ctxFsProvider{})
 	if o != nil {
 		provider := o.(FSProvider)
@@ -53,7 +56,7 @@ func getFS(ctx context.Context, sourceID string) (FS, error) {
 	switch uri.Scheme {
 	case SchemeFS:
 		rootDir := strings.TrimPrefix(source.URI, SchemeFS+"://")
-		return &dirFS{root: rootDir}, nil
+		return &diskFS{root: rootDir}, nil
 
 	default:
 		return nil, errors.Create(errors.BadRequest, "not supported scheme")

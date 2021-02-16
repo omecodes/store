@@ -330,7 +330,7 @@ func TestHandler_CreateDir4(t *testing.T) {
 }
 
 func TestHandler_CreateDir5(t *testing.T) {
-	Convey("FILES - MKDIR: can create a directory if context has no source manager", t, func() {
+	Convey("FILES - MKDIR: cannot create a directory if context has no source manager", t, func() {
 		initDir()
 		initDir()
 
@@ -425,5 +425,19 @@ func TestHandler_ListSource2(t *testing.T) {
 		sources, err = handler.ListSources(getContextWithUserFromClient("user1"))
 		So(err, ShouldBeNil)
 		So(sources, ShouldHaveLength, 1)
+	})
+}
+
+func TestHandler_CreateDir6(t *testing.T) {
+	Convey("FILES - CREATE DIR: can create dir in source if context user is admin or satisfies WRITE permission ", t, func() {
+		initDir()
+		initDir()
+
+		router := DefaultFilesRouter()
+		handler := router.GetHandler()
+
+		user1Context := getContextWithUserFromClient("user1")
+		err := handler.CreateDir(user1Context, "user1-source", "Documents")
+		So(err, ShouldBeNil)
 	})
 }

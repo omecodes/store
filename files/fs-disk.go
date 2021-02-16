@@ -13,12 +13,13 @@ import (
 	"github.com/pkg/xattr"
 )
 
-type dirFS struct {
+type diskFS struct {
 	root string
 }
 
-func (d *dirFS) Mkdir(_ context.Context, dirname string) error {
+func (d *diskFS) Mkdir(_ context.Context, dirname string) error {
 	fullDirname := filepath.Join(d.root, dirname)
+	logs.Info("FS: Create Dir", logs.Details("path", fullDirname))
 
 	err := os.MkdirAll(UnNormalizePath(fullDirname), os.ModePerm)
 	if err != nil {
@@ -36,13 +37,15 @@ func (d *dirFS) Mkdir(_ context.Context, dirname string) error {
 				errors.Info{Name: "file", Details: dirname},
 			)
 		}
-		return errors.Create(errors.Internal, "could not get file info", errors.Info{Name: "file", Details: dirname})
+		return errors.Create(errors.Internal, "could not create directory", errors.Info{Name: "file", Details: dirname})
 	}
 	return nil
 }
 
-func (d *dirFS) Ls(_ context.Context, dirname string, offset int, count int) (*DirContent, error) {
+func (d *diskFS) Ls(_ context.Context, dirname string, offset int, count int) (*DirContent, error) {
 	fullDirname := filepath.Join(d.root, dirname)
+	logs.Info("FS: List Dir", logs.Details("path", fullDirname))
+
 	f, err := os.Open(UnNormalizePath(fullDirname))
 	if err != nil {
 		logs.Error("failed to open file", logs.Details("file", dirname), logs.Err(err))
@@ -97,7 +100,7 @@ func (d *dirFS) Ls(_ context.Context, dirname string, offset int, count int) (*D
 	return dirContent, nil
 }
 
-func (d *dirFS) Write(_ context.Context, filename string, content io.Reader, append bool) error {
+func (d *diskFS) Write(_ context.Context, filename string, content io.Reader, append bool) error {
 	fullFilename := filepath.Join(d.root, filename)
 
 	flags := os.O_CREATE | os.O_WRONLY
@@ -150,7 +153,7 @@ func (d *dirFS) Write(_ context.Context, filename string, content io.Reader, app
 	return nil
 }
 
-func (d *dirFS) Read(_ context.Context, filename string, offset int64, length int64) (io.ReadCloser, int64, error) {
+func (d *diskFS) Read(_ context.Context, filename string, offset int64, length int64) (io.ReadCloser, int64, error) {
 	fullFilename := filepath.Join(d.root, filename)
 
 	f, err := os.Open(UnNormalizePath(fullFilename))
@@ -181,7 +184,7 @@ func (d *dirFS) Read(_ context.Context, filename string, offset int64, length in
 	return f, stats.Size(), nil
 }
 
-func (d *dirFS) Info(_ context.Context, filename string, withAttrs bool) (*File, error) {
+func (d *diskFS) Info(_ context.Context, filename string, withAttrs bool) (*File, error) {
 	fullFilename := filepath.Join(d.root, filename)
 
 	stats, err := os.Stat(UnNormalizePath(fullFilename))
@@ -234,7 +237,7 @@ func (d *dirFS) Info(_ context.Context, filename string, withAttrs bool) (*File,
 	return file, nil
 }
 
-func (d *dirFS) SetAttributes(_ context.Context, filename string, attrs Attributes) error {
+func (d *diskFS) SetAttributes(_ context.Context, filename string, attrs Attributes) error {
 	fullFilename := filepath.Join(d.root, filename)
 	for name, value := range attrs {
 		err := xattr.Set(UnNormalizePath(fullFilename), name, []byte(value))
@@ -248,9 +251,9 @@ func (d *dirFS) SetAttributes(_ context.Context, filename string, attrs Attribut
 	return nil
 }
 
-func (d *dirFS) GetAttributes(_ context.Context, filename string, names ...string) (Attributes, error) {
+func (d *diskFS) GetAttributes(_ context.Context, filename string, names ...string) (Attributes, error) {
 	fullFilename := filepath.Join(d.root, filename)
-	logs.Info("Getting file attributes", logs.Details("path", fullFilename))
+	logs.Info("FS: Get file attributes", logs.Details("path", fullFilename))
 
 	resolvedFilename := UnNormalizePath(fullFilename)
 
@@ -283,7 +286,7 @@ func (d *dirFS) GetAttributes(_ context.Context, filename string, names ...strin
 	return attributes, nil
 }
 
-func (d *dirFS) Rename(_ context.Context, filename string, newName string) error {
+func (d *diskFS) Rename(_ context.Context, filename string, newName string) error {
 	fullFilename := filepath.Join(d.root, filename)
 	newPath := filepath.Join(UnNormalizePath(fullFilename), newName)
 	err := os.Rename(UnNormalizePath(fullFilename), newPath)
@@ -307,7 +310,7 @@ func (d *dirFS) Rename(_ context.Context, filename string, newName string) error
 	return nil
 }
 
-func (d *dirFS) Move(_ context.Context, filename string, dirname string) error {
+func (d *diskFS) Move(_ context.Context, filename string, dirname string) error {
 	fullFilename := filepath.Join(d.root, filename)
 	newPath := UnNormalizePath(filepath.Join(d.root, dirname))
 
@@ -333,7 +336,7 @@ func (d *dirFS) Move(_ context.Context, filename string, dirname string) error {
 	return nil
 }
 
-func (d *dirFS) Copy(_ context.Context, filename string, dirname string) error {
+func (d *diskFS) Copy(_ context.Context, filename string, dirname string) error {
 	fullFilename := filepath.Join(d.root, filename)
 	newPath := UnNormalizePath(filepath.Join(d.root, dirname, filepath.Base(filename)))
 
@@ -359,7 +362,7 @@ func (d *dirFS) Copy(_ context.Context, filename string, dirname string) error {
 	return nil
 }
 
-func (d *dirFS) DeleteFile(_ context.Context, filename string, recursive bool) error {
+func (d *diskFS) DeleteFile(_ context.Context, filename string, recursive bool) error {
 	fullDirname := filepath.Join(d.root, filename)
 
 	var err error
