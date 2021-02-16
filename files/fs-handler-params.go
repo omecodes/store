@@ -50,7 +50,7 @@ func (h *ParamsHandler) CreateDir(ctx context.Context, sourceID string, filename
 }
 
 func (h *ParamsHandler) WriteFileContent(ctx context.Context, sourceID string, filename string, content io.Reader, size int64, opts WriteOptions) error {
-	if sourceID == "" || filename == "" || content == nil {
+	if sourceID == "" || filename == "" || content == nil || size == 0 {
 		err := errors.Create(errors.BadRequest, "missing parameters", errors.Info{
 			Name:    "source",
 			Details: "required",
@@ -63,12 +63,13 @@ func (h *ParamsHandler) WriteFileContent(ctx context.Context, sourceID string, f
 			})
 		}
 
-		if content == nil {
+		if content == nil || size == 0 {
 			err.AppendDetails(errors.Info{
 				Name:    "content",
 				Details: "required",
 			})
 		}
+
 		return err
 	}
 

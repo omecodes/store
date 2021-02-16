@@ -287,6 +287,20 @@ func (h *PolicyHandler) GetSource(ctx context.Context, sourceID string) (*Source
 }
 
 func (h *PolicyHandler) DeleteSource(ctx context.Context, sourceID string) error {
+	user := auth.Get(ctx)
+	if user == nil {
+		return errors.Create(errors.Forbidden, "context missing user")
+	}
+
+	if user.Name != "admin" {
+		source, err := h.next.GetSource(ctx, sourceID)
+		if err != nil {
+			return err
+		}
+		if source.CreatedBy != user.Name {
+			return errors.Create(errors.Forbidden, "context missing user")
+		}
+	}
 	return h.next.DeleteSource(ctx, sourceID)
 }
 

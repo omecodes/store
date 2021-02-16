@@ -1,6 +1,7 @@
 package files
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"os"
@@ -449,6 +450,208 @@ func TestHandler_CreateDir6(t *testing.T) {
 
 		user1Context := getContextWithUserFromClient("user1")
 		err := handler.CreateDir(user1Context, "user1-source", "Documents")
+		So(err, ShouldBeNil)
+	})
+}
+
+func TestHandler_CreateDir7(t *testing.T) {
+	Convey("FILES - CREATE DIR: can create dir in source if context user is admin or satisfies WRITE permission ", t, func() {
+		initDir()
+		initDir()
+
+		router := DefaultFilesRouter()
+		handler := router.GetHandler()
+
+		user1Context := getContextWithUserFromClient("user1")
+		err := handler.CreateDir(user1Context, "user1-source", "Documents/photo")
+		So(err, ShouldBeNil)
+	})
+}
+
+func TestHandler_CreateSource8(t *testing.T) {
+	Convey("SOURCE - CREATE: can create source (share) for another user", t, func() {
+		initDB()
+		initDir()
+
+		router := DefaultFilesRouter()
+		handler := router.GetHandler()
+
+		user1Source := &Source{
+			ID:          "user2-source",
+			Label:       "User2 Files",
+			Description: "",
+			CreatedBy:   "user1",
+			Type:        TypeReference,
+			URI:         SchemeSource + "://user1-source/Documents/photo",
+			PermissionOverrides: &Permissions{
+				Filename: "/Documents/photo",
+				Read: []*auth.Permission{
+					{
+						Name:         "user2-can-read",
+						Label:        "User2 can read",
+						Description:  "User2 has permission to read all file in this source",
+						Rule:         "user.name=='user2'",
+						RelatedUsers: []string{"user2"},
+					},
+				},
+				Write: []*auth.Permission{
+					{
+						Name:         "user2-write-perm",
+						Label:        "User2 write permission",
+						Description:  "User2 has permission to read all file in this source",
+						Rule:         "user.name=='user2'",
+						RelatedUsers: []string{"user2"},
+					},
+				},
+				Chmod: []*auth.Permission{
+					{
+						Name:         "user2-chmod-perm",
+						Label:        "User2 chmod permission",
+						Description:  "User2 cannot chmod files in this source",
+						Rule:         "false",
+						RelatedUsers: []string{"public"},
+					},
+				},
+			},
+			ExpireTime: -1,
+		}
+
+		err := handler.CreateSource(adminContext(), user1Source)
+		So(err, ShouldBeNil)
+	})
+}
+
+func TestHandler_WriteFileContent1(t *testing.T) {
+	Convey("FILES - WRITE: cannot write file if one of the following parameters is not set: sourceID, filename, content, size", t, func() {
+		initDB()
+		initDir()
+
+		handler := DefaultFilesRouter().GetHandler()
+		err := handler.WriteFileContent(getContext(), "", "filename", bytes.NewBufferString("a"), 1, WriteOptions{})
+		So(err, ShouldNotBeNil)
+
+		err = handler.WriteFileContent(getContext(), "main", "", bytes.NewBufferString("a"), 1, WriteOptions{})
+		So(err, ShouldNotBeNil)
+
+		err = handler.WriteFileContent(getContext(), "main", "filename", nil, 1, WriteOptions{})
+		So(err, ShouldNotBeNil)
+
+		err = handler.WriteFileContent(getContext(), "main", "filename", bytes.NewBufferString("a"), 0, WriteOptions{})
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_WriteFileContent2(t *testing.T) {
+	Convey("FILES - WRITE: cannot write file content if context has no user", t, func() {
+		initDB()
+		initDir()
+
+		handler := DefaultFilesRouter().GetHandler()
+
+		err := handler.WriteFileContent(getContext(), "main", "filename", bytes.NewBufferString("a"), 1, WriteOptions{})
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_WriteFileContent3(t *testing.T) {
+	Convey("FILES - WRITE: cannot write file content if context has user that has no write permission on target folder", t, func() {
+		initDB()
+		initDir()
+
+		handler := DefaultFilesRouter().GetHandler()
+
+		userContext := getContextWithUserFromClient("user1")
+		err := handler.WriteFileContent(userContext, "main", "filename", bytes.NewBufferString("a"), 1, WriteOptions{})
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_WriteFileContent4(t *testing.T) {
+	Convey("FILES - WRITE: cannot write file content if context has no source manager", t, func() {
+		initDB()
+		initDir()
+
+		handler := DefaultFilesRouter().GetHandler()
+
+		adminContext := getContextWithUserFromClientAndNoSourceManager("admin")
+		err := handler.WriteFileContent(adminContext, "main", "file.txt", bytes.NewBufferString("a"), 1, WriteOptions{})
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_WriteFileContent5(t *testing.T) {
+	Convey("FILES - WRITE: can write file content if context has source manager and context has user with WRITE permission on target folder", t, func() {
+		initDB()
+		initDir()
+
+		handler := DefaultFilesRouter().GetHandler()
+
+		err := handler.WriteFileContent(adminContext(), "main", "file.txt", bytes.NewBufferString("a"), 1, WriteOptions{})
+		So(err, ShouldBeNil)
+
+		err = handler.WriteFileContent(getContextWithUserFromClient("user1"), "user1-source", "file.txt", bytes.NewBufferString("a"), 1, WriteOptions{})
+		So(err, ShouldBeNil)
+	})
+}
+
+func TestHandler_ListSource3(t *testing.T) {
+	Convey("SOURCES LIST: can list sources which one of the READ rule is satisfied by the context user", t, func() {
+		initDB()
+		initDir()
+
+		router := DefaultFilesRouter()
+		handler := router.GetHandler()
+
+		sources, err := handler.ListSources(adminContext())
+		So(err, ShouldBeNil)
+		So(sources, ShouldHaveLength, 1)
+
+		sources, err = handler.ListSources(getContextWithUserFromClient("user1"))
+		So(err, ShouldBeNil)
+		So(sources, ShouldHaveLength, 1)
+	})
+}
+
+func TestHandler_DeleteSource1(t *testing.T) {
+	Convey("SOURCE - DELETE: cannot delete source if one the following parameters is not provided: sourceID", t, func() {
+		initDB()
+		initDir()
+
+		handler := DefaultFilesRouter().GetHandler()
+		err := handler.DeleteSource(getContext(), "")
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_DeleteSource2(t *testing.T) {
+	Convey("SOURCE - DELETE: cannot delete source if the context has no user", t, func() {
+		initDB()
+		initDir()
+
+		handler := DefaultFilesRouter().GetHandler()
+		err := handler.DeleteSource(getContext(), "main")
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_DeleteSource3(t *testing.T) {
+	Convey("SOURCE - DELETE: cannot delete source if context user is not admin or the source is created by another user", t, func() {
+		initDB()
+		initDir()
+
+		handler := DefaultFilesRouter().GetHandler()
+		err := handler.DeleteSource(getContextWithUserFromClient("user-1"), "main")
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_DeleteSource4(t *testing.T) {
+	Convey("SOURCE - DELETE: can delete a source if it has been created by the context user", t, func() {
+		initDB()
+		initDir()
+
+		handler := DefaultFilesRouter().GetHandler()
+		err := handler.DeleteSource(adminContext(), "user1-source")
 		So(err, ShouldBeNil)
 	})
 }
