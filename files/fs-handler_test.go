@@ -573,8 +573,8 @@ func TestHandler_WriteFileContent4(t *testing.T) {
 
 		handler := DefaultFilesRouter().GetHandler()
 
-		adminContext := getContextWithUserFromClientAndNoSourceManager("admin")
-		err := handler.WriteFileContent(adminContext, "main", "file.txt", bytes.NewBufferString("a"), 1, WriteOptions{})
+		user1Source := getContextWithUserFromClientAndNoSourceManager("admin")
+		err := handler.WriteFileContent(user1Source, "user1-source", "file.txt", bytes.NewBufferString("a"), 1, WriteOptions{})
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -612,6 +612,53 @@ func TestHandler_ListSource3(t *testing.T) {
 	})
 }
 
+func TestHandler_ListDir1(t *testing.T) {
+	Convey("FILES - LS: cannot list directory if one of the following parameters is not set", t, func() {
+		initDB()
+		initDir()
+
+		handler := DefaultFilesRouter().GetHandler()
+		_, err := handler.ListDir(getContext(), "", "/", ListDirOptions{})
+		So(err, ShouldNotBeNil)
+
+		_, err = handler.ListDir(getContext(), "user-source1", "", ListDirOptions{})
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_ListDir2(t *testing.T) {
+	Convey("FILES - LS: cannot list directory if context has no source manager", t, func() {
+		initDB()
+		initDir()
+
+		handler := DefaultFilesRouter().GetHandler()
+		_, err := handler.ListDir(getContextWithUserFromClientAndNoSourceManager("user1"), "user1-source", "/", ListDirOptions{})
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_ListDir3(t *testing.T) {
+	Convey("FILES - LS: cannot list directory if context user has no READ permission on it", t, func() {
+		initDB()
+		initDir()
+
+		handler := DefaultFilesRouter().GetHandler()
+		_, err := handler.ListDir(getContextWithUserFromClient("user1"), "main", "/", ListDirOptions{})
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_ListDir4(t *testing.T) {
+	Convey("FILES - LS: can list directory if context user has READ permission on it", t, func() {
+		initDB()
+		initDir()
+
+		handler := DefaultFilesRouter().GetHandler()
+		_, err := handler.ListDir(getContextWithUserFromClient("user1"), "user1-source", "/", ListDirOptions{})
+		So(err, ShouldBeNil)
+	})
+}
+
 func TestHandler_DeleteSource1(t *testing.T) {
 	Convey("SOURCE - DELETE: cannot delete source if one the following parameters is not provided: sourceID", t, func() {
 		initDB()
@@ -624,6 +671,18 @@ func TestHandler_DeleteSource1(t *testing.T) {
 }
 
 func TestHandler_DeleteSource2(t *testing.T) {
+	Convey("SOURCE - DELETE: cannot delete source if the context has no source manager", t, func() {
+		initDB()
+		initDir()
+
+		handler := DefaultFilesRouter().GetHandler()
+		adminContext := getContextWithUserFromClientAndNoSourceManager("admin")
+		err := handler.DeleteSource(adminContext, "user1-source")
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestHandler_DeleteSource3(t *testing.T) {
 	Convey("SOURCE - DELETE: cannot delete source if the context has no user", t, func() {
 		initDB()
 		initDir()
@@ -634,7 +693,7 @@ func TestHandler_DeleteSource2(t *testing.T) {
 	})
 }
 
-func TestHandler_DeleteSource3(t *testing.T) {
+func TestHandler_DeleteSource4(t *testing.T) {
 	Convey("SOURCE - DELETE: cannot delete source if context user is not admin or the source is created by another user", t, func() {
 		initDB()
 		initDir()
@@ -645,7 +704,7 @@ func TestHandler_DeleteSource3(t *testing.T) {
 	})
 }
 
-func TestHandler_DeleteSource4(t *testing.T) {
+func TestHandler_DeleteSource5(t *testing.T) {
 	Convey("SOURCE - DELETE: can delete a source if it has been created by the context user", t, func() {
 		initDB()
 		initDir()
@@ -653,6 +712,17 @@ func TestHandler_DeleteSource4(t *testing.T) {
 		handler := DefaultFilesRouter().GetHandler()
 		err := handler.DeleteSource(adminContext(), "user1-source")
 		So(err, ShouldBeNil)
+	})
+}
+
+func TestHandler_DeleteSource6(t *testing.T) {
+	Convey("SOURCE - DELETE: cannot delete non existing source", t, func() {
+		initDB()
+		initDir()
+
+		handler := DefaultFilesRouter().GetHandler()
+		err := handler.DeleteSource(adminContext(), "source")
+		So(err, ShouldNotBeNil)
 	})
 }
 

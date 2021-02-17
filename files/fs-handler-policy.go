@@ -292,11 +292,12 @@ func (h *PolicyHandler) DeleteSource(ctx context.Context, sourceID string) error
 		return errors.Create(errors.Forbidden, "context missing user")
 	}
 
+	source, err := h.next.GetSource(ctx, sourceID)
+	if err != nil {
+		return err
+	}
+
 	if user.Name != "admin" {
-		source, err := h.next.GetSource(ctx, sourceID)
-		if err != nil {
-			return err
-		}
 		if source.CreatedBy != user.Name {
 			return errors.Create(errors.Forbidden, "context missing user")
 		}
@@ -317,7 +318,8 @@ func (h *PolicyHandler) WriteFileContent(ctx context.Context, sourceID string, f
 	if err != nil {
 		return err
 	}
-	return h.next.WriteFileContent(ctx, sourceID, filename, content, size, opts)
+	err = h.next.WriteFileContent(ctx, sourceID, filename, content, size, opts)
+	return err
 }
 
 func (h *PolicyHandler) ListDir(ctx context.Context, sourceID string, dirname string, opts ListDirOptions) (*DirContent, error) {
