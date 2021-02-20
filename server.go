@@ -29,8 +29,12 @@ import (
 
 // Config contains info to configure an instance of Server
 type Config struct {
-	Dev        bool
-	AutoCert   bool
+	Dev          bool
+	TLS          bool
+	AutoCert     bool
+	CertFilename string
+	KeyFilename  string
+
 	Domains    []string
 	FSRootDir  string
 	WorkingDir string
@@ -192,17 +196,20 @@ func (s *Server) Start() error {
 	}
 
 	if s.config.Dev {
-		return s.startDefaultAPIServer()
+		return s.startDevServer()
 	}
 
-	if s.config.AutoCert {
-		return s.startAutoCertAPIServer()
+	if s.config.TLS {
+		if s.config.AutoCert {
+			return s.startAutoCertAPIServer()
+		}
+		return s.startSecureAPIServer()
 	}
 
-	return s.startSecureAPIServer()
+	return s.startNonSecureAPIServer()
 }
 
-func (s *Server) startDefaultAPIServer() error {
+func (s *Server) startDevServer() error {
 	var err error
 	s.listener, err = net.Listen("tcp", ":8080")
 	if err != nil {
@@ -263,7 +270,7 @@ func (s *Server) startSecureAPIServer() error {
 		Handler: r,
 	}
 	go func() {
-		if err := srv.ListenAndServeTLS("store-cert.pem", "store-key.pem"); err != nil {
+		if err := srv.ListenAndServeTLS(s.config.CertFilename, s.config.KeyFilename); err != nil {
 			s.Errors <- err
 		}
 	}()
@@ -285,6 +292,30 @@ func (s *Server) startSecureAPIServer() error {
 			_, _ = w.Write(contentBytes)
 		})); err != nil {
 			logs.Error("listen to port 80 failed", logs.Err(err))
+		}
+	}()
+	return nil
+}
+
+func (s *Server) startNonSecureAPIServer() error {
+	var err error
+	s.listener, err = net.Listen("tcp", "0.0.0.0:80")
+	if err != nil {
+		return err
+	}
+
+	address := s.listener.Addr().String()
+	logs.Info("starting HTTP server", logs.Details("address", address))
+
+	r := s.httpRouter()
+
+	go func() {
+		s.server = &http.Server{
+			Addr:    address,
+			Handler: r,
+		}
+		if err := s.server.Serve(s.listener); err != nil {
+			s.Errors <- err
 		}
 	}()
 	return nil

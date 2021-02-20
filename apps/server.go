@@ -15,15 +15,18 @@ import (
 )
 
 var (
-	dev        bool
-	autoCert   bool
-	adminInfo  string
-	workingDir string
-	fsDir      string
-	wwwDir     string
-	dsn        string
-	domains    []string
-	command    *cobra.Command
+	dev          bool
+	autoCert     bool
+	enableTLS    bool
+	adminInfo    string
+	workingDir   string
+	fsDir        string
+	wwwDir       string
+	certFilename string
+	keyFilename  string
+	dsn          string
+	domains      []string
+	command      *cobra.Command
 )
 
 func init() {
@@ -80,14 +83,17 @@ func init() {
 			}
 
 			s := store.New(store.Config{
-				Dev:        dev,
-				AutoCert:   autoCert,
-				Domains:    domains,
-				FSRootDir:  fsDir,
-				WorkingDir: workingDir,
-				WebDir:     wwwDir,
-				AdminInfo:  adminInfo,
-				DSN:        dsn,
+				Dev:          dev,
+				AutoCert:     autoCert,
+				Domains:      domains,
+				FSRootDir:    fsDir,
+				WorkingDir:   workingDir,
+				WebDir:       wwwDir,
+				AdminInfo:    adminInfo,
+				CertFilename: certFilename,
+				KeyFilename:  keyFilename,
+				TLS:          enableTLS,
+				DSN:          dsn,
 			})
 
 			err = s.Start()
@@ -107,7 +113,10 @@ func init() {
 
 	flags := runCMD.PersistentFlags()
 	flags.BoolVar(&dev, "dev", false, "Enable development mode")
-	flags.BoolVar(&autoCert, "autocert", false, "Run with ACME autocert")
+	flags.BoolVar(&autoCert, "auto-cert", false, "Run TLS server with auto generated certificate/key pair")
+	flags.BoolVar(&enableTLS, "tls", false, "Enable TLS secure connexion")
+	flags.StringVar(&certFilename, "cert", "", "Certificate filename")
+	flags.StringVar(&keyFilename, "key", "", "Key filename")
 	flags.StringArrayVar(&domains, "domains", nil, "Domains name for auto cert")
 	flags.StringVar(&workingDir, "dir", "./", "Data directory")
 	flags.StringVar(&fsDir, "fs", "./files", "File storage root directory")
