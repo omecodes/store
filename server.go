@@ -201,11 +201,14 @@ func (s *Server) Start() error {
 
 	if s.config.TLS {
 		if s.config.AutoCert {
+			logs.Info("starting api server over tls with auto-cert")
 			return s.startAutoCertAPIServer()
 		}
+		logs.Info("starting api server over TLS")
 		return s.startSecureAPIServer()
 	}
 
+	logs.Info("starting api server")
 	return s.startNonSecureAPIServer()
 }
 
