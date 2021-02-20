@@ -302,7 +302,7 @@ func (s *Server) startSecureAPIServer() error {
 
 func (s *Server) startNonSecureAPIServer() error {
 	var err error
-	s.listener, err = net.Listen("tcp", "0.0.0.0:80")
+	s.listener, err = net.Listen("tcp", ":80")
 	if err != nil {
 		return err
 	}
