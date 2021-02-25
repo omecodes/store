@@ -34,6 +34,7 @@ type sqlStore struct {
 	loadedCollections *collectionContainer
 	db                *sql.DB
 	dialect           string
+	tablePrefix       string
 	collections       *bome.JSONMap
 }
 

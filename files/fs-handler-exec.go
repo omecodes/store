@@ -15,7 +15,7 @@ type ExecHandler struct {
 func (h *ExecHandler) CreateSource(ctx context.Context, source *Source) error {
 	sourceManager := getSourceManager(ctx)
 	if sourceManager == nil {
-		return errors.New("context missing source manager")
+		return errors.Internal("context missing source manager")
 	}
 	_, err := sourceManager.Save(ctx, source)
 	return err
@@ -24,7 +24,7 @@ func (h *ExecHandler) CreateSource(ctx context.Context, source *Source) error {
 func (h *ExecHandler) ListSources(ctx context.Context) ([]*Source, error) {
 	sourceManager := getSourceManager(ctx)
 	if sourceManager == nil {
-		return nil, errors.New("context missing source manager")
+		return nil, errors.Internal("context missing source manager")
 	}
 
 	a := auth.Get(ctx)
@@ -34,7 +34,7 @@ func (h *ExecHandler) ListSources(ctx context.Context) ([]*Source, error) {
 func (h *ExecHandler) GetSource(ctx context.Context, sourceID string) (*Source, error) {
 	sourceManager := getSourceManager(ctx)
 	if sourceManager == nil {
-		return nil, errors.New("context missing source manager")
+		return nil, errors.Internal("context missing source manager")
 	}
 	return sourceManager.Get(ctx, sourceID)
 }
@@ -42,7 +42,7 @@ func (h *ExecHandler) GetSource(ctx context.Context, sourceID string) (*Source, 
 func (h *ExecHandler) DeleteSource(ctx context.Context, sourceID string) error {
 	sourceManager := getSourceManager(ctx)
 	if sourceManager == nil {
-		return errors.New("context missing source manager")
+		return errors.Internal("context missing source manager")
 	}
 	return sourceManager.Delete(ctx, sourceID)
 }

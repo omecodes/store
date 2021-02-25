@@ -3,6 +3,7 @@ package objects
 import (
 	"database/sql"
 	"github.com/omecodes/bome"
+	"github.com/omecodes/errors"
 )
 
 func NewSQLSettings(db *sql.DB, dialect string, tableName string) (SettingsManager, error) {
@@ -14,33 +15,33 @@ func NewSQLSettings(db *sql.DB, dialect string, tableName string) (SettingsManag
 	settings := &settingsSQL{bMap: m}
 	_, err = settings.Get(SettingsDataMaxSizePath)
 	if err != nil {
-		if !bome.IsNotFound(err) {
+		if !errors.IsNotFound(err) {
 			return nil, err
 		}
 		err = settings.Set(SettingsDataMaxSizePath, DefaultSettings[SettingsDataMaxSizePath])
-		if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
+		if err != nil && !errors.IsConflict(err) {
 			return nil, err
 		}
 	}
 
 	_, err = settings.Get(SettingsDataMaxSizePath)
 	if err != nil {
-		if !bome.IsNotFound(err) {
+		if !errors.IsNotFound(err) {
 			return nil, err
 		}
 		err = settings.Set(SettingsCreateDataSecurityRule, DefaultSettings[SettingsCreateDataSecurityRule])
-		if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
+		if err != nil && !errors.IsConflict(err) {
 			return nil, err
 		}
 	}
 
 	_, err = settings.Get(SettingsObjectListMaxCount)
 	if err != nil {
-		if !bome.IsNotFound(err) {
+		if !errors.IsNotFound(err) {
 			return nil, err
 		}
 		err = settings.Set(SettingsObjectListMaxCount, DefaultSettings[SettingsObjectListMaxCount])
-		if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
+		if err != nil && !errors.IsConflict(err) {
 			return nil, err
 		}
 	}

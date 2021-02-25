@@ -18,7 +18,7 @@ func (p *DefaultRouterGrpcProvider) GetClient(ctx context.Context, serviceType u
 		return NewHandlerUnitClient(conn), nil
 
 	default:
-		return nil, errors.Create(errors.VersionNotSupported, "no client for this service type")
+		return nil, errors.Unsupported("no client for this service type", errors.Details{Key: "service-type", Value: serviceType})
 	}
 
 }

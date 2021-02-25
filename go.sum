@@ -265,6 +265,7 @@ github.com/mattn/go-isatty v0.0.8/go.mod h1:Iq45c/XA43vh69/j3iqttzPXn0bhXyGjM0Hd
 github.com/mattn/go-isatty v0.0.12 h1:wuysRhFDzyxgEmMf5xjvJ2M9dZoWAXNNr5LSBS7uHXY=
 github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Kysco4FUpU=
 github.com/mattn/go-sqlite3 v1.14.0/go.mod h1:JIl7NbARA7phWnGvh0LKTyg7S9BA+6gx71ShQilpsus=
+github.com/mattn/go-sqlite3 v1.14.6/go.mod h1:NyWgC/yNuGj7Q9rpYnZvas74GogHl5/Z4A/KQRfk6bU=
 github.com/mattn/go-sqlite3 v2.0.3+incompatible h1:gXHsfypPkaMZrKbD5209QV9jbUTJKjyR5WD3HYQSd+U=
 github.com/mattn/go-sqlite3 v2.0.3+incompatible/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsOqkbpncsNc=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
@@ -305,6 +306,8 @@ github.com/omecodes/bome v0.0.0-20210213161649-d5e5aaca4b18 h1:fG9ui2Fifl6C7es1x
 github.com/omecodes/bome v0.0.0-20210213161649-d5e5aaca4b18/go.mod h1:MgNIwPO6s9K2qWujgw3kydv8bTjFHUQIvNxWpQnr7TI=
 github.com/omecodes/bome v0.0.0-20210213184932-612057270586 h1:kxFb10p3XeUSKh8lb0RK0SifS9ejkeHW05DvXrKAPRo=
 github.com/omecodes/bome v0.0.0-20210213184932-612057270586/go.mod h1:MgNIwPO6s9K2qWujgw3kydv8bTjFHUQIvNxWpQnr7TI=
+github.com/omecodes/bome v0.0.0-20210225145609-62bc8e1c7994 h1:jH0LoSlb95KHtfaRr/iUtOJ6rZ1iw0+JdSiY5o9qFBA=
+github.com/omecodes/bome v0.0.0-20210225145609-62bc8e1c7994/go.mod h1:E5nl+ggA0h9G9ThHCu5rInuS9FbZ0ewjT0UT57qTiAU=
 github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08 h1:cw7bAWTQwcV4w2A7HvO89TnbvR/YvWLlOyosyPjYDY8=
 github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08/go.mod h1:ORHcmOlnZMs77fvBLp41cuh0R3bOw/e+2jaoIxN0WP0=
 github.com/omecodes/discover v0.0.0-20210119195912-fc755694fab9 h1:DTerGQy4lqsl+U+TvX/Meyi8ftln5R+ispHxQz6l6fY=
@@ -313,11 +316,17 @@ github.com/omecodes/discover v0.0.0-20210213111105-c5af043d728b h1:TxFuu0c239PxS
 github.com/omecodes/discover v0.0.0-20210213111105-c5af043d728b/go.mod h1:N3+e+vLss9wjkt9cmHPv/CJq/bdeBFxUiABS37Numas=
 github.com/omecodes/errors v0.0.0-20210113230812-4f98b9fc3d3c h1:xnlE7H3s8od+Mhsr27mYAY4UNxVgenKP0s4nmAVdj2A=
 github.com/omecodes/errors v0.0.0-20210113230812-4f98b9fc3d3c/go.mod h1:ie0cX9zTKGVWvhBS3gOJMs4HCGupe7tU5m1n9FQ9ZjI=
+github.com/omecodes/errors v0.0.0-20210225144456-2de7fb1939b8 h1:s9laGtFJvOqHQ1nsRCjO9r/9oB4H6+2g96U2A1QNdNc=
+github.com/omecodes/errors v0.0.0-20210225144456-2de7fb1939b8/go.mod h1:ie0cX9zTKGVWvhBS3gOJMs4HCGupe7tU5m1n9FQ9ZjI=
+github.com/omecodes/errors v0.0.0-20210225152132-e879de1f2be5 h1:YoNPVfpwtxrCP5B63NXe7qV8cyX9XItxKoekNX4w3Dw=
+github.com/omecodes/errors v0.0.0-20210225152132-e879de1f2be5/go.mod h1:x9Ol4wDesFdrAHdOQ1krCBdluBT/m4RpHbVFvvBOU3c=
 github.com/omecodes/libome v0.0.0-20201128214815-2b3f03af9fa6/go.mod h1:zWK7ZcUVGB+F7XO5fSkwzypxtHjMM05UAPcwpnd+BcI=
 github.com/omecodes/libome v0.0.0-20210118230551-aff816f21c74 h1:emBVcWXLPmljjZc4Z6Lio5x5xEWnOOx/kxJllm8Ce78=
 github.com/omecodes/libome v0.0.0-20210118230551-aff816f21c74/go.mod h1:KDrBixAwkiu9Ooe/f0MRAbiD5GgQgOwDpCVm7sX2F84=
 github.com/omecodes/service v0.0.0-20210119200004-85aec6812c6b h1:QfZ3p4jFDyug4WveXiZRm/JdkpwLUgtZ7TL7JCQxaeY=
 github.com/omecodes/service v0.0.0-20210119200004-85aec6812c6b/go.mod h1:jmpMwtLM4cQIsRFKxfnhbl+kew5VRUXc96nxELHQ2Pc=
+github.com/omecodes/service v0.0.0-20210225153927-688cff63b9a1 h1:ZlrKlExk40ZM5y3fkZ3wXv9wSMWQ3sSa4s+cfRNkIc4=
+github.com/omecodes/service v0.0.0-20210225153927-688cff63b9a1/go.mod h1:woo1rFCE6rAruW7RVEsdfyTQcf8l5gbqaJIRc4FobDE=
 github.com/omecodes/zebou v0.0.0-20201218212929-8dbed76eaa74 h1:6Q5QXs8YkfV0/90it6x36xuSiGpnJvwnM1S12LbqGCc=
 github.com/omecodes/zebou v0.0.0-20201218212929-8dbed76eaa74/go.mod h1:BaVpxrNKtfAJKuAaOLwlLySTSLU7e2pv44UNXOzobKo=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=

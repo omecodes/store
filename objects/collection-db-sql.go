@@ -334,7 +334,7 @@ func (s *sqlCollection) Get(ctx context.Context, objectID string, opts GetOption
 	hv, err := s.headers.Get(objectID)
 	if err != nil {
 		logs.Error("Get: could not get object header", logs.Details("id", objectID), logs.Err(err))
-		if bome.IsNotFound(err) {
+		if errors.IsNotFound(err) {
 			return nil, err
 		}
 		return nil, errors.Internal

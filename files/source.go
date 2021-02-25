@@ -65,7 +65,7 @@ func getSourceManager(ctx context.Context) SourceManager {
 func resolveSource(ctx context.Context, sourceID string) (*Source, error) {
 	sourcesManager := getSourceManager(ctx)
 	if sourcesManager == nil {
-		return nil, errors.Create(errors.Internal, "missing source manager in context")
+		return nil, errors.Internal("missing source manager in context")
 	}
 	source, err := sourcesManager.Get(ctx, sourceID)
 	if err != nil {
@@ -77,7 +77,7 @@ func resolveSource(ctx context.Context, sourceID string) (*Source, error) {
 	for resolvedSource.Type == TypeReference {
 		u, err := url.Parse(source.URI)
 		if err != nil {
-			return nil, errors.Create(errors.Internal, "could not resolve source uri", errors.Info{Name: "source uri", Details: err.Error()})
+			return nil, errors.Internal("could not resolve source uri", errors.Details{Key: "source uri", Value: err})
 		}
 
 		refSourceID := u.Host
@@ -89,7 +89,7 @@ func resolveSource(ctx context.Context, sourceID string) (*Source, error) {
 
 		for _, src := range sourceChain {
 			if src == refSourceID {
-				return nil, errors.Create(errors.Internal, "source cycle references")
+				return nil, errors.Internal("source cycle references")
 			}
 		}
 		sourceChain = append(sourceChain, refSourceID)

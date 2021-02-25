@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"fmt"
+	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
 	"net"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/omecodes/bome"
-	"github.com/omecodes/common/errors"
 	"github.com/omecodes/common/httpx"
 	"github.com/omecodes/common/netx"
 	"github.com/omecodes/store/accounts"
@@ -125,7 +125,7 @@ func (s *Server) init() error {
 			return err
 		}
 		err = s.settings.Set(objects.SettingsDataMaxSizePath, objects.DefaultSettings[objects.SettingsDataMaxSizePath])
-		if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
+		if err != nil && !errors.IsConflict(err) {
 			return err
 		}
 	}
@@ -136,7 +136,7 @@ func (s *Server) init() error {
 			return err
 		}
 		err = s.settings.Set(objects.SettingsCreateDataSecurityRule, objects.DefaultSettings[objects.SettingsCreateDataSecurityRule])
-		if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
+		if err != nil && !errors.IsConflict(err) {
 			return err
 		}
 	}
@@ -147,7 +147,7 @@ func (s *Server) init() error {
 			return err
 		}
 		err = s.settings.Set(objects.SettingsObjectListMaxCount, objects.DefaultSettings[objects.SettingsObjectListMaxCount])
-		if err != nil && !bome.IsPrimaryKeyConstraintError(err) {
+		if err != nil && !errors.IsConflict(err) {
 			return err
 		}
 	}

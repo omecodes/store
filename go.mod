@@ -16,12 +16,12 @@ require (
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
-	github.com/omecodes/bome v0.0.0-20210213184932-612057270586
+	github.com/omecodes/bome v0.0.0-20210225145609-62bc8e1c7994
 	github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08
 	github.com/omecodes/discover v0.0.0-20210213111105-c5af043d728b // indirect
-	github.com/omecodes/errors v0.0.0-20210113230812-4f98b9fc3d3c
+	github.com/omecodes/errors v0.0.0-20210225152132-e879de1f2be5
 	github.com/omecodes/libome v0.0.0-20210118230551-aff816f21c74
-	github.com/omecodes/service v0.0.0-20210119200004-85aec6812c6b
+	github.com/omecodes/service v0.0.0-20210225153927-688cff63b9a1
 	github.com/pkg/xattr v0.4.3
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.1.1

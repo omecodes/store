@@ -2,8 +2,8 @@ package se
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
+	"github.com/omecodes/errors"
 	"io"
 	"strings"
 
@@ -75,7 +75,7 @@ func NewSQLIndexStore(db *sql.DB, dialect string, tablePrefix string) (Store, er
 		s.db, err = bome.New(db)
 
 	} else {
-		return nil, errors.New("not supported")
+		return nil, errors.Unsupported("sql dialect not supported", errors.Details{Key: "type", Value: "dialect"}, errors.Details{Key: "name", Value: dialect})
 	}
 
 	if err != nil {
@@ -105,7 +105,7 @@ type sqlStore struct {
 
 func (s *sqlStore) SaveWordMapping(word string, id string) error {
 	err := s.db.Exec(insertWord, word, id).Error
-	if bome.IsPrimaryKeyConstraintError(err) {
+	if errors.IsConflict(err) {
 		return nil
 	}
 	return err
@@ -113,7 +113,7 @@ func (s *sqlStore) SaveWordMapping(word string, id string) error {
 
 func (s *sqlStore) SaveNumberMapping(num int64, id string) error {
 	err := s.db.Exec(insertNumber, num, id).Error
-	if bome.IsPrimaryKeyConstraintError(err) {
+	if errors.IsConflict(err) {
 		return nil
 	}
 	return err
@@ -121,7 +121,7 @@ func (s *sqlStore) SaveNumberMapping(num int64, id string) error {
 
 func (s *sqlStore) SavePropertiesMapping(id string, value string) error {
 	err := s.db.Exec(insertProps, id, value).Error
-	if bome.IsPrimaryKeyConstraintError(err) {
+	if errors.IsConflict(err) {
 		return nil
 	}
 	return err
@@ -192,7 +192,7 @@ func (s *sqlStore) performSearch(query *SearchQuery) (Cursor, error) {
 		return &dbStringCursorWrapper{cursor: c}, err
 	}
 
-	return nil, errors.New("unsupported query type")
+	return nil, errors.Unsupported("sql dialect not supported", errors.Details{Key: "type", Value: "query"}, errors.Details{Key: "name", Value: query.Query})
 }
 
 func evaluateWordSearchingQuery(query *StrQuery) (string, []tokenMatchScorer) {

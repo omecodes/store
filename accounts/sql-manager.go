@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/omecodes/bome"
-	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
 )
 
@@ -61,10 +60,7 @@ func (s *sqlManager) Create(ctx context.Context, account *Account) error {
 		if rer := bome.Rollback(txCtx); rer != nil {
 			logs.Error("Transaction rollback failed", logs.Err(err))
 		}
-		return errors.AppendDetails(err, errors.Info{
-			Name:    "am",
-			Details: "could not create entry",
-		})
+		return err
 	}
 
 	_, sources, _ := s.sources.Transaction(txCtx)
@@ -77,10 +73,7 @@ func (s *sqlManager) Create(ctx context.Context, account *Account) error {
 		if rer := bome.Rollback(txCtx); rer != nil {
 			logs.Error("Transaction rollback failed", logs.Err(err))
 		}
-		return errors.AppendDetails(err, errors.Info{
-			Name:    "am",
-			Details: "could not create source reference",
-		})
+		return err
 	}
 
 	return nil
@@ -89,19 +82,13 @@ func (s *sqlManager) Create(ctx context.Context, account *Account) error {
 func (s *sqlManager) Get(ctx context.Context, username string) (*Account, error) {
 	encoded, err := s.accounts.Get(username)
 	if err != nil {
-		return nil, errors.AppendDetails(err, errors.Info{
-			Name:    "am",
-			Details: "failed to get account by name",
-		})
+		return nil, err
 	}
 
 	var account *Account
 	err = json.Unmarshal([]byte(encoded), &account)
 	if err != nil {
-		return nil, errors.AppendDetails(err, errors.Info{
-			Name:    "am",
-			Details: "failed to decode account from db result",
-		})
+		return nil, err
 	}
 	return account, nil
 }
@@ -109,10 +96,7 @@ func (s *sqlManager) Get(ctx context.Context, username string) (*Account, error)
 func (s *sqlManager) Find(ctx context.Context, provider string, originalName string) (*Account, error) {
 	accountName, err := s.sources.Get(provider, originalName)
 	if err != nil {
-		return nil, errors.AppendDetails(err, errors.Info{
-			Name:    "am",
-			Details: "failed to get account by source",
-		})
+		return nil, err
 	}
 	return s.Get(ctx, accountName)
 }
@@ -121,10 +105,7 @@ func (s *sqlManager) Search(ctx context.Context, pattern string) ([]string, erro
 	query := fmt.Sprintf("select value from %s_accounts where name like ?", s.tablePrefix)
 	cursor, err := s.accounts.Query(query, bome.StringScanner, fmt.Sprintf("%%%s%%", pattern))
 	if err != nil {
-		return nil, errors.AppendDetails(err, errors.Info{
-			Name:    "am",
-			Details: "failed to finds accounts matching pattern",
-		})
+		return nil, err
 	}
 
 	defer func() {
@@ -138,10 +119,7 @@ func (s *sqlManager) Search(ctx context.Context, pattern string) ([]string, erro
 	for cursor.HasNext() {
 		o, err := cursor.Next()
 		if err != nil {
-			return nil, errors.AppendDetails(err, errors.Info{
-				Name:    "am",
-				Details: "failed to decode account from db result",
-			})
+			return nil, err
 		}
 		names = append(names, o.(string))
 	}

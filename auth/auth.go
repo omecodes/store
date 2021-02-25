@@ -35,7 +35,7 @@ func BasicContextUpdater(ctx context.Context) (context.Context, error) {
 
 	if authType == "basic" {
 		if authorization == "" {
-			return ctx, errors.Create(errors.BadRequest, "malformed authorization value")
+			return ctx, errors.BadRequest("malformed authorization value")
 		}
 		return updateContextWithBasic(ctx, authorization)
 	}
@@ -57,7 +57,7 @@ func OAuth2ContextUpdater(ctx context.Context) (context.Context, error) {
 
 	if authType == "bearer" {
 		if authorization == "" {
-			return ctx, errors.Create(errors.BadRequest, "malformed authorization value")
+			return ctx, errors.BadRequest("malformed authorization value")
 		}
 		return updateContextWithOauth2(ctx, authorization)
 	}
@@ -75,17 +75,17 @@ func UpdateFromMeta(parent context.Context) (context.Context, error) {
 func updateContextWithBasic(ctx context.Context, authorization string) (context.Context, error) {
 	bytes, err := base64.StdEncoding.DecodeString(authorization)
 	if err != nil {
-		return ctx, errors.Create(errors.BadRequest, "authorization wrong encoding")
+		return ctx, errors.BadRequest("authorization wrong encoding")
 	}
 
 	parts := strings.Split(string(bytes), ":")
 	if len(parts) != 2 {
-		return ctx, errors.Create(errors.BadRequest, "wrong basic authentication")
+		return ctx, errors.BadRequest("wrong basic authentication")
 	}
 
 	authUser := parts[0]
 	if authUser != "admin" {
-		return nil, errors.Create(errors.Forbidden, "forbidden")
+		return nil, errors.Forbidden("forbidden")
 	}
 
 	var pass string
@@ -95,13 +95,13 @@ func updateContextWithBasic(ctx context.Context, authorization string) (context.
 
 	manager := GetCredentialsManager(ctx)
 	if manager == nil {
-		return ctx, errors.Create(errors.Forbidden, "No manager basic authentication is not supported")
+		return ctx, errors.Forbidden("No manager basic authentication is not supported")
 	}
 
 	err = manager.ValidateAdminAccess(pass)
 	if err != nil {
 		logs.Error("verifying admin authentication", logs.Err(err))
-		return ctx, errors.Create(errors.Forbidden, "admin authentication failed")
+		return ctx, errors.Forbidden("admin authentication failed")
 	}
 
 	return context.WithValue(ctx, ctxUser{}, &User{
@@ -112,12 +112,12 @@ func updateContextWithBasic(ctx context.Context, authorization string) (context.
 func updateContextWithProxyBasic(ctx context.Context, authorization string) (context.Context, error) {
 	bytes, err := base64.StdEncoding.DecodeString(authorization)
 	if err != nil {
-		return ctx, errors.Create(errors.BadRequest, "authorization value non base64 encoding")
+		return ctx, errors.BadRequest("authorization value non base64 encoding")
 	}
 
 	parts := strings.Split(string(bytes), ":")
 	if len(parts) != 2 {
-		return ctx, errors.Create(errors.BadRequest, "authorization value non base64 encoding")
+		return ctx, errors.BadRequest("authorization value non base64 encoding")
 	}
 
 	authUser := parts[0]
@@ -128,13 +128,13 @@ func updateContextWithProxyBasic(ctx context.Context, authorization string) (con
 
 	manager := GetCredentialsManager(ctx)
 	if manager == nil {
-		return ctx, errors.Create(errors.Forbidden, "No manager basic authentication is not supported")
+		return ctx, errors.Forbidden("No manager basic authentication is not supported")
 	}
 
 	sh := sha512.New()
 	_, err = sh.Write([]byte(pass))
 	if err != nil {
-		return ctx, errors.Create(errors.Internal, "password hashing failed")
+		return ctx, errors.Internal("password hashing failed")
 	}
 	hashed := sh.Sum(nil)
 
@@ -144,7 +144,7 @@ func updateContextWithProxyBasic(ctx context.Context, authorization string) (con
 	}
 
 	if access.Secret != hex.EncodeToString(hashed) {
-		return ctx, errors.Create(errors.Forbidden, "authorization value non base64 encoding")
+		return ctx, errors.Forbidden("authorization value non base64 encoding")
 	}
 
 	return context.WithValue(ctx, ctxUser{}, &User{
@@ -160,7 +160,7 @@ func updateContextWithOauth2(ctx context.Context, authorization string) (context
 
 	providers := GetProviders(ctx)
 	if providers == nil {
-		return ctx, errors.Create(errors.Forbidden, "token not signed")
+		return ctx, errors.Forbidden("token not signed")
 	}
 
 	provider, err := providers.Get(jwt.Claims.Iss)
@@ -174,7 +174,7 @@ func updateContextWithOauth2(ctx context.Context, authorization string) (context
 	}
 
 	if signature != jwt.Signature {
-		return ctx, errors.Create(errors.Forbidden, "token not signed")
+		return ctx, errors.Forbidden("token not signed")
 	}
 
 	ctx = context.WithValue(ctx, ctxJWt{}, jwt)

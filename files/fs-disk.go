@@ -29,18 +29,18 @@ func (d *diskFS) Mkdir(_ context.Context, dirname string) error {
 		logs.Error("failed to create directory", logs.Details("file", dirname), logs.Err(err))
 
 		if os.IsNotExist(err) {
-			return errors.Create(errors.NotFound, "file not found",
-				errors.Info{Name: "file", Details: dirname},
+			return errors.NotFound("file not found",
+				errors.Details{Key: "file", Value: dirname},
 			)
 		}
 
 		if os.IsPermission(err) {
-			return errors.Create(errors.Internal, "file not found",
-				errors.Info{Name: "system", Details: "Store app has no READ permissions on FS"},
-				errors.Info{Name: "file", Details: dirname},
+			return errors.Internal("file not found",
+				errors.Details{Key: "system", Value: "Store app has no READ permissions on FS"},
+				errors.Details{Key: "file", Value: dirname},
 			)
 		}
-		return errors.Create(errors.Internal, "could not create directory")
+		return errors.Internal("could not create directory")
 	}
 	return nil
 }
@@ -54,18 +54,18 @@ func (d *diskFS) Ls(_ context.Context, dirname string, offset int, count int) (*
 		logs.Error("failed to open file", logs.Details("file", dirname), logs.Err(err))
 
 		if os.IsNotExist(err) {
-			return nil, errors.Create(errors.NotFound, "file not found",
-				errors.Info{Name: "file", Details: dirname},
+			return nil, errors.NotFound("file not found",
+				errors.Details{Key: "file", Value: dirname},
 			)
 		}
 
 		if os.IsPermission(err) {
-			return nil, errors.Create(errors.Internal, "file not found",
-				errors.Info{Name: "system", Details: "Store app has no READ permissions on FS"},
-				errors.Info{Name: "file", Details: dirname},
+			return nil, errors.Internal("file not found",
+				errors.Details{Key: "system", Value: "Store app has no READ permissions on FS"},
+				errors.Details{Key: "file", Value: dirname},
 			)
 		}
-		return nil, errors.Create(errors.Internal, "could not get file info", errors.Info{Name: "file", Details: dirname})
+		return nil, errors.Internal("could not get file info", errors.Details{Key: "file", Value: dirname})
 	}
 
 	defer func() {
@@ -75,7 +75,7 @@ func (d *diskFS) Ls(_ context.Context, dirname string, offset int, count int) (*
 	names, err := f.Readdirnames(-1)
 	if err != nil {
 		logs.Error("failed to get children names", logs.Details("file", dirname), logs.Err(err))
-		return nil, errors.Create(errors.Internal, "failed to get children names", errors.Info{Name: "file", Details: dirname})
+		return nil, errors.Internal("failed to get children names", errors.Details{Key: "file", Value: dirname})
 	}
 
 	dirContent := &DirContent{
@@ -116,19 +116,19 @@ func (d *diskFS) Write(_ context.Context, filename string, content io.Reader, ap
 		logs.Error("failed to open file", logs.Details("file", filename), logs.Err(err))
 
 		if os.IsNotExist(err) {
-			return errors.Create(errors.NotFound, "failed to open file",
-				errors.Info{Name: "file", Details: filename},
+			return errors.NotFound("failed to open file",
+				errors.Details{Key: "file", Value: filename},
 			)
 		}
 
 		if os.IsPermission(err) {
-			return errors.Create(errors.Internal, "failed to open file",
-				errors.Info{Name: "system", Details: "Store app has no READ permissions on FS"},
-				errors.Info{Name: "file", Details: filename},
+			return errors.Internal("failed to open file",
+				errors.Details{Key: "system", Value: "Store app has no READ permissions on FS"},
+				errors.Details{Key: "file", Value: filename},
 			)
 		}
 
-		return errors.Create(errors.Internal, "could not get file info", errors.Info{Name: "file", Details: filename}, errors.Info{Name: "open", Details: err.Error()})
+		return errors.Internal("could not get file info", errors.Details{Key: "file", Value: filename}, errors.Details{Key: "open", Value: err.Error()})
 	}
 
 	defer func() {
@@ -162,22 +162,22 @@ func (d *diskFS) Read(_ context.Context, filename string, offset int64, length i
 	f, err := os.Open(UnNormalizePath(fullFilename))
 	if err != nil {
 		logs.Error("failed to open file", logs.Details("file", filename), logs.Err(err))
-		return nil, 0, errors.Create(errors.Internal, "failed to open file",
-			errors.Info{Name: "file", Details: filename})
+		return nil, 0, errors.Internal("failed to open file",
+			errors.Details{Key: "file", Value: filename})
 	}
 
 	stats, err := f.Stat()
 	if err != nil {
 		logs.Error("failed to get file stats", logs.Details("file", filename), logs.Err(err))
-		return nil, 0, errors.Create(errors.Internal, "could not get file info", errors.Info{Name: "file", Details: filename})
+		return nil, 0, errors.Internal("could not get file info", errors.Details{Key: "file", Value: filename})
 	}
 
 	if offset > 0 {
 		_, err = f.Seek(offset, io.SeekStart)
 		if err != nil {
 			logs.Error("failed to perform seek on file", logs.Details("file", filename), logs.Err(err))
-			return nil, 0, errors.Create(errors.Internal, "seek failed on file",
-				errors.Info{Name: "file", Details: filename})
+			return nil, 0, errors.Internal("seek failed on file",
+				errors.Details{Key: "file", Value: filename})
 		}
 	}
 
@@ -195,19 +195,19 @@ func (d *diskFS) Info(_ context.Context, filename string, withAttrs bool) (*File
 		logs.Error("failed to get file stats", logs.Details("file", filename), logs.Err(err))
 
 		if os.IsNotExist(err) {
-			return nil, errors.Create(errors.NotFound, "file not found",
-				errors.Info{Name: "file", Details: filename},
+			return nil, errors.NotFound("file not found",
+				errors.Details{Key: "file", Value: filename},
 			)
 		}
 
 		if os.IsPermission(err) {
-			return nil, errors.Create(errors.Internal, "file not found",
-				errors.Info{Name: "system", Details: "Store app has no READ permissions on FS"},
-				errors.Info{Name: "file", Details: filename},
+			return nil, errors.Internal("file not found",
+				errors.Details{Key: "system", Value: "Store app has no READ permissions on FS"},
+				errors.Details{Key: "file", Value: filename},
 			)
 		}
 
-		return nil, errors.Create(errors.Internal, "could not get file info", errors.Info{Name: "file", Details: filename})
+		return nil, errors.Internal("could not get file info", errors.Details{Key: "file", Value: filename})
 	}
 
 	file := &File{
@@ -223,7 +223,7 @@ func (d *diskFS) Info(_ context.Context, filename string, withAttrs bool) (*File
 		attrsName, err := xattr.List(fullFilename)
 		if err != nil {
 			logs.Error("failed to get file attributes names", logs.Details("file", filename), logs.Err(err))
-			return nil, errors.Create(errors.Internal, "could not get file attributes", errors.Info{Name: "file", Details: filename})
+			return nil, errors.Internal("could not get file attributes", errors.Details{Key: "file", Value: filename})
 		}
 
 		for _, name := range attrsName {
@@ -231,7 +231,7 @@ func (d *diskFS) Info(_ context.Context, filename string, withAttrs bool) (*File
 				attrsBytes, err := xattr.Get(fullFilename, name)
 				if err != nil {
 					logs.Error("failed to get file attribute", logs.Details("file", filename), logs.Details("attribute", name), logs.Err(err))
-					return nil, errors.Create(errors.Internal, "could not get file attribute", errors.Info{Name: "file", Details: filename})
+					return nil, errors.Internal("could not get file attribute", errors.Details{Key: "file", Value: filename})
 				}
 				file.Attributes[name] = string(attrsBytes)
 			}
@@ -246,9 +246,9 @@ func (d *diskFS) SetAttributes(_ context.Context, filename string, attrs Attribu
 		err := xattr.Set(UnNormalizePath(fullFilename), name, []byte(value))
 		if err != nil {
 			logs.Error("failed to get file attributes names", logs.Details("file", filename), logs.Err(err))
-			return errors.Create(errors.Internal, "failed to set file attribute",
-				errors.Info{Name: name, Details: value},
-				errors.Info{Name: "file", Details: filename})
+			return errors.Internal("failed to set file attribute",
+				errors.Details{Key: name, Value: value},
+				errors.Details{Key: "file", Value: filename})
 		}
 	}
 	return nil
@@ -280,7 +280,7 @@ func (d *diskFS) GetAttributes(_ context.Context, filename string, names ...stri
 			attrsBytes, err := xattr.Get(filename, name)
 			if err != nil {
 				logs.Error("failed to get file attribute", logs.Details("file", resolvedFilename), logs.Details("attribute", name), logs.Err(err))
-				return nil, errors.Create(errors.Internal, "could not get file attribute", errors.Info{Name: "file", Details: filename})
+				return nil, errors.Internal("could not get file attribute", errors.Details{Key: "file", Value: filename})
 			}
 			attributes[name] = string(attrsBytes)
 		}
@@ -297,18 +297,18 @@ func (d *diskFS) Rename(_ context.Context, filename string, newName string) erro
 		logs.Error("failed to rename file", logs.Details("file", filename), logs.Details("new name", newName), logs.Err(err))
 
 		if os.IsNotExist(err) {
-			return errors.Create(errors.NotFound, "file not found",
-				errors.Info{Name: "file", Details: filename},
+			return errors.NotFound("file not found",
+				errors.Details{Key: "file", Value: filename},
 			)
 		}
 
 		if os.IsPermission(err) {
-			return errors.Create(errors.Internal, "permission denied for applicaiton",
-				errors.Info{Name: "system", Details: "disk permissions denied for store application"},
-				errors.Info{Name: "file", Details: filename},
+			return errors.Internal("permission denied for applicaiton",
+				errors.Details{Key: "system", Value: "disk permissions denied for store application"},
+				errors.Details{Key: "file", Value: filename},
 			)
 		}
-		return errors.Create(errors.Internal, "could not rename file", errors.Info{Name: "file", Details: filename}, errors.Info{Name: "new name", Details: newName})
+		return errors.Internal("could not rename file", errors.Details{Key: "file", Value: filename}, errors.Details{Key: "new name", Value: newName})
 	}
 	return nil
 }
@@ -322,18 +322,18 @@ func (d *diskFS) Move(_ context.Context, filename string, dirname string) error 
 		logs.Error("failed to move file", logs.Details("file", filename), logs.Details("directory", dirname), logs.Err(err))
 
 		if os.IsNotExist(err) {
-			return errors.Create(errors.NotFound, "file not found",
-				errors.Info{Name: "file", Details: filename},
+			return errors.NotFound("file not found",
+				errors.Details{Key: "file", Value: filename},
 			)
 		}
 
 		if os.IsPermission(err) {
-			return errors.Create(errors.Internal, "permission denied for application",
-				errors.Info{Name: "system", Details: "disk permissions denied for store application"},
-				errors.Info{Name: "file", Details: filename},
+			return errors.Internal("permission denied for application",
+				errors.Details{Key: "system", Value: "disk permissions denied for store application"},
+				errors.Details{Key: "file", Value: filename},
 			)
 		}
-		return errors.Create(errors.Internal, "could not rename file", errors.Info{Name: "file", Details: filename}, errors.Info{Name: "directory", Details: dirname})
+		return errors.Internal("could not rename file", errors.Details{Key: "file", Value: filename}, errors.Details{Key: "directory", Value: dirname})
 	}
 
 	return nil
@@ -348,18 +348,18 @@ func (d *diskFS) Copy(_ context.Context, filename string, dirname string) error 
 		logs.Error("failed to copy file", logs.Details("file", filename), logs.Details("directory", dirname), logs.Err(err))
 
 		if os.IsNotExist(err) {
-			return errors.Create(errors.NotFound, "file not found",
-				errors.Info{Name: "file", Details: filename},
+			return errors.NotFound("file not found",
+				errors.Details{Key: "file", Value: filename},
 			)
 		}
 
 		if os.IsPermission(err) {
-			return errors.Create(errors.Internal, "permission denied for application",
-				errors.Info{Name: "system", Details: "disk permissions denied for store application"},
-				errors.Info{Name: "file", Details: filename},
+			return errors.Internal("permission denied for application",
+				errors.Details{Key: "system", Value: "disk permissions denied for store application"},
+				errors.Details{Key: "file", Value: filename},
 			)
 		}
-		return errors.Create(errors.Internal, "could not copy file", errors.Info{Name: "file", Details: filename}, errors.Info{Name: "directory", Details: dirname})
+		return errors.Internal("could not copy file", errors.Details{Key: "file", Value: filename}, errors.Details{Key: "directory", Value: dirname})
 	}
 
 	return nil
@@ -380,19 +380,19 @@ func (d *diskFS) DeleteFile(_ context.Context, filename string, recursive bool) 
 		logs.Error("failed to delete file", logs.Details("file", filename), logs.Err(err))
 
 		if os.IsNotExist(err) {
-			return errors.Create(errors.NotFound, "file not found",
-				errors.Info{Name: "file", Details: filename},
+			return errors.NotFound("file not found",
+				errors.Details{Key: "file", Value: filename},
 			)
 		}
 
 		if os.IsPermission(err) {
-			return errors.Create(errors.Internal, "file not found",
-				errors.Info{Name: "system", Details: "Store app has no READ permissions on FS"},
-				errors.Info{Name: "file", Details: filename},
+			return errors.Internal("file not found",
+				errors.Details{Key: "system", Value: "Store app has no READ permissions on FS"},
+				errors.Details{Key: "file", Value: filename},
 			)
 		}
 
-		return errors.Create(errors.Internal, "could not delete directory", errors.Info{Name: "file", Details: filename})
+		return errors.Internal("could not delete directory", errors.Details{Key: "file", Value: filename})
 	}
 	return nil
 }

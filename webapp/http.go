@@ -80,7 +80,7 @@ func getFileContent(_ context.Context, filename string) (string, io.ReadCloser, 
 	f, err := os.Open(filename)
 	if err != nil {
 		if err == os.ErrNotExist {
-			return "", f, size, errors.Create(errors.NotFound, err.Error())
+			return "", f, size, errors.NotFound(err.Error())
 		}
 		return "", f, size, err
 	}

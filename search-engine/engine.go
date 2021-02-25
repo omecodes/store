@@ -59,7 +59,7 @@ func (e *Engine) CreatePropertiesMapping(mapping *PropertiesMapping) error {
 	var props map[string]interface{}
 	err := json.NewDecoder(bytes.NewBufferString(mapping.Json)).Decode(&props)
 	if err != nil {
-		return errors.Create(errors.BadRequest, err.Error())
+		return errors.BadRequest(err.Error())
 	}
 
 	for key, value := range props {
@@ -71,7 +71,7 @@ func (e *Engine) CreatePropertiesMapping(mapping *PropertiesMapping) error {
 
 	encoded, err := json.Marshal(props)
 	if err != nil {
-		return errors.Create(errors.Internal, err.Error(), errors.Info{Name: "engine", Details: "text not usable after analyze"})
+		return errors.Internal(err.Error(), errors.Details{Key: "engine", Value: "text not usable after analyze"})
 	}
 
 	return e.store.SavePropertiesMapping(mapping.ObjectId, string(encoded))

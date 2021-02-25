@@ -29,7 +29,7 @@ func (h *PolicyHandler) assertPermissionIsGranted(ctx context.Context, rules ...
 
 	prg, err := cenv.GetProgram(fullExpression)
 	if err != nil {
-		return errors.Create(errors.Internal, "context missing access rule evaluator")
+		return errors.Internal("context missing access rule evaluator")
 	}
 
 	vars := map[string]interface{}{}
@@ -52,7 +52,7 @@ func (h *PolicyHandler) assertPermissionIsGranted(ctx context.Context, rules ...
 		return nil
 	}
 
-	return errors.Create(errors.Forbidden, "permission denied")
+	return errors.Forbidden("permission denied")
 }
 
 func (h *PolicyHandler) assertIsAllowedToRead(ctx context.Context, sourceID string, filename string) error {
@@ -86,7 +86,7 @@ func (h *PolicyHandler) assertIsAllowedToRead(ctx context.Context, sourceID stri
 	}
 
 	if !found {
-		return errors.Create(errors.Forbidden, "access to this resources is forbidden")
+		return errors.Forbidden("access to this resources is forbidden")
 	}
 
 	var rules []string
@@ -128,7 +128,7 @@ func (h *PolicyHandler) assertIsAllowedToWrite(ctx context.Context, sourceID str
 	}
 
 	if !found {
-		return errors.Create(errors.Forbidden, "access to this resources is forbidden")
+		return errors.Forbidden("access to this resources is forbidden")
 	}
 
 	var rules []string
@@ -170,7 +170,7 @@ func (h *PolicyHandler) assertIsAllowedToChmod(ctx context.Context, sourceID str
 	}
 
 	if !found {
-		return errors.Create(errors.Forbidden, "access to this resources is forbidden")
+		return errors.Forbidden("access to this resources is forbidden")
 	}
 
 	var rules []string
@@ -184,7 +184,7 @@ func (h *PolicyHandler) assertIsAllowedToChmod(ctx context.Context, sourceID str
 func (h *PolicyHandler) assertAllowedToChmodSource(ctx context.Context, source *Source) error {
 	user := auth.Get(ctx)
 	if user == nil {
-		return errors.Create(errors.Forbidden, "")
+		return errors.Forbidden("")
 	}
 
 	if user.Name == "admin" {
@@ -198,11 +198,11 @@ func (h *PolicyHandler) assertAllowedToChmodSource(ctx context.Context, source *
 	for sourceType == TypeReference {
 		u, err := url.Parse(source.URI)
 		if err != nil {
-			return errors.Create(errors.Internal, "could not resolve source uri", errors.Info{Name: "uri", Details: err.Error()})
+			return errors.Internal("could not resolve source uri", errors.Details{Key: "uri", Value: err})
 		}
 
 		if u.Scheme != "ref" {
-			return errors.Create(errors.Internal, "unexpected source scheme")
+			return errors.Internal("unexpected source scheme")
 		}
 
 		refSourceID = u.Host
@@ -223,7 +223,7 @@ func (h *PolicyHandler) assertAllowedToChmodSource(ctx context.Context, source *
 
 		for _, src := range sourceChain {
 			if src == refSourceID {
-				return errors.Create(errors.Internal, "source cycle references")
+				return errors.Internal("source cycle references")
 			}
 		}
 		sourceChain = append(sourceChain, refSourceID)
@@ -242,7 +242,7 @@ func (h *PolicyHandler) assertAllowedToChmodSource(ctx context.Context, source *
 	}
 
 	if !found {
-		return errors.Create(errors.Forbidden, "access to this resources is forbidden")
+		return errors.Forbidden("access to this resources is forbidden")
 	}
 
 	var rules []string
@@ -289,7 +289,7 @@ func (h *PolicyHandler) GetSource(ctx context.Context, sourceID string) (*Source
 func (h *PolicyHandler) DeleteSource(ctx context.Context, sourceID string) error {
 	user := auth.Get(ctx)
 	if user == nil {
-		return errors.Create(errors.Forbidden, "context missing user")
+		return errors.Forbidden("context missing user")
 	}
 
 	source, err := h.next.GetSource(ctx, sourceID)
@@ -299,7 +299,7 @@ func (h *PolicyHandler) DeleteSource(ctx context.Context, sourceID string) error
 
 	if user.Name != "admin" {
 		if source.CreatedBy != user.Name {
-			return errors.Create(errors.Forbidden, "context missing user")
+			return errors.Forbidden("context missing user")
 		}
 	}
 	return h.next.DeleteSource(ctx, sourceID)

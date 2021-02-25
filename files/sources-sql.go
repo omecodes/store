@@ -8,6 +8,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/omecodes/errors"
 	"github.com/omecodes/store/auth"
 	"time"
 
@@ -141,7 +142,7 @@ func (s *sourceSQLManager) Delete(ctx context.Context, id string) error {
 	}
 
 	err = sources.Delete(id)
-	if err != nil && !bome.IsNotFound(err) {
+	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 
