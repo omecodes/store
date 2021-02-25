@@ -70,7 +70,7 @@ func (ms *sqlStore) CreateCollection(ctx context.Context, collection *Collection
 	}
 
 	tableName := strcase.ToSnake(collection.Id)
-	col, err := NewSQLCollection(collection, ms.db, ms.dialect, tableName)
+	col, err := NewSQLCollection(collection, ms.db, ms.dialect, ms.tablePrefix+"_"+tableName)
 	if err != nil {
 		return err
 	}

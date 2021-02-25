@@ -18,8 +18,8 @@ import (
 
 const objectScanner = "object"
 
-func NewSQLCollection(collection *Collection, db *sql.DB, dialect string, tableName string) (*sqlCollection, error) {
-	objectsTableName := "store_" + tableName + "_objects"
+func NewSQLCollection(collection *Collection, db *sql.DB, dialect string, tablePrefix string) (*sqlCollection, error) {
+	objectsTableName := tablePrefix + "_objects"
 	objects, err := bome.Build().
 		SetDialect(dialect).
 		SetConn(db).
@@ -29,7 +29,7 @@ func NewSQLCollection(collection *Collection, db *sql.DB, dialect string, tableN
 		return nil, err
 	}
 
-	headersTableName := "store_" + tableName + "_headers"
+	headersTableName := tablePrefix + "_headers"
 	headers, err := bome.Build().
 		SetDialect(dialect).
 		SetConn(db).
@@ -51,7 +51,7 @@ func NewSQLCollection(collection *Collection, db *sql.DB, dialect string, tableN
 		return nil, err
 	}
 
-	indexTablePrefix := "store_" + tableName + "_index"
+	indexTablePrefix := tablePrefix + "_index"
 	indexStore, err := se.NewSQLIndexStore(db, dialect, indexTablePrefix)
 	if err != nil {
 		return nil, err
