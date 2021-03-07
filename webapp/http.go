@@ -26,6 +26,7 @@ var mimes = map[string]string{
 func ServeApps(w http.ResponseWriter, r *http.Request) {
 	filename := r.URL.Path
 
+	logs.Info("resources ", logs.Details("path", filename))
 	contentType, f, size, err := getFileContent(r.Context(), filename)
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))

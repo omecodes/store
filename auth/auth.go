@@ -2,9 +2,7 @@ package auth
 
 import (
 	"context"
-	"crypto/sha512"
 	"encoding/base64"
-	"encoding/hex"
 	"github.com/omecodes/libome/logs"
 	"strings"
 
@@ -15,9 +13,14 @@ import (
 )
 
 type User struct {
-	Name   string `json:"name,omitempty"`
-	Access string `json:"access,omitempty"`
-	Group  string `json:"group,omitempty"`
+	Name      string     `json:"name,omitempty"`
+	Access    string     `json:"access,omitempty"`
+	ClientApp *APIAccess `json:"client_app,omitempty"`
+	Group     string     `json:"group,omitempty"`
+}
+
+type InitClientAppSessionRequest struct {
+	Access *APIAccess `json:"access,omitempty"`
 }
 
 func BasicContextUpdater(ctx context.Context) (context.Context, error) {
@@ -84,29 +87,54 @@ func updateContextWithBasic(ctx context.Context, authorization string) (context.
 	}
 
 	authUser := parts[0]
-	if authUser != "admin" {
-		return nil, errors.Forbidden("forbidden")
+	if authUser == "admin" {
+
+		var pass string
+		if len(parts) > 1 {
+			pass = parts[1]
+		}
+
+		manager := GetCredentialsManager(ctx)
+		if manager == nil {
+			return ctx, errors.Forbidden("No manager basic authentication is not supported")
+		}
+
+		err = manager.ValidateAdminAccess(pass)
+		if err != nil {
+			logs.Error("verifying admin authentication", logs.Err(err))
+			return ctx, errors.Forbidden("admin authentication failed")
+		}
+
+		return context.WithValue(ctx, ctxUser{}, &User{
+			Name: "admin",
+		}), nil
+	} else {
+
+		var pass string
+		if len(parts) > 1 {
+			pass = parts[1]
+		}
+
+		manager := GetCredentialsManager(ctx)
+		if manager == nil {
+			return ctx, errors.Forbidden("No manager basic authentication is not supported")
+		}
+
+		access, err := manager.GetAccess(authUser)
+		if err != nil {
+			logs.Error("client access not found", logs.Details("access", authUser), logs.Err(err))
+			return ctx, errors.Forbidden("client access not found")
+		}
+
+		if access.Secret == pass {
+			return context.WithValue(ctx, ctxUser{}, &User{
+				Name: "admin",
+			}), nil
+		}
+
+		return nil, errors.Forbidden("authentication failed")
 	}
 
-	var pass string
-	if len(parts) > 1 {
-		pass = parts[1]
-	}
-
-	manager := GetCredentialsManager(ctx)
-	if manager == nil {
-		return ctx, errors.Forbidden("No manager basic authentication is not supported")
-	}
-
-	err = manager.ValidateAdminAccess(pass)
-	if err != nil {
-		logs.Error("verifying admin authentication", logs.Err(err))
-		return ctx, errors.Forbidden("admin authentication failed")
-	}
-
-	return context.WithValue(ctx, ctxUser{}, &User{
-		Name: "admin",
-	}), nil
 }
 
 func updateContextWithProxyBasic(ctx context.Context, authorization string) (context.Context, error) {
@@ -131,19 +159,12 @@ func updateContextWithProxyBasic(ctx context.Context, authorization string) (con
 		return ctx, errors.Forbidden("No manager basic authentication is not supported")
 	}
 
-	sh := sha512.New()
-	_, err = sh.Write([]byte(pass))
-	if err != nil {
-		return ctx, errors.Internal("password hashing failed")
-	}
-	hashed := sh.Sum(nil)
-
 	access, err := manager.GetAccess(authUser)
 	if err != nil {
 		return ctx, err
 	}
 
-	if access.Secret != hex.EncodeToString(hashed) {
+	if access.Secret != pass {
 		return ctx, errors.Forbidden("authorization value non base64 encoding")
 	}
 

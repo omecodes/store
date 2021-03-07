@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	"github.com/omecodes/libome/logs"
+	"github.com/omecodes/store/session"
 	"net/http"
 	"strings"
 
@@ -86,7 +88,7 @@ func detectBasic(next http.Handler) http.Handler {
 
 func detectProxyBasic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authorization := r.Header.Get("Proxy-Authorization")
+		authorization := r.Header.Get("X-STORE-API-Authorization")
 
 		if authorization != "" {
 			authorizationParts := strings.SplitN(authorization, " ", 2)
@@ -108,6 +110,26 @@ func detectProxyBasic(next http.Handler) http.Handler {
 					return
 				}
 				r = r.WithContext(ctx)
+			}
+		} else {
+			logs.Info("no authorization passed so looking through session")
+			webSession, err := session.GetWebSession(session.ClientAppSession, r)
+			if err != nil {
+				logs.Error("could not get web session", logs.Err(err))
+				w.WriteHeader(errors.HTTPStatus(err))
+				return
+			}
+
+			if accessType := webSession.String(session.KeyAccessType); accessType != "" {
+				logs.Info("session detected")
+				ctx := context.WithValue(r.Context(), ctxUser{}, &User{
+					Name:   "",
+					Access: accessType,
+					Group:  "",
+				})
+				r = r.WithContext(ctx)
+			} else {
+				logs.Info("no session detected")
 			}
 		}
 		next.ServeHTTP(w, r)

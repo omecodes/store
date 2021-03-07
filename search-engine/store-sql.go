@@ -105,24 +105,30 @@ type sqlStore struct {
 
 func (s *sqlStore) SaveWordMapping(word string, id string) error {
 	err := s.db.Exec(insertWord, word, id).Error
-	if errors.IsConflict(err) {
-		return nil
+	if err != nil {
+		if errors.IsConflict(err) {
+			return nil
+		}
 	}
 	return err
 }
 
 func (s *sqlStore) SaveNumberMapping(num int64, id string) error {
 	err := s.db.Exec(insertNumber, num, id).Error
-	if errors.IsConflict(err) {
-		return nil
+	if err != nil {
+		if errors.IsConflict(err) {
+			return nil
+		}
 	}
 	return err
 }
 
 func (s *sqlStore) SavePropertiesMapping(id string, value string) error {
 	err := s.db.Exec(insertProps, id, value).Error
-	if errors.IsConflict(err) {
-		return nil
+	if err != nil {
+		if errors.IsConflict(err) {
+			return nil
+		}
 	}
 	return err
 }

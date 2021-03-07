@@ -1,13 +1,10 @@
 package admin
 
 import (
-	"crypto/sha512"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/omecodes/libome/crypt"
 	"github.com/omecodes/store/auth"
-	"github.com/omecodes/store/common"
 	"io"
 	"os"
 
@@ -96,31 +93,13 @@ var saveAccessCMD = &cobra.Command{
 				return
 			}
 
-			key, info, err := crypt.Generate(password, 16)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(-1)
+			if access.Secret == "" {
+				access.Secret, err = crypt.GenerateVerificationCode(16)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(-1)
+				}
 			}
-
-			encrypted, err := crypt.AESGCMEncrypt(key, []byte(access.Secret))
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(-1)
-			}
-
-			encodedInfo, err := json.Marshal(info)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(-1)
-			}
-
-			h := sha512.New()
-			secret := h.Sum([]byte(access.Secret))
-			access.Secret = hex.EncodeToString(secret)
-
-			access.Info = make(map[string]string)
-			access.Info[common.AccessInfoEncryptedSecret] = hex.EncodeToString(encrypted)
-			access.Info[common.AccessInfoSecretEncryptParams] = hex.EncodeToString(encodedInfo)
 
 			err = putAccess(password, access)
 			if err != nil {

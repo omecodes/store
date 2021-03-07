@@ -104,7 +104,8 @@ func (h *PolicyHandler) assertIsAllowedToWrite(ctx context.Context, sourceID str
 	}
 
 	source, err := h.next.GetSource(ctx, sourceID)
-	if source == nil {
+	if err != nil {
+		logs.Error("source not found", logs.Err(err))
 		return err
 	}
 

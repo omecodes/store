@@ -17,7 +17,7 @@ import (
 )
 
 func putAccess(adminPassword string, access *auth.APIAccess) error {
-	endpoint := fmt.Sprintf("%s/auth/access", server)
+	endpoint := fmt.Sprintf("%s/api/auth/access", server)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -47,14 +47,14 @@ func putAccess(adminPassword string, access *auth.APIAccess) error {
 	}()
 
 	if rsp.StatusCode != 200 {
-		return errors.New(rsp.Status)
+		return errors.BadRequest(rsp.Status)
 	}
 
 	return nil
 }
 
 func getAccesses(adminPassword string, outputFilename string) error {
-	endpoint := fmt.Sprintf("%s/auth/accesses", server)
+	endpoint := fmt.Sprintf("%s/api/auth/accesses", server)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -87,7 +87,7 @@ func getAccesses(adminPassword string, outputFilename string) error {
 	}()
 
 	if rsp.StatusCode != 200 {
-		return errors.New(rsp.Status)
+		return errors.BadRequest(rsp.Status)
 	}
 
 	done := false
@@ -120,7 +120,7 @@ func getAccesses(adminPassword string, outputFilename string) error {
 }
 
 func deleteAccess(adminPassword string, accessID string) error {
-	endpoint := fmt.Sprintf("%s/auth/access/%s", server, accessID)
+	endpoint := fmt.Sprintf("%s/api/auth/access/%s", server, accessID)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -145,14 +145,14 @@ func deleteAccess(adminPassword string, accessID string) error {
 	}()
 
 	if rsp.StatusCode != 200 {
-		return errors.New(rsp.Status)
+		return errors.BadRequest(rsp.Status)
 	}
 
 	return nil
 }
 
 func putCollections(adminPassword string, collection *objects.Collection) error {
-	endpoint := fmt.Sprintf("%s/objects/collections", server)
+	endpoint := fmt.Sprintf("%s/api/objects/collections", server)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -182,14 +182,14 @@ func putCollections(adminPassword string, collection *objects.Collection) error 
 	}()
 
 	if rsp.StatusCode != 200 {
-		return errors.New(rsp.Status)
+		return errors.BadRequest(rsp.Status)
 	}
 
 	return nil
 }
 
 func listCollections(adminPassword string, outputFilename string) error {
-	endpoint := fmt.Sprintf("%s/objects/collections", server)
+	endpoint := fmt.Sprintf("%s/api/objects/collections", server)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -222,7 +222,7 @@ func listCollections(adminPassword string, outputFilename string) error {
 	}()
 
 	if rsp.StatusCode != 200 {
-		return errors.New(rsp.Status)
+		return errors.BadRequest(rsp.Status)
 	}
 
 	done := false
@@ -255,7 +255,7 @@ func listCollections(adminPassword string, outputFilename string) error {
 }
 
 func putFileSource(adminPassword string, source *files.Source) error {
-	endpoint := fmt.Sprintf("%s/files/sources", server)
+	endpoint := fmt.Sprintf("%s/api/files/sources", server)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -285,14 +285,14 @@ func putFileSource(adminPassword string, source *files.Source) error {
 	}()
 
 	if rsp.StatusCode != 200 {
-		return errors.New(rsp.Status)
+		return errors.BadRequest(rsp.Status)
 	}
 
 	return nil
 }
 
 func listFileSources(adminPassword string, outputFilename string) error {
-	endpoint := fmt.Sprintf("%s/files/sources", server)
+	endpoint := fmt.Sprintf("%s/api/files/sources", server)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -325,7 +325,7 @@ func listFileSources(adminPassword string, outputFilename string) error {
 	}()
 
 	if rsp.StatusCode != 200 {
-		return errors.New(rsp.Status)
+		return errors.BadRequest(rsp.Status)
 	}
 
 	done := false
@@ -358,7 +358,7 @@ func listFileSources(adminPassword string, outputFilename string) error {
 }
 
 func deleteFileSources(adminPassword string, sourceID string) error {
-	endpoint := fmt.Sprintf("%s/files/sources/%s", server, sourceID)
+	endpoint := fmt.Sprintf("%s/api/files/sources/%s", server, sourceID)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -383,7 +383,7 @@ func deleteFileSources(adminPassword string, sourceID string) error {
 	}()
 
 	if rsp.StatusCode != 200 {
-		return errors.New(rsp.Status)
+		return errors.BadRequest(rsp.Status)
 	}
 
 	return nil

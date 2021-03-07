@@ -2,11 +2,15 @@ package store
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/tls"
 	"database/sql"
 	"fmt"
+	"github.com/gorilla/sessions"
+	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
+	"github.com/omecodes/store/session"
 	"net"
 	"net/http"
 	"os"
@@ -17,7 +21,6 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/omecodes/bome"
-	"github.com/omecodes/common/httpx"
 	"github.com/omecodes/common/netx"
 	"github.com/omecodes/store/accounts"
 	"github.com/omecodes/store/auth"
@@ -65,6 +68,7 @@ type Server struct {
 	credentialsManager      auth.CredentialsManager
 	accessStore             objects.ACLManager
 	sourceManager           files.SourceManager
+	cookieStore             *sessions.CookieStore
 
 	listener net.Listener
 	Errors   chan error
@@ -152,9 +156,15 @@ func (s *Server) init() error {
 		}
 	}
 
+	cookiesKey, err := s.generateKey(64)
+	if err != nil {
+		return err
+	}
+	s.cookieStore = sessions.NewCookieStore(cookiesKey[:31], cookiesKey[32:])
+
 	// Files initialization
 	if s.config.FSRootDir != "" {
-		s.sourceManager, err = files.NewSourceSQLManager(s.db, bome.MySQL, "store_")
+		s.sourceManager, err = files.NewSourceSQLManager(s.db, bome.MySQL, "store")
 		if err != nil {
 			return err
 		}
@@ -182,6 +192,16 @@ func (s *Server) init() error {
 	}
 	webapp.Dir = s.config.WebDir
 	return nil
+}
+
+func (s *Server) generateKey(size int) ([]byte, error) {
+	key := make([]byte, size)
+	_, err := rand.Read(key)
+	if err != nil {
+		log.Error("could not generate secret key", log.Err(err))
+		return nil, err
+	}
+	return key, nil
 }
 
 func (s *Server) GetRouter(_ context.Context) objects.Router {
@@ -324,7 +344,7 @@ func (s *Server) startNonSecureAPIServer() error {
 	return nil
 }
 
-func (s *Server) httpRouter() *mux.Router {
+func (s *Server) httpRouter() http.Handler {
 	r := mux.NewRouter()
 	filesRouter := files.MuxRouter(
 		files.Middleware(files.MiddlewareWithSourceManager(s.sourceManager)),
@@ -333,7 +353,6 @@ func (s *Server) httpRouter() *mux.Router {
 			auth.MiddlewareWithCredentials(s.credentialsManager),
 			auth.MiddlewareWithProviderManager(s.authenticationProviders),
 		),
-		httpx.Logger("files").Handle,
 	)
 
 	r.PathPrefix("/api/files/").Subrouter().Name("ServeFiles").
@@ -353,7 +372,6 @@ func (s *Server) httpRouter() *mux.Router {
 			auth.MiddlewareWithCredentials(s.credentialsManager),
 			auth.MiddlewareWithProviderManager(s.authenticationProviders),
 		),
-		httpx.Logger("objects").Handle,
 	)
 	r.PathPrefix("/api/objects/").Subrouter().Name("ServeObjects").
 		Handler(http.StripPrefix("/api/objects", objectsRouter))
@@ -363,7 +381,6 @@ func (s *Server) httpRouter() *mux.Router {
 			auth.MiddlewareWithCredentials(s.credentialsManager),
 			auth.MiddlewareWithProviderManager(s.authenticationProviders),
 		),
-		httpx.Logger("auth").Handle,
 	)
 	r.PathPrefix("/api/auth/").Subrouter().Name("ManageAuthentication").
 		Handler(http.StripPrefix("/api/auth", authRouter))
@@ -372,15 +389,15 @@ func (s *Server) httpRouter() *mux.Router {
 		accounts.Middleware(
 			accounts.MiddlewareWithAccountManager(s.accountsManager),
 		),
-		httpx.Logger("accounts").Handle,
 	)
+
 	r.PathPrefix("/api/accounts/").Subrouter().Name("ManageAccounts").
 		Handler(http.StripPrefix("/api/accounts", accountsRouter))
 
 	staticFilesRouter := http.HandlerFunc(webapp.ServeApps)
 	r.NotFoundHandler = staticFilesRouter
 
-	return r
+	return MiddlewareLogger(session.WithHTTPSessionMiddleware(s.cookieStore)(r))
 }
 
 // Stop stops API server

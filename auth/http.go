@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"github.com/omecodes/store/session"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -21,6 +22,7 @@ func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	r.Name("CreateAccess").Methods(http.MethodPut).Path("/access").Handler(http.HandlerFunc(CreateAccess))
 	r.Name("ListAccesses").Methods(http.MethodGet).Path("/accesses").Handler(http.HandlerFunc(ListAccesses))
 	r.Name("DeleteAccess").Methods(http.MethodDelete).Path("/providers/{key}").Handler(http.HandlerFunc(DeleteAccess))
+	r.Name("InitSession").Methods(http.MethodPost).Path("/sessions").Handler(http.HandlerFunc(InitClientAppSession))
 
 	var handler http.Handler
 	handler = r
@@ -172,6 +174,7 @@ func CreateAccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logs.Info("API save access", logs.Details("access", access))
 	manager := GetCredentialsManager(ctx)
 	if manager == nil {
 		logs.Error("missing credentials manager in context")
@@ -239,6 +242,47 @@ func DeleteAccess(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logs.Error("could not get access", logs.Err(err))
 		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+}
+
+func InitClientAppSession(w http.ResponseWriter, r *http.Request) {
+	var requestData *InitClientAppSessionRequest
+	err := json.NewDecoder(r.Body).Decode(&requestData)
+	if err != nil {
+		logs.Error("could not decode request data", logs.Err(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	manager := GetCredentialsManager(r.Context())
+	if manager == nil {
+		logs.Error("missing credentials manager in context")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	access, err := manager.GetAccess(requestData.Access.Key)
+	if err != nil {
+		logs.Error("could not load access", logs.Details("", requestData.Access.Key), logs.Err(err))
+		w.WriteHeader(errors.HTTPStatus(err))
+		return
+	}
+
+	caSession, err := session.GetWebSession(session.ClientAppSession, r)
+	if err != nil {
+		logs.Error("could not initialize client app session", logs.Err(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	caSession.Put(session.KeyAccessType, access.Type)
+	//caSession.Put(session.KeyAccessInfo, access.Info)
+
+	err = caSession.Save(w)
+	if err != nil {
+		logs.Error("could not save client app session", logs.Err(err))
+		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 }

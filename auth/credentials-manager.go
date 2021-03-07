@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
 
 	"github.com/omecodes/bome"
-	"github.com/omecodes/common/errors"
 	"github.com/omecodes/libome/crypt"
 )
 
@@ -33,7 +33,7 @@ func NewCredentialsSQLManager(db *sql.DB, dialect string, prefix string, adminIn
 	data, err := base64.RawStdEncoding.DecodeString(adminInfo)
 	if err != nil {
 		logs.Error("Unreadable admin info", logs.Err(err))
-		return nil, errors.BadInput
+		return nil, errors.BadRequest("")
 	}
 
 	var info *crypt.Info
@@ -41,7 +41,7 @@ func NewCredentialsSQLManager(db *sql.DB, dialect string, prefix string, adminIn
 	err = json.Unmarshal(data, &info)
 	if err != nil {
 		logs.Error("Unreadable admin info", logs.Err(err))
-		return nil, errors.BadInput
+		return nil, errors.BadRequest("")
 	}
 
 	return &credentialsSQLManager{store: store, adminInfo: info}, nil

@@ -195,6 +195,7 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 
 	err := handler.WriteFileContent(ctx, sourceID, filename, r.Body, r.ContentLength, opts)
 	if err != nil {
+		logs.Error("could not put file content", logs.Err(err))
 		w.WriteHeader(errors.HttpStatus(err))
 		return
 	}
@@ -269,6 +270,7 @@ func CreateSource(w http.ResponseWriter, r *http.Request) {
 	handler := GetRouteHandler(ctx)
 	err = handler.CreateSource(ctx, source)
 	if err != nil {
+		logs.Error("could not create source", logs.Err(err))
 		w.WriteHeader(errors.HttpStatus(err))
 		return
 	}

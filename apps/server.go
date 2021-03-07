@@ -120,7 +120,7 @@ func init() {
 	flags.StringArrayVar(&domains, "domains", nil, "Domains name for auto cert")
 	flags.StringVar(&workingDir, "dir", "./", "Data directory")
 	flags.StringVar(&fsDir, "fs", "./files", "File storage root directory")
-	flags.StringVar(&wwwDir, "web-dir", "./www", "Web apps directory (apache www equivalent)")
+	flags.StringVar(&wwwDir, "www", "./www", "Web apps directory (apache www equivalent)")
 	flags.StringVar(&adminInfo, "admin", "", "Admin password info")
 	flags.StringVar(&dsn, "db-uri", "store:store@(127.0.0.1:3306)/store?charset=utf8", "MySQL database uri")
 	if err := cobra.MarkFlagRequired(flags, "admin"); err != nil {

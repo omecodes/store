@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"github.com/iancoleman/strcase"
 	"github.com/omecodes/bome"
-	"github.com/omecodes/common/errors"
+	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
 	se "github.com/omecodes/store/search-engine"
 )
@@ -25,6 +25,7 @@ func NewSqlDB(db *sql.DB, dialect string, tablePrefix string) (DB, error) {
 		db:                db,
 		dialect:           dialect,
 		collections:       col,
+		tablePrefix:       tablePrefix,
 		loadedCollections: &collectionContainer{container: make(map[string]CollectionDB)},
 	}
 	return s, nil
@@ -40,7 +41,7 @@ type sqlStore struct {
 
 func (ms *sqlStore) ResolveCollection(ctx context.Context, name string) (CollectionDB, error) {
 	col, found := ms.loadedCollections.Get(name)
-	if !found {
+	if !found || col == nil {
 		encoded, err := ms.collections.Get(name)
 		if err != nil {
 			return nil, err
@@ -54,6 +55,10 @@ func (ms *sqlStore) ResolveCollection(ctx context.Context, name string) (Collect
 
 		tableName := strcase.ToSnake(name)
 		col, err = NewSQLCollection(collection, ms.db, ms.dialect, tableName)
+		if err != nil {
+			logs.Error("could not create collection", logs.Err(err))
+			return nil, errors.Internal("failed to load collection manager")
+		}
 		ms.loadedCollections.Save(name, col)
 	}
 	return col, nil
@@ -66,7 +71,7 @@ func (ms *sqlStore) CreateCollection(ctx context.Context, collection *Collection
 	}
 
 	if contains {
-		return errors.Duplicate
+		return errors.Conflict("duplicate collection")
 	}
 
 	tableName := strcase.ToSnake(collection.Id)

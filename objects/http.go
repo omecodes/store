@@ -63,8 +63,8 @@ func PutObject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var putRequest PutObjectRequest
-	err := jsonpb.Unmarshal(r.Body, &putRequest)
+	var putRequest *PutObjectRequest
+	err := json.NewDecoder(r.Body).Decode(&putRequest)
 	if err != nil {
 		logs.Error("failed to decode request body", logs.Err(err))
 		w.WriteHeader(http.StatusBadRequest)
@@ -384,7 +384,7 @@ func GetSettings(w http.ResponseWriter, r *http.Request) {
 func CreateCollection(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var collection Collection
+	var collection *Collection
 	err := json.NewDecoder(r.Body).Decode(&collection)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -393,8 +393,9 @@ func CreateCollection(w http.ResponseWriter, r *http.Request) {
 
 	handler := GetRouterHandler(ctx)
 
-	err = handler.CreateCollection(ctx, &collection)
+	err = handler.CreateCollection(ctx, collection)
 	if err != nil {
+		logs.Error("could not create collection", logs.Details("collection", collection), logs.Err(err))
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
@@ -407,6 +408,7 @@ func ListCollections(w http.ResponseWriter, r *http.Request) {
 
 	collections, err := handler.ListCollections(ctx)
 	if err != nil {
+		logs.Error("could not load collections", logs.Err(err))
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
@@ -443,6 +445,7 @@ func GetCollection(w http.ResponseWriter, r *http.Request) {
 
 	data, err := json.Marshal(collection)
 	if err != nil {
+		logs.Error("could not get collection", logs.Details("col-id", collection), logs.Err(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

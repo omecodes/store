@@ -2,7 +2,7 @@ package objects
 
 import (
 	"context"
-	"github.com/omecodes/common/errors"
+	"github.com/omecodes/errors"
 	ome "github.com/omecodes/libome"
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/service"
@@ -21,7 +21,7 @@ func (b *LoadBalancer) GetClient(ctx context.Context, serviceType uint32) (Handl
 	registry := service.GetRegistry(ctx)
 	if registry == nil {
 		logs.Error("Load balancer • missing registry in context")
-		return nil, errors.Internal
+		return nil, errors.Internal("missing service registry")
 	}
 
 	infoList, err := registry.GetOfType(serviceType)
@@ -30,7 +30,7 @@ func (b *LoadBalancer) GetClient(ctx context.Context, serviceType uint32) (Handl
 	}
 
 	if len(infoList) == 0 {
-		return nil, errors.NotFound
+		return nil, errors.NotFound("no service found")
 	}
 
 	var info *ome.ServiceInfo

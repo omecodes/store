@@ -2,7 +2,7 @@ package objects
 
 import (
 	"context"
-	"github.com/omecodes/common/errors"
+	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
 	"io"
 )
@@ -19,7 +19,7 @@ func (h *handler) CreateCollection(ctx context.Context, request *CreateCollectio
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
-		return nil, errors.Internal
+		return nil, errors.Internal("missing objects storage")
 	}
 
 	err := storage.CreateCollection(ctx, request.Collection)
@@ -30,7 +30,7 @@ func (h *handler) GetCollection(ctx context.Context, request *GetCollectionReque
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
-		return nil, errors.Internal
+		return nil, errors.Internal("missing objects storage")
 	}
 
 	collection, err := storage.GetCollection(ctx, request.Id)
@@ -41,7 +41,7 @@ func (h *handler) ListCollections(ctx context.Context, request *ListCollectionsR
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
-		return nil, errors.Internal
+		return nil, errors.Internal("missing objects storage")
 	}
 
 	collections, err := storage.ListCollections(ctx)
@@ -52,7 +52,7 @@ func (h *handler) DeleteCollection(ctx context.Context, request *DeleteCollectio
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
-		return nil, errors.Internal
+		return nil, errors.Internal("missing objects storage")
 	}
 
 	err := storage.DeleteCollection(ctx, request.Id)
@@ -63,7 +63,7 @@ func (h *handler) PutObject(ctx context.Context, request *PutObjectRequest) (*Pu
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
-		return nil, errors.Internal
+		return nil, errors.Internal("missing objects storage")
 	}
 
 	err := storage.Save(ctx, request.Collection, request.Object, request.Indexes...)
@@ -78,7 +78,7 @@ func (h *handler) PatchObject(ctx context.Context, request *PatchObjectRequest) 
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
-		return nil, errors.Internal
+		return nil, errors.Internal("missing objects storage")
 	}
 
 	err := storage.Patch(ctx, request.Collection, request.Patch)
@@ -93,7 +93,7 @@ func (h *handler) GetObject(ctx context.Context, request *GetObjectRequest) (*Ge
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
-		return nil, errors.Internal
+		return nil, errors.Internal("missing objects storage")
 	}
 
 	o, err := storage.Get(ctx, request.Collection, request.ObjectId, GetOptions{
@@ -112,7 +112,7 @@ func (h *handler) DeleteObject(ctx context.Context, request *DeleteObjectRequest
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
-		return nil, errors.Internal
+		return nil, errors.Internal("missing object storage")
 	}
 
 	err := storage.Delete(ctx, request.Collection, request.ObjectId)
@@ -126,7 +126,7 @@ func (h *handler) ObjectInfo(ctx context.Context, request *ObjectInfoRequest) (*
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
-		return nil, errors.Internal
+		return nil, errors.Internal("missing objects storage")
 	}
 
 	header, err := storage.Info(ctx, request.Collection, request.ObjectId)
@@ -143,7 +143,7 @@ func (h *handler) ListObjects(request *ListObjectsRequest, stream HandlerUnit_Li
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
-		return errors.Internal
+		return errors.Internal("missing objects storage")
 	}
 
 	opts := ListOptions{
@@ -184,7 +184,7 @@ func (h *handler) SearchObjects(request *SearchObjectsRequest, stream HandlerUni
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("Objects server • missing storage in context")
-		return errors.Internal
+		return errors.Internal("missing objects storage")
 	}
 
 	cursor, err := storage.Search(ctx, request.Collection, request.Query)

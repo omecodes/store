@@ -6,7 +6,7 @@ import (
 	"github.com/omecodes/libome/logs"
 	"strings"
 
-	"github.com/omecodes/common/errors"
+	"github.com/omecodes/errors"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/common/cenv"
 	se "github.com/omecodes/store/search-engine"
@@ -70,7 +70,7 @@ func (p *PolicyHandler) getAccessRule(ctx context.Context, collection string, ob
 	accessStore := GetACLStore(ctx)
 	if accessStore == nil {
 		logs.Error("ACL-Read-Check: missing access store in context")
-		return "", errors.Internal
+		return "", errors.Internal("missing ACL store")
 	}
 
 	ruleCollection, err := accessStore.GetRules(ctx, collection, objectID)
@@ -87,7 +87,7 @@ func (p *PolicyHandler) getAccessRule(ctx context.Context, collection string, ob
 		logs.Error("ACL: could not find access security rule", logs.Details("object", objectID), logs.Details("path", path))
 		rules, found = ruleCollection.AccessRules["$"]
 		if !found {
-			return "", errors.Forbidden
+			return "", errors.Forbidden("no security rules found")
 		}
 	}
 
@@ -102,7 +102,7 @@ func (p *PolicyHandler) getAccessRule(ctx context.Context, collection string, ob
 
 	default:
 		logs.Error("ACL: no rule for this action", logs.Details("action", action.String()))
-		return "", errors.Internal
+		return "", errors.Unsupported("unsupported ACL action")
 	}
 
 	var formattedRules []string
@@ -138,11 +138,11 @@ func (p *PolicyHandler) assetActionAllowedOnObject(ctx context.Context, collecti
 	allowed, err := p.evaluate(ctx, s, rule)
 	if err != nil {
 		logs.Error("failed to evaluate access rule", logs.Err(err))
-		return errors.Internal
+		return errors.Internal("unable to evaluate access permission")
 	}
 
 	if !allowed {
-		return errors.Unauthorized
+		return errors.Unauthorized("not authorized")
 	}
 
 	return nil
@@ -150,7 +150,7 @@ func (p *PolicyHandler) assetActionAllowedOnObject(ctx context.Context, collecti
 
 func (p *PolicyHandler) CreateCollection(ctx context.Context, collection *Collection) error {
 	if !p.isAdmin(ctx) {
-		return errors.Forbidden
+		return errors.Forbidden("access forbidden")
 	}
 	return p.BaseHandler.CreateCollection(ctx, collection)
 }
@@ -158,11 +158,11 @@ func (p *PolicyHandler) CreateCollection(ctx context.Context, collection *Collec
 func (p *PolicyHandler) GetCollection(ctx context.Context, id string) (*Collection, error) {
 	user := auth.Get(ctx)
 	if user == nil {
-		return nil, errors.Forbidden
+		return nil, errors.Forbidden("no user provided")
 	}
 
-	if user.Name == "" || user.Name != "admin" && user.Access != "client" {
-		return nil, errors.Forbidden
+	if user.Name != "admin" && user.Access != "client" {
+		return nil, errors.Forbidden("Resource access refused", errors.Details{Key: "user", Value: user})
 	}
 
 	return p.BaseHandler.GetCollection(ctx, id)
@@ -171,11 +171,11 @@ func (p *PolicyHandler) GetCollection(ctx context.Context, id string) (*Collecti
 func (p *PolicyHandler) ListCollections(ctx context.Context) ([]*Collection, error) {
 	user := auth.Get(ctx)
 	if user == nil {
-		return nil, errors.Forbidden
+		return nil, errors.Forbidden("no user provided")
 	}
 
-	if user.Name == "" || user.Name != "admin" && user.Access != "client" {
-		return nil, errors.Forbidden
+	if user.Name != "admin" && user.Access != "client" {
+		return nil, errors.Forbidden("Resource access refused", errors.Details{Key: "user", Value: user})
 	}
 
 	return p.BaseHandler.ListCollections(ctx)
@@ -183,7 +183,7 @@ func (p *PolicyHandler) ListCollections(ctx context.Context) ([]*Collection, err
 
 func (p *PolicyHandler) DeleteCollection(ctx context.Context, id string) error {
 	if !p.isAdmin(ctx) {
-		return errors.Forbidden
+		return errors.Forbidden("access forbidden")
 	}
 	return p.BaseHandler.DeleteCollection(ctx, id)
 }
@@ -191,13 +191,14 @@ func (p *PolicyHandler) DeleteCollection(ctx context.Context, id string) error {
 func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object *Object, accessSecurityRules *PathAccessRules, indexes []*se.TextIndex, opts PutOptions) (string, error) {
 	user := auth.Get(ctx)
 	if user == nil {
-		return "", errors.Forbidden
+		return "", errors.Forbidden("access forbidden")
 	}
 
 	// if no security rules are provided, collection security rules will be used
 	if accessSecurityRules == nil {
 		collectionInfo, err := p.next.GetCollection(ctx, collection)
 		if err != nil {
+			logs.Error("could not get collection", logs.Err(err))
 			return "", err
 		}
 		accessSecurityRules = collectionInfo.DefaultAccessSecurityRules
@@ -244,6 +245,7 @@ func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object
 	docRules.Delete = append(docRules.Delete, deletePerm)
 
 	object.Header.CreatedBy = user.Name
+
 	return p.BaseHandler.PutObject(ctx, collection, object, accessSecurityRules, indexes, opts)
 }
 
@@ -335,7 +337,7 @@ func (p *PolicyHandler) ListObjects(ctx context.Context, collection string, opts
 
 			allowed, err := p.evaluate(ctx, s, rule)
 			if err != nil {
-				return nil, errors.Internal
+				return nil, errors.Internal("unable to evaluate access permission")
 			}
 
 			if !allowed {
@@ -350,10 +352,6 @@ func (p *PolicyHandler) ListObjects(ctx context.Context, collection string, opts
 }
 
 func (p *PolicyHandler) SearchObjects(ctx context.Context, collection string, query *se.SearchQuery) (*Cursor, error) {
-	if collection == "" || query == nil {
-		return nil, errors.BadInput
-	}
-
 	cursor, err := p.BaseHandler.SearchObjects(ctx, collection, query)
 	if err != nil {
 		return nil, err
@@ -385,7 +383,7 @@ func (p *PolicyHandler) SearchObjects(ctx context.Context, collection string, qu
 			allowed, err := p.evaluate(ctx, s, rule)
 			if err != nil {
 				logs.Error("failed to evaluate access rule", logs.Err(err))
-				return nil, errors.Internal
+				return nil, errors.Internal("unable to evaluate access permission")
 			}
 
 			if !allowed {

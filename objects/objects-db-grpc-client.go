@@ -2,7 +2,7 @@ package objects
 
 import (
 	"context"
-	"github.com/omecodes/common/errors"
+	"github.com/omecodes/errors"
 	se "github.com/omecodes/store/search-engine"
 )
 
@@ -174,5 +174,5 @@ func (d *dbClient) Search(ctx context.Context, collection string, query *se.Sear
 }
 
 func (d *dbClient) Clear() error {
-	return errors.Forbidden
+	return errors.Unauthorized("this operation is not authorize")
 }

@@ -2,7 +2,7 @@ package objects
 
 import (
 	"context"
-	"github.com/omecodes/common/errors"
+	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
 )
 
@@ -18,13 +18,13 @@ func (h *aclHandler) PutRules(ctx context.Context, request *PutRulesRequest) (*P
 	store := GetACLStore(ctx)
 	if store == nil {
 		logs.Error("ACL Service • no store associated with context")
-		return nil, errors.Internal
+		return nil, errors.Internal("missing ACL store")
 	}
 
 	err := store.SaveRules(ctx, request.Collection, request.ObjectId, request.Rules)
 	if err != nil {
 		logs.Error("ACL Service • could not save rules", logs.Err(err))
-		return nil, errors.Internal
+		return nil, errors.Internal("could not save ACL rules")
 	}
 
 	return &PutRulesResponse{}, nil
@@ -34,7 +34,7 @@ func (h *aclHandler) GetRules(ctx context.Context, request *GetRulesRequest) (*G
 	store := GetACLStore(ctx)
 	if store == nil {
 		logs.Error("ACL Service • no store associated with context")
-		return nil, errors.Internal
+		return nil, errors.Internal("missing ACL store")
 	}
 
 	rules, err := store.GetRules(ctx, request.Collection, request.ObjectId)
@@ -45,7 +45,7 @@ func (h *aclHandler) GetRulesForPath(ctx context.Context, request *GetRulesForPa
 	store := GetACLStore(ctx)
 	if store == nil {
 		logs.Error("ACL Service • no store associated with context")
-		return nil, errors.Internal
+		return nil, errors.Internal("missing ACl store")
 	}
 
 	rsp := &GetRulesForPathResponse{
@@ -69,7 +69,7 @@ func (h *aclHandler) DeleteRules(ctx context.Context, request *DeleteRulesReques
 	store := GetACLStore(ctx)
 	if store == nil {
 		logs.Error("ACL Service • no store associated with context")
-		return nil, errors.Internal
+		return nil, errors.Internal("missing ACL store")
 	}
 
 	err := store.Delete(ctx, request.Collection, request.ObjectId)
@@ -80,7 +80,7 @@ func (h *aclHandler) DeleteRulesForPath(ctx context.Context, request *DeleteRule
 	store := GetACLStore(ctx)
 	if store == nil {
 		logs.Error("ACL Service • no store associated with context")
-		return nil, errors.Internal
+		return nil, errors.Internal("missing ACL store")
 	}
 
 	rules, err := store.GetRules(ctx, request.Collection, request.ObjectId)
