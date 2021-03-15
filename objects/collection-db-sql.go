@@ -13,6 +13,7 @@ import (
 	se "github.com/omecodes/store/search-engine"
 	"github.com/tidwall/gjson"
 	"io"
+	"strconv"
 	"strings"
 )
 
@@ -580,6 +581,10 @@ func sqlJSONSetValue(value string) string {
 	if err != nil {
 		val := strings.Replace(value, "'", `\'`, -1)
 		return "'" + val + "'"
+	}
+
+	if _, err := strconv.Atoi(value); err == nil {
+		return value
 	}
 
 	val := strings.Replace(value, "'", `\'`, -1)
