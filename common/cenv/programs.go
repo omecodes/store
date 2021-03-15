@@ -2,29 +2,19 @@ package cenv
 
 import (
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/interpreter/functions"
 	"github.com/omecodes/libome/logs"
-	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	_ "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"strings"
 )
 
 var aclEnv *cel.Env
 
-func acl() (*cel.Env, error) {
+func acl(opts ...cel.EnvOption) (*cel.Env, error) {
 	if aclEnv == nil {
 		var err error
 		aclEnv, err = cel.NewEnv(
-			cel.Declarations(
-				decls.NewVar("user", decls.NewMapType(decls.String, decls.Dyn)),
-				decls.NewVar("object", decls.NewMapType(decls.String, decls.Dyn)),
-				decls.NewFunction("now",
-					decls.NewOverload(
-						"now_uint",
-						[]*expr.Type{}, decls.Uint,
-					),
-				),
-			),
+			opts...,
 		)
 		if err != nil {
 			return nil, err
@@ -33,8 +23,8 @@ func acl() (*cel.Env, error) {
 	return aclEnv, nil
 }
 
-func GetProgram(expression string) (cel.Program, error) {
-	env, err := acl()
+func GetProgram(expression string, envOpts ...cel.EnvOption) (cel.Program, error) {
+	env, err := acl(envOpts...)
 	if err != nil {
 		return nil, err
 	}

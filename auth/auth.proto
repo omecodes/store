@@ -2,6 +2,12 @@ syntax = "proto3";
 
 option go_package = "github.com/omecodes/store/auth/auth.proto;auth";
 
+enum ClientType {
+  web = 0;
+  mobile_ios = 1;
+  mobile_android = 2;
+}
+
 enum AllowedTo {
   read = 0;
   write = 1;
@@ -15,4 +21,22 @@ message Permission {
   string description = 3;
   string rule = 4;
   repeated string related_users = 5;
+}
+
+message ClientApp {
+  string key = 1;
+  string secret = 2;
+  ClientType type = 3;
+  map<string, string> info = 4;
+}
+
+message User {
+  string from = 1;
+  string name = 2;
+  string group = 3;
+}
+
+message UserCredentials {
+  string username = 1;
+  string password = 2;
 }

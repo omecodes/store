@@ -3,10 +3,13 @@ package objects
 import (
 	"context"
 	"fmt"
-	"github.com/omecodes/libome/logs"
+	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/checker/decls"
+	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"strings"
 
 	"github.com/omecodes/errors"
+	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/common/cenv"
 	se "github.com/omecodes/store/search-engine"
@@ -27,6 +30,7 @@ func (p *PolicyHandler) isAdmin(ctx context.Context) bool {
 type celParams struct {
 	auth *auth.User
 	data *Header
+	app  *auth.ClientApp
 }
 
 func (p *PolicyHandler) evaluate(ctx context.Context, state *celParams, rule string) (bool, error) {
@@ -38,23 +42,28 @@ func (p *PolicyHandler) evaluate(ctx context.Context, state *celParams, rule str
 		return true, nil
 	}
 
-	prg, err := cenv.GetProgram(rule)
+	prg, err := cenv.GetProgram(rule,
+		cel.Declarations(
+			decls.NewVar("user", decls.NewObjectType("User")),
+			decls.NewVar("app", decls.NewObjectType("ClientApp")),
+			decls.NewVar("data", decls.NewObjectType("Header")),
+			decls.NewFunction("now",
+				decls.NewOverload(
+					"now_uint",
+					[]*expr.Type{}, decls.Uint,
+				),
+			),
+		),
+		cel.Types(&auth.User{}, &auth.ClientApp{}, &Header{}),
+	)
 	if err != nil {
 		return false, err
 	}
 
 	vars := map[string]interface{}{
-		"user": map[string]interface{}{
-			"name":   state.auth.Name,
-			"access": state.auth.Access,
-			"group":  state.auth.Group,
-		},
-		"object": map[string]interface{}{
-			"id":         state.data.Id,
-			"created_by": state.data.CreatedBy,
-			"created_at": state.data.CreatedAt,
-			"size":       state.data.Size,
-		},
+		"user": state.auth,
+		"app":  state.app,
+		"data": state.data,
 	}
 
 	out, details, err := prg.Eval(vars)
@@ -128,6 +137,7 @@ func (p *PolicyHandler) assetActionAllowedOnObject(ctx context.Context, collecti
 	s := &celParams{
 		data: header,
 		auth: authCEL,
+		app:  auth.App(ctx),
 	}
 
 	rule, err := p.getAccessRule(ctx, collection, objectID, action, path)
@@ -161,7 +171,12 @@ func (p *PolicyHandler) GetCollection(ctx context.Context, id string) (*Collecti
 		return nil, errors.Forbidden("no user provided")
 	}
 
-	if user.Name != "admin" && user.Access != "client" {
+	app := auth.App(ctx)
+	if user.Name != "admin" && app == nil {
+		return nil, errors.Forbidden("collections are only readable within a registered application")
+	}
+
+	if user.Name == "" {
 		return nil, errors.Forbidden("Resource access refused", errors.Details{Key: "user", Value: user})
 	}
 
@@ -174,7 +189,12 @@ func (p *PolicyHandler) ListCollections(ctx context.Context) ([]*Collection, err
 		return nil, errors.Forbidden("no user provided")
 	}
 
-	if user.Name != "admin" && user.Access != "client" {
+	app := auth.App(ctx)
+	if user.Name != "admin" && app == nil {
+		return nil, errors.Forbidden("collections are only readable within a registered application")
+	}
+
+	if user.Name == "" {
 		return nil, errors.Forbidden("Resource access refused", errors.Details{Key: "user", Value: user})
 	}
 
@@ -215,7 +235,7 @@ func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object
 		Name:        "default-readers",
 		Label:       "Readers",
 		Description: "In addition of creator, admin and workers are allowed to read the object",
-		Rule:        "user.access=='worker' || user.name=='admin'",
+		Rule:        "user.name=='admin'",
 	}
 	if len(docRules.Read) == 0 {
 		readPerm.Rule = creatorRule + " || user.name=='worker' || user.name=='admin'"
@@ -226,7 +246,7 @@ func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object
 		Name:        "default-readers",
 		Label:       "Readers",
 		Description: "In addition of creator, admin and workers are allowed to edit the object",
-		Rule:        "user.access=='worker' || user.name=='admin'",
+		Rule:        "user.name=='admin'",
 	}
 	if len(docRules.Write) == 0 {
 		writePerm.Rule = creatorRule + " || user.access=='worker' || user.name=='admin'"
@@ -237,10 +257,10 @@ func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object
 		Name:        "default-readers",
 		Label:       "Readers",
 		Description: "In addition of creator, admin and workers are allowed to write the object",
-		Rule:        "user.access=='worker' || user.name=='admin'",
+		Rule:        "user.name=='admin'",
 	}
 	if len(docRules.Delete) == 0 {
-		deletePerm.Rule = creatorRule + " || user.access=='worker' || user.name=='admin'"
+		deletePerm.Rule = creatorRule + " || user.name=='admin'"
 	}
 	docRules.Delete = append(docRules.Delete, deletePerm)
 

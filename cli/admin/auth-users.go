@@ -3,18 +3,19 @@ package admin
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/omecodes/libome/crypt"
-	"github.com/omecodes/store/auth"
+	"github.com/omecodes/libome/logs"
 	"io"
 	"os"
 
 	"github.com/spf13/cobra"
 
 	"github.com/omecodes/common/utils/prompt"
+	"github.com/omecodes/libome/crypt"
+	"github.com/omecodes/store/auth"
 )
 
 func init() {
-	flags := saveAccessCMD.PersistentFlags()
+	flags := saveUserCMD.PersistentFlags()
 	flags.StringVar(&input, "in", "", "Input file containing sequence of JSON encoded access")
 	flags.StringVar(&server, "server", "", "Server API location")
 	flags.StringVar(&password, "password", "", "admin password")
@@ -27,7 +28,7 @@ func init() {
 		os.Exit(-1)
 	}
 
-	flags = getAccessesCMD.PersistentFlags()
+	flags = getUsersCMD.PersistentFlags()
 	flags.StringVar(&server, "server", "", "Server API location")
 	flags.StringVar(&password, "password", "", "admin password")
 	flags.StringVar(&output, "out", "", "Output file")
@@ -36,7 +37,7 @@ func init() {
 		os.Exit(-1)
 	}
 
-	flags = deleteAccessesCMD.PersistentFlags()
+	flags = deleteUserCMD.PersistentFlags()
 	flags.StringVar(&server, "server", "", "Server API location")
 	flags.StringVar(&password, "password", "", "admin password")
 	flags.StringArrayVar(&ids, "id", nil, "Access ID")
@@ -49,22 +50,22 @@ func init() {
 		os.Exit(-1)
 	}
 
-	accessCMD.AddCommand(saveAccessCMD)
-	accessCMD.AddCommand(getAccessesCMD)
-	accessCMD.AddCommand(deleteAccessesCMD)
+	usersCMD.AddCommand(saveUserCMD)
+	usersCMD.AddCommand(getUsersCMD)
+	usersCMD.AddCommand(deleteUserCMD)
 }
 
-var accessCMD = &cobra.Command{
-	Use:   "access",
+var usersCMD = &cobra.Command{
+	Use:   "users",
 	Short: "Manage store accesses",
 	Run: func(cmd *cobra.Command, args []string) {
 		_ = cmd.Help()
 	},
 }
 
-var saveAccessCMD = &cobra.Command{
-	Use:   "set",
-	Short: "save accesses",
+var saveUserCMD = &cobra.Command{
+	Use:   "new",
+	Short: "Save user credentials",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		if password == "" {
@@ -87,21 +88,22 @@ var saveAccessCMD = &cobra.Command{
 
 		decoder := json.NewDecoder(file)
 		for {
-			var access *auth.ClientApp
-			err = decoder.Decode(&access)
+			var userCredentials *auth.UserCredentials
+			err = decoder.Decode(&userCredentials)
 			if err == io.EOF {
 				return
 			}
 
-			if access.Secret == "" {
-				access.Secret, err = crypt.GenerateVerificationCode(16)
+			if userCredentials.Password == "" {
+				userCredentials.Password, err = crypt.GenerateVerificationCode(16)
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(-1)
 				}
+				logs.Info("Generated password for user", logs.Details("user", userCredentials.Username), logs.Details("password", userCredentials.Password))
 			}
 
-			err = putAccess(password, access)
+			err = putUser(password, userCredentials)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -109,7 +111,7 @@ var saveAccessCMD = &cobra.Command{
 	},
 }
 
-var getAccessesCMD = &cobra.Command{
+var getUsersCMD = &cobra.Command{
 	Use:   "get",
 	Short: "Get all accesses",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -130,7 +132,7 @@ var getAccessesCMD = &cobra.Command{
 	},
 }
 
-var deleteAccessesCMD = &cobra.Command{
+var deleteUserCMD = &cobra.Command{
 	Use:   "del",
 	Short: "Delete accesses",
 	Run: func(cmd *cobra.Command, args []string) {

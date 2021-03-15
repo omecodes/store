@@ -18,6 +18,7 @@ func init() {
 
 	authCMD.AddCommand(genAdminAuthCMD)
 	authCMD.AddCommand(accessCMD)
+	authCMD.AddCommand(usersCMD)
 }
 
 var authCMD = &cobra.Command{
@@ -58,4 +59,11 @@ var genAdminAuthCMD = &cobra.Command{
 			os.Exit(-1)
 		}
 	},
+}
+
+var addUserCMD = &cobra.Command{
+	Use: "user",
+	Short: "Manage" +
+		"",
+	Run: func(cmd *cobra.Command, args []string) {},
 }

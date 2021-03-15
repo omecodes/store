@@ -94,6 +94,7 @@ github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7
 github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5/go.mod h1:a2zkGnVExMxdzMo3M0Hi/3sEU+cWnZpSni0O6/Yb/P0=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
+github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20191125211704-12ad95a8df72/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
@@ -337,6 +338,8 @@ github.com/omecodes/errors v0.0.0-20210307082057-dfe6f559d09c/go.mod h1:x9Ol4wDe
 github.com/omecodes/libome v0.0.0-20201128214815-2b3f03af9fa6/go.mod h1:zWK7ZcUVGB+F7XO5fSkwzypxtHjMM05UAPcwpnd+BcI=
 github.com/omecodes/libome v0.0.0-20210118230551-aff816f21c74 h1:emBVcWXLPmljjZc4Z6Lio5x5xEWnOOx/kxJllm8Ce78=
 github.com/omecodes/libome v0.0.0-20210118230551-aff816f21c74/go.mod h1:KDrBixAwkiu9Ooe/f0MRAbiD5GgQgOwDpCVm7sX2F84=
+github.com/omecodes/libome v0.0.0-20210309220055-6f9c1b46bdd4 h1:jgN2m9h2xrSlFgSX9czRhtSlrXDZCg61kngOj5Liflk=
+github.com/omecodes/libome v0.0.0-20210309220055-6f9c1b46bdd4/go.mod h1:zAlJkKO8iKWe12wBKSwIl2SYf+O9rJEcWxfaKLgS/tg=
 github.com/omecodes/service v0.0.0-20210119200004-85aec6812c6b h1:QfZ3p4jFDyug4WveXiZRm/JdkpwLUgtZ7TL7JCQxaeY=
 github.com/omecodes/service v0.0.0-20210119200004-85aec6812c6b/go.mod h1:jmpMwtLM4cQIsRFKxfnhbl+kew5VRUXc96nxELHQ2Pc=
 github.com/omecodes/service v0.0.0-20210225153927-688cff63b9a1 h1:ZlrKlExk40ZM5y3fkZ3wXv9wSMWQ3sSa4s+cfRNkIc4=
@@ -740,6 +743,7 @@ google.golang.org/grpc v1.33.2/go.mod h1:JMHMWHQWaTccqQQlmk3MJZS+GWXOdAesneDmEnv
 google.golang.org/grpc v1.34.0/go.mod h1:WotjhfgOW/POjDeRt8vscBtXq+2VjORFy659qA51WJ8=
 google.golang.org/grpc v1.35.0 h1:TwIQcH3es+MojMVojxxfQ3l3OF2KzlRxML2xZq0kRo8=
 google.golang.org/grpc v1.35.0/go.mod h1:qjiiYl8FncCW8feJPdyg3v6XW24KsRHe+dy9BAGRRjU=
+google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.0.0 h1:lQ+dE99pFsb8osbJB3oRfE5eW4Hx6a/lZQr8Jh+eoT4=
 google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.0.0/go.mod h1:6Kw0yEErY5E/yWrBtf03jp27GLLJujG4z/JK95pnjjw=
 google.golang.org/grpc/examples v0.0.0-20201130222003-4a0125ac5808/go.mod h1:Ly7ZA/ARzg8fnPU9TyZIxoz33sEUuWX7txiqs8lPTgE=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=

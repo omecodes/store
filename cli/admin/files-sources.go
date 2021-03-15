@@ -13,7 +13,7 @@ import (
 func init() {
 	flags := createFileSourceCMD.PersistentFlags()
 	flags.StringVar(&input, "in", "", "Input file containing sequence of JSON encoded collection")
-	flags.StringVar(&server, "server", "", "Server address")
+	flags.StringVar(&server, "server", "", "Server API location")
 	flags.StringVar(&password, "password", "", "Admin password")
 	if err := cobra.MarkFlagRequired(flags, "server"); err != nil {
 		fmt.Println(err)
@@ -25,7 +25,7 @@ func init() {
 	}
 
 	flags = getFileSourcesCMD.PersistentFlags()
-	flags.StringVar(&server, "server", "", "Server address")
+	flags.StringVar(&server, "server", "", "Server API location")
 	flags.StringVar(&password, "password", "", "Admin password")
 	if err := cobra.MarkFlagRequired(flags, "server"); err != nil {
 		fmt.Println(err)
@@ -33,7 +33,7 @@ func init() {
 	}
 
 	flags = deleteFileSourcesCMD.PersistentFlags()
-	flags.StringVar(&server, "server", "", "Server address")
+	flags.StringVar(&server, "server", "", "Server API location")
 	flags.StringVar(&password, "password", "", "admin password")
 	flags.StringArrayVar(&ids, "id", nil, "source id")
 	if err := cobra.MarkFlagRequired(flags, "server"); err != nil {

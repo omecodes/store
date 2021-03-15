@@ -60,18 +60,26 @@ func getContextWithoutSourceManager() context.Context {
 	return context.Background()
 }
 
-func getContextWithUserFromClient(user string) context.Context {
+func getContextWithUser(user string) context.Context {
 	ctx := getContext()
-	ctx = auth.ContextWithAuh(ctx, &auth.User{Name: user, Access: "client"})
+	ctx = auth.ContextWithUser(ctx, &auth.User{Name: user})
 	return ctx
 }
 
+func contextWithApp(parent context.Context, name string, clientType auth.ClientType) context.Context {
+	return auth.ContextWithApp(parent, &auth.ClientApp{
+		Key:    name,
+		Secret: "",
+		Type:   clientType,
+	})
+}
+
 func adminContext() context.Context {
-	return getContextWithUserFromClient("admin")
+	return getContextWithUser("admin")
 }
 
 func getContextWithUserFromClientAndNoSourceManager(user string) context.Context {
-	return auth.ContextWithAuh(getContextWithoutSourceManager(), &auth.User{Name: user, Access: "client"})
+	return auth.ContextWithUser(getContextWithoutSourceManager(), &auth.User{Name: user})
 }
 
 func Test_initializeDatabase(t *testing.T) {
@@ -148,7 +156,7 @@ func TestHandler_CreateSource4(t *testing.T) {
 			URI:         "files://" + workingDir,
 			ExpireTime:  -1,
 		}
-		userContext := getContextWithUserFromClient("user")
+		userContext := getContextWithUser("user")
 		err := handler.CreateSource(userContext, mainSource)
 		So(err, ShouldNotBeNil)
 	})
@@ -200,7 +208,7 @@ func TestHandler_CreateSource5(t *testing.T) {
 				},
 			},
 		}
-		userContext := getContextWithUserFromClient("admin")
+		userContext := getContextWithUser("admin")
 		err := handler.CreateSource(userContext, mainSource)
 		So(err, ShouldBeNil)
 	})
@@ -265,7 +273,7 @@ func TestHandler_GetSource3(t *testing.T) {
 		router := DefaultFilesRouter()
 		handler := router.GetHandler()
 
-		source, err := handler.GetSource(getContextWithUserFromClient("ome"), "main")
+		source, err := handler.GetSource(getContextWithUser("ome"), "main")
 		So(err, ShouldNotBeNil)
 		So(source, ShouldBeNil)
 	})
@@ -322,7 +330,7 @@ func TestHandler_CreateDir3(t *testing.T) {
 		router := DefaultFilesRouter()
 		handler := router.GetHandler()
 
-		userContext := getContextWithUserFromClient("ome")
+		userContext := getContextWithUser("ome")
 		err := handler.CreateDir(userContext, "main", "user1")
 		So(err, ShouldNotBeNil)
 	})
@@ -434,7 +442,7 @@ func TestHandler_ListSource2(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(sources, ShouldHaveLength, 1)
 
-		sources, err = handler.ListSources(getContextWithUserFromClient("user1"))
+		sources, err = handler.ListSources(getContextWithUser("user1"))
 		So(err, ShouldBeNil)
 		So(sources, ShouldHaveLength, 1)
 	})
@@ -448,7 +456,7 @@ func TestHandler_CreateDir6(t *testing.T) {
 		router := DefaultFilesRouter()
 		handler := router.GetHandler()
 
-		user1Context := getContextWithUserFromClient("user1")
+		user1Context := getContextWithUser("user1")
 		err := handler.CreateDir(user1Context, "user1-source", "Documents")
 		So(err, ShouldBeNil)
 	})
@@ -462,7 +470,7 @@ func TestHandler_CreateDir7(t *testing.T) {
 		router := DefaultFilesRouter()
 		handler := router.GetHandler()
 
-		user1Context := getContextWithUserFromClient("user1")
+		user1Context := getContextWithUser("user1")
 		err := handler.CreateDir(user1Context, "user1-source", "Documents/photo")
 		So(err, ShouldBeNil)
 	})
@@ -560,7 +568,7 @@ func TestHandler_WriteFileContent3(t *testing.T) {
 
 		handler := DefaultFilesRouter().GetHandler()
 
-		userContext := getContextWithUserFromClient("user1")
+		userContext := getContextWithUser("user1")
 		err := handler.WriteFileContent(userContext, "main", "filename", bytes.NewBufferString("a"), 1, WriteOptions{})
 		So(err, ShouldNotBeNil)
 	})
@@ -589,7 +597,7 @@ func TestHandler_WriteFileContent5(t *testing.T) {
 		err := handler.WriteFileContent(adminContext(), "main", "file.txt", bytes.NewBufferString("a"), 1, WriteOptions{})
 		So(err, ShouldBeNil)
 
-		err = handler.WriteFileContent(getContextWithUserFromClient("user1"), "user1-source", "file.txt", bytes.NewBufferString("a"), 1, WriteOptions{})
+		err = handler.WriteFileContent(getContextWithUser("user1"), "user1-source", "file.txt", bytes.NewBufferString("a"), 1, WriteOptions{})
 		So(err, ShouldBeNil)
 	})
 }
@@ -606,7 +614,7 @@ func TestHandler_ListSource3(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(sources, ShouldHaveLength, 1)
 
-		sources, err = handler.ListSources(getContextWithUserFromClient("user1"))
+		sources, err = handler.ListSources(getContextWithUser("user1"))
 		So(err, ShouldBeNil)
 		So(sources, ShouldHaveLength, 1)
 	})
@@ -643,7 +651,7 @@ func TestHandler_ListDir3(t *testing.T) {
 		initDir()
 
 		handler := DefaultFilesRouter().GetHandler()
-		_, err := handler.ListDir(getContextWithUserFromClient("user1"), "main", "/", ListDirOptions{})
+		_, err := handler.ListDir(getContextWithUser("user1"), "main", "/", ListDirOptions{})
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -654,7 +662,7 @@ func TestHandler_ListDir4(t *testing.T) {
 		initDir()
 
 		handler := DefaultFilesRouter().GetHandler()
-		_, err := handler.ListDir(getContextWithUserFromClient("user1"), "user1-source", "/", ListDirOptions{})
+		_, err := handler.ListDir(getContextWithUser("user1"), "user1-source", "/", ListDirOptions{})
 		So(err, ShouldBeNil)
 	})
 }
@@ -699,7 +707,7 @@ func TestHandler_DeleteSource4(t *testing.T) {
 		initDir()
 
 		handler := DefaultFilesRouter().GetHandler()
-		err := handler.DeleteSource(getContextWithUserFromClient("user-1"), "main")
+		err := handler.DeleteSource(getContextWithUser("user-1"), "main")
 		So(err, ShouldNotBeNil)
 	})
 }

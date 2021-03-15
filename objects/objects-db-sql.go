@@ -54,7 +54,7 @@ func (ms *sqlStore) ResolveCollection(ctx context.Context, name string) (Collect
 		}
 
 		tableName := strcase.ToSnake(name)
-		col, err = NewSQLCollection(collection, ms.db, ms.dialect, tableName)
+		col, err = NewSQLCollection(collection, ms.db, ms.dialect, ms.tablePrefix+"_"+tableName)
 		if err != nil {
 			logs.Error("could not create collection", logs.Err(err))
 			return nil, errors.Internal("failed to load collection manager")

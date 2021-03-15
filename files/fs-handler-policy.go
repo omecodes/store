@@ -2,6 +2,10 @@ package files
 
 import (
 	"context"
+	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/checker/decls"
+	"github.com/omecodes/store/objects"
+	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"io"
 	"net/url"
 	"path"
@@ -27,19 +31,29 @@ func (h *PolicyHandler) assertPermissionIsGranted(ctx context.Context, rules ...
 	}
 	fullExpression := strings.Join(formattedRules, " || ")
 
-	prg, err := cenv.GetProgram(fullExpression)
+	prg, err := cenv.GetProgram(fullExpression,
+		cel.Declarations(
+			decls.NewVar("user", decls.NewObjectType("User")),
+			decls.NewVar("app", decls.NewObjectType("ClientApp")),
+			decls.NewVar("data", decls.NewObjectType("Header")),
+			decls.NewFunction("now",
+				decls.NewOverload(
+					"now_uint",
+					[]*expr.Type{}, decls.Uint,
+				),
+			),
+		),
+		cel.Types(&auth.User{}, &auth.ClientApp{}, &objects.Header{}),
+	)
 	if err != nil {
 		return errors.Internal("context missing access rule evaluator")
 	}
 
 	vars := map[string]interface{}{}
+
 	user := auth.Get(ctx)
 	if user != nil {
-		vars["user"] = map[string]interface{}{
-			"name":   user.Name,
-			"access": user.Access,
-			"group":  user.Group,
-		}
+		vars["user"] = user
 	}
 
 	out, details, err := prg.Eval(vars)

@@ -6,12 +6,17 @@ import (
 )
 
 type ctxUser struct{}
+type ctxApp struct{}
 type ctxJWt struct{}
 type ctxCredentialsManager struct{}
 type ctxAuthenticationProviders struct{}
 
-func ContextWithAuh(parent context.Context, user *User) context.Context {
+func ContextWithUser(parent context.Context, user *User) context.Context {
 	return context.WithValue(parent, ctxUser{}, user)
+}
+
+func ContextWithApp(parent context.Context, clientApp *ClientApp) context.Context {
+	return context.WithValue(parent, ctxApp{}, clientApp)
 }
 
 func Get(ctx context.Context) *User {
@@ -20,6 +25,14 @@ func Get(ctx context.Context) *User {
 		return nil
 	}
 	return o.(*User)
+}
+
+func App(ctx context.Context) *ClientApp {
+	o := ctx.Value(ctxApp{})
+	if o == nil {
+		return nil
+	}
+	return o.(*ClientApp)
 }
 
 func JWT(ctx context.Context) *ome.JWT {

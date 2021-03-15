@@ -385,6 +385,13 @@ func (s *Server) httpRouter() http.Handler {
 	r.PathPrefix("/api/auth/").Subrouter().Name("ManageAuthentication").
 		Handler(http.StripPrefix("/api/auth", authRouter))
 
+	r.Handle("/login", auth.UserSessionHandler(
+		auth.Middleware(
+			auth.MiddlewareWithCredentials(s.credentialsManager),
+			auth.MiddlewareWithProviderManager(s.authenticationProviders),
+		),
+	)).Methods(http.MethodPost)
+
 	accountsRouter := accounts.MuxRouter(
 		accounts.Middleware(
 			accounts.MiddlewareWithAccountManager(s.accountsManager),

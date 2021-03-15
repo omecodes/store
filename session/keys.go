@@ -2,11 +2,13 @@ package session
 
 const (
 	ClientAppSession = "client-app"
-	UserSession      = "auth"
+	UserSession      = "user-session"
 )
 
 const (
-	KeyAccessType = ""
-	KeyAccessInfo = ""
-	KeyUsername   = ""
+	KeyAccessType = "type"
+	KeyAccessInfo = "info"
+	KeyAccessKey  = "key"
+
+	KeyUsername = ""
 )

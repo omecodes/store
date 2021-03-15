@@ -35,7 +35,7 @@ var (
 							Name:        "public",
 							Label:       "Readable",
 							Description: "Readable by everybody",
-							Rule:        "user.name==object.created_by && user.access=='client'",
+							Rule:        "user.name==data.created_by",
 						},
 					},
 					Write: []*auth.Permission{
@@ -43,7 +43,7 @@ var (
 							Name:        "restricted-write",
 							Label:       "Restricted Write",
 							Description: "Only creator can write",
-							Rule:        "user.name==object.created_by && user.access=='client'",
+							Rule:        "user.name==data.created_by",
 						},
 					},
 					Delete: []*auth.Permission{
@@ -51,7 +51,7 @@ var (
 							Name:        "restricted-delete",
 							Label:       "Restricted Delete",
 							Description: "Only creator can delete",
-							Rule:        "user.name==object.created_by && user.access=='client'",
+							Rule:        "user.name==data.created_by",
 						},
 					},
 				},
@@ -76,7 +76,7 @@ var (
 							Name:        "public",
 							Label:       "Readable",
 							Description: "Readable by everybody",
-							Rule:        "user.name==object.created_by && user.access=='client'",
+							Rule:        "user.name==data.created_by && app.key!=''",
 						},
 					},
 					Write: []*auth.Permission{
@@ -84,7 +84,7 @@ var (
 							Name:        "restricted-write",
 							Label:       "Restricted Write",
 							Description: "Only creator can write",
-							Rule:        "user.name==object.created_by && user.access=='client'",
+							Rule:        "user.name==data.created_by && app.key!=''",
 						},
 					},
 					Delete: []*auth.Permission{
@@ -92,7 +92,7 @@ var (
 							Name:        "restricted-delete",
 							Label:       "Restricted Delete",
 							Description: "Only creator can delete",
-							Rule:        "user.name==object.created_by && user.access=='client'",
+							Rule:        "user.name==data.created_by && app.key!=''",
 						},
 					},
 				},
@@ -117,7 +117,7 @@ var (
 							Name:        "public",
 							Label:       "Readable",
 							Description: "Readable by everybody",
-							Rule:        "user.name==object.created_by && user.access=='client'",
+							Rule:        "user.name==data.created_by && app.key!=''",
 						},
 					},
 					Write: []*auth.Permission{
@@ -125,7 +125,7 @@ var (
 							Name:        "restricted-write",
 							Label:       "Restricted Write",
 							Description: "Only creator can write",
-							Rule:        "user.name==object.created_by && user.access=='client'",
+							Rule:        "user.name==data.created_by && app.key!=''",
 						},
 					},
 					Delete: []*auth.Permission{
@@ -133,7 +133,7 @@ var (
 							Name:        "restricted-delete",
 							Label:       "Restricted Delete",
 							Description: "Only creator can delete",
-							Rule:        "user.name==object.created_by && user.access=='client'",
+							Rule:        "user.name==data.created_by && app.key!=''",
 						},
 					},
 				},
@@ -158,13 +158,17 @@ func getContextWithNoSettings() context.Context {
 }
 
 func userContext(ctx context.Context, name string) context.Context {
-	return auth.ContextWithAuh(ctx, &auth.User{Name: name})
+	return auth.ContextWithUser(ctx, &auth.User{Name: name})
 }
 
 func userContextInRegisteredClient(ctx context.Context, name string) context.Context {
 	// this create a context as if it was created by the authentication interceptor when
 	// receiving a request from a user by the means of a registered app client
-	return auth.ContextWithAuh(ctx, &auth.User{Name: name, Access: "client"})
+	ctx = auth.ContextWithUser(ctx, &auth.User{Name: name})
+	return auth.ContextWithApp(ctx, &auth.ClientApp{
+		Key:    "some-key",
+		Secret: "some-secret",
+	})
 }
 
 func initDB() {
@@ -231,7 +235,7 @@ func TestHandler_CreateCollection1(t *testing.T) {
 								Name:        "restricted-write",
 								Label:       "Restricted Write",
 								Description: "Only creator can write",
-								Rule:        "user.name==object.created_by",
+								Rule:        "user.name==data.created_by",
 							},
 						},
 						Delete: []*auth.Permission{
@@ -239,7 +243,7 @@ func TestHandler_CreateCollection1(t *testing.T) {
 								Name:        "restricted-delete",
 								Label:       "Restricted Delete",
 								Description: "Only creator can delete",
-								Rule:        "user.name==object.created_by",
+								Rule:        "user.name==data.created_by",
 							},
 						},
 					},
@@ -251,13 +255,11 @@ func TestHandler_CreateCollection1(t *testing.T) {
 		adminContext := userContext(getContext(), "admin")
 		err := handler.CreateCollection(adminContext, col)
 		So(err, ShouldNotBeNil)
-		So(err.Error(), ShouldContainSubstring, "bad input")
 
 		col.Id = "objects"
 		col.DefaultAccessSecurityRules = nil
 		err = handler.CreateCollection(adminContext, col)
 		So(err, ShouldNotBeNil)
-		So(err.Error(), ShouldContainSubstring, "bad input")
 
 		// Try to create collection as unauthenticated user
 		err = handler.CreateCollection(getContext(), col)
@@ -317,7 +319,6 @@ func TestHandler_GetCollection1(t *testing.T) {
 		col, err := handler.GetCollection(adminContext, "")
 		So(err, ShouldNotBeNil)
 		So(col, ShouldBeNil)
-		So(err.Error(), ShouldContainSubstring, "bad input")
 	})
 }
 
@@ -349,14 +350,12 @@ func TestHandler_GetCollection(t *testing.T) {
 		// Try to retrieve collection info from non authenticated user
 		col, err := handler.GetCollection(getContext(), "objects")
 		So(err, ShouldNotBeNil)
-		So(err.Error(), ShouldContainSubstring, "forbidden")
 		So(col, ShouldBeNil)
 
 		// Retrieve new created collection from user1 context
 		user1Context := userContext(getContext(), "user1")
 		col, err = handler.GetCollection(user1Context, "objects")
 		So(err, ShouldNotBeNil)
-		So(err.Error(), ShouldContainSubstring, "forbidden")
 		So(col, ShouldBeNil)
 
 		// Retrieve new created collection from user1 context
@@ -406,14 +405,12 @@ func TestHandler_ListCollection(t *testing.T) {
 		// Try to retrieve collection info from non authenticated user
 		col, err := handler.GetCollection(getContext(), "objects")
 		So(err, ShouldNotBeNil)
-		So(err.Error(), ShouldContainSubstring, "forbidden")
 		So(col, ShouldBeNil)
 
 		// Retrieve new created collection from user1 context
 		user1Context := userContext(getContext(), "user1")
 		col, err = handler.GetCollection(user1Context, "objects")
 		So(err, ShouldNotBeNil)
-		So(err.Error(), ShouldContainSubstring, "forbidden")
 		So(col, ShouldBeNil)
 
 		// Retrieve new created collection from user1 context

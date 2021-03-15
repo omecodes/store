@@ -396,7 +396,7 @@ func (s *sqlCollection) List(ctx context.Context, opts ListOptions) (*Cursor, er
 		opts.Offset = utime.Now()
 	}
 
-	sqlQuery := fmt.Sprintf("select headers.value as header, objects.value as object from %s as headers, %s as objects where headers.name=objects.name and objects.ind < ? ", s.headers.Table(), s.objects.Table())
+	sqlQuery := fmt.Sprintf("select headers.value as header, objects.value as object from %s as headers, %s as objects where headers.name=objects.name and objects.ind < ?", s.headers.Table(), s.objects.Table())
 	cursor, err := s.objects.Query(sqlQuery, objectScanner, opts.Offset)
 	if err != nil {
 		return nil, err
@@ -405,6 +405,7 @@ func (s *sqlCollection) List(ctx context.Context, opts ListOptions) (*Cursor, er
 	closer := CloseFunc(func() error {
 		return cursor.Close()
 	})
+
 	browser := BrowseFunc(func() (*Object, error) {
 		if !cursor.HasNext() {
 			return nil, io.EOF
@@ -415,6 +416,7 @@ func (s *sqlCollection) List(ctx context.Context, opts ListOptions) (*Cursor, er
 		}
 		return next.(*Object), nil
 	})
+
 	return NewCursor(browser, closer), nil
 }
 

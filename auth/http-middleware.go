@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/session"
 	"net/http"
@@ -32,9 +33,8 @@ func MiddlewareWithCredentials(manager CredentialsManager) MiddlewareOption {
 
 func Middleware(opts ...MiddlewareOption) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
-		next = detectBasic(next)
-		next = detectOauth2(next)
-		next = detectProxyBasic(next)
+		next = detectUserAuthentication(next)
+		next = detectClientAppAuthentication(next)
 
 		var options middlewareOptions
 		for _, opt := range opts {
@@ -51,12 +51,21 @@ func Middleware(opts ...MiddlewareOption) mux.MiddlewareFunc {
 				updatedContext = context.WithValue(updatedContext, ctxAuthenticationProviders{}, options.providers)
 			}
 
+			user := Get(updatedContext)
+			if user == nil {
+				user = &User{
+					Name:  "",
+					Group: "",
+				}
+				updatedContext = ContextWithUser(updatedContext, user)
+			}
+
 			next.ServeHTTP(w, r.WithContext(updatedContext))
 		})
 	}
 }
 
-func detectBasic(next http.Handler) http.Handler {
+func detectUserAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authorization := r.Header.Get("Authorization")
 
@@ -80,13 +89,42 @@ func detectBasic(next http.Handler) http.Handler {
 					return
 				}
 				r = r.WithContext(ctx)
+			} else if authType == "bearer" {
+				if authorization == "" {
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+
+				ctx, err := updateContextWithOauth2(r.Context(), authorization)
+				if err != nil {
+					w.WriteHeader(errors.HTTPStatus(err))
+					return
+				}
+				r = r.WithContext(ctx)
+			}
+
+		} else {
+			userSession, err := session.GetWebSession(session.UserSession, r)
+			if err != nil {
+				logs.Error("could not get web session", logs.Err(err))
+				w.WriteHeader(errors.HTTPStatus(err))
+				return
+			}
+
+			if username := userSession.String(session.KeyUsername); username != "" {
+				logs.Info("detected user authentication", logs.Details("user", username))
+				ctx := context.WithValue(r.Context(), ctxUser{}, &User{
+					Name: username,
+				})
+				r = r.WithContext(ctx)
 			}
 		}
+
 		next.ServeHTTP(w, r)
 	})
 }
 
-func detectProxyBasic(next http.Handler) http.Handler {
+func detectClientAppAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authorization := r.Header.Get("X-STORE-API-Authorization")
 
@@ -104,7 +142,7 @@ func detectProxyBasic(next http.Handler) http.Handler {
 				}
 
 				ctx := r.Context()
-				ctx, err := updateContextWithProxyBasic(ctx, authorization)
+				ctx, err := updateContextWithClientAppInfo(ctx, authorization)
 				if err != nil {
 					w.WriteHeader(errors.HTTPStatus(err))
 					return
@@ -112,7 +150,6 @@ func detectProxyBasic(next http.Handler) http.Handler {
 				r = r.WithContext(ctx)
 			}
 		} else {
-			logs.Info("no authorization passed so looking through session")
 			webSession, err := session.GetWebSession(session.ClientAppSession, r)
 			if err != nil {
 				logs.Error("could not get web session", logs.Err(err))
@@ -121,42 +158,24 @@ func detectProxyBasic(next http.Handler) http.Handler {
 			}
 
 			if accessType := webSession.String(session.KeyAccessType); accessType != "" {
-				logs.Info("session detected")
-				ctx := context.WithValue(r.Context(), ctxUser{}, &User{
-					Name:   "",
-					Access: accessType,
-					Group:  "",
-				})
-				r = r.WithContext(ctx)
-			} else {
-				logs.Info("no session detected")
-			}
-		}
-		next.ServeHTTP(w, r)
-	})
-}
+				logs.Info("detected client app session")
 
-func detectOauth2(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authorization := r.Header.Get("Authorization")
-		if authorization != "" {
-			authorizationParts := strings.SplitN(authorization, " ", 2)
-			authType := strings.ToLower(authorizationParts[0])
-			if len(authorizationParts) > 1 {
-				authorization = authorizationParts[1]
-			}
-
-			if authType == "bearer" {
-				if authorization == "" {
-					w.WriteHeader(http.StatusBadRequest)
-					return
+				clientApp := &ClientApp{
+					Key:  webSession.String(session.KeyAccessKey),
+					Type: ClientType(ClientType_value[webSession.String(session.KeyAccessType)]),
 				}
 
-				ctx, err := updateContextWithOauth2(r.Context(), authorization)
-				if err != nil {
-					w.WriteHeader(errors.HTTPStatus(err))
-					return
+				infoInterface := webSession.String(session.KeyAccessInfo)
+				if infoInterface != "" {
+					err = json.Unmarshal([]byte(infoInterface), &clientApp.Info)
+					if err != nil {
+						logs.Error("could not decode client app info", logs.Err(err))
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
 				}
+
+				ctx := context.WithValue(r.Context(), ctxApp{}, clientApp)
 				r = r.WithContext(ctx)
 			}
 		}

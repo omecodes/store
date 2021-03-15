@@ -12,15 +12,8 @@ import (
 	ome "github.com/omecodes/libome"
 )
 
-type User struct {
-	Name      string     `json:"name,omitempty"`
-	Access    string     `json:"access,omitempty"`
-	ClientApp *APIAccess `json:"client_app,omitempty"`
-	Group     string     `json:"group,omitempty"`
-}
-
 type InitClientAppSessionRequest struct {
-	Access *APIAccess `json:"access,omitempty"`
+	ClientApp *ClientApp `json:"client,omitempty"`
 }
 
 func BasicContextUpdater(ctx context.Context) (context.Context, error) {
@@ -108,8 +101,8 @@ func updateContextWithBasic(ctx context.Context, authorization string) (context.
 		return context.WithValue(ctx, ctxUser{}, &User{
 			Name: "admin",
 		}), nil
-	} else {
 
+	} else {
 		var pass string
 		if len(parts) > 1 {
 			pass = parts[1]
@@ -120,13 +113,13 @@ func updateContextWithBasic(ctx context.Context, authorization string) (context.
 			return ctx, errors.Forbidden("No manager basic authentication is not supported")
 		}
 
-		access, err := manager.GetAccess(authUser)
+		clientApp, err := manager.GetClientApp(authUser)
 		if err != nil {
 			logs.Error("client access not found", logs.Details("access", authUser), logs.Err(err))
 			return ctx, errors.Forbidden("client access not found")
 		}
 
-		if access.Secret == pass {
+		if clientApp.Secret == pass {
 			return context.WithValue(ctx, ctxUser{}, &User{
 				Name: "admin",
 			}), nil
@@ -134,10 +127,9 @@ func updateContextWithBasic(ctx context.Context, authorization string) (context.
 
 		return nil, errors.Forbidden("authentication failed")
 	}
-
 }
 
-func updateContextWithProxyBasic(ctx context.Context, authorization string) (context.Context, error) {
+func updateContextWithClientAppInfo(ctx context.Context, authorization string) (context.Context, error) {
 	bytes, err := base64.StdEncoding.DecodeString(authorization)
 	if err != nil {
 		return ctx, errors.BadRequest("authorization value non base64 encoding")
@@ -159,18 +151,16 @@ func updateContextWithProxyBasic(ctx context.Context, authorization string) (con
 		return ctx, errors.Forbidden("No manager basic authentication is not supported")
 	}
 
-	access, err := manager.GetAccess(authUser)
+	clientApp, err := manager.GetClientApp(authUser)
 	if err != nil {
 		return ctx, err
 	}
 
-	if access.Secret != pass {
+	if clientApp.Secret != pass {
 		return ctx, errors.Forbidden("authorization value non base64 encoding")
 	}
 
-	return context.WithValue(ctx, ctxUser{}, &User{
-		Access: access.Type,
-	}), nil
+	return context.WithValue(ctx, ctxApp{}, access), nil
 }
 
 func updateContextWithOauth2(ctx context.Context, authorization string) (context.Context, error) {

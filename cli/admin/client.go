@@ -16,13 +16,13 @@ import (
 	"github.com/omecodes/store/auth"
 )
 
-func putAccess(adminPassword string, access *auth.APIAccess) error {
-	endpoint := fmt.Sprintf("%s/api/auth/access", server)
+func putAccess(adminPassword string, clientApp *auth.ClientApp) error {
+	endpoint := fmt.Sprintf("%s/access", server)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
 
-	encoded, err := json.Marshal(access)
+	encoded, err := json.Marshal(clientApp)
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func putAccess(adminPassword string, access *auth.APIAccess) error {
 }
 
 func getAccesses(adminPassword string, outputFilename string) error {
-	endpoint := fmt.Sprintf("%s/api/auth/accesses", server)
+	endpoint := fmt.Sprintf("%s/accesses", server)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -120,7 +120,7 @@ func getAccesses(adminPassword string, outputFilename string) error {
 }
 
 func deleteAccess(adminPassword string, accessID string) error {
-	endpoint := fmt.Sprintf("%s/api/auth/access/%s", server, accessID)
+	endpoint := fmt.Sprintf("%s/access/%s", server, accessID)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -151,8 +151,45 @@ func deleteAccess(adminPassword string, accessID string) error {
 	return nil
 }
 
+func putUser(adminPassword string, user *auth.UserCredentials) error {
+	endpoint := fmt.Sprintf("%s/users", server)
+	if !strings.HasPrefix(endpoint, "http") {
+		endpoint = "https://" + endpoint
+	}
+
+	encoded, err := json.Marshal(user)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, endpoint, bytes.NewBuffer(encoded))
+	if err != nil {
+		return err
+	}
+	req.SetBasicAuth("admin", adminPassword)
+	req.Header.Set("Content-Type", "application/json")
+	req.Close = true
+
+	client := &http.Client{}
+
+	rsp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
+
+	if rsp.StatusCode != 200 {
+		return errors.BadRequest(rsp.Status)
+	}
+
+	return nil
+}
+
 func putCollections(adminPassword string, collection *objects.Collection) error {
-	endpoint := fmt.Sprintf("%s/api/objects/collections", server)
+	endpoint := fmt.Sprintf("%s/collections", server)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -189,7 +226,7 @@ func putCollections(adminPassword string, collection *objects.Collection) error 
 }
 
 func listCollections(adminPassword string, outputFilename string) error {
-	endpoint := fmt.Sprintf("%s/api/objects/collections", server)
+	endpoint := fmt.Sprintf("%s/collections", server)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -255,7 +292,7 @@ func listCollections(adminPassword string, outputFilename string) error {
 }
 
 func putFileSource(adminPassword string, source *files.Source) error {
-	endpoint := fmt.Sprintf("%s/api/files/sources", server)
+	endpoint := fmt.Sprintf("%s/sources", server)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -292,7 +329,7 @@ func putFileSource(adminPassword string, source *files.Source) error {
 }
 
 func listFileSources(adminPassword string, outputFilename string) error {
-	endpoint := fmt.Sprintf("%s/api/files/sources", server)
+	endpoint := fmt.Sprintf("%s/sources", server)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -358,7 +395,7 @@ func listFileSources(adminPassword string, outputFilename string) error {
 }
 
 func deleteFileSources(adminPassword string, sourceID string) error {
-	endpoint := fmt.Sprintf("%s/api/files/sources/%s", server, sourceID)
+	endpoint := fmt.Sprintf("%s/sources/%s", server, sourceID)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}

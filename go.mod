@@ -21,7 +21,7 @@ require (
 	github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08
 	github.com/omecodes/discover v0.0.0-20210213111105-c5af043d728b // indirect
 	github.com/omecodes/errors v0.0.0-20210307082057-dfe6f559d09c
-	github.com/omecodes/libome v0.0.0-20210118230551-aff816f21c74
+	github.com/omecodes/libome v0.0.0-20210309220055-6f9c1b46bdd4
 	github.com/omecodes/service v0.0.0-20210225153927-688cff63b9a1
 	github.com/pkg/xattr v0.4.3
 	github.com/smartystreets/goconvey v1.6.4

@@ -395,7 +395,7 @@ func CreateCollection(w http.ResponseWriter, r *http.Request) {
 
 	err = handler.CreateCollection(ctx, collection)
 	if err != nil {
-		logs.Error("could not create collection", logs.Details("collection", collection), logs.Err(err))
+		logs.Error("could not create collection", logs.Err(err))
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}

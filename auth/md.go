@@ -32,9 +32,9 @@ func ToMD(a *User) metadata.MD {
 	md := metadata.MD{}
 	md.Set(uuid, a.Name)
 
-	if a.Access != "" {
+	/*if a.Access != "" {
 		md.Set(access, a.Access)
-	}
+	} */
 
 	if a.Group != "" {
 		md.Set(group, a.Group)
@@ -51,10 +51,10 @@ func FromMD(md metadata.MD) *User {
 	a := &User{}
 	a.Name = userValues[0]
 
-	emailValues := md.Get(access)
+	/*emailValues := md.Get(access)
 	if len(emailValues) > 0 {
 		a.Access = emailValues[0]
-	}
+	} */
 
 	groupValues := md.Get(group)
 	if len(groupValues) > 0 {
