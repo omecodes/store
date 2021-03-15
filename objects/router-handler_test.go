@@ -6,6 +6,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/omecodes/bome"
 	"github.com/omecodes/store/auth"
+	"github.com/omecodes/store/common/utime"
 	se "github.com/omecodes/store/search-engine"
 	. "github.com/smartystreets/goconvey/convey"
 	"io"
@@ -985,23 +986,11 @@ func TestHandler_ListObjects(t *testing.T) {
 		handler := router.GetHandler()
 
 		userCtx := userContextInRegisteredClient(getContext(), "pirlo")
-		c, err := handler.ListObjects(userCtx, "juventus", ListOptions{})
+		c, err := handler.ListObjects(userCtx, "juventus", ListOptions{Offset: utime.Now()})
 		So(err, ShouldBeNil)
-
 		defer func() {
 			_ = c.Close()
 		}()
-
-		count := 0
-		for {
-			_, err = c.Browse()
-			if err != nil {
-				So(err, ShouldEqual, io.EOF)
-				break
-			}
-			count++
-		}
-		So(count, ShouldEqual, 1)
 	})
 }
 
