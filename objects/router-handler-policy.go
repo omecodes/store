@@ -238,7 +238,7 @@ func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object
 		Rule:        "user.name=='admin'",
 	}
 	if len(docRules.Read) == 0 {
-		readPerm.Rule = creatorRule + " || user.name=='worker' || user.name=='admin'"
+		readPerm.Rule = creatorRule + " || user.name=='admin'"
 	}
 	docRules.Read = append(docRules.Read, readPerm)
 
@@ -249,7 +249,7 @@ func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object
 		Rule:        "user.name=='admin'",
 	}
 	if len(docRules.Write) == 0 {
-		writePerm.Rule = creatorRule + " || user.access=='worker' || user.name=='admin'"
+		writePerm.Rule = creatorRule + " || user.name=='admin'"
 	}
 	docRules.Write = append(docRules.Write, writePerm)
 
