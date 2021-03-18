@@ -112,7 +112,7 @@ func init() {
 	}
 
 	flags := runCMD.PersistentFlags()
-	flags.BoolVar(&dev, "dev", false, "Enable development mode")
+	flags.BoolVar(&dev, "dev", false, "Enable development mode. Enables CORS")
 	flags.BoolVar(&autoCert, "auto-cert", false, "Run TLS server with auto generated certificate/key pair")
 	flags.BoolVar(&enableTLS, "tls", false, "Enable TLS secure connexion")
 	flags.StringVar(&certFilename, "cert", "", "Certificate filename")
