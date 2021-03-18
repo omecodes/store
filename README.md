@@ -2,7 +2,6 @@
 
 Store is a backend application that combines:
 
-- An API server over HTTP
 - A JSON document storage with a search engine to find according to json path value
 - A file storage
 - A search engine for files and JSON documents
