@@ -17,7 +17,7 @@ import (
 )
 
 func putAccess(adminPassword string, clientApp *auth.ClientApp) error {
-	endpoint := fmt.Sprintf("%s/access", server)
+	endpoint := fmt.Sprintf("%s/accesses", server)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
