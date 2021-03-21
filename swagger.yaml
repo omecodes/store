@@ -1,6 +1,6 @@
 swagger: "2.0"
 info:
-  description: "API specification for Objects Store"
+  description: "API specification for Store"
   version: "v0.0.1"
   title: "Store API"
   termsOfService: ""
@@ -8,25 +8,24 @@ info:
     email: "omecodes@gmail.com"
   license:
     name: "GNU Affero General Public License v3.0"
-host: "firexio.com"
-basePath: "/"
+host: "omestore.com"
+basePath: "/api"
 tags:
-  - name: "Collections"
-    description: "Class of objects"
-  - name: "Objects"
+  - name: "AUTH"
+    description: "Authentication"
+  - name: "OBJECTS"
     description: "JSON documents"
-  - name: "ACL"
-    description: "Objects access rule list"
+  - name: "FILES"
+    description: "Files Storage"
 schemes:
   - "https"
   - "http"
 
 paths:
-
-  /collections:
+  /objects/collections:
     put:
       tags:
-        - "Collections"
+        - "OBJECTS"
       summary: "Create a collection and define default indexes for all its objects"
       operationId: "CreateCollection"
       consumes:
@@ -45,7 +44,7 @@ paths:
           description: "You are not authorized to create a resource"
     get:
       tags:
-        - "Collections"
+        - "OBJECTS"
       summary: "List all collections"
       description: ""
       operationId: "ListCollections"
@@ -57,7 +56,7 @@ paths:
         "404":
           description: "Resource not found"
 
-  /collections/{id}:
+  /objects/collections/{id}:
     parameters:
       - in: path
         name: "id"
@@ -66,7 +65,7 @@ paths:
         description: "collection id"
     get:
       tags:
-        - "Collections"
+        - "OBJECTS"
       summary: "Get collection info"
       description: ""
       operationId: "GetCollection"
@@ -79,7 +78,7 @@ paths:
           description: "Resource not found"
     delete:
       tags:
-        - "Collections"
+        - "OBJECTS"
       summary: "Delete a collection"
       description: ""
       operationId: "DeleteCollection"
@@ -91,7 +90,7 @@ paths:
         "404":
           description: "Resource not found"
 
-  /objects/{collection}:
+  /objects/data/{collection}:
     parameters:
       - in: path
         name: "collection"
@@ -100,7 +99,7 @@ paths:
         description: "collection id"
     put:
       tags:
-        - "Objects"
+        - "OBJECTS"
       summary: "Saves an object"
       operationId: "CreateObject"
       consumes:
@@ -119,7 +118,7 @@ paths:
           description: "You are not authorized to create a resource"
     get:
       tags:
-        - "Objects"
+        - "OBJECTS"
       summary: "Get objects list"
       description: ""
       operationId: "ListObjects"
@@ -142,7 +141,7 @@ paths:
           description: "Resource not found"
     post:
       tags:
-        - "Objects"
+        - "OBJECTS"
       summary: "Search for objects"
       description: ""
       operationId: "SearchObjects"
@@ -168,7 +167,7 @@ paths:
         "404":
           description: "Resource not found"
 
-  /objects/{collection}/{id}:
+  /objects/data/{collection}/{id}:
     parameters:
       - in: path
         name: "collection"
@@ -182,7 +181,7 @@ paths:
         description: "object id"
     put:
       tags:
-        - "Objects"
+        - "OBJECTS"
       summary: "Save an object to the store with id"
       operationId: "CreateObjectWithID"
       consumes:
@@ -201,7 +200,7 @@ paths:
           description: "You are not authorized to create a resource"
     patch:
       tags:
-        - "Objects"
+        - "OBJECTS"
       summary: "Patch an object"
       description: ""
       operationId: "Patch"
@@ -227,7 +226,7 @@ paths:
           description: "Resource not found"
     post:
       tags:
-        - "Objects"
+        - "OBJECTS"
       summary: "Move an object from a collection to another"
       description: ""
       operationId: "Move"
@@ -249,7 +248,7 @@ paths:
           description: "Resource not found"
     get:
       tags:
-        - "Objects"
+        - "OBJECTS"
       summary: "Get an object"
       description: ""
       operationId: "GetObject"
@@ -269,7 +268,7 @@ paths:
           description: "Resource not found"
     delete:
       tags:
-        - "Objects"
+        - "OBJECTS"
       summary: "Delete an object"
       description: ""
       operationId: "DeleteData"
@@ -285,21 +284,10 @@ paths:
         "404":
           description: "Resource not found"
 
-  /objects/{collection}/{id}/acl:
-    parameters:
-      - in: path
-        name: "collection"
-        required: true
-        type: string
-        description: "collection id"
-      - in: path
-        name: "id"
-        required: true
-        type: string
-        description: "object id"
+  /auth/providers:
     get:
       tags:
-        - "ACL"
+        - "AUTH"
       summary: "Get an object ACL"
       description: ""
       operationId: "GetACL"
@@ -312,7 +300,7 @@ paths:
           description: "Resource not found"
     post:
       tags:
-        - "ACL"
+        - "AUTH"
       summary: "Update object ACL"
       description: ""
       operationId: "UpdateACL"
@@ -323,6 +311,186 @@ paths:
           name: acl
           schema:
             type: object
+      responses:
+        "403":
+          description: "You are not authorized to read this resource"
+        "404":
+          description: "Resource not found"
+
+  /auth/providers/{name}:
+    parameters:
+      - in: path
+        name: "name"
+        required: true
+        type: string
+        description: "Provider name"
+    get:
+      tags:
+        - "AUTH"
+      summary: "Get an object ACL"
+      description: ""
+      operationId: "GetProviderInfo"
+      produces:
+        - "application/json"
+      responses:
+        "403":
+          description: "You are not authorized to read this resource"
+        "404":
+          description: "Resource not found"
+    post:
+      tags:
+        - "AUTH"
+      summary: "Update provider info"
+      description: ""
+      operationId: "UpdateProvider"
+      produces:
+        - "application/json"
+      parameters:
+        - in: body
+          name: acl
+          schema:
+            type: object
+      responses:
+        "403":
+          description: "You are not authorized to read this resource"
+        "404":
+          description: "Resource not found"
+
+  /auth/access:
+    get:
+      tags:
+        - "AUTH"
+      summary: "Get client application info"
+      description: ""
+      operationId: "GetClientAppInfo"
+      produces:
+        - "application/json"
+      responses:
+        "403":
+          description: "You are not authorized to read this resource"
+        "404":
+          description: "Resource not found"
+    post:
+      tags:
+        - "AUTH"
+      summary: "Register a client application"
+      description: ""
+      operationId: "RegisterClientApplication"
+      produces:
+        - "application/json"
+      parameters:
+        - in: body
+          name: acl
+          schema:
+            type: object
+      responses:
+        "403":
+          description: "You are not authorized to read this resource"
+        "404":
+          description: "Resource not found"
+
+  /auth/accesses:
+    get:
+      tags:
+        - "AUTH"
+      summary: "Get client application list"
+      description: ""
+      operationId: "ClientApplicationList"
+      produces:
+        - "application/json"
+      responses:
+        "403":
+          description: "You are not authorized to read this resource"
+    put:
+      tags:
+        - "AUTH"
+      summary: "Register client application info"
+      description: ""
+      operationId: "RegisterClientAppInfo"
+      produces:
+        - "application/json"
+      parameters:
+        - in: body
+          name: acl
+          schema:
+            type: object
+      responses:
+        "403":
+          description: "You are not authorized to read this resource"
+
+  /auth/accesses/{key}:
+    parameters:
+      - in: path
+        name: "key"
+        required: true
+        type: string
+        description: "Client application key"
+    delete:
+      tags:
+        - "AUTH"
+      summary: "Delete client application info"
+      description: ""
+      operationId: "Delete client application info"
+      produces:
+        - "application/json"
+      responses:
+        "403":
+          description: "You are not authorized to read this resource"
+        "404":
+          description: "Resource not found"
+
+  /auth/sessions/client-app:
+    post:
+      tags:
+        - "AUTH"
+      summary: "Create a web session for client applications"
+      operationId: "CreateWebSessionApplication"
+      produces:
+        - "application/json"
+      parameters:
+        - in: body
+          name: acl
+          schema:
+            type: object
+      responses:
+        "403":
+          description: "You are not authorized to read this resource"
+        "404":
+          description: "Resource not found"
+
+  /auth/users:
+    put:
+      tags:
+        - "AUTH"
+      summary: "Creates a user"
+      description: ""
+      operationId: "CreateUser"
+      produces:
+        - "application/json"
+      parameters:
+        - in: body
+          name: acl
+          schema:
+            type: object
+      responses:
+        "403":
+          description: "You are not authorized to read this resource"
+        "404":
+          description: "Resource not found"
+    get:
+      tags:
+        - "AUTH"
+      summary: "Search users"
+      description: ""
+      operationId: "SearchUsers"
+      produces:
+        - "application/json"
+      parameters:
+        - in: query
+          name: "q"
+          required: true
+          type: string
+          description: "Pattern to match user names against"
       responses:
         "403":
           description: "You are not authorized to read this resource"
