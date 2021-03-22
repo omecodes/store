@@ -1,0 +1,35 @@
+version: '3.3'
+
+services:
+  # App Service
+  store-app:
+    # Configuration for building the docker image for the service
+    build:
+      context: . # Use an image built from the specified dockerfile in the current directory.
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080" # Forward the exposed port 8080 on the container to port 8080 on the host machine
+    restart: unless-stopped
+    depends_on:
+      - db # This service depends on redis. Start that first.
+    networks: # Networks to join (Services on the same network can communicate with each other using their name)
+      - backend
+
+  # Redis Service
+  db:
+    image: mysql:8.0.23
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'store'
+      MYSQL_USER: 'store'
+      MYSQL_PASSWORD: 'store'
+      MYSQL_ROOT_PASSWORD: 'store'
+    ports:
+      - '3306:3306'
+    expose:
+      - '3306'
+    networks: # Networks to join (Services on the same network can communicate with each other using their name)
+      - backend
+
+networks:
+  backend:
