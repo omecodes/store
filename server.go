@@ -5,12 +5,16 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"database/sql"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/sessions"
 	"github.com/omecodes/common/utils/log"
 	"github.com/omecodes/errors"
+	"github.com/omecodes/libome/crypt"
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/session"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -93,6 +97,41 @@ func (s *Server) init() error {
 	s.db = common.GetDB("mysql", s.config.DSN)
 
 	var err error
+
+	if s.config.AdminInfo == "" {
+		adminAuthContent, err := ioutil.ReadFile("./admin-auth")
+		if err != nil && !os.IsNotExist(err) {
+			return err
+		}
+
+		if adminAuthContent == nil {
+			phrase, err := crypt.GenerateVerificationCode(8)
+			if err != nil {
+				return err
+			}
+
+			_, info, err := crypt.Generate(phrase, 16)
+			if err != nil {
+				return err
+			}
+
+			data, err := json.Marshal(info)
+			if err != nil {
+				return err
+			}
+
+			s.config.AdminInfo = base64.RawStdEncoding.EncodeToString(data)
+			err = ioutil.WriteFile("./admin-auth", []byte(phrase+":"+s.config.AdminInfo), os.ModePerm)
+			if err != nil {
+				return err
+			}
+
+		} else {
+			parts := strings.Split(string(adminAuthContent), ":")
+			s.config.AdminInfo = parts[1]
+		}
+	}
+
 	s.accessStore, err = objects.NewSQLACLStore(s.db, bome.MySQL, "store_acl")
 	if err != nil {
 		return err

@@ -123,10 +123,6 @@ func init() {
 	flags.StringVar(&wwwDir, "www", "./www", "Web apps directory (apache www equivalent)")
 	flags.StringVar(&adminInfo, "admin", "", "Admin password info")
 	flags.StringVar(&dsn, "db-uri", "store:store@(127.0.0.1:3306)/store?charset=utf8", "MySQL database uri")
-	if err := cobra.MarkFlagRequired(flags, "admin"); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
 	command.AddCommand(runCMD)
 
 	versionCMD := &cobra.Command{
