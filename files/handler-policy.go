@@ -206,12 +206,12 @@ func (h *PolicyHandler) assertAllowedToChmodSource(ctx context.Context, source *
 		return nil
 	}
 
-	sourceChain := []string{source.ID}
+	sourceChain := []string{source.Id}
 	sourceType := source.Type
 	var refSourceID string
 
-	for sourceType == TypeReference {
-		u, err := url.Parse(source.URI)
+	for sourceType == SourceType_Reference {
+		u, err := url.Parse(source.Uri)
 		if err != nil {
 			return errors.Internal("could not resolve source uri", errors.Details{Key: "uri", Value: err})
 		}
@@ -284,7 +284,7 @@ func (h *PolicyHandler) ListSources(ctx context.Context) ([]*Source, error) {
 
 	var allowedSources []*Source
 	for _, source := range sources {
-		err = h.assertIsAllowedToRead(ctx, source.ID, "/")
+		err = h.assertIsAllowedToRead(ctx, source.Id, "/")
 		if err != nil {
 			continue
 		}
@@ -353,7 +353,7 @@ func (h *PolicyHandler) ReadFileContent(ctx context.Context, sourceID string, fi
 	return h.next.ReadFileContent(ctx, sourceID, filename, opts)
 }
 
-func (h *PolicyHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileInfoOptions) (*File, error) {
+func (h *PolicyHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*File, error) {
 	err := h.assertIsAllowedToWrite(ctx, sourceID, path.Dir(filename))
 	if err != nil {
 		return nil, err

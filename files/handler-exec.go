@@ -79,7 +79,7 @@ func (h *ExecHandler) ReadFileContent(ctx context.Context, sourceID string, file
 	return fs.Read(ctx, filename, opts.Range.Offset, opts.Range.Length)
 }
 
-func (h *ExecHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileInfoOptions) (*File, error) {
+func (h *ExecHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*File, error) {
 	fs, err := getFS(ctx, sourceID)
 	if err != nil {
 		return nil, err

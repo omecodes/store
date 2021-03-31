@@ -7,8 +7,9 @@ import (
 )
 
 type middlewareRouteOptions struct {
-	sourceManager SourceManager
-	fsProvider    FSProvider
+	sourceManager  SourceManager
+	fsProvider     FSProvider
+	routerProvider RouterProvider
 }
 
 type MiddlewareOption func(options *middlewareRouteOptions)
@@ -30,6 +31,10 @@ func Middleware(opts ...MiddlewareOption) mux.MiddlewareFunc {
 				ctx = context.WithValue(ctx, ctxSourceManager{}, options.sourceManager)
 			}
 
+			if options.routerProvider != nil {
+				ctx = context.WithValue(ctx, ctxRouterProvider{}, options.routerProvider)
+			}
+
 			h.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -45,5 +50,11 @@ func MiddlewareWithSourceManager(manager SourceManager) MiddlewareOption {
 func MiddlewareWithFsProvider(provider FSProvider) MiddlewareOption {
 	return func(options *middlewareRouteOptions) {
 		options.fsProvider = provider
+	}
+}
+
+func MiddlewareWithRouterProvider(provider RouterProvider) MiddlewareOption {
+	return func(options *middlewareRouteOptions) {
+		options.routerProvider = provider
 	}
 }

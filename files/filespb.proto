@@ -1,0 +1,172 @@
+syntax = "proto3";
+
+option go_package = "github.com/omecodes/store/files/pb.proto;files";
+//import "github.com/omecodes/store/search-engine/se.proto";
+import "github.com/omecodes/store/auth/auth.proto";
+
+enum SourceType {
+  Default = 0;
+  Reference = 1;
+}
+
+message File {
+  string name = 1;
+  bool  is_dir = 2;
+  int64 size = 3;
+  int64 create_time = 4;
+  int64 edit_time = 5;
+  map<string, string> attributes = 6;
+}
+
+message EncryptionInfo {
+  string key_uri = 1;
+  int64 max_block_size = 2;
+}
+
+message Permissions {
+  repeated Permission read = 1;
+  repeated Permission write = 2;
+  repeated Permission chmod = 3;
+}
+
+message Source {
+  string id = 1;
+  string label = 2;
+  string description = 3;
+  string created_by = 4;
+  SourceType type = 5;
+  string uri = 6;
+  EncryptionInfo encryption = 7;
+  Permissions permission_overrides = 8;
+  int64 expire_time = 9;
+  string encoded_info = 10;
+}
+
+
+// Sources service
+service Sources {
+  rpc CreateSource(CreateSourceRequest) returns (CreateSourceResponse);
+  rpc GetSource(GetSourceRequest) returns (GetSourceResponse);
+  rpc GetSources(GetSourcesRequest) returns (stream Source);
+  rpc ResolveSource(ResolveSourceRequest) returns (ResolveSourceResponse);
+  rpc DeleteSource(stream DeleteSourceRequest) returns (DeleteSourceResponse);
+}
+
+
+message CreateSourceRequest {
+  Source source = 1;
+}
+message CreateSourceResponse {}
+
+message GetSourceRequest {
+  string id = 1;
+}
+message GetSourceResponse {
+  Source source = 1;
+}
+
+message GetSourcesRequest {
+  string user = 1;
+}
+
+message ResolveSourceRequest {
+  Source source = 1;
+}
+message ResolveSourceResponse {
+  Source resolved_source = 2;
+}
+
+message DeleteSourceRequest {
+  string source_id = 1;
+}
+message DeleteSourceResponse {}
+
+
+
+// Files service
+service Files {
+  rpc CreateDir(CreateDirRequest) returns (CreateDirResponse);
+  rpc ListDir(ListDirRequest) returns (ListDirResponse);
+  rpc GetFile(GetFileRequest) returns (GetFileResponse);
+  rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse);
+  rpc SetFileAttributes(SetFileAttributesRequest) returns (SetFileAttributesResponse);
+  rpc GetFileAttributes(GetFileAttributesRequest) returns (GetFileAttributesResponse);
+  rpc RenameFile(RenameFileRequest) returns (RenameFileResponse);
+  rpc MoveFile(MoveFileRequest) returns (MoveFileResponse);
+  rpc CopyFile(CopyFileRequest) returns (CopyFileResponse);
+}
+
+message CreateDirRequest {
+  string source_id = 1;
+  string path = 2;
+}
+message CreateDirResponse {}
+
+message ListDirRequest {
+  string source_id = 1;
+  string path = 2;
+  uint32 offset = 3;
+  uint32 count = 4;
+}
+message ListDirResponse {
+  repeated File files = 1;
+  uint32 offset = 2;
+  uint32 total = 3;
+}
+
+message GetFileRequest {
+  string source_id = 1;
+  string path = 2;
+  bool  with_attributes = 3;
+}
+message GetFileResponse {
+  File file = 1;
+}
+
+message DeleteFileRequest {
+  string source_id = 1;
+  string path = 2;
+}
+message DeleteFileResponse {}
+
+message SetFileAttributesRequest {
+  string source_id = 1;
+  string path = 2;
+  map<string, string> attributes = 3;
+}
+message SetFileAttributesResponse {}
+
+message GetFileAttributesRequest {
+  string source_id = 1;
+  string path = 2;
+  repeated string names = 3;
+}
+message GetFileAttributesResponse {
+  map<string, string> attributes = 1;
+}
+
+message RenameFileRequest {
+  string source_id = 1;
+  string path = 2;
+  string new_name = 3;
+}
+message RenameFileResponse {
+}
+
+message MoveFileRequest {
+  string source_id = 1;
+  string path = 2;
+  string target_dir = 3;
+}
+message MoveFileResponse {
+  string new_name = 3;
+}
+
+message CopyFileRequest {
+  string source_id = 1;
+  string path = 2;
+  string target_dir = 3;
+}
+message CopyFileResponse {
+  string copy_name = 1;
+}

@@ -55,8 +55,8 @@ func (s *sourceSQLManager) generateID() (string, error) {
 
 func (s *sourceSQLManager) Save(ctx context.Context, source *Source) (string, error) {
 	var err error
-	if source.ID == "" {
-		source.ID, err = s.generateID()
+	if source.Id == "" {
+		source.Id, err = s.generateID()
 		if err != nil {
 			return "", err
 		}
@@ -76,7 +76,7 @@ func (s *sourceSQLManager) Save(ctx context.Context, source *Source) (string, er
 	}
 
 	err = sources.Upsert(&bome.MapEntry{
-		Key:   source.ID,
+		Key:   source.Id,
 		Value: string(encoded),
 	})
 	if err != nil {
@@ -99,10 +99,10 @@ func (s *sourceSQLManager) Save(ctx context.Context, source *Source) (string, er
 		perms = append([]*auth.Permission{}, source.PermissionOverrides.Chmod...)
 
 		for _, perm := range perms {
-			for _, user := range perm.RelatedUsers {
+			for _, user := range perm.TargetUsers {
 				err = userRefs.Upsert(&bome.DoubleMapEntry{
 					FirstKey:  user,
-					SecondKey: source.ID,
+					SecondKey: source.Id,
 					Value:     creator,
 				})
 				if err != nil {
@@ -115,7 +115,7 @@ func (s *sourceSQLManager) Save(ctx context.Context, source *Source) (string, er
 		}
 	}
 
-	return source.ID, bome.Commit(ctx)
+	return source.Id, bome.Commit(ctx)
 }
 
 func (s *sourceSQLManager) Get(_ context.Context, id string) (*Source, error) {

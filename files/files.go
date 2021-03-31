@@ -1,18 +1,8 @@
 package files
 
 import (
-	"github.com/omecodes/store/auth"
 	"strings"
 )
-
-type File struct {
-	Name       string            `json:"name,omitempty"`
-	IsDir      bool              `json:"is_dir,omitempty"`
-	Size       int64             `json:"size,omitempty"`
-	CreateTime int64             `json:"create_time,omitempty"`
-	ModTime    int64             `json:"mod_time,omitempty"`
-	Attributes map[string]string `json:"attributes,omitempty"`
-}
 
 type FileLocation struct {
 	Source   string `json:"source,omitempty"`
@@ -22,24 +12,6 @@ type FileLocation struct {
 type TreePatchInfo struct {
 	Rename bool   `json:"rename,omitempty"`
 	Value  string `json:"value,omitempty"`
-}
-
-type Permissions struct {
-	Filename string             `json:"string,omitempty"`
-	Read     []*auth.Permission `json:"read,omitempty"`
-	Write    []*auth.Permission `json:"write,omitempty"`
-	Chmod    []*auth.Permission `json:"chmod,omitempty"`
-}
-
-type PermissionsOverrides struct {
-	Read  []*auth.Permission `json:"read,omitempty"`
-	Write []*auth.Permission `json:"write,omitempty"`
-	Chmod []*auth.Permission `json:"chmod,omitempty"`
-}
-
-type EncryptionInfo struct {
-	Key []byte `json:"key,omitempty"`
-	Alg string `json:"alg,omitempty"`
 }
 
 type DirContent struct {
@@ -68,7 +40,7 @@ type ReadOptions struct {
 	Range ContentRange `json:"range,omitempty"`
 }
 
-type GetFileInfoOptions struct {
+type GetFileOptions struct {
 	WithAttrs bool `json:"with_attrs,omitempty"`
 }
 

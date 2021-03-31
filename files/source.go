@@ -18,30 +18,7 @@ const (
 	SchemeAWS    = "aws"
 )
 
-type SourceType int
-
 type ctxSourceManager struct{}
-
-const (
-	TypeDisk      = SourceType(1)
-	TypeActive    = SourceType(2)
-	TypePartition = SourceType(3)
-	TypeObjects   = SourceType(4)
-	TypeReference = SourceType(5)
-)
-
-type Source struct {
-	ID                  string                 `json:"id,omitempty"`
-	Label               string                 `json:"label,omitempty"`
-	Description         string                 `json:"description,omitempty"`
-	CreatedBy           string                 `json:"created_by,omitempty"`
-	Type                SourceType             `json:"type,omitempty"`
-	URI                 string                 `json:"uri,omitempty"`
-	Encryption          *EncryptionInfo        `json:"encryption,omitempty"`
-	PermissionOverrides *Permissions           `json:"permission_overrides,omitempty"`
-	ExpireTime          int64                  `json:"expire_time,omitempty"`
-	Info                map[string]interface{} `json:"info,omitempty"`
-}
 
 type SourceManager interface {
 	Save(ctx context.Context, source *Source) (string, error)
@@ -74,8 +51,8 @@ func resolveSource(ctx context.Context, sourceID string) (*Source, error) {
 
 	resolvedSource := source
 	sourceChain := []string{sourceID}
-	for resolvedSource.Type == TypeReference {
-		u, err := url.Parse(source.URI)
+	for resolvedSource.Type == SourceType_Reference {
+		u, err := url.Parse(source.Uri)
 		if err != nil {
 			return nil, errors.Internal("could not resolve source uri", errors.Details{Key: "source uri", Value: err})
 		}
@@ -93,9 +70,9 @@ func resolveSource(ctx context.Context, sourceID string) (*Source, error) {
 			}
 		}
 		sourceChain = append(sourceChain, refSourceID)
-		resolvedSource.URI = strings.TrimSuffix(resolvedSource.URI, "/") + u.Path
+		resolvedSource.Uri = strings.TrimSuffix(resolvedSource.Uri, "/") + u.Path
 
-		logs.Info("resolved source", logs.Details("uri", resolvedSource.URI))
+		logs.Info("resolved source", logs.Details("uri", resolvedSource.Uri))
 	}
 
 	return resolvedSource, nil

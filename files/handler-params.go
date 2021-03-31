@@ -11,7 +11,7 @@ type ParamsHandler struct {
 }
 
 func (h *ParamsHandler) CreateSource(ctx context.Context, source *Source) error {
-	if source == nil || source.Type == SourceType(0) || source.URI == "" {
+	if source == nil || source.Type == SourceType(0) || source.Uri == "" {
 		return errors.BadRequest("invalid source value")
 	}
 	return h.next.CreateSource(ctx, source)
@@ -99,7 +99,7 @@ func (h *ParamsHandler) ReadFileContent(ctx context.Context, sourceID string, fi
 	return h.next.ReadFileContent(ctx, sourceID, filename, opts)
 }
 
-func (h *ParamsHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileInfoOptions) (*File, error) {
+func (h *ParamsHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*File, error) {
 	if sourceID == "" {
 		return nil, errors.BadRequest("missing parameters", errors.Details{
 			Key:   "source",

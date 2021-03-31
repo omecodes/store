@@ -41,7 +41,7 @@ func (h *BaseHandler) ReadFileContent(ctx context.Context, sourceID string, file
 	return h.next.ReadFileContent(ctx, sourceID, filename, opts)
 }
 
-func (h *BaseHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileInfoOptions) (*File, error) {
+func (h *BaseHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*File, error) {
 	return h.next.GetFileInfo(ctx, sourceID, filename, opts)
 }
 
