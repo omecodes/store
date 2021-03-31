@@ -1,4 +1,4 @@
-package objects
+package common
 
 const (
 	SettingsDataMaxSizePath        = "data_max_size"

@@ -3,17 +3,16 @@ package objects
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/omecodes/libome/logs"
-	"io"
-	"io/ioutil"
-	"net/http"
-	"strconv"
-
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/gorilla/mux"
 	"github.com/omecodes/errors"
+	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/auth"
+	"github.com/omecodes/store/common"
 	se "github.com/omecodes/store/search-engine"
+	"io"
+	"io/ioutil"
+	"net/http"
 )
 
 const (
@@ -27,21 +26,21 @@ const (
 func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	r := mux.NewRouter()
 
-	r.Name("SetSettings").Methods(http.MethodPut).Path("/settings").Handler(http.HandlerFunc(SetSettings))
-	r.Name("GetSettings").Methods(http.MethodGet).Path("/settings").Handler(http.HandlerFunc(GetSettings))
+	r.Name("SetSettings").Methods(http.MethodPut).Path("/settings").Handler(http.HandlerFunc(HTTPHandleSetSettings))
+	r.Name("GetSettings").Methods(http.MethodGet).Path("/settings").Handler(http.HandlerFunc(HTTPHandleGetSettings))
 
-	r.Name("CreateCollection").Methods(http.MethodPut).Path("/collections").Handler(http.HandlerFunc(CreateCollection))
-	r.Name("ListCollections").Methods(http.MethodGet).Path("/collections").Handler(http.HandlerFunc(ListCollections))
-	r.Name("DeleteCollection").Methods(http.MethodGet).Path("/collections/{id}").Handler(http.HandlerFunc(DeleteCollection))
-	r.Name("GetCollection").Methods(http.MethodGet).Path("/collections/{id}").Handler(http.HandlerFunc(GetCollection))
+	r.Name("CreateCollection").Methods(http.MethodPut).Path("/collections").Handler(http.HandlerFunc(HTTPHandleCreateCollection))
+	r.Name("ListCollections").Methods(http.MethodGet).Path("/collections").Handler(http.HandlerFunc(HTTPHandleListCollections))
+	r.Name("DeleteCollection").Methods(http.MethodGet).Path("/collections/{id}").Handler(http.HandlerFunc(HTTPHandleDeleteCollection))
+	r.Name("GetCollection").Methods(http.MethodGet).Path("/collections/{id}").Handler(http.HandlerFunc(HTTPHandleGetCollection))
 
-	r.Name("PutObject").Methods(http.MethodPut).Path("/data/{collection}").Handler(http.HandlerFunc(PutObject))
-	r.Name("PatchObject").Methods(http.MethodPatch).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(PatchObject))
-	r.Name("MoveObject").Methods(http.MethodPost).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(MoveObject))
-	r.Name("GetObject").Methods(http.MethodGet).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(GetObject))
-	r.Name("DeleteObject").Methods(http.MethodDelete).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(DeleteObject))
-	r.Name("GetObjects").Methods(http.MethodGet).Path("/data/{collection}").Handler(http.HandlerFunc(ListObjects))
-	r.Name("SearchObjects").Methods(http.MethodPost).Path("/data/{collection}").Handler(http.HandlerFunc(SearchObjects))
+	r.Name("PutObject").Methods(http.MethodPut).Path("/data/{collection}").Handler(http.HandlerFunc(HTTPHandlePutObject))
+	r.Name("PatchObject").Methods(http.MethodPatch).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(HTTPHandlePatchObject))
+	r.Name("MoveObject").Methods(http.MethodPost).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(HTTPHandleMoveObject))
+	r.Name("GetObject").Methods(http.MethodGet).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(HTTPHandleGetObject))
+	r.Name("DeleteObject").Methods(http.MethodDelete).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(HTTPHandleDeleteObject))
+	r.Name("GetObjects").Methods(http.MethodGet).Path("/data/{collection}").Handler(http.HandlerFunc(HTTPHandleListObjects))
+	r.Name("SearchObjects").Methods(http.MethodPost).Path("/data/{collection}").Handler(http.HandlerFunc(HTTPHandleSearchObjects))
 
 	var handler http.Handler
 	handler = r
@@ -51,7 +50,7 @@ func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	return handler
 }
 
-func PutObject(w http.ResponseWriter, r *http.Request) {
+func HTTPHandlePutObject(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	vars := mux.Vars(r)
@@ -76,8 +75,7 @@ func PutObject(w http.ResponseWriter, r *http.Request) {
 	}
 	putRequest.Object.Header.Size = int64(len(putRequest.Object.Data))
 
-	handler := GetRouterHandler(ctx)
-	id, err := handler.PutObject(ctx, collection, putRequest.Object, putRequest.AccessSecurityRules, putRequest.Indexes, PutOptions{})
+	id, err := PutObject(ctx, collection, putRequest.Object, putRequest.AccessSecurityRules, putRequest.Indexes, PutOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -87,7 +85,7 @@ func PutObject(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(fmt.Sprintf("{\"id\": \"%s\"}", id)))
 }
 
-func PatchObject(w http.ResponseWriter, r *http.Request) {
+func HTTPHandlePatchObject(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	contentType := r.Header.Get("Content-Type")
@@ -108,16 +106,14 @@ func PatchObject(w http.ResponseWriter, r *http.Request) {
 	collection := vars[pathItemCollection]
 	patch.ObjectId = vars[pathItemId]
 
-	handler := GetRouterHandler(ctx)
-
-	err = handler.PatchObject(ctx, collection, &patch, PatchOptions{})
+	err = PatchObject(ctx, collection, &patch, PatchOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 }
 
-func MoveObject(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleMoveObject(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	contentType := r.Header.Get("Content-Type")
@@ -138,16 +134,14 @@ func MoveObject(w http.ResponseWriter, r *http.Request) {
 	collection := vars[pathItemCollection]
 	objectId := vars[pathItemId]
 
-	handler := GetRouterHandler(ctx)
-
-	err = handler.MoveObject(ctx, collection, objectId, request.TargetCollection, request.AccessSecurityRules, MoveOptions{})
+	err = MoveObject(ctx, collection, objectId, request.TargetCollection, request.AccessSecurityRules, MoveOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 }
 
-func GetObject(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleGetObject(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	vars := mux.Vars(r)
@@ -157,9 +151,7 @@ func GetObject(w http.ResponseWriter, r *http.Request) {
 	header := r.URL.Query().Get(queryHeader)
 	at := r.URL.Query().Get(queryAt)
 
-	handler := GetRouterHandler(ctx)
-
-	object, err := handler.GetObject(ctx, collection, id, GetOptions{
+	object, err := GetObject(ctx, collection, id, GetOptions{
 		At:   at,
 		Info: header == "true",
 	})
@@ -175,23 +167,21 @@ func GetObject(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func DeleteObject(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleDeleteObject(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	vars := mux.Vars(r)
 	collection := vars[pathItemCollection]
 	id := vars[pathItemId]
 
-	handler := GetRouterHandler(ctx)
-
-	err := handler.DeleteObject(ctx, collection, id)
+	err := DeleteObject(ctx, collection, id)
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
 }
 
-func ListObjects(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleListObjects(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var (
@@ -202,7 +192,7 @@ func ListObjects(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	collection := vars[pathItemCollection]
 
-	opts.Offset, err = Int64QueryParam(r, queryOffset)
+	opts.Offset, err = common.Int64QueryParam(r, queryOffset)
 	if err != nil {
 		logs.Error("could not parse param 'before'")
 		w.WriteHeader(http.StatusBadRequest)
@@ -211,9 +201,7 @@ func ListObjects(w http.ResponseWriter, r *http.Request) {
 
 	opts.At = r.URL.Query().Get(queryAt)
 
-	handler := GetRouterHandler(ctx)
-
-	cursor, err := handler.ListObjects(ctx, collection, opts)
+	cursor, err := ListObjects(ctx, collection, opts)
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -255,7 +243,7 @@ func ListObjects(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write([]byte("}"))
 }
 
-func SearchObjects(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleSearchObjects(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var query se.SearchQuery
@@ -269,9 +257,7 @@ func SearchObjects(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	collection := vars[pathItemCollection]
 
-	handler := GetRouterHandler(ctx)
-
-	cursor, err := handler.SearchObjects(ctx, collection, &query)
+	cursor, err := SearchObjects(ctx, collection, &query)
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -314,7 +300,7 @@ func SearchObjects(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write([]byte("}"))
 }
 
-func SetSettings(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleSetSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	user := auth.Get(ctx)
@@ -350,7 +336,7 @@ func SetSettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetSettings(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleGetSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	name := r.URL.Query().Get("name")
 
@@ -381,7 +367,7 @@ func GetSettings(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(value))
 }
 
-func CreateCollection(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleCreateCollection(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var collection *Collection
@@ -391,9 +377,7 @@ func CreateCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handler := GetRouterHandler(ctx)
-
-	err = handler.CreateCollection(ctx, collection)
+	err = CreateCollection(ctx, collection)
 	if err != nil {
 		logs.Error("could not create collection", logs.Err(err))
 		w.WriteHeader(errors.HTTPStatus(err))
@@ -401,12 +385,10 @@ func CreateCollection(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ListCollections(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleListCollections(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	handler := GetRouterHandler(ctx)
-
-	collections, err := handler.ListCollections(ctx)
+	collections, err := ListCollections(ctx)
 	if err != nil {
 		logs.Error("could not load collections", logs.Err(err))
 		w.WriteHeader(errors.HTTPStatus(err))
@@ -427,15 +409,13 @@ func ListCollections(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(data)
 }
 
-func GetCollection(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleGetCollection(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
-	handler := GetRouterHandler(ctx)
 
 	vars := mux.Vars(r)
 	id := vars[pathItemId]
 
-	collection, err := handler.GetCollection(ctx, id)
+	collection, err := GetCollection(ctx, id)
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -452,26 +432,15 @@ func GetCollection(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(data)
 }
 
-func DeleteCollection(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleDeleteCollection(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
-	handler := GetRouterHandler(ctx)
 
 	vars := mux.Vars(r)
 	id := vars[pathItemId]
 
-	err := handler.DeleteCollection(ctx, id)
+	err := DeleteCollection(ctx, id)
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
-	}
-}
-
-func Int64QueryParam(r *http.Request, name string) (int64, error) {
-	beforeParam := r.URL.Query().Get(name)
-	if beforeParam != "" {
-		return strconv.ParseInt(beforeParam, 10, 64)
-	} else {
-		return 0, nil
 	}
 }

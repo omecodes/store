@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/omecodes/store/objects/objects.proto;objects";
+option go_package = "github.com/omecodes/store/objects/pb.proto;objects";
 import "github.com/omecodes/store/search-engine/se.proto";
 import "github.com/omecodes/store/auth/auth.proto";
 

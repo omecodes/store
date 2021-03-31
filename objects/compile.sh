@@ -1,6 +1,6 @@
 #!/bin/bash
 
-$PROTOCPATH/bin/protoc \
+protoc \
   -I$GOPATH/src \
   -I. \
   --go-grpc_out . --go-grpc_opt paths=source_relative \

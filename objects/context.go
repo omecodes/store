@@ -3,6 +3,7 @@ package objects
 import (
 	"context"
 	"github.com/google/cel-go/cel"
+	"github.com/omecodes/store/common"
 )
 
 type ctxDB struct{}
@@ -58,7 +59,7 @@ func WithACLStoreContextUpdater(store ACLManager) ContextUpdaterFunc {
 }
 
 // WithSettings creates a context updater that adds permissions to a context
-func WithSettingsContextUpdater(settings SettingsManager) ContextUpdaterFunc {
+func WithSettingsContextUpdater(settings common.SettingsManager) ContextUpdaterFunc {
 	return func(parent context.Context) context.Context {
 		return context.WithValue(parent, ctxSettings{}, settings)
 	}
@@ -77,16 +78,16 @@ func CELPolicyEnv(ctx context.Context) *cel.Env {
 	return o.(*cel.Env)
 }
 
-func ContextWithSettings(parent context.Context, manager SettingsManager) context.Context {
+func ContextWithSettings(parent context.Context, manager common.SettingsManager) context.Context {
 	return context.WithValue(parent, ctxSettings{}, manager)
 }
 
-func Settings(ctx context.Context) SettingsManager {
+func Settings(ctx context.Context) common.SettingsManager {
 	o := ctx.Value(ctxSettings{})
 	if o == nil {
 		return nil
 	}
-	return o.(SettingsManager)
+	return o.(common.SettingsManager)
 }
 
 func GetRouterHandler(ctx context.Context, opt ...RouteOption) Handler {

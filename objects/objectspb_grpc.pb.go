@@ -261,7 +261,7 @@ type UnsafeHandlerUnitServer interface {
 	mustEmbedUnimplementedHandlerUnitServer()
 }
 
-func RegisterHandlerUnitServer(s grpc.ServiceRegistrar, srv HandlerUnitServer) {
+func RegisterHandlerUnitServer(s *grpc.Server, srv HandlerUnitServer) {
 	s.RegisterService(&_HandlerUnit_serviceDesc, srv)
 }
 
@@ -544,7 +544,7 @@ var _HandlerUnit_serviceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "objects.proto",
+	Metadata: "objectspb.proto",
 }
 
 // ACLClient is the client API for ACL service.
@@ -651,7 +651,7 @@ type UnsafeACLServer interface {
 	mustEmbedUnimplementedACLServer()
 }
 
-func RegisterACLServer(s grpc.ServiceRegistrar, srv ACLServer) {
+func RegisterACLServer(s *grpc.Server, srv ACLServer) {
 	s.RegisterService(&_ACL_serviceDesc, srv)
 }
 
@@ -771,5 +771,5 @@ var _ACL_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "objects.proto",
+	Metadata: "objectspb.proto",
 }
