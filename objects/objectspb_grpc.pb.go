@@ -13,10 +13,10 @@ import (
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion7
 
-// HandlerUnitClient is the client API for HandlerUnit service.
+// ObjectsClient is the client API for Objects service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type HandlerUnitClient interface {
+type ObjectsClient interface {
 	CreateCollection(ctx context.Context, in *CreateCollectionRequest, opts ...grpc.CallOption) (*CreateCollectionResponse, error)
 	GetCollection(ctx context.Context, in *GetCollectionRequest, opts ...grpc.CallOption) (*GetCollectionResponse, error)
 	ListCollections(ctx context.Context, in *ListCollectionsRequest, opts ...grpc.CallOption) (*ListCollectionsResponse, error)
@@ -27,114 +27,114 @@ type HandlerUnitClient interface {
 	GetObject(ctx context.Context, in *GetObjectRequest, opts ...grpc.CallOption) (*GetObjectResponse, error)
 	DeleteObject(ctx context.Context, in *DeleteObjectRequest, opts ...grpc.CallOption) (*DeleteObjectResponse, error)
 	ObjectInfo(ctx context.Context, in *ObjectInfoRequest, opts ...grpc.CallOption) (*ObjectInfoResponse, error)
-	ListObjects(ctx context.Context, in *ListObjectsRequest, opts ...grpc.CallOption) (HandlerUnit_ListObjectsClient, error)
-	SearchObjects(ctx context.Context, in *SearchObjectsRequest, opts ...grpc.CallOption) (HandlerUnit_SearchObjectsClient, error)
+	ListObjects(ctx context.Context, in *ListObjectsRequest, opts ...grpc.CallOption) (Objects_ListObjectsClient, error)
+	SearchObjects(ctx context.Context, in *SearchObjectsRequest, opts ...grpc.CallOption) (Objects_SearchObjectsClient, error)
 }
 
-type handlerUnitClient struct {
+type objectsClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewHandlerUnitClient(cc grpc.ClientConnInterface) HandlerUnitClient {
-	return &handlerUnitClient{cc}
+func NewObjectsClient(cc grpc.ClientConnInterface) ObjectsClient {
+	return &objectsClient{cc}
 }
 
-func (c *handlerUnitClient) CreateCollection(ctx context.Context, in *CreateCollectionRequest, opts ...grpc.CallOption) (*CreateCollectionResponse, error) {
+func (c *objectsClient) CreateCollection(ctx context.Context, in *CreateCollectionRequest, opts ...grpc.CallOption) (*CreateCollectionResponse, error) {
 	out := new(CreateCollectionResponse)
-	err := c.cc.Invoke(ctx, "/HandlerUnit/CreateCollection", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/Objects/CreateCollection", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *handlerUnitClient) GetCollection(ctx context.Context, in *GetCollectionRequest, opts ...grpc.CallOption) (*GetCollectionResponse, error) {
+func (c *objectsClient) GetCollection(ctx context.Context, in *GetCollectionRequest, opts ...grpc.CallOption) (*GetCollectionResponse, error) {
 	out := new(GetCollectionResponse)
-	err := c.cc.Invoke(ctx, "/HandlerUnit/GetCollection", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/Objects/GetCollection", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *handlerUnitClient) ListCollections(ctx context.Context, in *ListCollectionsRequest, opts ...grpc.CallOption) (*ListCollectionsResponse, error) {
+func (c *objectsClient) ListCollections(ctx context.Context, in *ListCollectionsRequest, opts ...grpc.CallOption) (*ListCollectionsResponse, error) {
 	out := new(ListCollectionsResponse)
-	err := c.cc.Invoke(ctx, "/HandlerUnit/ListCollections", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/Objects/ListCollections", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *handlerUnitClient) DeleteCollection(ctx context.Context, in *DeleteCollectionRequest, opts ...grpc.CallOption) (*DeleteCollectionResponse, error) {
+func (c *objectsClient) DeleteCollection(ctx context.Context, in *DeleteCollectionRequest, opts ...grpc.CallOption) (*DeleteCollectionResponse, error) {
 	out := new(DeleteCollectionResponse)
-	err := c.cc.Invoke(ctx, "/HandlerUnit/DeleteCollection", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/Objects/DeleteCollection", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *handlerUnitClient) PutObject(ctx context.Context, in *PutObjectRequest, opts ...grpc.CallOption) (*PutObjectResponse, error) {
+func (c *objectsClient) PutObject(ctx context.Context, in *PutObjectRequest, opts ...grpc.CallOption) (*PutObjectResponse, error) {
 	out := new(PutObjectResponse)
-	err := c.cc.Invoke(ctx, "/HandlerUnit/PutObject", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/Objects/PutObject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *handlerUnitClient) PatchObject(ctx context.Context, in *PatchObjectRequest, opts ...grpc.CallOption) (*PatchObjectResponse, error) {
+func (c *objectsClient) PatchObject(ctx context.Context, in *PatchObjectRequest, opts ...grpc.CallOption) (*PatchObjectResponse, error) {
 	out := new(PatchObjectResponse)
-	err := c.cc.Invoke(ctx, "/HandlerUnit/PatchObject", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/Objects/PatchObject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *handlerUnitClient) MoveObject(ctx context.Context, in *MoveObjectRequest, opts ...grpc.CallOption) (*MoveObjectResponse, error) {
+func (c *objectsClient) MoveObject(ctx context.Context, in *MoveObjectRequest, opts ...grpc.CallOption) (*MoveObjectResponse, error) {
 	out := new(MoveObjectResponse)
-	err := c.cc.Invoke(ctx, "/HandlerUnit/MoveObject", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/Objects/MoveObject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *handlerUnitClient) GetObject(ctx context.Context, in *GetObjectRequest, opts ...grpc.CallOption) (*GetObjectResponse, error) {
+func (c *objectsClient) GetObject(ctx context.Context, in *GetObjectRequest, opts ...grpc.CallOption) (*GetObjectResponse, error) {
 	out := new(GetObjectResponse)
-	err := c.cc.Invoke(ctx, "/HandlerUnit/GetObject", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/Objects/GetObject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *handlerUnitClient) DeleteObject(ctx context.Context, in *DeleteObjectRequest, opts ...grpc.CallOption) (*DeleteObjectResponse, error) {
+func (c *objectsClient) DeleteObject(ctx context.Context, in *DeleteObjectRequest, opts ...grpc.CallOption) (*DeleteObjectResponse, error) {
 	out := new(DeleteObjectResponse)
-	err := c.cc.Invoke(ctx, "/HandlerUnit/DeleteObject", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/Objects/DeleteObject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *handlerUnitClient) ObjectInfo(ctx context.Context, in *ObjectInfoRequest, opts ...grpc.CallOption) (*ObjectInfoResponse, error) {
+func (c *objectsClient) ObjectInfo(ctx context.Context, in *ObjectInfoRequest, opts ...grpc.CallOption) (*ObjectInfoResponse, error) {
 	out := new(ObjectInfoResponse)
-	err := c.cc.Invoke(ctx, "/HandlerUnit/ObjectInfo", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/Objects/ObjectInfo", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *handlerUnitClient) ListObjects(ctx context.Context, in *ListObjectsRequest, opts ...grpc.CallOption) (HandlerUnit_ListObjectsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_HandlerUnit_serviceDesc.Streams[0], "/HandlerUnit/ListObjects", opts...)
+func (c *objectsClient) ListObjects(ctx context.Context, in *ListObjectsRequest, opts ...grpc.CallOption) (Objects_ListObjectsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Objects_serviceDesc.Streams[0], "/Objects/ListObjects", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &handlerUnitListObjectsClient{stream}
+	x := &objectsListObjectsClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -144,16 +144,16 @@ func (c *handlerUnitClient) ListObjects(ctx context.Context, in *ListObjectsRequ
 	return x, nil
 }
 
-type HandlerUnit_ListObjectsClient interface {
+type Objects_ListObjectsClient interface {
 	Recv() (*Object, error)
 	grpc.ClientStream
 }
 
-type handlerUnitListObjectsClient struct {
+type objectsListObjectsClient struct {
 	grpc.ClientStream
 }
 
-func (x *handlerUnitListObjectsClient) Recv() (*Object, error) {
+func (x *objectsListObjectsClient) Recv() (*Object, error) {
 	m := new(Object)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -161,12 +161,12 @@ func (x *handlerUnitListObjectsClient) Recv() (*Object, error) {
 	return m, nil
 }
 
-func (c *handlerUnitClient) SearchObjects(ctx context.Context, in *SearchObjectsRequest, opts ...grpc.CallOption) (HandlerUnit_SearchObjectsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_HandlerUnit_serviceDesc.Streams[1], "/HandlerUnit/SearchObjects", opts...)
+func (c *objectsClient) SearchObjects(ctx context.Context, in *SearchObjectsRequest, opts ...grpc.CallOption) (Objects_SearchObjectsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Objects_serviceDesc.Streams[1], "/Objects/SearchObjects", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &handlerUnitSearchObjectsClient{stream}
+	x := &objectsSearchObjectsClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -176,16 +176,16 @@ func (c *handlerUnitClient) SearchObjects(ctx context.Context, in *SearchObjects
 	return x, nil
 }
 
-type HandlerUnit_SearchObjectsClient interface {
+type Objects_SearchObjectsClient interface {
 	Recv() (*Object, error)
 	grpc.ClientStream
 }
 
-type handlerUnitSearchObjectsClient struct {
+type objectsSearchObjectsClient struct {
 	grpc.ClientStream
 }
 
-func (x *handlerUnitSearchObjectsClient) Recv() (*Object, error) {
+func (x *objectsSearchObjectsClient) Recv() (*Object, error) {
 	m := new(Object)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -193,10 +193,10 @@ func (x *handlerUnitSearchObjectsClient) Recv() (*Object, error) {
 	return m, nil
 }
 
-// HandlerUnitServer is the server API for HandlerUnit service.
-// All implementations must embed UnimplementedHandlerUnitServer
+// ObjectsServer is the server API for Objects service.
+// All implementations must embed UnimplementedObjectsServer
 // for forward compatibility
-type HandlerUnitServer interface {
+type ObjectsServer interface {
 	CreateCollection(context.Context, *CreateCollectionRequest) (*CreateCollectionResponse, error)
 	GetCollection(context.Context, *GetCollectionRequest) (*GetCollectionResponse, error)
 	ListCollections(context.Context, *ListCollectionsRequest) (*ListCollectionsResponse, error)
@@ -207,340 +207,340 @@ type HandlerUnitServer interface {
 	GetObject(context.Context, *GetObjectRequest) (*GetObjectResponse, error)
 	DeleteObject(context.Context, *DeleteObjectRequest) (*DeleteObjectResponse, error)
 	ObjectInfo(context.Context, *ObjectInfoRequest) (*ObjectInfoResponse, error)
-	ListObjects(*ListObjectsRequest, HandlerUnit_ListObjectsServer) error
-	SearchObjects(*SearchObjectsRequest, HandlerUnit_SearchObjectsServer) error
-	mustEmbedUnimplementedHandlerUnitServer()
+	ListObjects(*ListObjectsRequest, Objects_ListObjectsServer) error
+	SearchObjects(*SearchObjectsRequest, Objects_SearchObjectsServer) error
+	mustEmbedUnimplementedObjectsServer()
 }
 
-// UnimplementedHandlerUnitServer must be embedded to have forward compatible implementations.
-type UnimplementedHandlerUnitServer struct {
+// UnimplementedObjectsServer must be embedded to have forward compatible implementations.
+type UnimplementedObjectsServer struct {
 }
 
-func (UnimplementedHandlerUnitServer) CreateCollection(context.Context, *CreateCollectionRequest) (*CreateCollectionResponse, error) {
+func (UnimplementedObjectsServer) CreateCollection(context.Context, *CreateCollectionRequest) (*CreateCollectionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateCollection not implemented")
 }
-func (UnimplementedHandlerUnitServer) GetCollection(context.Context, *GetCollectionRequest) (*GetCollectionResponse, error) {
+func (UnimplementedObjectsServer) GetCollection(context.Context, *GetCollectionRequest) (*GetCollectionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCollection not implemented")
 }
-func (UnimplementedHandlerUnitServer) ListCollections(context.Context, *ListCollectionsRequest) (*ListCollectionsResponse, error) {
+func (UnimplementedObjectsServer) ListCollections(context.Context, *ListCollectionsRequest) (*ListCollectionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListCollections not implemented")
 }
-func (UnimplementedHandlerUnitServer) DeleteCollection(context.Context, *DeleteCollectionRequest) (*DeleteCollectionResponse, error) {
+func (UnimplementedObjectsServer) DeleteCollection(context.Context, *DeleteCollectionRequest) (*DeleteCollectionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteCollection not implemented")
 }
-func (UnimplementedHandlerUnitServer) PutObject(context.Context, *PutObjectRequest) (*PutObjectResponse, error) {
+func (UnimplementedObjectsServer) PutObject(context.Context, *PutObjectRequest) (*PutObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PutObject not implemented")
 }
-func (UnimplementedHandlerUnitServer) PatchObject(context.Context, *PatchObjectRequest) (*PatchObjectResponse, error) {
+func (UnimplementedObjectsServer) PatchObject(context.Context, *PatchObjectRequest) (*PatchObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PatchObject not implemented")
 }
-func (UnimplementedHandlerUnitServer) MoveObject(context.Context, *MoveObjectRequest) (*MoveObjectResponse, error) {
+func (UnimplementedObjectsServer) MoveObject(context.Context, *MoveObjectRequest) (*MoveObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MoveObject not implemented")
 }
-func (UnimplementedHandlerUnitServer) GetObject(context.Context, *GetObjectRequest) (*GetObjectResponse, error) {
+func (UnimplementedObjectsServer) GetObject(context.Context, *GetObjectRequest) (*GetObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetObject not implemented")
 }
-func (UnimplementedHandlerUnitServer) DeleteObject(context.Context, *DeleteObjectRequest) (*DeleteObjectResponse, error) {
+func (UnimplementedObjectsServer) DeleteObject(context.Context, *DeleteObjectRequest) (*DeleteObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteObject not implemented")
 }
-func (UnimplementedHandlerUnitServer) ObjectInfo(context.Context, *ObjectInfoRequest) (*ObjectInfoResponse, error) {
+func (UnimplementedObjectsServer) ObjectInfo(context.Context, *ObjectInfoRequest) (*ObjectInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ObjectInfo not implemented")
 }
-func (UnimplementedHandlerUnitServer) ListObjects(*ListObjectsRequest, HandlerUnit_ListObjectsServer) error {
+func (UnimplementedObjectsServer) ListObjects(*ListObjectsRequest, Objects_ListObjectsServer) error {
 	return status.Errorf(codes.Unimplemented, "method ListObjects not implemented")
 }
-func (UnimplementedHandlerUnitServer) SearchObjects(*SearchObjectsRequest, HandlerUnit_SearchObjectsServer) error {
+func (UnimplementedObjectsServer) SearchObjects(*SearchObjectsRequest, Objects_SearchObjectsServer) error {
 	return status.Errorf(codes.Unimplemented, "method SearchObjects not implemented")
 }
-func (UnimplementedHandlerUnitServer) mustEmbedUnimplementedHandlerUnitServer() {}
+func (UnimplementedObjectsServer) mustEmbedUnimplementedObjectsServer() {}
 
-// UnsafeHandlerUnitServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to HandlerUnitServer will
+// UnsafeObjectsServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ObjectsServer will
 // result in compilation errors.
-type UnsafeHandlerUnitServer interface {
-	mustEmbedUnimplementedHandlerUnitServer()
+type UnsafeObjectsServer interface {
+	mustEmbedUnimplementedObjectsServer()
 }
 
-func RegisterHandlerUnitServer(s *grpc.Server, srv HandlerUnitServer) {
-	s.RegisterService(&_HandlerUnit_serviceDesc, srv)
+func RegisterObjectsServer(s *grpc.Server, srv ObjectsServer) {
+	s.RegisterService(&_Objects_serviceDesc, srv)
 }
 
-func _HandlerUnit_CreateCollection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Objects_CreateCollection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateCollectionRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlerUnitServer).CreateCollection(ctx, in)
+		return srv.(ObjectsServer).CreateCollection(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/HandlerUnit/CreateCollection",
+		FullMethod: "/Objects/CreateCollection",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlerUnitServer).CreateCollection(ctx, req.(*CreateCollectionRequest))
+		return srv.(ObjectsServer).CreateCollection(ctx, req.(*CreateCollectionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HandlerUnit_GetCollection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Objects_GetCollection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetCollectionRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlerUnitServer).GetCollection(ctx, in)
+		return srv.(ObjectsServer).GetCollection(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/HandlerUnit/GetCollection",
+		FullMethod: "/Objects/GetCollection",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlerUnitServer).GetCollection(ctx, req.(*GetCollectionRequest))
+		return srv.(ObjectsServer).GetCollection(ctx, req.(*GetCollectionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HandlerUnit_ListCollections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Objects_ListCollections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListCollectionsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlerUnitServer).ListCollections(ctx, in)
+		return srv.(ObjectsServer).ListCollections(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/HandlerUnit/ListCollections",
+		FullMethod: "/Objects/ListCollections",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlerUnitServer).ListCollections(ctx, req.(*ListCollectionsRequest))
+		return srv.(ObjectsServer).ListCollections(ctx, req.(*ListCollectionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HandlerUnit_DeleteCollection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Objects_DeleteCollection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteCollectionRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlerUnitServer).DeleteCollection(ctx, in)
+		return srv.(ObjectsServer).DeleteCollection(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/HandlerUnit/DeleteCollection",
+		FullMethod: "/Objects/DeleteCollection",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlerUnitServer).DeleteCollection(ctx, req.(*DeleteCollectionRequest))
+		return srv.(ObjectsServer).DeleteCollection(ctx, req.(*DeleteCollectionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HandlerUnit_PutObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Objects_PutObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PutObjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlerUnitServer).PutObject(ctx, in)
+		return srv.(ObjectsServer).PutObject(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/HandlerUnit/PutObject",
+		FullMethod: "/Objects/PutObject",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlerUnitServer).PutObject(ctx, req.(*PutObjectRequest))
+		return srv.(ObjectsServer).PutObject(ctx, req.(*PutObjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HandlerUnit_PatchObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Objects_PatchObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PatchObjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlerUnitServer).PatchObject(ctx, in)
+		return srv.(ObjectsServer).PatchObject(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/HandlerUnit/PatchObject",
+		FullMethod: "/Objects/PatchObject",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlerUnitServer).PatchObject(ctx, req.(*PatchObjectRequest))
+		return srv.(ObjectsServer).PatchObject(ctx, req.(*PatchObjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HandlerUnit_MoveObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Objects_MoveObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MoveObjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlerUnitServer).MoveObject(ctx, in)
+		return srv.(ObjectsServer).MoveObject(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/HandlerUnit/MoveObject",
+		FullMethod: "/Objects/MoveObject",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlerUnitServer).MoveObject(ctx, req.(*MoveObjectRequest))
+		return srv.(ObjectsServer).MoveObject(ctx, req.(*MoveObjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HandlerUnit_GetObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Objects_GetObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetObjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlerUnitServer).GetObject(ctx, in)
+		return srv.(ObjectsServer).GetObject(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/HandlerUnit/GetObject",
+		FullMethod: "/Objects/GetObject",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlerUnitServer).GetObject(ctx, req.(*GetObjectRequest))
+		return srv.(ObjectsServer).GetObject(ctx, req.(*GetObjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HandlerUnit_DeleteObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Objects_DeleteObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteObjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlerUnitServer).DeleteObject(ctx, in)
+		return srv.(ObjectsServer).DeleteObject(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/HandlerUnit/DeleteObject",
+		FullMethod: "/Objects/DeleteObject",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlerUnitServer).DeleteObject(ctx, req.(*DeleteObjectRequest))
+		return srv.(ObjectsServer).DeleteObject(ctx, req.(*DeleteObjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HandlerUnit_ObjectInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Objects_ObjectInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ObjectInfoRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlerUnitServer).ObjectInfo(ctx, in)
+		return srv.(ObjectsServer).ObjectInfo(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/HandlerUnit/ObjectInfo",
+		FullMethod: "/Objects/ObjectInfo",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlerUnitServer).ObjectInfo(ctx, req.(*ObjectInfoRequest))
+		return srv.(ObjectsServer).ObjectInfo(ctx, req.(*ObjectInfoRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HandlerUnit_ListObjects_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _Objects_ListObjects_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(ListObjectsRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(HandlerUnitServer).ListObjects(m, &handlerUnitListObjectsServer{stream})
+	return srv.(ObjectsServer).ListObjects(m, &objectsListObjectsServer{stream})
 }
 
-type HandlerUnit_ListObjectsServer interface {
+type Objects_ListObjectsServer interface {
 	Send(*Object) error
 	grpc.ServerStream
 }
 
-type handlerUnitListObjectsServer struct {
+type objectsListObjectsServer struct {
 	grpc.ServerStream
 }
 
-func (x *handlerUnitListObjectsServer) Send(m *Object) error {
+func (x *objectsListObjectsServer) Send(m *Object) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _HandlerUnit_SearchObjects_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _Objects_SearchObjects_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(SearchObjectsRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(HandlerUnitServer).SearchObjects(m, &handlerUnitSearchObjectsServer{stream})
+	return srv.(ObjectsServer).SearchObjects(m, &objectsSearchObjectsServer{stream})
 }
 
-type HandlerUnit_SearchObjectsServer interface {
+type Objects_SearchObjectsServer interface {
 	Send(*Object) error
 	grpc.ServerStream
 }
 
-type handlerUnitSearchObjectsServer struct {
+type objectsSearchObjectsServer struct {
 	grpc.ServerStream
 }
 
-func (x *handlerUnitSearchObjectsServer) Send(m *Object) error {
+func (x *objectsSearchObjectsServer) Send(m *Object) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-var _HandlerUnit_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "HandlerUnit",
-	HandlerType: (*HandlerUnitServer)(nil),
+var _Objects_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "Objects",
+	HandlerType: (*ObjectsServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "CreateCollection",
-			Handler:    _HandlerUnit_CreateCollection_Handler,
+			Handler:    _Objects_CreateCollection_Handler,
 		},
 		{
 			MethodName: "GetCollection",
-			Handler:    _HandlerUnit_GetCollection_Handler,
+			Handler:    _Objects_GetCollection_Handler,
 		},
 		{
 			MethodName: "ListCollections",
-			Handler:    _HandlerUnit_ListCollections_Handler,
+			Handler:    _Objects_ListCollections_Handler,
 		},
 		{
 			MethodName: "DeleteCollection",
-			Handler:    _HandlerUnit_DeleteCollection_Handler,
+			Handler:    _Objects_DeleteCollection_Handler,
 		},
 		{
 			MethodName: "PutObject",
-			Handler:    _HandlerUnit_PutObject_Handler,
+			Handler:    _Objects_PutObject_Handler,
 		},
 		{
 			MethodName: "PatchObject",
-			Handler:    _HandlerUnit_PatchObject_Handler,
+			Handler:    _Objects_PatchObject_Handler,
 		},
 		{
 			MethodName: "MoveObject",
-			Handler:    _HandlerUnit_MoveObject_Handler,
+			Handler:    _Objects_MoveObject_Handler,
 		},
 		{
 			MethodName: "GetObject",
-			Handler:    _HandlerUnit_GetObject_Handler,
+			Handler:    _Objects_GetObject_Handler,
 		},
 		{
 			MethodName: "DeleteObject",
-			Handler:    _HandlerUnit_DeleteObject_Handler,
+			Handler:    _Objects_DeleteObject_Handler,
 		},
 		{
 			MethodName: "ObjectInfo",
-			Handler:    _HandlerUnit_ObjectInfo_Handler,
+			Handler:    _Objects_ObjectInfo_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "ListObjects",
-			Handler:       _HandlerUnit_ListObjects_Handler,
+			Handler:       _Objects_ListObjects_Handler,
 			ServerStreams: true,
 		},
 		{
 			StreamName:    "SearchObjects",
-			Handler:       _HandlerUnit_SearchObjects_Handler,
+			Handler:       _Objects_SearchObjects_Handler,
 			ServerStreams: true,
 		},
 	},

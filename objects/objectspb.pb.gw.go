@@ -31,7 +31,7 @@ var _ = runtime.String
 var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
-func request_HandlerUnit_CreateCollection_0(ctx context.Context, marshaler runtime.Marshaler, client HandlerUnitClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Objects_CreateCollection_0(ctx context.Context, marshaler runtime.Marshaler, client ObjectsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq CreateCollectionRequest
 	var metadata runtime.ServerMetadata
 
@@ -48,7 +48,7 @@ func request_HandlerUnit_CreateCollection_0(ctx context.Context, marshaler runti
 
 }
 
-func local_request_HandlerUnit_CreateCollection_0(ctx context.Context, marshaler runtime.Marshaler, server HandlerUnitServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_Objects_CreateCollection_0(ctx context.Context, marshaler runtime.Marshaler, server ObjectsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq CreateCollectionRequest
 	var metadata runtime.ServerMetadata
 
@@ -65,7 +65,7 @@ func local_request_HandlerUnit_CreateCollection_0(ctx context.Context, marshaler
 
 }
 
-func request_HandlerUnit_GetCollection_0(ctx context.Context, marshaler runtime.Marshaler, client HandlerUnitClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Objects_GetCollection_0(ctx context.Context, marshaler runtime.Marshaler, client ObjectsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetCollectionRequest
 	var metadata runtime.ServerMetadata
 
@@ -82,7 +82,7 @@ func request_HandlerUnit_GetCollection_0(ctx context.Context, marshaler runtime.
 
 }
 
-func local_request_HandlerUnit_GetCollection_0(ctx context.Context, marshaler runtime.Marshaler, server HandlerUnitServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_Objects_GetCollection_0(ctx context.Context, marshaler runtime.Marshaler, server ObjectsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetCollectionRequest
 	var metadata runtime.ServerMetadata
 
@@ -99,7 +99,7 @@ func local_request_HandlerUnit_GetCollection_0(ctx context.Context, marshaler ru
 
 }
 
-func request_HandlerUnit_ListCollections_0(ctx context.Context, marshaler runtime.Marshaler, client HandlerUnitClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Objects_ListCollections_0(ctx context.Context, marshaler runtime.Marshaler, client ObjectsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListCollectionsRequest
 	var metadata runtime.ServerMetadata
 
@@ -116,7 +116,7 @@ func request_HandlerUnit_ListCollections_0(ctx context.Context, marshaler runtim
 
 }
 
-func local_request_HandlerUnit_ListCollections_0(ctx context.Context, marshaler runtime.Marshaler, server HandlerUnitServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_Objects_ListCollections_0(ctx context.Context, marshaler runtime.Marshaler, server ObjectsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListCollectionsRequest
 	var metadata runtime.ServerMetadata
 
@@ -133,7 +133,7 @@ func local_request_HandlerUnit_ListCollections_0(ctx context.Context, marshaler 
 
 }
 
-func request_HandlerUnit_DeleteCollection_0(ctx context.Context, marshaler runtime.Marshaler, client HandlerUnitClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Objects_DeleteCollection_0(ctx context.Context, marshaler runtime.Marshaler, client ObjectsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteCollectionRequest
 	var metadata runtime.ServerMetadata
 
@@ -150,7 +150,7 @@ func request_HandlerUnit_DeleteCollection_0(ctx context.Context, marshaler runti
 
 }
 
-func local_request_HandlerUnit_DeleteCollection_0(ctx context.Context, marshaler runtime.Marshaler, server HandlerUnitServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_Objects_DeleteCollection_0(ctx context.Context, marshaler runtime.Marshaler, server ObjectsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteCollectionRequest
 	var metadata runtime.ServerMetadata
 
@@ -167,7 +167,7 @@ func local_request_HandlerUnit_DeleteCollection_0(ctx context.Context, marshaler
 
 }
 
-func request_HandlerUnit_PutObject_0(ctx context.Context, marshaler runtime.Marshaler, client HandlerUnitClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Objects_PutObject_0(ctx context.Context, marshaler runtime.Marshaler, client ObjectsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq PutObjectRequest
 	var metadata runtime.ServerMetadata
 
@@ -184,7 +184,7 @@ func request_HandlerUnit_PutObject_0(ctx context.Context, marshaler runtime.Mars
 
 }
 
-func local_request_HandlerUnit_PutObject_0(ctx context.Context, marshaler runtime.Marshaler, server HandlerUnitServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_Objects_PutObject_0(ctx context.Context, marshaler runtime.Marshaler, server ObjectsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq PutObjectRequest
 	var metadata runtime.ServerMetadata
 
@@ -201,7 +201,7 @@ func local_request_HandlerUnit_PutObject_0(ctx context.Context, marshaler runtim
 
 }
 
-func request_HandlerUnit_PatchObject_0(ctx context.Context, marshaler runtime.Marshaler, client HandlerUnitClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Objects_PatchObject_0(ctx context.Context, marshaler runtime.Marshaler, client ObjectsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq PatchObjectRequest
 	var metadata runtime.ServerMetadata
 
@@ -218,7 +218,7 @@ func request_HandlerUnit_PatchObject_0(ctx context.Context, marshaler runtime.Ma
 
 }
 
-func local_request_HandlerUnit_PatchObject_0(ctx context.Context, marshaler runtime.Marshaler, server HandlerUnitServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_Objects_PatchObject_0(ctx context.Context, marshaler runtime.Marshaler, server ObjectsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq PatchObjectRequest
 	var metadata runtime.ServerMetadata
 
@@ -235,7 +235,7 @@ func local_request_HandlerUnit_PatchObject_0(ctx context.Context, marshaler runt
 
 }
 
-func request_HandlerUnit_MoveObject_0(ctx context.Context, marshaler runtime.Marshaler, client HandlerUnitClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Objects_MoveObject_0(ctx context.Context, marshaler runtime.Marshaler, client ObjectsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq MoveObjectRequest
 	var metadata runtime.ServerMetadata
 
@@ -252,7 +252,7 @@ func request_HandlerUnit_MoveObject_0(ctx context.Context, marshaler runtime.Mar
 
 }
 
-func local_request_HandlerUnit_MoveObject_0(ctx context.Context, marshaler runtime.Marshaler, server HandlerUnitServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_Objects_MoveObject_0(ctx context.Context, marshaler runtime.Marshaler, server ObjectsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq MoveObjectRequest
 	var metadata runtime.ServerMetadata
 
@@ -269,7 +269,7 @@ func local_request_HandlerUnit_MoveObject_0(ctx context.Context, marshaler runti
 
 }
 
-func request_HandlerUnit_GetObject_0(ctx context.Context, marshaler runtime.Marshaler, client HandlerUnitClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Objects_GetObject_0(ctx context.Context, marshaler runtime.Marshaler, client ObjectsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetObjectRequest
 	var metadata runtime.ServerMetadata
 
@@ -286,7 +286,7 @@ func request_HandlerUnit_GetObject_0(ctx context.Context, marshaler runtime.Mars
 
 }
 
-func local_request_HandlerUnit_GetObject_0(ctx context.Context, marshaler runtime.Marshaler, server HandlerUnitServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_Objects_GetObject_0(ctx context.Context, marshaler runtime.Marshaler, server ObjectsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetObjectRequest
 	var metadata runtime.ServerMetadata
 
@@ -303,7 +303,7 @@ func local_request_HandlerUnit_GetObject_0(ctx context.Context, marshaler runtim
 
 }
 
-func request_HandlerUnit_DeleteObject_0(ctx context.Context, marshaler runtime.Marshaler, client HandlerUnitClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Objects_DeleteObject_0(ctx context.Context, marshaler runtime.Marshaler, client ObjectsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteObjectRequest
 	var metadata runtime.ServerMetadata
 
@@ -320,7 +320,7 @@ func request_HandlerUnit_DeleteObject_0(ctx context.Context, marshaler runtime.M
 
 }
 
-func local_request_HandlerUnit_DeleteObject_0(ctx context.Context, marshaler runtime.Marshaler, server HandlerUnitServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_Objects_DeleteObject_0(ctx context.Context, marshaler runtime.Marshaler, server ObjectsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteObjectRequest
 	var metadata runtime.ServerMetadata
 
@@ -337,7 +337,7 @@ func local_request_HandlerUnit_DeleteObject_0(ctx context.Context, marshaler run
 
 }
 
-func request_HandlerUnit_ObjectInfo_0(ctx context.Context, marshaler runtime.Marshaler, client HandlerUnitClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Objects_ObjectInfo_0(ctx context.Context, marshaler runtime.Marshaler, client ObjectsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ObjectInfoRequest
 	var metadata runtime.ServerMetadata
 
@@ -354,7 +354,7 @@ func request_HandlerUnit_ObjectInfo_0(ctx context.Context, marshaler runtime.Mar
 
 }
 
-func local_request_HandlerUnit_ObjectInfo_0(ctx context.Context, marshaler runtime.Marshaler, server HandlerUnitServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_Objects_ObjectInfo_0(ctx context.Context, marshaler runtime.Marshaler, server ObjectsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ObjectInfoRequest
 	var metadata runtime.ServerMetadata
 
@@ -371,7 +371,7 @@ func local_request_HandlerUnit_ObjectInfo_0(ctx context.Context, marshaler runti
 
 }
 
-func request_HandlerUnit_ListObjects_0(ctx context.Context, marshaler runtime.Marshaler, client HandlerUnitClient, req *http.Request, pathParams map[string]string) (HandlerUnit_ListObjectsClient, runtime.ServerMetadata, error) {
+func request_Objects_ListObjects_0(ctx context.Context, marshaler runtime.Marshaler, client ObjectsClient, req *http.Request, pathParams map[string]string) (Objects_ListObjectsClient, runtime.ServerMetadata, error) {
 	var protoReq ListObjectsRequest
 	var metadata runtime.ServerMetadata
 
@@ -396,7 +396,7 @@ func request_HandlerUnit_ListObjects_0(ctx context.Context, marshaler runtime.Ma
 
 }
 
-func request_HandlerUnit_SearchObjects_0(ctx context.Context, marshaler runtime.Marshaler, client HandlerUnitClient, req *http.Request, pathParams map[string]string) (HandlerUnit_SearchObjectsClient, runtime.ServerMetadata, error) {
+func request_Objects_SearchObjects_0(ctx context.Context, marshaler runtime.Marshaler, client ObjectsClient, req *http.Request, pathParams map[string]string) (Objects_SearchObjectsClient, runtime.ServerMetadata, error) {
 	var protoReq SearchObjectsRequest
 	var metadata runtime.ServerMetadata
 
@@ -591,24 +591,24 @@ func local_request_ACL_DeleteRulesForPath_0(ctx context.Context, marshaler runti
 
 }
 
-// RegisterHandlerUnitHandlerServer registers the http handlers for service HandlerUnit to "mux".
-// UnaryRPC     :call HandlerUnitServer directly.
+// RegisterObjectsHandlerServer registers the http handlers for service Objects to "mux".
+// UnaryRPC     :call ObjectsServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterHandlerUnitHandlerFromEndpoint instead.
-func RegisterHandlerUnitHandlerServer(ctx context.Context, mux *runtime.ServeMux, server HandlerUnitServer) error {
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterObjectsHandlerFromEndpoint instead.
+func RegisterObjectsHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ObjectsServer) error {
 
-	mux.Handle("POST", pattern_HandlerUnit_CreateCollection_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_CreateCollection_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.HandlerUnit/CreateCollection")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Objects/CreateCollection")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HandlerUnit_CreateCollection_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Objects_CreateCollection_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -616,22 +616,22 @@ func RegisterHandlerUnitHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 
-		forward_HandlerUnit_CreateCollection_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_CreateCollection_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_GetCollection_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_GetCollection_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.HandlerUnit/GetCollection")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Objects/GetCollection")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HandlerUnit_GetCollection_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Objects_GetCollection_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -639,22 +639,22 @@ func RegisterHandlerUnitHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 
-		forward_HandlerUnit_GetCollection_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_GetCollection_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_ListCollections_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_ListCollections_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.HandlerUnit/ListCollections")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Objects/ListCollections")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HandlerUnit_ListCollections_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Objects_ListCollections_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -662,22 +662,22 @@ func RegisterHandlerUnitHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 
-		forward_HandlerUnit_ListCollections_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_ListCollections_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_DeleteCollection_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_DeleteCollection_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.HandlerUnit/DeleteCollection")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Objects/DeleteCollection")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HandlerUnit_DeleteCollection_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Objects_DeleteCollection_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -685,22 +685,22 @@ func RegisterHandlerUnitHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 
-		forward_HandlerUnit_DeleteCollection_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_DeleteCollection_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_PutObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_PutObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.HandlerUnit/PutObject")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Objects/PutObject")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HandlerUnit_PutObject_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Objects_PutObject_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -708,22 +708,22 @@ func RegisterHandlerUnitHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 
-		forward_HandlerUnit_PutObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_PutObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_PatchObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_PatchObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.HandlerUnit/PatchObject")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Objects/PatchObject")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HandlerUnit_PatchObject_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Objects_PatchObject_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -731,22 +731,22 @@ func RegisterHandlerUnitHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 
-		forward_HandlerUnit_PatchObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_PatchObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_MoveObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_MoveObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.HandlerUnit/MoveObject")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Objects/MoveObject")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HandlerUnit_MoveObject_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Objects_MoveObject_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -754,22 +754,22 @@ func RegisterHandlerUnitHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 
-		forward_HandlerUnit_MoveObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_MoveObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_GetObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_GetObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.HandlerUnit/GetObject")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Objects/GetObject")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HandlerUnit_GetObject_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Objects_GetObject_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -777,22 +777,22 @@ func RegisterHandlerUnitHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 
-		forward_HandlerUnit_GetObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_GetObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_DeleteObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_DeleteObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.HandlerUnit/DeleteObject")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Objects/DeleteObject")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HandlerUnit_DeleteObject_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Objects_DeleteObject_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -800,22 +800,22 @@ func RegisterHandlerUnitHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 
-		forward_HandlerUnit_DeleteObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_DeleteObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_ObjectInfo_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_ObjectInfo_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.HandlerUnit/ObjectInfo")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Objects/ObjectInfo")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HandlerUnit_ObjectInfo_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Objects_ObjectInfo_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -823,18 +823,18 @@ func RegisterHandlerUnitHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 
-		forward_HandlerUnit_ObjectInfo_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_ObjectInfo_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_ListObjects_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_ListObjects_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
 		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 		return
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_SearchObjects_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_SearchObjects_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
 		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -968,9 +968,9 @@ func RegisterACLHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 	return nil
 }
 
-// RegisterHandlerUnitHandlerFromEndpoint is same as RegisterHandlerUnitHandler but
+// RegisterObjectsHandlerFromEndpoint is same as RegisterObjectsHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterHandlerUnitHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterObjectsHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
 		return err
@@ -990,259 +990,259 @@ func RegisterHandlerUnitHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 		}()
 	}()
 
-	return RegisterHandlerUnitHandler(ctx, mux, conn)
+	return RegisterObjectsHandler(ctx, mux, conn)
 }
 
-// RegisterHandlerUnitHandler registers the http handlers for service HandlerUnit to "mux".
+// RegisterObjectsHandler registers the http handlers for service Objects to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterHandlerUnitHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterHandlerUnitHandlerClient(ctx, mux, NewHandlerUnitClient(conn))
+func RegisterObjectsHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterObjectsHandlerClient(ctx, mux, NewObjectsClient(conn))
 }
 
-// RegisterHandlerUnitHandlerClient registers the http handlers for service HandlerUnit
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "HandlerUnitClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "HandlerUnitClient"
+// RegisterObjectsHandlerClient registers the http handlers for service Objects
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "ObjectsClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "ObjectsClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "HandlerUnitClient" to call the correct interceptors.
-func RegisterHandlerUnitHandlerClient(ctx context.Context, mux *runtime.ServeMux, client HandlerUnitClient) error {
+// "ObjectsClient" to call the correct interceptors.
+func RegisterObjectsHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ObjectsClient) error {
 
-	mux.Handle("POST", pattern_HandlerUnit_CreateCollection_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_CreateCollection_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.HandlerUnit/CreateCollection")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Objects/CreateCollection")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HandlerUnit_CreateCollection_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Objects_CreateCollection_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_HandlerUnit_CreateCollection_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_CreateCollection_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_GetCollection_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_GetCollection_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.HandlerUnit/GetCollection")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Objects/GetCollection")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HandlerUnit_GetCollection_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Objects_GetCollection_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_HandlerUnit_GetCollection_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_GetCollection_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_ListCollections_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_ListCollections_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.HandlerUnit/ListCollections")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Objects/ListCollections")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HandlerUnit_ListCollections_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Objects_ListCollections_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_HandlerUnit_ListCollections_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_ListCollections_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_DeleteCollection_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_DeleteCollection_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.HandlerUnit/DeleteCollection")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Objects/DeleteCollection")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HandlerUnit_DeleteCollection_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Objects_DeleteCollection_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_HandlerUnit_DeleteCollection_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_DeleteCollection_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_PutObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_PutObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.HandlerUnit/PutObject")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Objects/PutObject")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HandlerUnit_PutObject_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Objects_PutObject_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_HandlerUnit_PutObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_PutObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_PatchObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_PatchObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.HandlerUnit/PatchObject")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Objects/PatchObject")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HandlerUnit_PatchObject_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Objects_PatchObject_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_HandlerUnit_PatchObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_PatchObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_MoveObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_MoveObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.HandlerUnit/MoveObject")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Objects/MoveObject")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HandlerUnit_MoveObject_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Objects_MoveObject_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_HandlerUnit_MoveObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_MoveObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_GetObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_GetObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.HandlerUnit/GetObject")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Objects/GetObject")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HandlerUnit_GetObject_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Objects_GetObject_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_HandlerUnit_GetObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_GetObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_DeleteObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_DeleteObject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.HandlerUnit/DeleteObject")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Objects/DeleteObject")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HandlerUnit_DeleteObject_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Objects_DeleteObject_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_HandlerUnit_DeleteObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_DeleteObject_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_ObjectInfo_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_ObjectInfo_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.HandlerUnit/ObjectInfo")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Objects/ObjectInfo")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HandlerUnit_ObjectInfo_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Objects_ObjectInfo_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_HandlerUnit_ObjectInfo_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Objects_ObjectInfo_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_ListObjects_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_ListObjects_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.HandlerUnit/ListObjects")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Objects/ListObjects")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HandlerUnit_ListObjects_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Objects_ListObjects_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_HandlerUnit_ListObjects_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
+		forward_Objects_ListObjects_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_HandlerUnit_SearchObjects_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Objects_SearchObjects_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.HandlerUnit/SearchObjects")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Objects/SearchObjects")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HandlerUnit_SearchObjects_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Objects_SearchObjects_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_HandlerUnit_SearchObjects_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
+		forward_Objects_SearchObjects_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1250,55 +1250,55 @@ func RegisterHandlerUnitHandlerClient(ctx context.Context, mux *runtime.ServeMux
 }
 
 var (
-	pattern_HandlerUnit_CreateCollection_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "CreateCollection"}, ""))
+	pattern_Objects_CreateCollection_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Objects", "CreateCollection"}, ""))
 
-	pattern_HandlerUnit_GetCollection_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "GetCollection"}, ""))
+	pattern_Objects_GetCollection_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Objects", "GetCollection"}, ""))
 
-	pattern_HandlerUnit_ListCollections_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "ListCollections"}, ""))
+	pattern_Objects_ListCollections_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Objects", "ListCollections"}, ""))
 
-	pattern_HandlerUnit_DeleteCollection_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "DeleteCollection"}, ""))
+	pattern_Objects_DeleteCollection_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Objects", "DeleteCollection"}, ""))
 
-	pattern_HandlerUnit_PutObject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "PutObject"}, ""))
+	pattern_Objects_PutObject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Objects", "PutObject"}, ""))
 
-	pattern_HandlerUnit_PatchObject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "PatchObject"}, ""))
+	pattern_Objects_PatchObject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Objects", "PatchObject"}, ""))
 
-	pattern_HandlerUnit_MoveObject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "MoveObject"}, ""))
+	pattern_Objects_MoveObject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Objects", "MoveObject"}, ""))
 
-	pattern_HandlerUnit_GetObject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "GetObject"}, ""))
+	pattern_Objects_GetObject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Objects", "GetObject"}, ""))
 
-	pattern_HandlerUnit_DeleteObject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "DeleteObject"}, ""))
+	pattern_Objects_DeleteObject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Objects", "DeleteObject"}, ""))
 
-	pattern_HandlerUnit_ObjectInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "ObjectInfo"}, ""))
+	pattern_Objects_ObjectInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Objects", "ObjectInfo"}, ""))
 
-	pattern_HandlerUnit_ListObjects_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "ListObjects"}, ""))
+	pattern_Objects_ListObjects_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Objects", "ListObjects"}, ""))
 
-	pattern_HandlerUnit_SearchObjects_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"HandlerUnit", "SearchObjects"}, ""))
+	pattern_Objects_SearchObjects_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Objects", "SearchObjects"}, ""))
 )
 
 var (
-	forward_HandlerUnit_CreateCollection_0 = runtime.ForwardResponseMessage
+	forward_Objects_CreateCollection_0 = runtime.ForwardResponseMessage
 
-	forward_HandlerUnit_GetCollection_0 = runtime.ForwardResponseMessage
+	forward_Objects_GetCollection_0 = runtime.ForwardResponseMessage
 
-	forward_HandlerUnit_ListCollections_0 = runtime.ForwardResponseMessage
+	forward_Objects_ListCollections_0 = runtime.ForwardResponseMessage
 
-	forward_HandlerUnit_DeleteCollection_0 = runtime.ForwardResponseMessage
+	forward_Objects_DeleteCollection_0 = runtime.ForwardResponseMessage
 
-	forward_HandlerUnit_PutObject_0 = runtime.ForwardResponseMessage
+	forward_Objects_PutObject_0 = runtime.ForwardResponseMessage
 
-	forward_HandlerUnit_PatchObject_0 = runtime.ForwardResponseMessage
+	forward_Objects_PatchObject_0 = runtime.ForwardResponseMessage
 
-	forward_HandlerUnit_MoveObject_0 = runtime.ForwardResponseMessage
+	forward_Objects_MoveObject_0 = runtime.ForwardResponseMessage
 
-	forward_HandlerUnit_GetObject_0 = runtime.ForwardResponseMessage
+	forward_Objects_GetObject_0 = runtime.ForwardResponseMessage
 
-	forward_HandlerUnit_DeleteObject_0 = runtime.ForwardResponseMessage
+	forward_Objects_DeleteObject_0 = runtime.ForwardResponseMessage
 
-	forward_HandlerUnit_ObjectInfo_0 = runtime.ForwardResponseMessage
+	forward_Objects_ObjectInfo_0 = runtime.ForwardResponseMessage
 
-	forward_HandlerUnit_ListObjects_0 = runtime.ForwardResponseStream
+	forward_Objects_ListObjects_0 = runtime.ForwardResponseStream
 
-	forward_HandlerUnit_SearchObjects_0 = runtime.ForwardResponseStream
+	forward_Objects_SearchObjects_0 = runtime.ForwardResponseStream
 )
 
 // RegisterACLHandlerFromEndpoint is same as RegisterACLHandler but

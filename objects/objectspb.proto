@@ -51,7 +51,7 @@ message ObjectList {
 }
 
 
-service HandlerUnit {
+service Objects {
   rpc CreateCollection(CreateCollectionRequest) returns (CreateCollectionResponse);
   rpc GetCollection(GetCollectionRequest) returns (GetCollectionResponse);
   rpc ListCollections(ListCollectionsRequest) returns (ListCollectionsResponse);

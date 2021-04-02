@@ -3,20 +3,21 @@ package objects
 import (
 	"context"
 	"github.com/gorilla/mux"
+	"github.com/omecodes/store/common"
 	"net/http"
 )
 
 type middlewareOptions struct {
-	gRPCRouterProvider GRPCRouterProvider
+	gRPCRouterProvider ClientProvider
 	acl                ACLManager
 	db                 DB
-	settings           SettingsManager
+	settings           common.SettingsManager
 	routerProvider     RouterProvider
 }
 
 type MiddlewareOption func(*middlewareOptions)
 
-func MiddlewareWithSettings(manager SettingsManager) MiddlewareOption {
+func MiddlewareWithSettings(manager common.SettingsManager) MiddlewareOption {
 	return func(options *middlewareOptions) {
 		options.settings = manager
 	}
@@ -40,7 +41,7 @@ func MiddlewareWithDB(db DB) MiddlewareOption {
 	}
 }
 
-func WithGRPCRouterProvider(provider GRPCRouterProvider) MiddlewareOption {
+func WithGRPCRouterProvider(provider ClientProvider) MiddlewareOption {
 	return func(options *middlewareOptions) {
 		options.gRPCRouterProvider = provider
 	}
@@ -72,7 +73,7 @@ func Middleware(opt ...MiddlewareOption) mux.MiddlewareFunc {
 			}
 
 			if options.gRPCRouterProvider != nil {
-				ctx = context.WithValue(ctx, ctxGrpcRouterClientProvider{}, options.gRPCRouterProvider)
+				ctx = context.WithValue(ctx, ctxClientProvider{}, options.gRPCRouterProvider)
 			}
 
 			next.ServeHTTP(w, r.WithContext(ctx))

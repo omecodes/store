@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
+	"github.com/omecodes/store/common"
 	se "github.com/omecodes/store/search-engine"
 	"io"
 	"strconv"
@@ -45,7 +46,7 @@ func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object
 		return "", errors.Internal("missing settings in context")
 	}
 
-	s, err := settings.Get(SettingsDataMaxSizePath)
+	s, err := settings.Get(common.SettingsDataMaxSizePath)
 	if err != nil {
 		logs.Error("could not get data max length from settings", logs.Err(err))
 		return "", errors.Internal("could not get data-max-size config")
@@ -81,7 +82,7 @@ func (p *ParamsHandler) PatchObject(ctx context.Context, collection string, patc
 		return errors.Internal("missing settings in context")
 	}
 
-	s, err := settings.Get(SettingsDataMaxSizePath)
+	s, err := settings.Get(common.SettingsDataMaxSizePath)
 	if err != nil {
 		logs.Error("could not get data max length from settings", logs.Err(err))
 		return errors.Internal("could not get data-max-size config")
@@ -139,7 +140,7 @@ func (p *ParamsHandler) ListObjects(ctx context.Context, collection string, opts
 		return nil, errors.Internal("missing settings in context")
 	}
 
-	s, err := settings.Get(SettingsObjectListMaxCount)
+	s, err := settings.Get(common.SettingsObjectListMaxCount)
 	if err != nil {
 		logs.Error("could not get data max length from settings", logs.Err(err))
 		return nil, errors.Internal("could not get data-max-size config")

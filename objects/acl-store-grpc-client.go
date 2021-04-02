@@ -11,7 +11,7 @@ func NewACLGrpcClient() *gRPCClient {
 type gRPCClient struct{}
 
 func (g *gRPCClient) SaveRules(ctx context.Context, collection string, objectID string, rules *PathAccessRules) error {
-	client, err := ACLGrpc(ctx)
+	client, err := AclGRPCClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -20,7 +20,7 @@ func (g *gRPCClient) SaveRules(ctx context.Context, collection string, objectID 
 }
 
 func (g *gRPCClient) GetRules(ctx context.Context, collection string, objectID string) (*PathAccessRules, error) {
-	client, err := ACLGrpc(ctx)
+	client, err := AclGRPCClient(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func (g *gRPCClient) GetRules(ctx context.Context, collection string, objectID s
 }
 
 func (g *gRPCClient) GetForPath(ctx context.Context, collection string, objectID string, path string) (*AccessRules, error) {
-	client, err := ACLGrpc(ctx)
+	client, err := AclGRPCClient(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (g *gRPCClient) GetForPath(ctx context.Context, collection string, objectID
 }
 
 func (g *gRPCClient) Delete(ctx context.Context, collection string, objectID string) error {
-	client, err := ACLGrpc(ctx)
+	client, err := AclGRPCClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (g *gRPCClient) Delete(ctx context.Context, collection string, objectID str
 }
 
 func (g *gRPCClient) DeleteForPath(ctx context.Context, collection string, objectID string, path string) error {
-	client, err := ACLGrpc(ctx)
+	client, err := AclGRPCClient(ctx)
 	if err != nil {
 		return err
 	}

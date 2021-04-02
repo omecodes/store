@@ -7,12 +7,12 @@ import (
 	"io"
 )
 
-func NewStoreGrpcHandler() HandlerUnitServer {
+func NewStoreGrpcHandler() ObjectsServer {
 	return &handler{}
 }
 
 type handler struct {
-	UnimplementedHandlerUnitServer
+	UnimplementedObjectsServer
 }
 
 func (h *handler) CreateCollection(ctx context.Context, request *CreateCollectionRequest) (*CreateCollectionResponse, error) {
@@ -137,7 +137,7 @@ func (h *handler) ObjectInfo(ctx context.Context, request *ObjectInfoRequest) (*
 	return &ObjectInfoResponse{Header: header}, nil
 }
 
-func (h *handler) ListObjects(request *ListObjectsRequest, stream HandlerUnit_ListObjectsServer) error {
+func (h *handler) ListObjects(request *ListObjectsRequest, stream Objects_ListObjectsServer) error {
 	ctx := stream.Context()
 
 	storage := Get(ctx)
@@ -178,7 +178,7 @@ func (h *handler) ListObjects(request *ListObjectsRequest, stream HandlerUnit_Li
 	}
 }
 
-func (h *handler) SearchObjects(request *SearchObjectsRequest, stream HandlerUnit_SearchObjectsServer) error {
+func (h *handler) SearchObjects(request *SearchObjectsRequest, stream Objects_SearchObjectsServer) error {
 	ctx := stream.Context()
 
 	storage := Get(ctx)

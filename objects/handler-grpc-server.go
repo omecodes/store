@@ -2,51 +2,74 @@ package objects
 
 import (
 	"context"
+	"github.com/omecodes/store/auth"
 	"io"
 
 	"github.com/omecodes/libome/logs"
 )
 
-func NewGRPCHandler() HandlerUnitServer {
+func NewGRPCHandler() ObjectsServer {
 	return &gRPCGatewayHandler{}
 }
 
-func NewHandler() HandlerUnitServer {
+func NewHandler() ObjectsServer {
 	return &handler{}
 }
 
 type gRPCGatewayHandler struct {
-	UnimplementedHandlerUnitServer
+	UnimplementedObjectsServer
 }
 
 func (h *gRPCGatewayHandler) CreateCollection(ctx context.Context, request *CreateCollectionRequest) (*CreateCollectionResponse, error) {
-	handler := GetRouterHandler(ctx)
-	err := handler.CreateCollection(ctx, request.Collection)
+	var err error
+	ctx, err = auth.ParseMetaInNewContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = CreateCollection(ctx, request.Collection)
 	return &CreateCollectionResponse{}, err
 }
 
 func (h *gRPCGatewayHandler) GetCollection(ctx context.Context, request *GetCollectionRequest) (*GetCollectionResponse, error) {
-	handler := GetRouterHandler(ctx)
-	collection, err := handler.GetCollection(ctx, request.Id)
+	var err error
+	ctx, err = auth.ParseMetaInNewContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	collection, err := GetCollection(ctx, request.Id)
 	return &GetCollectionResponse{Collection: collection}, err
 }
 
 func (h *gRPCGatewayHandler) ListCollections(ctx context.Context, _ *ListCollectionsRequest) (*ListCollectionsResponse, error) {
-	handler := GetRouterHandler(ctx)
+	var err error
+	ctx, err = auth.ParseMetaInNewContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	collections, err := handler.ListCollections(ctx)
+	collections, err := ListCollections(ctx)
 	return &ListCollectionsResponse{Collections: collections}, err
 }
 
 func (h *gRPCGatewayHandler) DeleteCollection(ctx context.Context, request *DeleteCollectionRequest) (*DeleteCollectionResponse, error) {
-	handler := GetRouterHandler(ctx)
+	var err error
+	ctx, err = auth.ParseMetaInNewContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	err := handler.DeleteCollection(ctx, request.Id)
+	err = DeleteCollection(ctx, request.Id)
 	return &DeleteCollectionResponse{}, err
 }
 
 func (h *gRPCGatewayHandler) PutObject(ctx context.Context, request *PutObjectRequest) (*PutObjectResponse, error) {
-	handler := GetRouterHandler(ctx)
+	var err error
+	ctx, err = auth.ParseMetaInNewContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	if request.AccessSecurityRules == nil {
 		request.AccessSecurityRules = &PathAccessRules{}
@@ -55,7 +78,7 @@ func (h *gRPCGatewayHandler) PutObject(ctx context.Context, request *PutObjectRe
 		request.AccessSecurityRules.AccessRules = map[string]*AccessRules{}
 	}
 
-	id, err := handler.PutObject(ctx, "", request.Object, request.AccessSecurityRules, request.Indexes, PutOptions{})
+	id, err := PutObject(ctx, "", request.Object, request.AccessSecurityRules, request.Indexes, PutOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -66,20 +89,33 @@ func (h *gRPCGatewayHandler) PutObject(ctx context.Context, request *PutObjectRe
 }
 
 func (h *gRPCGatewayHandler) PatchObject(ctx context.Context, request *PatchObjectRequest) (*PatchObjectResponse, error) {
-	handler := GetRouterHandler(ctx)
+	var err error
+	ctx, err = auth.ParseMetaInNewContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	return &PatchObjectResponse{}, handler.PatchObject(ctx, "", request.Patch, PatchOptions{})
+	return &PatchObjectResponse{}, PatchObject(ctx, "", request.Patch, PatchOptions{})
 }
 
 func (h *gRPCGatewayHandler) MoveObject(ctx context.Context, request *MoveObjectRequest) (*MoveObjectResponse, error) {
-	handler := GetRouterHandler(ctx)
-	return &MoveObjectResponse{}, handler.MoveObject(ctx, request.SourceCollection, request.ObjectId, request.TargetCollection, request.AccessSecurityRules, MoveOptions{})
+	var err error
+	ctx, err = auth.ParseMetaInNewContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &MoveObjectResponse{}, MoveObject(ctx, request.SourceCollection, request.ObjectId, request.TargetCollection, request.AccessSecurityRules, MoveOptions{})
 }
 
 func (h *gRPCGatewayHandler) GetObject(ctx context.Context, request *GetObjectRequest) (*GetObjectResponse, error) {
-	handler := GetRouterHandler(ctx)
+	var err error
+	ctx, err = auth.ParseMetaInNewContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	object, err := handler.GetObject(ctx, "", request.ObjectId, GetOptions{
+	object, err := GetObject(ctx, "", request.ObjectId, GetOptions{
 		At:   request.At,
 		Info: request.InfoOnly,
 	})
@@ -90,15 +126,24 @@ func (h *gRPCGatewayHandler) GetObject(ctx context.Context, request *GetObjectRe
 }
 
 func (h *gRPCGatewayHandler) DeleteObject(ctx context.Context, request *DeleteObjectRequest) (*DeleteObjectResponse, error) {
-	handler := GetRouterHandler(ctx)
-	err := handler.DeleteObject(ctx, "", request.ObjectId)
+	var err error
+	ctx, err = auth.ParseMetaInNewContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = DeleteObject(ctx, "", request.ObjectId)
 	return &DeleteObjectResponse{}, err
 }
 
 func (h *gRPCGatewayHandler) ObjectInfo(ctx context.Context, request *ObjectInfoRequest) (*ObjectInfoResponse, error) {
-	handler := GetRouterHandler(ctx)
+	var err error
+	ctx, err = auth.ParseMetaInNewContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	header, err := handler.GetObjectHeader(ctx, "", request.ObjectId)
+	header, err := GetObjectHeader(ctx, "", request.ObjectId)
 	if err != nil {
 		return nil, err
 	}
@@ -106,17 +151,18 @@ func (h *gRPCGatewayHandler) ObjectInfo(ctx context.Context, request *ObjectInfo
 	return &ObjectInfoResponse{Header: header}, nil
 }
 
-func (h *gRPCGatewayHandler) ListObjects(request *ListObjectsRequest, stream HandlerUnit_ListObjectsServer) error {
-	ctx := stream.Context()
-
-	handler := GetRouterHandler(ctx)
+func (h *gRPCGatewayHandler) ListObjects(request *ListObjectsRequest, stream Objects_ListObjectsServer) error {
+	ctx, err := auth.ParseMetaInNewContext(stream.Context())
+	if err != nil {
+		return err
+	}
 
 	opts := ListOptions{
 		At:     request.At,
 		Offset: request.Offset,
 	}
 
-	cursor, err := handler.ListObjects(ctx, request.Collection, opts)
+	cursor, err := ListObjects(ctx, request.Collection, opts)
 	if err != nil {
 		return err
 	}
@@ -143,12 +189,13 @@ func (h *gRPCGatewayHandler) ListObjects(request *ListObjectsRequest, stream Han
 	}
 }
 
-func (h *gRPCGatewayHandler) SearchObjects(request *SearchObjectsRequest, stream HandlerUnit_SearchObjectsServer) error {
-	ctx := stream.Context()
+func (h *gRPCGatewayHandler) SearchObjects(request *SearchObjectsRequest, stream Objects_SearchObjectsServer) error {
+	ctx, err := auth.ParseMetaInNewContext(stream.Context())
+	if err != nil {
+		return err
+	}
 
-	handler := GetRouterHandler(ctx)
-
-	cursor, err := handler.SearchObjects(ctx, request.Collection, request.Query)
+	cursor, err := SearchObjects(ctx, request.Collection, request.Query)
 	if err != nil {
 		return err
 	}

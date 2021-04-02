@@ -3,6 +3,7 @@ package objects
 import (
 	"context"
 	"github.com/omecodes/store/auth"
+	"github.com/omecodes/store/common"
 	se "github.com/omecodes/store/search-engine"
 )
 
@@ -19,7 +20,7 @@ type gRPCClientHandler struct {
 }
 
 func (g *gRPCClientHandler) CreateCollection(ctx context.Context, collection *Collection) error {
-	client, err := RouterGrpc(ctx, g.nodeType)
+	client, err := GRPCClient(ctx, g.nodeType)
 	if err != nil {
 		return err
 	}
@@ -29,7 +30,7 @@ func (g *gRPCClientHandler) CreateCollection(ctx context.Context, collection *Co
 }
 
 func (g *gRPCClientHandler) GetCollection(ctx context.Context, id string) (*Collection, error) {
-	client, err := RouterGrpc(ctx, g.nodeType)
+	client, err := GRPCClient(ctx, g.nodeType)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +43,7 @@ func (g *gRPCClientHandler) GetCollection(ctx context.Context, id string) (*Coll
 }
 
 func (g *gRPCClientHandler) ListCollections(ctx context.Context) ([]*Collection, error) {
-	client, err := RouterGrpc(ctx, g.nodeType)
+	client, err := GRPCClient(ctx, g.nodeType)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +56,7 @@ func (g *gRPCClientHandler) ListCollections(ctx context.Context) ([]*Collection,
 }
 
 func (g *gRPCClientHandler) DeleteCollection(ctx context.Context, id string) error {
-	client, err := RouterGrpc(ctx, g.nodeType)
+	client, err := GRPCClient(ctx, g.nodeType)
 	if err != nil {
 		return err
 	}
@@ -65,12 +66,17 @@ func (g *gRPCClientHandler) DeleteCollection(ctx context.Context, id string) err
 }
 
 func (g *gRPCClientHandler) PutObject(ctx context.Context, collection string, object *Object, accessSecurityRules *PathAccessRules, indexes []*se.TextIndex, opts PutOptions) (string, error) {
-	client, err := RouterGrpc(ctx, g.nodeType)
+	client, err := GRPCClient(ctx, g.nodeType)
 	if err != nil {
 		return "", err
 	}
 
-	rsp, err := client.PutObject(auth.SetMetaWithExisting(ctx), &PutObjectRequest{
+	newCtx, err := auth.ContextWithMeta(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	rsp, err := client.PutObject(newCtx, &PutObjectRequest{
 		Collection:          collection,
 		Object:              object,
 		Indexes:             indexes,
@@ -84,12 +90,17 @@ func (g *gRPCClientHandler) PutObject(ctx context.Context, collection string, ob
 }
 
 func (g *gRPCClientHandler) PatchObject(ctx context.Context, collection string, patch *Patch, opts PatchOptions) error {
-	client, err := RouterGrpc(ctx, ServiceTypeHandler)
+	client, err := GRPCClient(ctx, common.ServiceTypeFilesHandler)
 	if err != nil {
 		return err
 	}
 
-	_, err = client.PatchObject(auth.SetMetaWithExisting(ctx), &PatchObjectRequest{
+	newCtx, err := auth.ContextWithMeta(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.PatchObject(newCtx, &PatchObjectRequest{
 		Collection: collection,
 		Patch:      patch,
 	})
@@ -97,12 +108,16 @@ func (g *gRPCClientHandler) PatchObject(ctx context.Context, collection string, 
 }
 
 func (g *gRPCClientHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *PathAccessRules, opts MoveOptions) error {
-	client, err := RouterGrpc(ctx, ServiceTypeHandler)
+	client, err := GRPCClient(ctx, common.ServiceTypeFilesHandler)
 	if err != nil {
 		return err
 	}
 
-	_, err = client.MoveObject(auth.SetMetaWithExisting(ctx), &MoveObjectRequest{
+	newCtx, err := auth.ContextWithMeta(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = client.MoveObject(newCtx, &MoveObjectRequest{
 		SourceCollection:    collection,
 		ObjectId:            objectID,
 		TargetCollection:    targetCollection,
@@ -112,12 +127,17 @@ func (g *gRPCClientHandler) MoveObject(ctx context.Context, collection string, o
 }
 
 func (g *gRPCClientHandler) GetObject(ctx context.Context, collection string, id string, opts GetOptions) (*Object, error) {
-	client, err := RouterGrpc(ctx, ServiceTypeHandler)
+	client, err := GRPCClient(ctx, common.ServiceTypeFilesHandler)
 	if err != nil {
 		return nil, err
 	}
 
-	rsp, err := client.GetObject(auth.SetMetaWithExisting(ctx), &GetObjectRequest{
+	newCtx, err := auth.ContextWithMeta(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	rsp, err := client.GetObject(newCtx, &GetObjectRequest{
 		Collection: collection,
 		ObjectId:   id,
 		At:         opts.At,
@@ -131,12 +151,17 @@ func (g *gRPCClientHandler) GetObject(ctx context.Context, collection string, id
 }
 
 func (g *gRPCClientHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*Header, error) {
-	client, err := RouterGrpc(ctx, ServiceTypeHandler)
+	client, err := GRPCClient(ctx, common.ServiceTypeFilesHandler)
 	if err != nil {
 		return nil, err
 	}
 
-	rsp, err := client.ObjectInfo(auth.SetMetaWithExisting(ctx), &ObjectInfoRequest{
+	newCtx, err := auth.ContextWithMeta(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	rsp, err := client.ObjectInfo(newCtx, &ObjectInfoRequest{
 		Collection: collection,
 		ObjectId:   id,
 	})
@@ -147,12 +172,17 @@ func (g *gRPCClientHandler) GetObjectHeader(ctx context.Context, collection stri
 }
 
 func (g *gRPCClientHandler) DeleteObject(ctx context.Context, collection string, id string) error {
-	client, err := RouterGrpc(ctx, ServiceTypeHandler)
+	client, err := GRPCClient(ctx, common.ServiceTypeFilesHandler)
 	if err != nil {
 		return err
 	}
 
-	_, err = client.DeleteObject(auth.SetMetaWithExisting(ctx), &DeleteObjectRequest{
+	newCtx, err := auth.ContextWithMeta(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.DeleteObject(newCtx, &DeleteObjectRequest{
 		Collection: collection,
 		ObjectId:   id,
 	})
@@ -160,12 +190,17 @@ func (g *gRPCClientHandler) DeleteObject(ctx context.Context, collection string,
 }
 
 func (g *gRPCClientHandler) ListObjects(ctx context.Context, collection string, opts ListOptions) (*Cursor, error) {
-	client, err := RouterGrpc(ctx, ServiceTypeHandler)
+	client, err := GRPCClient(ctx, common.ServiceTypeFilesHandler)
 	if err != nil {
 		return nil, err
 	}
 
-	stream, err := client.ListObjects(auth.SetMetaWithExisting(ctx), &ListObjectsRequest{
+	newCtx, err := auth.ContextWithMeta(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	stream, err := client.ListObjects(newCtx, &ListObjectsRequest{
 		Offset:     opts.Offset,
 		At:         opts.At,
 		Collection: collection,
@@ -185,12 +220,17 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, collection string, 
 }
 
 func (g *gRPCClientHandler) SearchObjects(ctx context.Context, collection string, query *se.SearchQuery) (*Cursor, error) {
-	client, err := RouterGrpc(ctx, ServiceTypeHandler)
+	client, err := GRPCClient(ctx, common.ServiceTypeFilesHandler)
 	if err != nil {
 		return nil, err
 	}
 
-	stream, err := client.SearchObjects(auth.SetMetaWithExisting(ctx), &SearchObjectsRequest{
+	newCtx, err := auth.ContextWithMeta(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	stream, err := client.SearchObjects(newCtx, &SearchObjectsRequest{
 		Collection: collection,
 		Query:      query,
 	})

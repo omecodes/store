@@ -14,7 +14,7 @@ type LoadBalancer struct {
 	counter int
 }
 
-func (b *LoadBalancer) GetClient(ctx context.Context, serviceType uint32) (HandlerUnitClient, error) {
+func (b *LoadBalancer) GetClient(ctx context.Context, serviceType uint32) (ObjectsClient, error) {
 	b.Lock()
 	defer b.Unlock()
 
@@ -49,5 +49,5 @@ func (b *LoadBalancer) GetClient(ctx context.Context, serviceType uint32) (Handl
 		return nil, err
 	}
 
-	return NewHandlerUnitClient(conn), nil
+	return NewObjectsClient(conn), nil
 }
