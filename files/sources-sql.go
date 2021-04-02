@@ -1,7 +1,6 @@
 package files
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"database/sql"
@@ -165,13 +164,24 @@ func (s *sourceSQLManager) Save(ctx context.Context, source *Source) (string, er
 }
 
 func (s *sourceSQLManager) Get(_ context.Context, id string) (*Source, error) {
-	strEncoded, err := s.sources.Get(id)
+	hasResolvedVersion, err := s.resolved.Contains(id)
 	if err != nil {
 		return nil, err
 	}
-	var source *Source
 
-	err = json.NewDecoder(bytes.NewBufferString(strEncoded)).Decode(&source)
+	var strEncoded string
+
+	if hasResolvedVersion {
+		strEncoded, err = s.sources.Get(id)
+	} else {
+		strEncoded, err = s.resolved.Get(id)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	source := &Source{}
+	err = jsonpb.UnmarshalString(strEncoded, source)
 	return source, err
 }
 
