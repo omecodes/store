@@ -60,14 +60,6 @@ func OAuth2ContextUpdater(ctx context.Context) (context.Context, error) {
 	return ctx, nil
 }
 
-func UpdateFromMeta(parent context.Context) (context.Context, error) {
-	a := FindInMD(parent)
-	if a != nil {
-		return context.WithValue(parent, ctxUser{}, a), nil
-	}
-	return parent, nil
-}
-
 func updateContextWithBasic(ctx context.Context, authorization string) (context.Context, error) {
 	bytes, err := base64.StdEncoding.DecodeString(authorization)
 	if err != nil {
@@ -160,7 +152,7 @@ func updateContextWithClientAppInfo(ctx context.Context, authorization string) (
 		return ctx, errors.Forbidden("authorization value non base64 encoding")
 	}
 
-	return context.WithValue(ctx, ctxApp{}, access), nil
+	return context.WithValue(ctx, ctxApp{}, clientApp), nil
 }
 
 func updateContextWithOauth2(ctx context.Context, authorization string) (context.Context, error) {
