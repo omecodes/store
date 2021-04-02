@@ -44,16 +44,16 @@ func (h *EncryptionHandler) ReadFileContent(ctx context.Context, sourceID string
 	return decryptStream.WrapReadCloser(readCloser), size, nil
 }
 
-func (h *EncryptionHandler) AddContentPart(ctx context.Context, sessionID string, content io.Reader, size int64, info *ContentPartInfo) error {
+func (h *EncryptionHandler) WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo) (int64, error) {
 	source, err := h.next.GetSource(ctx, sessionID)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	if source.Encryption == nil {
-		return h.next.AddContentPart(ctx, sessionID, content, size, info)
+		return h.next.WriteFilePart(ctx, sessionID, content, size, info)
 	}
 
 	encryptStream := crypt.NewEncryptWrapper(nil, crypt.WithBlockSize(4096))
-	return h.next.AddContentPart(ctx, sessionID, encryptStream.WrapReader(content), size, info)
+	return h.next.WriteFilePart(ctx, sessionID, encryptStream.WrapReader(content), size, info)
 }

@@ -49,8 +49,8 @@ func (h *BaseHandler) DeleteFile(ctx context.Context, sourceID string, filename 
 	return h.next.DeleteFile(ctx, sourceID, filename, opts)
 }
 
-func (h *BaseHandler) SetFileMetaData(ctx context.Context, sourceID string, filename string, attrs Attributes) error {
-	return h.next.SetFileMetaData(ctx, sourceID, filename, attrs)
+func (h *BaseHandler) SetFileAttributes(ctx context.Context, sourceID string, filename string, attrs Attributes) error {
+	return h.next.SetFileAttributes(ctx, sourceID, filename, attrs)
 }
 
 func (h *BaseHandler) GetFileAttributes(ctx context.Context, sourceID string, filename string, name ...string) (Attributes, error) {
@@ -69,12 +69,12 @@ func (h *BaseHandler) CopyFile(ctx context.Context, sourceID string, filename st
 	return h.next.CopyFile(ctx, sourceID, filename, dirname)
 }
 
-func (h *BaseHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info *MultipartSessionInfo) (string, error) {
+func (h *BaseHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info MultipartSessionInfo) (string, error) {
 	return h.next.OpenMultipartSession(ctx, sourceID, filename, info)
 }
 
-func (h *BaseHandler) AddContentPart(ctx context.Context, sessionID string, content io.Reader, size int64, info *ContentPartInfo) error {
-	return h.next.AddContentPart(ctx, sessionID, content, size, info)
+func (h *BaseHandler) WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo) (int64, error) {
+	return h.next.WriteFilePart(ctx, sessionID, content, size, info)
 }
 
 func (h *BaseHandler) CloseMultipartSession(ctx context.Context, sessionId string) error {

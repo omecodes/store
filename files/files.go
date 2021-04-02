@@ -48,16 +48,10 @@ type DeleteFileOptions struct {
 	Recursive bool `json:"recursive,omitempty"`
 }
 
-type MultipartSessionInfo struct {
-	ID          string `json:"id,omitempty"`
-	User        string `json:"user,omitempty"`
-	PartCount   int    `json:"part_count,omitempty"`
-	ContentHash string `json:"content_hash"`
-}
+type MultipartSessionInfo struct{}
 
 type ContentPartInfo struct {
 	ID          string `json:"id,omitempty"`
-	User        string `json:"user,omitempty"`
 	PartNumber  int    `json:"part_number,omitempty"`
 	ContentHash string `json:"content_hash"`
 }

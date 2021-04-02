@@ -95,7 +95,7 @@ func (h *ExecHandler) DeleteFile(ctx context.Context, sourceID string, filename 
 	return fs.DeleteFile(ctx, filename, opts.Recursive)
 }
 
-func (h *ExecHandler) SetFileMetaData(ctx context.Context, sourceID string, filename string, attrs Attributes) error {
+func (h *ExecHandler) SetFileAttributes(ctx context.Context, sourceID string, filename string, attrs Attributes) error {
 	fs, err := getFS(ctx, sourceID)
 	if err != nil {
 		return err
@@ -135,11 +135,11 @@ func (h *ExecHandler) CopyFile(ctx context.Context, sourceID string, filename st
 	return fs.Rename(ctx, filename, dirname)
 }
 
-func (h *ExecHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info *MultipartSessionInfo) (string, error) {
+func (h *ExecHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info MultipartSessionInfo) (string, error) {
 	panic("implement me")
 }
 
-func (h *ExecHandler) AddContentPart(ctx context.Context, sessionID string, content io.Reader, size int64, info *ContentPartInfo) error {
+func (h *ExecHandler) WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo) (int64, error) {
 	panic("implement me")
 }
 

@@ -135,7 +135,7 @@ func (h *ParamsHandler) DeleteFile(ctx context.Context, sourceID string, filenam
 	return h.next.DeleteFile(ctx, sourceID, filename, opts)
 }
 
-func (h *ParamsHandler) SetFileMetaData(ctx context.Context, sourceID string, filename string, attrs Attributes) error {
+func (h *ParamsHandler) SetFileAttributes(ctx context.Context, sourceID string, filename string, attrs Attributes) error {
 	if sourceID == "" {
 		return errors.BadRequest("missing parameters", errors.Details{
 			Key:   "source",
@@ -155,7 +155,7 @@ func (h *ParamsHandler) SetFileMetaData(ctx context.Context, sourceID string, fi
 		return err
 	}
 
-	return h.next.SetFileMetaData(ctx, sourceID, filename, attrs)
+	return h.next.SetFileAttributes(ctx, sourceID, filename, attrs)
 }
 
 func (h *ParamsHandler) GetFileAttributes(ctx context.Context, sourceID string, filename string, name ...string) (Attributes, error) {
@@ -255,7 +255,7 @@ func (h *ParamsHandler) CopyFile(ctx context.Context, sourceID string, filename 
 	return h.next.MoveFile(ctx, sourceID, filename, dirname)
 }
 
-func (h *ParamsHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info *MultipartSessionInfo) (string, error) {
+func (h *ParamsHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info MultipartSessionInfo) (string, error) {
 	if sourceID == "" {
 		return "", errors.BadRequest("missing parameters", errors.Details{
 			Key:   "source",
@@ -263,14 +263,10 @@ func (h *ParamsHandler) OpenMultipartSession(ctx context.Context, sourceID strin
 		})
 	}
 
-	if filename == "" || info == nil {
+	if filename == "" {
 		err := errors.BadRequest("missing parameters")
 		if filename == "" {
 			err.AddDetails("filename", "required")
-		}
-
-		if info == nil {
-			err.AddDetails("info", "required")
 		}
 		return "", err
 	}
@@ -278,19 +274,16 @@ func (h *ParamsHandler) OpenMultipartSession(ctx context.Context, sourceID strin
 	return h.next.OpenMultipartSession(ctx, sourceID, filename, info)
 }
 
-func (h *ParamsHandler) AddContentPart(ctx context.Context, sessionID string, content io.Reader, size int64, info *ContentPartInfo) error {
-	if sessionID == "" || content == nil || size == 0 || info == nil {
+func (h *ParamsHandler) WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo) (int64, error) {
+	if sessionID == "" || content == nil || size == 0 {
 		err := errors.BadRequest("missing parameters")
 		if sessionID == "" {
 			err.AddDetails("session_id", "required")
 		}
 
-		if info == nil {
-			err.AddDetails("info", "required")
-		}
-		return err
+		return 0, err
 	}
-	return h.next.AddContentPart(ctx, sessionID, content, size, info)
+	return h.next.WriteFilePart(ctx, sessionID, content, size, info)
 }
 
 func (h *ParamsHandler) CloseMultipartSession(ctx context.Context, sessionID string) error {

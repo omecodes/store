@@ -1,14 +1,15 @@
 package files
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/libome/logs"
+	"github.com/omecodes/store/common"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -20,24 +21,24 @@ func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	r := mux.NewRouter()
 
 	treeRoute := r.PathPrefix("/tree/").Subrouter()
-	treeRoute.Name("CreateFile").Methods(http.MethodPut).Handler(http.StripPrefix("/tree/", http.HandlerFunc(APIHandleCreateFile)))
-	treeRoute.Name("ListDir").Methods(http.MethodPost).Handler(http.StripPrefix("/tree/", http.HandlerFunc(APIHandleListDir)))
-	treeRoute.Name("GetFileInfo").Methods(http.MethodGet).Handler(http.StripPrefix("/tree/", http.HandlerFunc(APIHandleGetFileInfo)))
-	treeRoute.Name("DeleteFile").Methods(http.MethodDelete).Handler(http.StripPrefix("/tree/", http.HandlerFunc(APIHandleDeleteFile)))
-	treeRoute.Name("PatchTree").Methods(http.MethodPatch).Handler(http.StripPrefix("/tree/", http.HandlerFunc(APIHandlePatchFileTree)))
+	treeRoute.Name("CreateFile").Methods(http.MethodPut).Handler(http.StripPrefix("/tree/", http.HandlerFunc(HTTPHandleCreateFile)))
+	treeRoute.Name("ListDir").Methods(http.MethodPost).Handler(http.StripPrefix("/tree/", http.HandlerFunc(HTTPHandleListDir)))
+	treeRoute.Name("GetFileInfo").Methods(http.MethodGet).Handler(http.StripPrefix("/tree/", http.HandlerFunc(HTTPHandleGetFileInfo)))
+	treeRoute.Name("DeleteFile").Methods(http.MethodDelete).Handler(http.StripPrefix("/tree/", http.HandlerFunc(HTTPHandleDeleteFile)))
+	treeRoute.Name("PatchTree").Methods(http.MethodPatch).Handler(http.StripPrefix("/tree/", http.HandlerFunc(HTTPHandlePatchFileTree)))
 
 	attrRoute := r.PathPrefix("/attr/").Subrouter()
-	attrRoute.Name("GetFileAttributes").Methods(http.MethodGet).Handler(http.StripPrefix("/attr/", http.HandlerFunc(APIHandleGetFileAttributes)))
-	attrRoute.Name("SetFileAttributes").Methods(http.MethodPut).Handler(http.StripPrefix("/attr/", http.HandlerFunc(APIHandleSetFileAttributes)))
+	attrRoute.Name("GetFileAttributes").Methods(http.MethodGet).Handler(http.StripPrefix("/attr/", http.HandlerFunc(HTTPHandleGetFileAttributes)))
+	attrRoute.Name("SetFileAttributes").Methods(http.MethodPut).Handler(http.StripPrefix("/attr/", http.HandlerFunc(HTTPHandleSetFileAttributes)))
 
 	dataRoute := r.PathPrefix("/data/").Subrouter()
-	dataRoute.Name("Download").Methods(http.MethodGet).Handler(http.StripPrefix("/data/", http.HandlerFunc(APIHandleDownloadFile)))
-	dataRoute.Name("Upload").Methods(http.MethodPut, http.MethodPost).Handler(http.StripPrefix("/data/", http.HandlerFunc(APIHandleUploadFile)))
+	dataRoute.Name("Download").Methods(http.MethodGet).Handler(http.StripPrefix("/data/", http.HandlerFunc(HTTPHandleDownloadFile)))
+	dataRoute.Name("Upload").Methods(http.MethodPut, http.MethodPost).Handler(http.StripPrefix("/data/", http.HandlerFunc(HTTPHandleUploadFile)))
 
-	r.Name("CreateSource").Path("/sources").Methods(http.MethodPut).HandlerFunc(APIHandleCreateSource)
-	r.Name("ListSources").Path("/sources").Methods(http.MethodGet).HandlerFunc(APIHandleListSources)
-	r.Name("GetSource").Path("/sources/{id}").Methods(http.MethodGet).HandlerFunc(APIHandleGetSource)
-	r.Name("DeleterSource").Path("/sources/{id}").Methods(http.MethodDelete).HandlerFunc(APIHandleDeleteSource)
+	r.Name("CreateSource").Path("/sources").Methods(http.MethodPut).HandlerFunc(HTTPHandleCreateSource)
+	r.Name("ListSources").Path("/sources").Methods(http.MethodGet).HandlerFunc(HTTPHandleListSources)
+	r.Name("GetSource").Path("/sources/{id}").Methods(http.MethodGet).HandlerFunc(HTTPHandleGetSource)
+	r.Name("DeleterSource").Path("/sources/{id}").Methods(http.MethodDelete).HandlerFunc(HTTPHandleDeleteSource)
 
 	var handler http.Handler
 	handler = r
@@ -47,7 +48,7 @@ func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	return handler
 }
 
-func APIHandleCreateFile(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleCreateFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
@@ -74,7 +75,7 @@ func APIHandleCreateFile(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func APIHandleListDir(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleListDir(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
@@ -93,7 +94,7 @@ func APIHandleListDir(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(content)
 }
 
-func APIHandleGetFileInfo(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleGetFileInfo(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
@@ -108,7 +109,7 @@ func APIHandleGetFileInfo(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(info)
 }
 
-func APIHandleDeleteFile(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleDeleteFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
@@ -122,7 +123,7 @@ func APIHandleDeleteFile(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func APIHandlePatchFileTree(w http.ResponseWriter, r *http.Request) {
+func HTTPHandlePatchFileTree(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
@@ -144,7 +145,7 @@ func APIHandlePatchFileTree(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func APIHandleSetFileAttributes(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleSetFileAttributes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
@@ -156,14 +157,14 @@ func APIHandleSetFileAttributes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handler := GetRouteHandler(ctx)
-	err = handler.SetFileMetaData(ctx, sourceID, filename, attributes)
+	err = handler.SetFileAttributes(ctx, sourceID, filename, attributes)
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
 	}
 }
 
-func APIHandleGetFileAttributes(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleGetFileAttributes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
@@ -179,7 +180,7 @@ func APIHandleGetFileAttributes(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(attributes)
 }
 
-func APIHandleUploadFile(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleUploadFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
@@ -195,20 +196,20 @@ func APIHandleUploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func APIHandleDownloadFile(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleDownloadFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	sourceID, filename := Split(r.URL.Path)
 
 	var err error
 
 	opts := ReadOptions{}
-	opts.Range.Offset, err = Int64QueryParam(r, "offset")
+	opts.Range.Offset, err = common.Int64QueryParam(r, "offset")
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	opts.Range.Length, err = Int64QueryParam(r, "length")
+	opts.Range.Length, err = common.Int64QueryParam(r, "length")
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -250,7 +251,7 @@ func APIHandleDownloadFile(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func APIHandleCreateSource(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleCreateSource(w http.ResponseWriter, r *http.Request) {
 	var source *Source
 	err := json.NewDecoder(r.Body).Decode(&source)
 	if err != nil {
@@ -268,7 +269,7 @@ func APIHandleCreateSource(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func APIHandleListSources(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleListSources(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	sources, err := ListSources(ctx)
@@ -279,7 +280,7 @@ func APIHandleListSources(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(sources)
 }
 
-func APIHandleGetSource(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleGetSource(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	sourceID := vars[pathVarId]
 
@@ -293,7 +294,7 @@ func APIHandleGetSource(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(source)
 }
 
-func APIHandleDeleteSource(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleDeleteSource(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	sourceID := vars[pathVarId]
 
@@ -306,11 +307,55 @@ func APIHandleDeleteSource(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func Int64QueryParam(r *http.Request, name string) (int64, error) {
-	param := r.URL.Query().Get(name)
-	if param != "" {
-		return strconv.ParseInt(param, 10, 64)
-	} else {
-		return 0, nil
+type middlewareRouteOptions struct {
+	sourceManager  SourceManager
+	fsProvider     FSProvider
+	routerProvider RouterProvider
+}
+
+type MiddlewareOption func(options *middlewareRouteOptions)
+
+func Middleware(opts ...MiddlewareOption) mux.MiddlewareFunc {
+	var options middlewareRouteOptions
+	for _, opt := range opts {
+		opt(&options)
+	}
+
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			if options.fsProvider != nil {
+				ctx = context.WithValue(ctx, ctxFsProvider{}, options.fsProvider)
+			}
+
+			if options.sourceManager != nil {
+				ctx = context.WithValue(ctx, ctxSourceManager{}, options.sourceManager)
+			}
+
+			if options.routerProvider != nil {
+				ctx = context.WithValue(ctx, ctxRouterProvider{}, options.routerProvider)
+			}
+
+			h.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+
+}
+
+func MiddlewareWithSourceManager(manager SourceManager) MiddlewareOption {
+	return func(options *middlewareRouteOptions) {
+		options.sourceManager = manager
+	}
+}
+
+func MiddlewareWithFsProvider(provider FSProvider) MiddlewareOption {
+	return func(options *middlewareRouteOptions) {
+		options.fsProvider = provider
+	}
+}
+
+func MiddlewareWithRouterProvider(provider RouterProvider) MiddlewareOption {
+	return func(options *middlewareRouteOptions) {
+		options.routerProvider = provider
 	}
 }

@@ -20,13 +20,13 @@ type Handler interface {
 	ReadFileContent(ctx context.Context, sourceID string, filename string, opts ReadOptions) (io.ReadCloser, int64, error)
 	GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*File, error)
 	DeleteFile(ctx context.Context, sourceID string, filename string, opts DeleteFileOptions) error
-	SetFileMetaData(ctx context.Context, sourceID string, filename string, attrs Attributes) error
+	SetFileAttributes(ctx context.Context, sourceID string, filename string, attrs Attributes) error
 	GetFileAttributes(ctx context.Context, sourceID string, filename string, name ...string) (Attributes, error)
 	RenameFile(ctx context.Context, sourceID string, filename string, newName string) error
 	MoveFile(ctx context.Context, sourceID string, filename string, dirname string) error
 	CopyFile(ctx context.Context, sourceID string, filename string, dirname string) error
-	OpenMultipartSession(ctx context.Context, sourceID string, filename string, info *MultipartSessionInfo) (string, error)
-	AddContentPart(ctx context.Context, sessionID string, content io.Reader, size int64, info *ContentPartInfo) error
+	OpenMultipartSession(ctx context.Context, sourceID string, filename string, info MultipartSessionInfo) (string, error)
+	WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo) (int64, error)
 	CloseMultipartSession(ctx context.Context, sessionId string) error
 }
 
@@ -106,7 +106,7 @@ func DeleteFile(ctx context.Context, sourceID string, filename string, opts Dele
 }
 
 func SetFileAttributes(ctx context.Context, sourceID string, filename string, attrs Attributes) error {
-	return GetRouteHandler(ctx).SetFileMetaData(ctx, sourceID, filename, attrs)
+	return GetRouteHandler(ctx).SetFileAttributes(ctx, sourceID, filename, attrs)
 }
 
 func GetFileAttributes(ctx context.Context, sourceID string, filename string, name ...string) (Attributes, error) {
@@ -125,12 +125,12 @@ func CopyFile(ctx context.Context, sourceID string, filename string, dirname str
 	return GetRouteHandler(ctx).CopyFile(ctx, sourceID, filename, dirname)
 }
 
-func OpenMultipartSession(ctx context.Context, sourceID string, filename string, info *MultipartSessionInfo) (string, error) {
+func OpenMultipartSession(ctx context.Context, sourceID string, filename string, info MultipartSessionInfo) (string, error) {
 	return GetRouteHandler(ctx).OpenMultipartSession(ctx, sourceID, filename, info)
 }
 
-func AddContentPart(ctx context.Context, sessionID string, content io.Reader, size int64, info *ContentPartInfo) error {
-	return GetRouteHandler(ctx).AddContentPart(ctx, sessionID, content, size, info)
+func AddContentPart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo) (int64, error) {
+	return GetRouteHandler(ctx).WriteFilePart(ctx, sessionID, content, size, info)
 }
 
 func CloseMultipartSession(ctx context.Context, sessionId string) error {

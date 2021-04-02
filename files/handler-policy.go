@@ -370,12 +370,12 @@ func (h *PolicyHandler) DeleteFile(ctx context.Context, sourceID string, filenam
 	return h.next.DeleteFile(ctx, sourceID, filename, opts)
 }
 
-func (h *PolicyHandler) SetFileMetaData(ctx context.Context, sourceID string, filename string, attrs Attributes) error {
+func (h *PolicyHandler) SetFileAttributes(ctx context.Context, sourceID string, filename string, attrs Attributes) error {
 	err := h.assertIsAllowedToWrite(ctx, sourceID, filename)
 	if err != nil {
 		return err
 	}
-	return h.next.SetFileMetaData(ctx, sourceID, filename, attrs)
+	return h.next.SetFileAttributes(ctx, sourceID, filename, attrs)
 }
 
 func (h *PolicyHandler) GetFileAttributes(ctx context.Context, sourceID string, filename string, name ...string) (Attributes, error) {
@@ -428,7 +428,7 @@ func (h *PolicyHandler) CopyFile(ctx context.Context, sourceID string, filename 
 	return h.next.CopyFile(ctx, sourceID, filename, dirname)
 }
 
-func (h *PolicyHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info *MultipartSessionInfo) (string, error) {
+func (h *PolicyHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info MultipartSessionInfo) (string, error) {
 	err := h.assertIsAllowedToWrite(ctx, sourceID, path.Dir(filename))
 	if err != nil {
 		return "", err
@@ -436,7 +436,7 @@ func (h *PolicyHandler) OpenMultipartSession(ctx context.Context, sourceID strin
 	return h.next.OpenMultipartSession(ctx, sourceID, filename, info)
 }
 
-func (h *PolicyHandler) AddContentPart(_ context.Context, _ string, _ io.Reader, _ int64, _ *ContentPartInfo) error {
+func (h *PolicyHandler) WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo) (int64, error) {
 	panic("implement me")
 }
 
