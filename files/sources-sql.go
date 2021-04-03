@@ -84,7 +84,7 @@ func (s *sourceSQLManager) Save(ctx context.Context, source *Source) (string, er
 	)
 
 	if source.Type == SourceType_Reference {
-		resolvedSource, err := s.resolveSource(source.Id)
+		resolvedSource, err := s.resolveSource(ctx, source)
 		if err != nil {
 			return "", err
 		}
@@ -120,7 +120,7 @@ func (s *sourceSQLManager) Save(ctx context.Context, source *Source) (string, er
 
 		err = resolved.Upsert(&bome.MapEntry{
 			Key:   source.Id,
-			Value: string(encoded),
+			Value: encodedResolved,
 		})
 		if err != nil {
 			_ = sources.Rollback()
@@ -262,8 +262,8 @@ func (s *sourceSQLManager) UserSources(ctx context.Context, username string) ([]
 			return nil, err
 		}
 
-		var source *Source
-		err = json.Unmarshal([]byte(o.(string)), &source)
+		source := &Source{}
+		err = jsonpb.UnmarshalString(o.(string), source)
 		if err != nil {
 			return nil, err
 		}
@@ -272,14 +272,12 @@ func (s *sourceSQLManager) UserSources(ctx context.Context, username string) ([]
 	return sources, nil
 }
 
-func (s *sourceSQLManager) resolveSource(sourceID string) (*Source, error) {
-	source, err := s.Get(nil, sourceID)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *sourceSQLManager) resolveSource(ctx context.Context, source *Source) (*Source, error) {
 	resolvedSource := source
-	sourceChain := []string{sourceID}
+	sourceChain := []string{source.Id}
+
+	permissionOverrides := source.PermissionOverrides
+
 	for resolvedSource.Type == SourceType_Reference {
 		u, err := url.Parse(source.Uri)
 		if err != nil {
@@ -287,10 +285,16 @@ func (s *sourceSQLManager) resolveSource(sourceID string) (*Source, error) {
 		}
 
 		refSourceID := u.Host
-		resolvedSource, err = s.Get(nil, refSourceID)
+		resolvedSource, err = s.Get(ctx, refSourceID)
 		if err != nil {
 			logs.Error("could not load source", logs.Details("source", refSourceID), logs.Err(err))
 			return nil, err
+		}
+
+		if permissionOverrides != nil {
+			resolvedSource.PermissionOverrides = permissionOverrides
+		} else {
+			permissionOverrides = resolvedSource.PermissionOverrides
 		}
 
 		for _, src := range sourceChain {
