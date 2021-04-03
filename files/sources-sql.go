@@ -172,9 +172,9 @@ func (s *sourceSQLManager) Get(_ context.Context, id string) (*Source, error) {
 	var strEncoded string
 
 	if hasResolvedVersion {
-		strEncoded, err = s.sources.Get(id)
-	} else {
 		strEncoded, err = s.resolved.Get(id)
+	} else {
+		strEncoded, err = s.sources.Get(id)
 	}
 	if err != nil {
 		return nil, err
