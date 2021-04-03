@@ -66,7 +66,7 @@ type Server struct {
 	autoCertDir string
 
 	objects                 objects.DB
-	settings                objects.SettingsManager
+	settings                common.SettingsManager
 	accountsManager         accounts.Manager
 	authenticationProviders auth.ProviderManager
 	credentialsManager      auth.CredentialsManager
@@ -137,7 +137,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	s.settings, err = objects.NewSQLSettings(s.db, bome.MySQL, "store_settings")
+	s.settings, err = common.NewSQLSettings(s.db, bome.MySQL, "store_settings")
 	if err != nil {
 		return err
 	}
@@ -162,34 +162,34 @@ func (s *Server) init() error {
 		return err
 	}
 
-	_, err = s.settings.Get(objects.SettingsDataMaxSizePath)
+	_, err = s.settings.Get(common.SettingsDataMaxSizePath)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
-		err = s.settings.Set(objects.SettingsDataMaxSizePath, objects.DefaultSettings[objects.SettingsDataMaxSizePath])
+		err = s.settings.Set(common.SettingsDataMaxSizePath, common.DefaultSettings[common.SettingsDataMaxSizePath])
 		if err != nil && !errors.IsConflict(err) {
 			return err
 		}
 	}
 
-	_, err = s.settings.Get(objects.SettingsDataMaxSizePath)
+	_, err = s.settings.Get(common.SettingsDataMaxSizePath)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
-		err = s.settings.Set(objects.SettingsCreateDataSecurityRule, objects.DefaultSettings[objects.SettingsCreateDataSecurityRule])
+		err = s.settings.Set(common.SettingsCreateDataSecurityRule, common.DefaultSettings[common.SettingsCreateDataSecurityRule])
 		if err != nil && !errors.IsConflict(err) {
 			return err
 		}
 	}
 
-	_, err = s.settings.Get(objects.SettingsObjectListMaxCount)
+	_, err = s.settings.Get(common.SettingsObjectListMaxCount)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
-		err = s.settings.Set(objects.SettingsObjectListMaxCount, objects.DefaultSettings[objects.SettingsObjectListMaxCount])
+		err = s.settings.Set(common.SettingsObjectListMaxCount, common.DefaultSettings[common.SettingsObjectListMaxCount])
 		if err != nil && !errors.IsConflict(err) {
 			return err
 		}
@@ -216,11 +216,11 @@ func (s *Server) init() error {
 
 		if source == nil {
 			source = &files.Source{
-				ID:          "main",
+				Id:          "main",
 				Label:       "Default file source",
 				Description: "",
-				Type:        files.TypeDisk,
-				URI:         fmt.Sprintf("files://%s", files.NormalizePath(s.config.FSRootDir)),
+				Type:        files.SourceType_Default,
+				Uri:         fmt.Sprintf("files://%s", files.NormalizePath(s.config.FSRootDir)),
 				ExpireTime:  -1,
 			}
 			_, err = s.sourceManager.Save(ctx, source)
@@ -241,10 +241,6 @@ func (s *Server) generateKey(size int) ([]byte, error) {
 		return nil, err
 	}
 	return key, nil
-}
-
-func (s *Server) GetRouter(_ context.Context) objects.Router {
-	return objects.DefaultRouter()
 }
 
 // Start starts API server
@@ -400,7 +396,7 @@ func (s *Server) httpRouter() http.Handler {
 	objectsRouter := objects.MuxRouter(
 		objects.Middleware(
 			objects.MiddlewareWithACLManager(s.accessStore),
-			objects.MiddlewareWithRouterProvider(s),
+			//objects.MiddlewareWithRouterProvider(s),
 			objects.MiddlewareWithDB(s.objects),
 			objects.MiddlewareWithSettings(s.settings),
 		),
@@ -443,7 +439,7 @@ func (s *Server) httpRouter() http.Handler {
 	staticFilesRouter := http.HandlerFunc(webapp.ServeApps)
 	r.NotFoundHandler = staticFilesRouter
 
-	return MiddlewareLogger(session.WithHTTPSessionMiddleware(s.cookieStore)(r))
+	return common.MiddlewareLogger(session.WithHTTPSessionMiddleware(s.cookieStore)(r))
 }
 
 // Stop stops API server
