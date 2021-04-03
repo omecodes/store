@@ -87,16 +87,19 @@ where `access.json` file that contains sequence of json:
 {
   "key": "client-app1",
   "secret": "client-app1-secret",
-  "manages_user": true,
-  "manages_collections": true,
-  "manages_file_sources": true
-}
-{
-  "key": "client-app2",
-  "secret": "client-app2-secret",
-  "manages_user": false,
-  "manages_collections": false,
-  "manages_sources": false
+  "collections": {
+    "create": true,
+    "read": false
+  },
+  "sources": {
+    "restricted": true,
+    "create": true,
+    "view": true
+  },
+  "users": {
+    "create": true,
+    "view": true
+  }
 }
 ```
 
@@ -136,6 +139,22 @@ object user {
 object app {
     type: int
     key: string
+    collections: struct {
+        create: bool
+        view: bool
+        delete: bool
+    }
+    sources: struct {
+        create: bool
+        view: bool
+        delete: bool
+        restricted: bool
+    }
+    users: struct {
+        create: bool
+        view: bool
+        delete: bool
+    }
     info: json
 }
 
