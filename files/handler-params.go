@@ -11,7 +11,7 @@ type ParamsHandler struct {
 }
 
 func (h *ParamsHandler) CreateSource(ctx context.Context, source *Source) error {
-	if source == nil || source.Type == SourceType(0) || source.Uri == "" {
+	if source == nil || source.Uri == "" {
 		return errors.BadRequest("invalid source value")
 	}
 	return h.next.CreateSource(ctx, source)
