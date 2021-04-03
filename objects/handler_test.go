@@ -6,6 +6,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/omecodes/bome"
 	"github.com/omecodes/store/auth"
+	"github.com/omecodes/store/common"
 	"github.com/omecodes/store/common/utime"
 	se "github.com/omecodes/store/search-engine"
 	. "github.com/smartystreets/goconvey/convey"
@@ -16,7 +17,7 @@ import (
 
 var (
 	db       DB
-	settings SettingsManager
+	settings common.SettingsManager
 	acl      ACLManager
 
 	juveTeam = &Collection{
@@ -59,7 +60,6 @@ var (
 			},
 		},
 	}
-
 	barcaTeam = &Collection{
 		Id:          "barcelona",
 		Label:       "Team of Barcelona",
@@ -100,7 +100,6 @@ var (
 			},
 		},
 	}
-
 	psgTeam = &Collection{
 		Id:          "paris-sg",
 		Label:       "Team of PSG",
@@ -185,7 +184,7 @@ func initDB() {
 		conn, err := sql.Open("sqlite3", ":memory:")
 		So(err, ShouldBeNil)
 
-		settings, err = NewSQLSettings(conn, bome.SQLite3, "settings")
+		settings, err = common.NewSQLSettings(conn, bome.SQLite3, "settings")
 		So(err, ShouldBeNil)
 	}
 
@@ -512,26 +511,26 @@ func TestHandler_PutObject3(t *testing.T) {
 		}
 
 		// saving current value
-		value, err := settings.Get(SettingsDataMaxSizePath)
+		value, err := settings.Get(common.SettingsDataMaxSizePath)
 		So(err, ShouldBeNil)
 
 		user1Context := userContextInRegisteredClient(getContextWithNoSettings(), "user1")
 		object.Header.Id, err = handler.PutObject(user1Context, "objects", object, nil, nil, PutOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settings.Delete(SettingsDataMaxSizePath)
+		err = settings.Delete(common.SettingsDataMaxSizePath)
 		So(err, ShouldBeNil)
 		user1Context = userContext(getContext(), "user1")
 		object.Header.Id, err = handler.PutObject(user1Context, "objects", object, nil, nil, PutOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settings.Set(SettingsDataMaxSizePath, "no-number")
+		err = settings.Set(common.SettingsDataMaxSizePath, "no-number")
 		So(err, ShouldBeNil)
 
 		object.Header.Id, err = handler.PutObject(user1Context, "objects", object, nil, nil, PutOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settings.Set(SettingsDataMaxSizePath, value)
+		err = settings.Set(common.SettingsDataMaxSizePath, value)
 		So(err, ShouldBeNil)
 	})
 }
@@ -554,17 +553,17 @@ func TestHandler_PutObject4(t *testing.T) {
 		}
 
 		// saving current value
-		value, err := settings.Get(SettingsDataMaxSizePath)
+		value, err := settings.Get(common.SettingsDataMaxSizePath)
 		So(err, ShouldBeNil)
 
-		err = settings.Set(SettingsDataMaxSizePath, "5")
+		err = settings.Set(common.SettingsDataMaxSizePath, "5")
 		So(err, ShouldBeNil)
 
 		user1Context := userContextInRegisteredClient(getContext(), "user1")
 		object.Header.Id, err = handler.PutObject(user1Context, "objects", object, nil, nil, PutOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settings.Set(SettingsDataMaxSizePath, value)
+		err = settings.Set(common.SettingsDataMaxSizePath, value)
 		So(err, ShouldBeNil)
 	})
 }
@@ -709,26 +708,26 @@ func TestHandler_PatchObject3(t *testing.T) {
 		}
 
 		// saving current value
-		value, err := settings.Get(SettingsDataMaxSizePath)
+		value, err := settings.Get(common.SettingsDataMaxSizePath)
 		So(err, ShouldBeNil)
 
 		user1Context := userContextInRegisteredClient(getContextWithNoSettings(), "user1")
 		err = handler.PatchObject(user1Context, "objects", patch, PatchOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settings.Delete(SettingsDataMaxSizePath)
+		err = settings.Delete(common.SettingsDataMaxSizePath)
 		So(err, ShouldBeNil)
 		user1Context = userContext(getContext(), "user1")
 		err = handler.PatchObject(user1Context, "objects", patch, PatchOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settings.Set(SettingsDataMaxSizePath, "no-number")
+		err = settings.Set(common.SettingsDataMaxSizePath, "no-number")
 		So(err, ShouldBeNil)
 
 		err = handler.PatchObject(user1Context, "objects", patch, PatchOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settings.Set(SettingsDataMaxSizePath, value)
+		err = settings.Set(common.SettingsDataMaxSizePath, value)
 		So(err, ShouldBeNil)
 	})
 }
@@ -746,17 +745,17 @@ func TestHandler_PatchObject4(t *testing.T) {
 		}
 
 		// saving current value
-		value, err := settings.Get(SettingsDataMaxSizePath)
+		value, err := settings.Get(common.SettingsDataMaxSizePath)
 		So(err, ShouldBeNil)
 
-		err = settings.Set(SettingsDataMaxSizePath, "5")
+		err = settings.Set(common.SettingsDataMaxSizePath, "5")
 		So(err, ShouldBeNil)
 
 		user1Context := userContextInRegisteredClient(getContext(), "user1")
 		err = handler.PatchObject(user1Context, "objects", patch, PatchOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settings.Set(SettingsDataMaxSizePath, value)
+		err = settings.Set(common.SettingsDataMaxSizePath, value)
 		So(err, ShouldBeNil)
 	})
 }
@@ -922,22 +921,22 @@ func TestHandler_ListObjects3(t *testing.T) {
 		handler := router.GetHandler()
 
 		// saving current value
-		value, err := settings.Get(SettingsObjectListMaxCount)
+		value, err := settings.Get(common.SettingsObjectListMaxCount)
 		So(err, ShouldBeNil)
 
-		err = settings.Delete(SettingsObjectListMaxCount)
-		So(err, ShouldBeNil)
-
-		_, err = handler.ListObjects(getContext(), "juventus", ListOptions{})
-		So(err, ShouldNotBeNil)
-
-		err = settings.Set(SettingsObjectListMaxCount, "no-number")
+		err = settings.Delete(common.SettingsObjectListMaxCount)
 		So(err, ShouldBeNil)
 
 		_, err = handler.ListObjects(getContext(), "juventus", ListOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settings.Set(SettingsObjectListMaxCount, value)
+		err = settings.Set(common.SettingsObjectListMaxCount, "no-number")
+		So(err, ShouldBeNil)
+
+		_, err = handler.ListObjects(getContext(), "juventus", ListOptions{})
+		So(err, ShouldNotBeNil)
+
+		err = settings.Set(common.SettingsObjectListMaxCount, value)
 		So(err, ShouldBeNil)
 	})
 }
