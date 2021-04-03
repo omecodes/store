@@ -24,9 +24,10 @@ message EncryptionInfo {
 }
 
 message Permissions {
-  repeated Permission read = 1;
-  repeated Permission write = 2;
-  repeated Permission chmod = 3;
+  string filename = 1;
+  repeated Permission read = 2;
+  repeated Permission write = 3;
+  repeated Permission chmod = 4;
 }
 
 message Source {
