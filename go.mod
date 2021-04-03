@@ -10,19 +10,17 @@ require (
 	github.com/google/cel-go v0.7.1
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.8.0
-	github.com/gorilla/sessions v1.2.1 // indirect
+	github.com/gorilla/sessions v1.2.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.1.0
 	github.com/iancoleman/strcase v0.1.3
-	github.com/lunixbochs/vtclean v1.0.0 // indirect
-	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
-	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/omecodes/bome v0.0.0-20210307202356-9570bc59b78c
 	github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08
-	github.com/omecodes/discover v0.0.0-20210213111105-c5af043d728b // indirect
+	github.com/omecodes/discover v0.0.0-20210213111105-c5af043d728b
 	github.com/omecodes/errors v0.0.0-20210307082057-dfe6f559d09c
-	github.com/omecodes/libome v0.0.0-20210309220055-6f9c1b46bdd4
+	github.com/omecodes/libome v0.0.0-20210328231408-367b9167265b
 	github.com/omecodes/service v0.0.0-20210225153927-688cff63b9a1
+	github.com/omecodes/services-ca v0.0.0-20210119200320-e05b356709b1
 	github.com/pkg/xattr v0.4.3
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.1.1
@@ -30,7 +28,6 @@ require (
 	github.com/tidwall/gjson v1.6.8
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/oauth2 v0.0.0-20210201163806-010130855d6c
-	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
 	golang.org/x/text v0.3.5
 	golang.org/x/tools v0.0.0-20210108195828-e2f9c7f1fc8e // indirect
 	google.golang.org/appengine v1.6.7 // indirect
