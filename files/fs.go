@@ -54,7 +54,7 @@ func getFS(ctx context.Context, sourceID string) (FS, error) {
 	}
 
 	if source.Type != SourceType_Default {
-		return nil, errors.Unsupported("file source type is not supported")
+		return nil, errors.Unsupported("file source type is not supported", errors.Details{Key: "source-type", Value: source.Type.String()})
 	}
 
 	uri, err := url.Parse(source.Uri)
@@ -68,7 +68,7 @@ func getFS(ctx context.Context, sourceID string) (FS, error) {
 		return &diskFS{root: rootDir}, nil
 
 	default:
-		return nil, errors.BadRequest("not supported scheme")
+		return nil, errors.BadRequest("not supported scheme", errors.Details{Key: "scheme", Value: uri.Scheme})
 	}
 }
 
