@@ -91,10 +91,8 @@ func Test_initializeDatabase(t *testing.T) {
 func TestHandler_CreateSource1(t *testing.T) {
 	Convey("SOURCE - CREATE: cannot create source if one the following parameters is not provided: source", t, func() {
 		initDB()
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
 
-		err := handler.CreateSource(getContext(), nil)
+		err := CreateSource(getContext(), nil)
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -102,18 +100,16 @@ func TestHandler_CreateSource1(t *testing.T) {
 func TestHandler_CreateSource2(t *testing.T) {
 	Convey("SOURCE - CREATE: cannot create source if one the following parameters is not provided: type, uri", t, func() {
 		initDB()
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
 
 		source := &Source{
-			ID:          "source",
+			Id:          "source",
 			Label:       "Source de tests",
 			Description: "Source de tests",
 			Type:        0,
-			URI:         "",
+			Uri:         "",
 			ExpireTime:  -1,
 		}
-		err := handler.CreateSource(getContext(), source)
+		err := CreateSource(getContext(), source)
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -123,19 +119,16 @@ func TestHandler_CreateSource3(t *testing.T) {
 		initDB()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
 		mainSource = &Source{
-			ID:          "main",
+			Id:          "main",
 			Label:       "Root source",
 			Description: "Root source",
 			CreatedBy:   "admin",
-			Type:        TypeDisk,
-			URI:         "files://" + workingDir,
+			Type:        SourceType_Default,
+			Uri:         "files://" + workingDir,
 			ExpireTime:  -1,
 		}
-		err := handler.CreateSource(getContext(), mainSource)
+		err := CreateSource(getContext(), mainSource)
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -145,19 +138,16 @@ func TestHandler_CreateSource4(t *testing.T) {
 		initDB()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
 		mainSource = &Source{
-			ID:          "main",
+			Id:          "main",
 			Label:       "Root source",
 			Description: "Root source",
-			Type:        TypeDisk,
-			URI:         "files://" + workingDir,
+			Type:        SourceType_Default,
+			Uri:         "files://" + workingDir,
 			ExpireTime:  -1,
 		}
 		userContext := getContextWithUser("user")
-		err := handler.CreateSource(userContext, mainSource)
+		err := CreateSource(userContext, mainSource)
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -167,49 +157,46 @@ func TestHandler_CreateSource5(t *testing.T) {
 		initDB()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
 		mainSource = &Source{
-			ID:          "main",
+			Id:          "main",
 			Label:       "Root source",
 			Description: "Root source",
-			Type:        TypeDisk,
-			URI:         SchemeFS + "://" + workingDir,
+			Type:        SourceType_Default,
+			Uri:         SchemeFS + "://" + workingDir,
 			ExpireTime:  -1,
 			PermissionOverrides: &Permissions{
-				Filename: "/user1",
+				Filename: "/admin",
 				Read: []*auth.Permission{
 					{
-						Name:         "admin-can-read",
-						Label:        "Admin can read",
-						Description:  "Admin has permission to read all file in this source",
-						Rule:         "user.name=='admin'",
-						RelatedUsers: []string{"admin"},
+						Name:        "admin-can-read",
+						Label:       "Admin can read",
+						Description: "Admin has permission to read all file in this source",
+						Rule:        "user.name=='admin'",
+						TargetUsers: []string{"admin"},
 					},
 				},
 				Write: []*auth.Permission{
 					{
-						Name:         "admin-write-perm",
-						Label:        "Admin write permission",
-						Description:  "Admin has permission to read all file in this source",
-						Rule:         "user.name=='admin'",
-						RelatedUsers: []string{"admin"},
+						Name:        "admin-write-perm",
+						Label:       "Admin write permission",
+						Description: "Admin has permission to read all file in this source",
+						Rule:        "user.name=='admin'",
+						TargetUsers: []string{"admin"},
 					},
 				},
 				Chmod: []*auth.Permission{
 					{
-						Name:         "admin-chmod-perm",
-						Label:        "admin chmod permission",
-						Description:  "admin has permission to chmod all file in this source",
-						Rule:         "user.name=='admin'",
-						RelatedUsers: []string{"admin"},
+						Name:        "admin-chmod-perm",
+						Label:       "admin chmod permission",
+						Description: "admin has permission to chmod all file in this source",
+						Rule:        "user.name=='admin'",
+						TargetUsers: []string{"admin"},
 					},
 				},
 			},
 		}
 		userContext := getContextWithUser("admin")
-		err := handler.CreateSource(userContext, mainSource)
+		err := CreateSource(userContext, mainSource)
 		So(err, ShouldBeNil)
 	})
 }
@@ -219,20 +206,17 @@ func TestHandler_CreateSource6(t *testing.T) {
 		initDB()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
 		mainSource = &Source{
-			ID:          "main",
+			Id:          "main",
 			Label:       "Root source",
 			Description: "Root source",
-			Type:        TypeDisk,
-			URI:         "files://" + workingDir,
+			Type:        SourceType_Default,
+			Uri:         "files://" + workingDir,
 			ExpireTime:  -1,
 		}
 
 		userContext := getContextWithUserFromClientAndNoSourceManager("admin")
-		err := handler.CreateSource(userContext, mainSource)
+		err := CreateSource(userContext, mainSource)
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -242,10 +226,7 @@ func TestHandler_GetSource1(t *testing.T) {
 		initDir()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
-		source, err := handler.GetSource(getContext(), "")
+		source, err := GetSource(getContext(), "")
 		So(err, ShouldNotBeNil)
 		So(source, ShouldBeNil)
 	})
@@ -256,10 +237,7 @@ func TestHandler_GetSource2(t *testing.T) {
 		initDir()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
-		source, err := handler.GetSource(getContext(), "main")
+		source, err := GetSource(getContext(), "main")
 		So(err, ShouldNotBeNil)
 		So(source, ShouldBeNil)
 	})
@@ -270,10 +248,7 @@ func TestHandler_GetSource3(t *testing.T) {
 		initDir()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
-		source, err := handler.GetSource(getContextWithUser("ome"), "main")
+		source, err := GetSource(getContextWithUser("ome"), "main")
 		So(err, ShouldNotBeNil)
 		So(source, ShouldBeNil)
 	})
@@ -284,12 +259,9 @@ func TestHandler_GetSource4(t *testing.T) {
 		initDir()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
-		source, err := handler.GetSource(adminContext(), "main")
+		source, err := GetSource(adminContext(), "main")
 		So(err, ShouldBeNil)
-		So(source.ID, ShouldEqual, "main")
+		So(source.Id, ShouldEqual, "main")
 	})
 }
 
@@ -298,13 +270,10 @@ func TestHandler_CreateDir1(t *testing.T) {
 		initDir()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
-		err := handler.CreateDir(getContext(), "", "user1")
+		err := CreateDir(getContext(), "", "user1")
 		So(err, ShouldNotBeNil)
 
-		err = handler.CreateDir(getContext(), "main", "")
+		err = CreateDir(getContext(), "main", "")
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -314,10 +283,7 @@ func TestHandler_CreateDir2(t *testing.T) {
 		initDir()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
-		err := handler.CreateDir(getContext(), "main", "user1")
+		err := CreateDir(getContext(), "main", "user1")
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -327,11 +293,8 @@ func TestHandler_CreateDir3(t *testing.T) {
 		initDir()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
 		userContext := getContextWithUser("ome")
-		err := handler.CreateDir(userContext, "main", "user1")
+		err := CreateDir(userContext, "main", "user1")
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -341,10 +304,7 @@ func TestHandler_CreateDir4(t *testing.T) {
 		initDir()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
-		err := handler.CreateDir(adminContext(), "main", "user1")
+		err := CreateDir(adminContext(), "main", "user1")
 		So(err, ShouldBeNil)
 	})
 }
@@ -354,11 +314,8 @@ func TestHandler_CreateDir5(t *testing.T) {
 		initDir()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
 		adminContext := getContextWithUserFromClientAndNoSourceManager("admin")
-		err := handler.CreateDir(adminContext, "main", "user1")
+		err := CreateDir(adminContext, "main", "user1")
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -368,50 +325,47 @@ func TestHandler_CreateSource7(t *testing.T) {
 		initDB()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
 		user1Source := &Source{
-			ID:          "user1-source",
+			Id:          "user1-source",
 			Label:       "User1 Files",
 			Description: "",
 			CreatedBy:   "admin",
-			Type:        TypeReference,
-			URI:         SchemeSource + "://main/user1",
+			Type:        SourceType_Reference,
+			Uri:         SchemeSource + "://main/user1",
 			PermissionOverrides: &Permissions{
 				Filename: "/user1",
 				Read: []*auth.Permission{
 					{
-						Name:         "user1-can-read",
-						Label:        "User1 can read",
-						Description:  "User1 has permission to read all file in this source",
-						Rule:         "user.name=='user1'",
-						RelatedUsers: []string{"user1"},
+						Name:        "user1-can-read",
+						Label:       "User1 can read",
+						Description: "User1 has permission to read all file in this source",
+						Rule:        "user.name=='user1'",
+						TargetUsers: []string{"user1"},
 					},
 				},
 				Write: []*auth.Permission{
 					{
-						Name:         "user1-write-perm",
-						Label:        "User1 write permission",
-						Description:  "User1 has permission to read all file in this source",
-						Rule:         "user.name=='user1'",
-						RelatedUsers: []string{"user1"},
+						Name:        "user1-write-perm",
+						Label:       "User1 write permission",
+						Description: "User1 has permission to read all file in this source",
+						Rule:        "user.name=='user1'",
+						TargetUsers: []string{"user1"},
 					},
 				},
 				Chmod: []*auth.Permission{
 					{
-						Name:         "user1-chmod-perm",
-						Label:        "User1 chmod permission",
-						Description:  "User1 has permission to chmod all file in this source",
-						Rule:         "user.name=='user1'",
-						RelatedUsers: []string{"user1"},
+						Name:        "user1-chmod-perm",
+						Label:       "User1 chmod permission",
+						Description: "User1 has permission to chmod all file in this source",
+						Rule:        "user.name=='user1'",
+						TargetUsers: []string{"user1"},
 					},
 				},
 			},
 			ExpireTime: -1,
 		}
 
-		err := handler.CreateSource(adminContext(), user1Source)
+		err := CreateSource(adminContext(), user1Source)
 		So(err, ShouldBeNil)
 	})
 }
@@ -421,10 +375,7 @@ func TestHandler_ListSource1(t *testing.T) {
 		initDB()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
-		sources, err := handler.ListSources(getContextWithUserFromClientAndNoSourceManager("admin"))
+		sources, err := ListSources(getContextWithUserFromClientAndNoSourceManager("admin"))
 		So(err, ShouldNotBeNil)
 		So(sources, ShouldBeNil)
 	})
@@ -435,14 +386,11 @@ func TestHandler_ListSource2(t *testing.T) {
 		initDB()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
-		sources, err := handler.ListSources(adminContext())
+		sources, err := ListSources(adminContext())
 		So(err, ShouldBeNil)
 		So(sources, ShouldHaveLength, 1)
 
-		sources, err = handler.ListSources(getContextWithUser("user1"))
+		sources, err = ListSources(getContextWithUser("user1"))
 		So(err, ShouldBeNil)
 		So(sources, ShouldHaveLength, 1)
 	})
@@ -453,11 +401,8 @@ func TestHandler_CreateDir6(t *testing.T) {
 		initDir()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
 		user1Context := getContextWithUser("user1")
-		err := handler.CreateDir(user1Context, "user1-source", "Documents")
+		err := CreateDir(user1Context, "user1-source", "Documents")
 		So(err, ShouldBeNil)
 	})
 }
@@ -467,11 +412,8 @@ func TestHandler_CreateDir7(t *testing.T) {
 		initDir()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
 		user1Context := getContextWithUser("user1")
-		err := handler.CreateDir(user1Context, "user1-source", "Documents/photo")
+		err := CreateDir(user1Context, "user1-source", "Documents/photo")
 		So(err, ShouldBeNil)
 	})
 }
@@ -481,50 +423,47 @@ func TestHandler_CreateSource8(t *testing.T) {
 		initDB()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
 		user1Source := &Source{
-			ID:          "user2-source",
+			Id:          "user2-source",
 			Label:       "User2 Files",
 			Description: "",
 			CreatedBy:   "user1",
-			Type:        TypeReference,
-			URI:         SchemeSource + "://user1-source/Documents/photo",
+			Type:        SourceType_Reference,
+			Uri:         SchemeSource + "://user1-source/Documents/photo",
 			PermissionOverrides: &Permissions{
 				Filename: "/Documents/photo",
 				Read: []*auth.Permission{
 					{
-						Name:         "user2-can-read",
-						Label:        "User2 can read",
-						Description:  "User2 has permission to read all file in this source",
-						Rule:         "user.name=='user2'",
-						RelatedUsers: []string{"user2"},
+						Name:        "user2-can-read",
+						Label:       "User2 can read",
+						Description: "User2 has permission to read all file in this source",
+						Rule:        "user.name=='user2'",
+						TargetUsers: []string{"user2"},
 					},
 				},
 				Write: []*auth.Permission{
 					{
-						Name:         "user2-write-perm",
-						Label:        "User2 write permission",
-						Description:  "User2 has permission to read all file in this source",
-						Rule:         "user.name=='user2'",
-						RelatedUsers: []string{"user2"},
+						Name:        "user2-write-perm",
+						Label:       "User2 write permission",
+						Description: "User2 has permission to read all file in this source",
+						Rule:        "user.name=='user2'",
+						TargetUsers: []string{"user2"},
 					},
 				},
 				Chmod: []*auth.Permission{
 					{
-						Name:         "user2-chmod-perm",
-						Label:        "User2 chmod permission",
-						Description:  "User2 cannot chmod files in this source",
-						Rule:         "false",
-						RelatedUsers: []string{"public"},
+						Name:        "user2-chmod-perm",
+						Label:       "User2 chmod permission",
+						Description: "User2 cannot chmod files in this source",
+						Rule:        "false",
+						TargetUsers: []string{"public"},
 					},
 				},
 			},
 			ExpireTime: -1,
 		}
 
-		err := handler.CreateSource(adminContext(), user1Source)
+		err := CreateSource(adminContext(), user1Source)
 		So(err, ShouldBeNil)
 	})
 }
@@ -534,17 +473,16 @@ func TestHandler_WriteFileContent1(t *testing.T) {
 		initDB()
 		initDir()
 
-		handler := DefaultFilesRouter().GetHandler()
-		err := handler.WriteFileContent(getContext(), "", "filename", bytes.NewBufferString("a"), 1, WriteOptions{})
+		err := WriteFileContent(getContext(), "", "filename", bytes.NewBufferString("a"), 1, WriteOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = handler.WriteFileContent(getContext(), "main", "", bytes.NewBufferString("a"), 1, WriteOptions{})
+		err = WriteFileContent(getContext(), "main", "", bytes.NewBufferString("a"), 1, WriteOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = handler.WriteFileContent(getContext(), "main", "filename", nil, 1, WriteOptions{})
+		err = WriteFileContent(getContext(), "main", "filename", nil, 1, WriteOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = handler.WriteFileContent(getContext(), "main", "filename", bytes.NewBufferString("a"), 0, WriteOptions{})
+		err = WriteFileContent(getContext(), "main", "filename", bytes.NewBufferString("a"), 0, WriteOptions{})
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -554,9 +492,7 @@ func TestHandler_WriteFileContent2(t *testing.T) {
 		initDB()
 		initDir()
 
-		handler := DefaultFilesRouter().GetHandler()
-
-		err := handler.WriteFileContent(getContext(), "main", "filename", bytes.NewBufferString("a"), 1, WriteOptions{})
+		err := WriteFileContent(getContext(), "main", "filename", bytes.NewBufferString("a"), 1, WriteOptions{})
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -566,10 +502,8 @@ func TestHandler_WriteFileContent3(t *testing.T) {
 		initDB()
 		initDir()
 
-		handler := DefaultFilesRouter().GetHandler()
-
 		userContext := getContextWithUser("user1")
-		err := handler.WriteFileContent(userContext, "main", "filename", bytes.NewBufferString("a"), 1, WriteOptions{})
+		err := WriteFileContent(userContext, "main", "filename", bytes.NewBufferString("a"), 1, WriteOptions{})
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -579,10 +513,8 @@ func TestHandler_WriteFileContent4(t *testing.T) {
 		initDB()
 		initDir()
 
-		handler := DefaultFilesRouter().GetHandler()
-
 		user1Source := getContextWithUserFromClientAndNoSourceManager("admin")
-		err := handler.WriteFileContent(user1Source, "user1-source", "file.txt", bytes.NewBufferString("a"), 1, WriteOptions{})
+		err := WriteFileContent(user1Source, "user1-source", "file.txt", bytes.NewBufferString("a"), 1, WriteOptions{})
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -592,12 +524,10 @@ func TestHandler_WriteFileContent5(t *testing.T) {
 		initDB()
 		initDir()
 
-		handler := DefaultFilesRouter().GetHandler()
-
-		err := handler.WriteFileContent(adminContext(), "main", "file.txt", bytes.NewBufferString("a"), 1, WriteOptions{})
+		err := WriteFileContent(adminContext(), "main", "file.txt", bytes.NewBufferString("a"), 1, WriteOptions{})
 		So(err, ShouldBeNil)
 
-		err = handler.WriteFileContent(getContextWithUser("user1"), "user1-source", "file.txt", bytes.NewBufferString("a"), 1, WriteOptions{})
+		err = WriteFileContent(getContextWithUser("user1"), "user1-source", "file.txt", bytes.NewBufferString("a"), 1, WriteOptions{})
 		So(err, ShouldBeNil)
 	})
 }
@@ -607,14 +537,11 @@ func TestHandler_ListSource3(t *testing.T) {
 		initDB()
 		initDir()
 
-		router := DefaultFilesRouter()
-		handler := router.GetHandler()
-
-		sources, err := handler.ListSources(adminContext())
+		sources, err := ListSources(adminContext())
 		So(err, ShouldBeNil)
 		So(sources, ShouldHaveLength, 1)
 
-		sources, err = handler.ListSources(getContextWithUser("user1"))
+		sources, err = ListSources(getContextWithUser("user1"))
 		So(err, ShouldBeNil)
 		So(sources, ShouldHaveLength, 1)
 	})
@@ -625,11 +552,10 @@ func TestHandler_ListDir1(t *testing.T) {
 		initDB()
 		initDir()
 
-		handler := DefaultFilesRouter().GetHandler()
-		_, err := handler.ListDir(getContext(), "", "/", ListDirOptions{})
+		_, err := ListDir(getContext(), "", "/", ListDirOptions{})
 		So(err, ShouldNotBeNil)
 
-		_, err = handler.ListDir(getContext(), "user-source1", "", ListDirOptions{})
+		_, err = ListDir(getContext(), "user-source1", "", ListDirOptions{})
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -639,8 +565,7 @@ func TestHandler_ListDir2(t *testing.T) {
 		initDB()
 		initDir()
 
-		handler := DefaultFilesRouter().GetHandler()
-		_, err := handler.ListDir(getContextWithUserFromClientAndNoSourceManager("user1"), "user1-source", "/", ListDirOptions{})
+		_, err := ListDir(getContextWithUserFromClientAndNoSourceManager("user1"), "user1-source", "/", ListDirOptions{})
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -650,8 +575,7 @@ func TestHandler_ListDir3(t *testing.T) {
 		initDB()
 		initDir()
 
-		handler := DefaultFilesRouter().GetHandler()
-		_, err := handler.ListDir(getContextWithUser("user1"), "main", "/", ListDirOptions{})
+		_, err := ListDir(getContextWithUser("user1"), "main", "/", ListDirOptions{})
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -661,8 +585,7 @@ func TestHandler_ListDir4(t *testing.T) {
 		initDB()
 		initDir()
 
-		handler := DefaultFilesRouter().GetHandler()
-		_, err := handler.ListDir(getContextWithUser("user1"), "user1-source", "/", ListDirOptions{})
+		_, err := ListDir(getContextWithUser("user1"), "user1-source", "/", ListDirOptions{})
 		So(err, ShouldBeNil)
 	})
 }
@@ -672,8 +595,7 @@ func TestHandler_DeleteSource1(t *testing.T) {
 		initDB()
 		initDir()
 
-		handler := DefaultFilesRouter().GetHandler()
-		err := handler.DeleteSource(getContext(), "")
+		err := DeleteSource(getContext(), "")
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -683,9 +605,8 @@ func TestHandler_DeleteSource2(t *testing.T) {
 		initDB()
 		initDir()
 
-		handler := DefaultFilesRouter().GetHandler()
 		adminContext := getContextWithUserFromClientAndNoSourceManager("admin")
-		err := handler.DeleteSource(adminContext, "user1-source")
+		err := DeleteSource(adminContext, "user1-source")
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -695,8 +616,7 @@ func TestHandler_DeleteSource3(t *testing.T) {
 		initDB()
 		initDir()
 
-		handler := DefaultFilesRouter().GetHandler()
-		err := handler.DeleteSource(getContext(), "main")
+		err := DeleteSource(getContext(), "main")
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -706,8 +626,7 @@ func TestHandler_DeleteSource4(t *testing.T) {
 		initDB()
 		initDir()
 
-		handler := DefaultFilesRouter().GetHandler()
-		err := handler.DeleteSource(getContextWithUser("user-1"), "main")
+		err := DeleteSource(getContextWithUser("user-1"), "main")
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -717,8 +636,7 @@ func TestHandler_DeleteSource5(t *testing.T) {
 		initDB()
 		initDir()
 
-		handler := DefaultFilesRouter().GetHandler()
-		err := handler.DeleteSource(adminContext(), "user1-source")
+		err := DeleteSource(adminContext(), "user1-source")
 		So(err, ShouldBeNil)
 	})
 }
@@ -728,8 +646,7 @@ func TestHandler_DeleteSource6(t *testing.T) {
 		initDB()
 		initDir()
 
-		handler := DefaultFilesRouter().GetHandler()
-		err := handler.DeleteSource(adminContext(), "source")
+		err := DeleteSource(adminContext(), "source")
 		So(err, ShouldNotBeNil)
 	})
 }
