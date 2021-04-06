@@ -4,14 +4,14 @@ import (
 	"context"
 )
 
-func NewACLGrpcClient() *gRPCClient {
-	return &gRPCClient{}
+func NewACLManagerServiceClient() ACLManager {
+	return &aclManagerServiceClient{}
 }
 
-type gRPCClient struct{}
+type aclManagerServiceClient struct{}
 
-func (g *gRPCClient) SaveRules(ctx context.Context, collection string, objectID string, rules *PathAccessRules) error {
-	client, err := AclGRPCClient(ctx)
+func (g *aclManagerServiceClient) SaveRules(ctx context.Context, collection string, objectID string, rules *PathAccessRules) error {
+	client, err := aclGrpcClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -19,8 +19,8 @@ func (g *gRPCClient) SaveRules(ctx context.Context, collection string, objectID 
 	return err
 }
 
-func (g *gRPCClient) GetRules(ctx context.Context, collection string, objectID string) (*PathAccessRules, error) {
-	client, err := AclGRPCClient(ctx)
+func (g *aclManagerServiceClient) GetRules(ctx context.Context, collection string, objectID string) (*PathAccessRules, error) {
+	client, err := aclGrpcClient(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -31,8 +31,8 @@ func (g *gRPCClient) GetRules(ctx context.Context, collection string, objectID s
 	return rsp.GetRules(), nil
 }
 
-func (g *gRPCClient) GetForPath(ctx context.Context, collection string, objectID string, path string) (*AccessRules, error) {
-	client, err := AclGRPCClient(ctx)
+func (g *aclManagerServiceClient) GetForPath(ctx context.Context, collection string, objectID string, path string) (*AccessRules, error) {
+	client, err := aclGrpcClient(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -43,8 +43,8 @@ func (g *gRPCClient) GetForPath(ctx context.Context, collection string, objectID
 	return rsp.Rules.AccessRules[path], nil
 }
 
-func (g *gRPCClient) Delete(ctx context.Context, collection string, objectID string) error {
-	client, err := AclGRPCClient(ctx)
+func (g *aclManagerServiceClient) Delete(ctx context.Context, collection string, objectID string) error {
+	client, err := aclGrpcClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -52,8 +52,8 @@ func (g *gRPCClient) Delete(ctx context.Context, collection string, objectID str
 	return err
 }
 
-func (g *gRPCClient) DeleteForPath(ctx context.Context, collection string, objectID string, path string) error {
-	client, err := AclGRPCClient(ctx)
+func (g *aclManagerServiceClient) DeleteForPath(ctx context.Context, collection string, objectID string, path string) error {
+	client, err := aclGrpcClient(ctx)
 	if err != nil {
 		return err
 	}

@@ -144,7 +144,7 @@ var (
 
 func getContext() context.Context {
 	ctx := context.Background()
-	ctx = ContextWithACLStore(ctx, acl)
+	ctx = ContextWithACLManager(ctx, acl)
 	ctx = ContextWithStore(ctx, db)
 	ctx = ContextWithSettings(ctx, settings)
 	return ctx
@@ -152,7 +152,7 @@ func getContext() context.Context {
 
 func getContextWithNoSettings() context.Context {
 	ctx := context.Background()
-	ctx = ContextWithACLStore(ctx, acl)
+	ctx = ContextWithACLManager(ctx, acl)
 	ctx = ContextWithStore(ctx, db)
 	return ctx
 }
@@ -192,7 +192,7 @@ func initDB() {
 		conn, err := sql.Open("sqlite3", ":memory:")
 		So(err, ShouldBeNil)
 
-		acl, err = NewSQLACLStore(conn, bome.SQLite3, "access_rules")
+		acl, err = NewACLSQLManager(conn, bome.SQLite3, "access_rules")
 		So(err, ShouldBeNil)
 	}
 }

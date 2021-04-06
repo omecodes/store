@@ -41,7 +41,7 @@ func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object
 		return "", errors.BadRequest("requires a collection ID and object with header and data")
 	}
 
-	settings := Settings(ctx)
+	settings := common.Settings(ctx)
 	if settings == nil {
 		return "", errors.Internal("missing settings in context")
 	}
@@ -77,7 +77,7 @@ func (p *ParamsHandler) PatchObject(ctx context.Context, collection string, patc
 		return errors.BadRequest("requires a collection ID a patch, with object ID content data and the path")
 	}
 
-	settings := Settings(ctx)
+	settings := common.Settings(ctx)
 	if settings == nil {
 		return errors.Internal("missing settings in context")
 	}
@@ -135,7 +135,7 @@ func (p *ParamsHandler) ListObjects(ctx context.Context, collection string, opts
 		return nil, errors.BadRequest("requires a collection ID ")
 	}
 
-	settings := Settings(ctx)
+	settings := common.Settings(ctx)
 	if settings == nil {
 		return nil, errors.Internal("missing settings in context")
 	}

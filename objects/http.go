@@ -323,7 +323,7 @@ func HTTPHandleSetSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	settings := Settings(ctx)
+	settings := common.Settings(ctx)
 	if settings == nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -351,7 +351,7 @@ func HTTPHandleGetSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	settings := Settings(ctx)
+	settings := common.Settings(ctx)
 	if settings == nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

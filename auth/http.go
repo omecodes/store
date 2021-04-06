@@ -1,10 +1,12 @@
 package auth
 
 import (
+	"context"
 	"crypto/sha512"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/golang/protobuf/jsonpb"
 	"net/http"
 	"net/url"
 	"strings"
@@ -20,6 +22,32 @@ const pathItemName = "name"
 const formValueUsername = "username"
 const formValuePassword = "password"
 const queryContinueURL = "continue"
+
+func ToHttpHeaders(ctx context.Context) (http.Header, error) {
+	headers := http.Header{}
+
+	m := &jsonpb.Marshaler{EnumsAsInts: true}
+
+	user := Get(ctx)
+	if user != nil {
+		encodedUser, err := m.MarshalToString(user)
+		if err != nil {
+			return nil, err
+		}
+		headers.Set(UserHeader, encodedUser)
+	}
+
+	app := App(ctx)
+	if user != nil {
+		encodedApp, err := m.MarshalToString(app)
+		if err != nil {
+			return nil, err
+		}
+		headers.Set(AppHeader, encodedApp)
+	}
+
+	return headers, nil
+}
 
 func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	r := mux.NewRouter()

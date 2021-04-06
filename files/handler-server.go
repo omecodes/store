@@ -6,6 +6,10 @@ import (
 	"io"
 )
 
+func NewFilesServerHandler() FilesServer {
+	return &gRPCHandler{}
+}
+
 type gRPCHandler struct {
 	UnimplementedFilesServer
 	UnimplementedSourcesServer

@@ -7,7 +7,7 @@ import (
 	"github.com/omecodes/store/common"
 )
 
-func AclGRPCClient(ctx context.Context) (ACLClient, error) {
+func aclGrpcClient(ctx context.Context) (ACLClient, error) {
 	provider := ACLGrpcClientProvider(ctx)
 	if provider == nil {
 		return nil, errors.Internal("missing ACL provider")
@@ -15,7 +15,7 @@ func AclGRPCClient(ctx context.Context) (ACLClient, error) {
 	return provider.GetClient(ctx)
 }
 
-func GRPCClient(ctx context.Context, serviceType uint32) (ObjectsClient, error) {
+func grpcClient(ctx context.Context, serviceType uint32) (ObjectsClient, error) {
 	provider := RouterGrpcClientProvider(ctx)
 	if provider == nil {
 		return nil, errors.ServiceUnavailable("no service available", errors.Details{Key: "type", Value: "service"}, errors.Details{Key: "service-type", Value: serviceType})
@@ -29,7 +29,7 @@ type ClientProvider interface {
 
 type ctxClientProvider struct{}
 
-func WithRouterGrpcClientProvider(parent context.Context, provider ClientProvider) context.Context {
+func WithObjectsGrpcClientProvider(parent context.Context, provider ClientProvider) context.Context {
 	return context.WithValue(parent, ctxClientProvider{}, provider)
 }
 

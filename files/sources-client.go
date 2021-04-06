@@ -5,9 +5,13 @@ import (
 	"github.com/omecodes/store/common"
 )
 
-type SourceManagerServiceClient struct{}
+func NewSourcesManagerServiceClient() SourceManager {
+	return &sourcesManagerServiceClient{}
+}
 
-func (s *SourceManagerServiceClient) Save(ctx context.Context, source *Source) (string, error) {
+type sourcesManagerServiceClient struct{}
+
+func (s *sourcesManagerServiceClient) Save(ctx context.Context, source *Source) (string, error) {
 	client, err := NewSourcesServiceClient(ctx, common.ServiceTypeSource)
 	if err != nil {
 		return "", err
@@ -16,7 +20,7 @@ func (s *SourceManagerServiceClient) Save(ctx context.Context, source *Source) (
 	return "", err
 }
 
-func (s *SourceManagerServiceClient) Get(ctx context.Context, id string) (*Source, error) {
+func (s *sourcesManagerServiceClient) Get(ctx context.Context, id string) (*Source, error) {
 	client, err := NewSourcesServiceClient(ctx, common.ServiceTypeSource)
 	if err != nil {
 		return nil, err
@@ -29,7 +33,7 @@ func (s *SourceManagerServiceClient) Get(ctx context.Context, id string) (*Sourc
 	return rsp.Source, nil
 }
 
-func (s *SourceManagerServiceClient) Delete(ctx context.Context, id string) error {
+func (s *sourcesManagerServiceClient) Delete(ctx context.Context, id string) error {
 	client, err := NewSourcesServiceClient(ctx, common.ServiceTypeSource)
 	if err != nil {
 		return err
@@ -46,7 +50,7 @@ func (s *SourceManagerServiceClient) Delete(ctx context.Context, id string) erro
 	return stream.Send(&DeleteSourceRequest{SourceId: id})
 }
 
-func (s *SourceManagerServiceClient) UserSources(ctx context.Context, username string) ([]*Source, error) {
+func (s *sourcesManagerServiceClient) UserSources(ctx context.Context, username string) ([]*Source, error) {
 	client, err := NewSourcesServiceClient(ctx, common.ServiceTypeSource)
 	if err != nil {
 		return nil, err

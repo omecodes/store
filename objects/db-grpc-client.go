@@ -14,7 +14,7 @@ func NewDBGrpcClient() DB {
 type dbClient struct{}
 
 func (d *dbClient) CreateCollection(ctx context.Context, collection *Collection) error {
-	objects, err := GRPCClient(ctx, common.ServiceTypeFilesStorage)
+	objects, err := grpcClient(ctx, common.ServiceTypeFilesStorage)
 	if err != nil {
 		return err
 	}
@@ -25,7 +25,7 @@ func (d *dbClient) CreateCollection(ctx context.Context, collection *Collection)
 }
 
 func (d *dbClient) GetCollection(ctx context.Context, id string) (*Collection, error) {
-	objects, err := GRPCClient(ctx, common.ServiceTypeFilesStorage)
+	objects, err := grpcClient(ctx, common.ServiceTypeFilesStorage)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (d *dbClient) GetCollection(ctx context.Context, id string) (*Collection, e
 }
 
 func (d *dbClient) ListCollections(ctx context.Context) ([]*Collection, error) {
-	objects, err := GRPCClient(ctx, common.ServiceTypeFilesStorage)
+	objects, err := grpcClient(ctx, common.ServiceTypeFilesStorage)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (d *dbClient) ListCollections(ctx context.Context) ([]*Collection, error) {
 }
 
 func (d *dbClient) DeleteCollection(ctx context.Context, id string) error {
-	objects, err := GRPCClient(ctx, common.ServiceTypeFilesStorage)
+	objects, err := grpcClient(ctx, common.ServiceTypeFilesStorage)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (d *dbClient) DeleteCollection(ctx context.Context, id string) error {
 }
 
 func (d *dbClient) Save(ctx context.Context, collection string, object *Object, index ...*se.TextIndex) error {
-	objects, err := GRPCClient(ctx, common.ServiceTypeFilesStorage)
+	objects, err := grpcClient(ctx, common.ServiceTypeFilesStorage)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (d *dbClient) Save(ctx context.Context, collection string, object *Object, 
 }
 
 func (d *dbClient) Patch(ctx context.Context, collection string, patch *Patch) error {
-	objects, err := GRPCClient(ctx, common.ServiceTypeFilesStorage)
+	objects, err := grpcClient(ctx, common.ServiceTypeFilesStorage)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (d *dbClient) Patch(ctx context.Context, collection string, patch *Patch) e
 }
 
 func (d *dbClient) Delete(ctx context.Context, collection string, objectID string) error {
-	objects, err := GRPCClient(ctx, common.ServiceTypeFilesStorage)
+	objects, err := grpcClient(ctx, common.ServiceTypeFilesStorage)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (d *dbClient) Delete(ctx context.Context, collection string, objectID strin
 }
 
 func (d *dbClient) Get(ctx context.Context, collection string, objectID string, opts GetOptions) (*Object, error) {
-	objects, err := GRPCClient(ctx, common.ServiceTypeFilesStorage)
+	objects, err := grpcClient(ctx, common.ServiceTypeFilesStorage)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func (d *dbClient) Get(ctx context.Context, collection string, objectID string, 
 }
 
 func (d *dbClient) Info(ctx context.Context, collection string, objectID string) (*Header, error) {
-	objects, err := GRPCClient(ctx, common.ServiceTypeFilesStorage)
+	objects, err := grpcClient(ctx, common.ServiceTypeFilesStorage)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func (d *dbClient) Info(ctx context.Context, collection string, objectID string)
 }
 
 func (d *dbClient) List(ctx context.Context, collection string, opts ListOptions) (*Cursor, error) {
-	objects, err := GRPCClient(ctx, common.ServiceTypeFilesStorage)
+	objects, err := grpcClient(ctx, common.ServiceTypeFilesStorage)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (d *dbClient) List(ctx context.Context, collection string, opts ListOptions
 }
 
 func (d *dbClient) Search(ctx context.Context, collection string, query *se.SearchQuery) (*Cursor, error) {
-	objects, err := GRPCClient(ctx, common.ServiceTypeFilesStorage)
+	objects, err := grpcClient(ctx, common.ServiceTypeFilesStorage)
 	if err != nil {
 		return nil, err
 	}

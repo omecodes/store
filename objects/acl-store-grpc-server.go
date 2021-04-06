@@ -6,15 +6,15 @@ import (
 	"github.com/omecodes/libome/logs"
 )
 
-func NewUnitServerHandler() ACLServer {
-	return &aclHandler{}
+func NewACLManagerServiceServerHandler() ACLServer {
+	return &aclManagerServiceServerHandler{}
 }
 
-type aclHandler struct {
+type aclManagerServiceServerHandler struct {
 	UnimplementedACLServer
 }
 
-func (h *aclHandler) PutRules(ctx context.Context, request *PutRulesRequest) (*PutRulesResponse, error) {
+func (h *aclManagerServiceServerHandler) PutRules(ctx context.Context, request *PutRulesRequest) (*PutRulesResponse, error) {
 	store := GetACLStore(ctx)
 	if store == nil {
 		logs.Error("ACL Service • no store associated with context")
@@ -30,7 +30,7 @@ func (h *aclHandler) PutRules(ctx context.Context, request *PutRulesRequest) (*P
 	return &PutRulesResponse{}, nil
 }
 
-func (h *aclHandler) GetRules(ctx context.Context, request *GetRulesRequest) (*GetRulesResponse, error) {
+func (h *aclManagerServiceServerHandler) GetRules(ctx context.Context, request *GetRulesRequest) (*GetRulesResponse, error) {
 	store := GetACLStore(ctx)
 	if store == nil {
 		logs.Error("ACL Service • no store associated with context")
@@ -41,7 +41,7 @@ func (h *aclHandler) GetRules(ctx context.Context, request *GetRulesRequest) (*G
 	return &GetRulesResponse{Rules: rules}, err
 }
 
-func (h *aclHandler) GetRulesForPath(ctx context.Context, request *GetRulesForPathRequest) (*GetRulesForPathResponse, error) {
+func (h *aclManagerServiceServerHandler) GetRulesForPath(ctx context.Context, request *GetRulesForPathRequest) (*GetRulesForPathResponse, error) {
 	store := GetACLStore(ctx)
 	if store == nil {
 		logs.Error("ACL Service • no store associated with context")
@@ -65,7 +65,7 @@ func (h *aclHandler) GetRulesForPath(ctx context.Context, request *GetRulesForPa
 	return rsp, nil
 }
 
-func (h *aclHandler) DeleteRules(ctx context.Context, request *DeleteRulesRequest) (*DeleteRulesResponse, error) {
+func (h *aclManagerServiceServerHandler) DeleteRules(ctx context.Context, request *DeleteRulesRequest) (*DeleteRulesResponse, error) {
 	store := GetACLStore(ctx)
 	if store == nil {
 		logs.Error("ACL Service • no store associated with context")
@@ -76,7 +76,7 @@ func (h *aclHandler) DeleteRules(ctx context.Context, request *DeleteRulesReques
 	return &DeleteRulesResponse{}, err
 }
 
-func (h *aclHandler) DeleteRulesForPath(ctx context.Context, request *DeleteRulesForPathRequest) (*DeleteRulesForPathResponse, error) {
+func (h *aclManagerServiceServerHandler) DeleteRulesForPath(ctx context.Context, request *DeleteRulesForPathRequest) (*DeleteRulesForPathResponse, error) {
 	store := GetACLStore(ctx)
 	if store == nil {
 		logs.Error("ACL Service • no store associated with context")

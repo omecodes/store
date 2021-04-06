@@ -3,25 +3,18 @@ package objects
 import (
 	"context"
 	"github.com/gorilla/mux"
-	"github.com/omecodes/store/common"
 	"net/http"
 )
 
 type middlewareOptions struct {
-	gRPCRouterProvider ClientProvider
-	acl                ACLManager
-	db                 DB
-	settings           common.SettingsManager
-	routerProvider     RouterProvider
+	db                DB
+	routerProvider    RouterProvider
+	acl               ACLManager
+	clientProvider    ClientProvider
+	aclClientProvider ACLClientProvider
 }
 
 type MiddlewareOption func(*middlewareOptions)
-
-func MiddlewareWithSettings(manager common.SettingsManager) MiddlewareOption {
-	return func(options *middlewareOptions) {
-		options.settings = manager
-	}
-}
 
 func MiddlewareWithRouterProvider(provider RouterProvider) MiddlewareOption {
 	return func(options *middlewareOptions) {
@@ -41,9 +34,15 @@ func MiddlewareWithDB(db DB) MiddlewareOption {
 	}
 }
 
-func WithGRPCRouterProvider(provider ClientProvider) MiddlewareOption {
+func MiddlewareWithACLClientProvider(provider ACLClientProvider) MiddlewareOption {
 	return func(options *middlewareOptions) {
-		options.gRPCRouterProvider = provider
+		options.aclClientProvider = provider
+	}
+}
+
+func WithClientProvider(provider ClientProvider) MiddlewareOption {
+	return func(options *middlewareOptions) {
+		options.clientProvider = provider
 	}
 }
 
@@ -68,12 +67,12 @@ func Middleware(opt ...MiddlewareOption) mux.MiddlewareFunc {
 				ctx = context.WithValue(ctx, ctxRouterProvider{}, options.routerProvider)
 			}
 
-			if options.settings != nil {
-				ctx = context.WithValue(ctx, ctxSettings{}, options.settings)
+			if options.clientProvider != nil {
+				ctx = context.WithValue(ctx, ctxClientProvider{}, options.clientProvider)
 			}
 
-			if options.gRPCRouterProvider != nil {
-				ctx = context.WithValue(ctx, ctxClientProvider{}, options.gRPCRouterProvider)
+			if options.aclClientProvider != nil {
+				ctx = context.WithValue(ctx, ctxACLClientProvider{}, options.aclClientProvider)
 			}
 
 			next.ServeHTTP(w, r.WithContext(ctx))

@@ -26,8 +26,8 @@ type CredentialsManager interface {
 	DeleteUserCredentials(username string) error
 }
 
-func NewCredentialsSQLManager(db *sql.DB, dialect string, prefix string, adminInfo string) (*credentialsSQLManager, error) {
-	clientsTableName := prefix + "_client_apps"
+func NewCredentialsSQLManager(db *sql.DB, dialect string, tablePrefix string, adminInfo string) (*credentialsSQLManager, error) {
+	clientsTableName := tablePrefix + "_client_apps"
 	clients, err := bome.Build().
 		SetConn(db).
 		SetDialect(dialect).
@@ -37,7 +37,7 @@ func NewCredentialsSQLManager(db *sql.DB, dialect string, prefix string, adminIn
 		return nil, err
 	}
 
-	usersTableName := prefix + "_users"
+	usersTableName := tablePrefix + "_users"
 	users, err := bome.Build().
 		SetConn(db).
 		SetDialect(dialect).

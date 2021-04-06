@@ -5,20 +5,24 @@ import (
 	"io"
 )
 
-type SourceService struct {
+func NewSourceServerHandler() SourcesServer {
+	return &sourcesServerHandler{}
+}
+
+type sourcesServerHandler struct {
 	UnimplementedSourcesServer
 }
 
-func (s *SourceService) CreateSource(ctx context.Context, request *CreateSourceRequest) (*CreateSourceResponse, error) {
+func (s *sourcesServerHandler) CreateSource(ctx context.Context, request *CreateSourceRequest) (*CreateSourceResponse, error) {
 	return &CreateSourceResponse{}, CreateSource(ctx, request.Source)
 }
 
-func (s *SourceService) GetSource(ctx context.Context, request *GetSourceRequest) (*GetSourceResponse, error) {
+func (s *sourcesServerHandler) GetSource(ctx context.Context, request *GetSourceRequest) (*GetSourceResponse, error) {
 	source, err := GetSource(ctx, request.Id)
 	return &GetSourceResponse{Source: source}, err
 }
 
-func (s *SourceService) GetSources(request *GetSourcesRequest, server Sources_GetSourcesServer) error {
+func (s *sourcesServerHandler) GetSources(request *GetSourcesRequest, server Sources_GetSourcesServer) error {
 	sources, err := ListSources(server.Context())
 	if err != nil {
 		return err
@@ -33,12 +37,12 @@ func (s *SourceService) GetSources(request *GetSourcesRequest, server Sources_Ge
 	return nil
 }
 
-func (s *SourceService) ResolveSource(ctx context.Context, request *ResolveSourceRequest) (*ResolveSourceResponse, error) {
+func (s *sourcesServerHandler) ResolveSource(ctx context.Context, request *ResolveSourceRequest) (*ResolveSourceResponse, error) {
 	source, err := ResolveSource(ctx, request.Source)
 	return &ResolveSourceResponse{ResolvedSource: source}, err
 }
 
-func (s *SourceService) DeleteSource(server Sources_DeleteSourceServer) error {
+func (s *sourcesServerHandler) DeleteSource(server Sources_DeleteSourceServer) error {
 	done := false
 
 	for !done {

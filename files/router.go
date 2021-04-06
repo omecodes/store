@@ -4,8 +4,6 @@ import (
 	"context"
 )
 
-type ctxRouterProvider struct{}
-
 type Router interface {
 	// GetRoute returns a sequence of handler
 	GetHandler(opts ...RouteOption) Handler

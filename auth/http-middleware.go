@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/session"
 	"net/http"
@@ -10,6 +11,11 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/omecodes/errors"
+)
+
+const (
+	UserHeader = "X-User"
+	AppHeader  = "X-Client-App"
 )
 
 type middlewareOptions struct {
@@ -32,153 +38,149 @@ func MiddlewareWithCredentials(manager CredentialsManager) MiddlewareOption {
 }
 
 func Middleware(opts ...MiddlewareOption) mux.MiddlewareFunc {
+	var options middlewareOptions
+	for _, opt := range opts {
+		opt(&options)
+	}
+
 	return func(next http.Handler) http.Handler {
-		next = detectUserAuthentication(next)
-		next = detectClientAppAuthentication(next)
-
-		var options middlewareOptions
-		for _, opt := range opts {
-			opt(&options)
-		}
-
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			updatedContext := r.Context()
-			if options.credentials != nil {
-				updatedContext = context.WithValue(updatedContext, ctxCredentialsManager{}, options.credentials)
+
+			updatedContext = context.WithValue(updatedContext, ctxCredentialsManager{}, options.credentials)
+			updatedContext = context.WithValue(updatedContext, ctxAuthenticationProviders{}, options.providers)
+
+			var err error
+			updatedContext, err = userContext(r.WithContext(updatedContext))
+			if err != nil {
+				w.WriteHeader(errors.HTTPStatus(err))
+				return
 			}
 
-			if options.providers != nil {
-				updatedContext = context.WithValue(updatedContext, ctxAuthenticationProviders{}, options.providers)
+			updatedContext, err = clientAppContext(r.WithContext(updatedContext))
+			if err != nil {
+				w.WriteHeader(errors.HTTPStatus(err))
+				return
 			}
-
-			user := Get(updatedContext)
-			if user == nil {
-				user = &User{
-					Name:  "",
-					Group: "",
-				}
-				updatedContext = ContextWithUser(updatedContext, user)
-			}
-
 			next.ServeHTTP(w, r.WithContext(updatedContext))
 		})
 	}
 }
 
-func detectUserAuthentication(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authorization := r.Header.Get("Authorization")
+func userContext(r *http.Request) (context.Context, error) {
+	ctx := r.Context()
 
-		if authorization != "" {
-			authorizationParts := strings.SplitN(authorization, " ", 2)
-			authType := strings.ToLower(authorizationParts[0])
-			if len(authorizationParts) > 1 {
-				authorization = authorizationParts[1]
+	authorization := r.Header.Get("X-STORE-API-Authorization")
+	if authorization != "" {
+		authorizationParts := strings.SplitN(authorization, " ", 2)
+		authType := strings.ToLower(authorizationParts[0])
+		if len(authorizationParts) > 1 {
+			authorization = authorizationParts[1]
+		}
+		if authType == "basic" {
+			if authorization == "" {
+				return ctx, errors.Forbidden("malformed authentication")
 			}
-
-			if authType == "basic" {
-				if authorization == "" {
-					w.WriteHeader(http.StatusBadRequest)
-					return
-				}
-
-				ctx := r.Context()
-				ctx, err := updateContextWithBasic(ctx, authorization)
-				if err != nil {
-					w.WriteHeader(errors.HTTPStatus(err))
-					return
-				}
-				r = r.WithContext(ctx)
-			} else if authType == "bearer" {
-				if authorization == "" {
-					w.WriteHeader(http.StatusBadRequest)
-					return
-				}
-
-				ctx, err := updateContextWithOauth2(r.Context(), authorization)
-				if err != nil {
-					w.WriteHeader(errors.HTTPStatus(err))
-					return
-				}
-				r = r.WithContext(ctx)
-			}
-
-		} else {
-			userSession, err := session.GetWebSession(session.UserSession, r)
-			if err != nil {
-				logs.Error("could not get web session", logs.Err(err))
-				w.WriteHeader(errors.HTTPStatus(err))
-				return
-			}
-
-			if username := userSession.String(session.KeyUsername); username != "" {
-				logs.Info("detected user authentication", logs.Details("user", username))
-				ctx := context.WithValue(r.Context(), ctxUser{}, &User{
-					Name: username,
-				})
-				r = r.WithContext(ctx)
-			}
+			return updateContextWithClientAppInfo(ctx, authorization)
 		}
 
-		next.ServeHTTP(w, r)
-	})
+	} else {
+		webSession, err := session.GetWebSession(session.ClientAppSession, r)
+		if err != nil {
+			return ctx, err
+		}
+
+		if accessType := webSession.String(session.KeyAccessType); accessType != "" {
+			logs.Info("detected client app session")
+
+			clientApp := &ClientApp{
+				Key:  webSession.String(session.KeyAccessKey),
+				Type: ClientType(ClientType_value[webSession.String(session.KeyAccessType)]),
+			}
+
+			infoInterface := webSession.String(session.KeyAccessInfo)
+			if infoInterface != "" {
+				err = json.Unmarshal([]byte(infoInterface), &clientApp.Info)
+				if err != nil {
+					logs.Error("could not decode client app info", logs.Err(err))
+					return ctx, err
+				}
+			}
+			return context.WithValue(r.Context(), ctxApp{}, clientApp), nil
+		}
+	}
+
+	return ctx, nil
 }
 
-func detectClientAppAuthentication(next http.Handler) http.Handler {
+func clientAppContext(r *http.Request) (context.Context, error) {
+	ctx := r.Context()
+
+	authorization := r.Header.Get("Authorization")
+	if authorization != "" {
+		authorizationParts := strings.SplitN(authorization, " ", 2)
+		authType := strings.ToLower(authorizationParts[0])
+		if len(authorizationParts) > 1 {
+			authorization = authorizationParts[1]
+		}
+
+		if authType == "basic" {
+			if authorization == "" {
+				return nil, errors.Forbidden("malformed authentication")
+			}
+			return updateContextWithBasic(ctx, authorization)
+
+		} else if authType == "bearer" {
+			if authorization == "" {
+				return nil, errors.Forbidden("malformed authentication")
+			}
+			return updateContextWithOauth2(r.Context(), authorization)
+		}
+
+	} else {
+		userSession, err := session.GetWebSession(session.UserSession, r)
+		if err != nil {
+			logs.Error("could not get web session", logs.Err(err))
+			return nil, err
+		}
+
+		if username := userSession.String(session.KeyUsername); username != "" {
+			logs.Info("detected user authentication", logs.Details("user", username))
+			return context.WithValue(r.Context(), ctxUser{}, &User{
+				Name: username,
+			}), nil
+		}
+	}
+	return ctx, nil
+}
+
+func ServiceMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authorization := r.Header.Get("X-STORE-API-Authorization")
-
-		if authorization != "" {
-			authorizationParts := strings.SplitN(authorization, " ", 2)
-			authType := strings.ToLower(authorizationParts[0])
-			if len(authorizationParts) > 1 {
-				authorization = authorizationParts[1]
-			}
-
-			if authType == "basic" {
-				if authorization == "" {
-					w.WriteHeader(http.StatusBadRequest)
-					return
-				}
-
-				ctx := r.Context()
-				ctx, err := updateContextWithClientAppInfo(ctx, authorization)
-				if err != nil {
-					w.WriteHeader(errors.HTTPStatus(err))
-					return
-				}
-				r = r.WithContext(ctx)
-			}
-		} else {
-			webSession, err := session.GetWebSession(session.ClientAppSession, r)
+		updatedContext := r.Context()
+		encoded := r.Header.Get(UserHeader)
+		if encoded != "" {
+			user := &User{}
+			err := jsonpb.UnmarshalString(encoded, user)
 			if err != nil {
-				logs.Error("could not get web session", logs.Err(err))
-				w.WriteHeader(errors.HTTPStatus(err))
+				logs.Error("could not decode user from custom header", logs.Err(err))
+				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
-
-			if accessType := webSession.String(session.KeyAccessType); accessType != "" {
-				logs.Info("detected client app session")
-
-				clientApp := &ClientApp{
-					Key:  webSession.String(session.KeyAccessKey),
-					Type: ClientType(ClientType_value[webSession.String(session.KeyAccessType)]),
-				}
-
-				infoInterface := webSession.String(session.KeyAccessInfo)
-				if infoInterface != "" {
-					err = json.Unmarshal([]byte(infoInterface), &clientApp.Info)
-					if err != nil {
-						logs.Error("could not decode client app info", logs.Err(err))
-						w.WriteHeader(http.StatusInternalServerError)
-						return
-					}
-				}
-
-				ctx := context.WithValue(r.Context(), ctxApp{}, clientApp)
-				r = r.WithContext(ctx)
-			}
+			updatedContext = ContextWithUser(updatedContext, user)
 		}
-		next.ServeHTTP(w, r)
+
+		encoded = r.Header.Get(UserHeader)
+		if encoded != "" {
+			app := &ClientApp{}
+			err := jsonpb.UnmarshalString(encoded, app)
+			if err != nil {
+				logs.Error("could not decode client app from custom header", logs.Err(err))
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			updatedContext = ContextWithApp(updatedContext, app)
+		}
+
+		next.ServeHTTP(w, r.WithContext(updatedContext))
 	})
 }
