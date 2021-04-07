@@ -21,6 +21,14 @@ type PolicyHandler struct {
 	BaseHandler
 }
 
+func (h *PolicyHandler) isAdmin(ctx context.Context) bool {
+	user := auth.Get(ctx)
+	if user == nil {
+		return false
+	}
+	return user.Name == "admin"
+}
+
 func (h *PolicyHandler) assertPermissionIsGranted(ctx context.Context, rules ...string) error {
 	var formattedRules []string
 	for _, exp := range rules {
@@ -269,6 +277,11 @@ func (h *PolicyHandler) assertAllowedToChmodSource(ctx context.Context, source *
 }
 
 func (h *PolicyHandler) CreateSource(ctx context.Context, source *Source) error {
+	clientApp := auth.App(ctx)
+	if clientApp == nil || !clientApp.Sources.Create {
+		return errors.Forbidden("application is not allowed to create sources")
+	}
+
 	err := h.assertAllowedToChmodSource(ctx, source)
 	if err != nil {
 		return err
@@ -277,6 +290,11 @@ func (h *PolicyHandler) CreateSource(ctx context.Context, source *Source) error 
 }
 
 func (h *PolicyHandler) ListSources(ctx context.Context) ([]*Source, error) {
+	clientApp := auth.App(ctx)
+	if clientApp == nil || !clientApp.Sources.Delete {
+		return nil, errors.Forbidden("application is not allowed to list sources")
+	}
+
 	sources, err := h.next.ListSources(ctx)
 	if err != nil {
 		return nil, err
@@ -294,6 +312,11 @@ func (h *PolicyHandler) ListSources(ctx context.Context) ([]*Source, error) {
 }
 
 func (h *PolicyHandler) GetSource(ctx context.Context, sourceID string) (*Source, error) {
+	clientApp := auth.App(ctx)
+	if clientApp == nil || !clientApp.Sources.Delete {
+		return nil, errors.Forbidden("application is not allowed to list sources")
+	}
+
 	err := h.assertIsAllowedToRead(ctx, sourceID, "/")
 	if err != nil {
 		return nil, err
@@ -305,6 +328,11 @@ func (h *PolicyHandler) DeleteSource(ctx context.Context, sourceID string) error
 	user := auth.Get(ctx)
 	if user == nil {
 		return errors.Forbidden("context missing user")
+	}
+
+	clientApp := auth.App(ctx)
+	if clientApp == nil || !clientApp.Sources.Delete {
+		return errors.Forbidden("application is not allowed to delete sources")
 	}
 
 	source, err := h.next.GetSource(ctx, sourceID)

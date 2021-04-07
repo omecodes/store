@@ -159,51 +159,37 @@ func (p *PolicyHandler) assetActionAllowedOnObject(ctx context.Context, collecti
 }
 
 func (p *PolicyHandler) CreateCollection(ctx context.Context, collection *Collection) error {
-	if !p.isAdmin(ctx) {
-		return errors.Forbidden("access forbidden")
+	clientApp := auth.App(ctx)
+	if !p.isAdmin(ctx) || (clientApp == nil || !clientApp.Collections.Create) {
+		return errors.Forbidden("not allowed to create collections")
 	}
 	return p.BaseHandler.CreateCollection(ctx, collection)
 }
 
 func (p *PolicyHandler) GetCollection(ctx context.Context, id string) (*Collection, error) {
-	user := auth.Get(ctx)
-	if user == nil {
-		return nil, errors.Forbidden("no user provided")
+	if !p.isAdmin(ctx) {
+		clientApp := auth.App(ctx)
+		if clientApp == nil || !clientApp.Collections.View {
+			return nil, errors.Forbidden("not allowed to get collection info")
+		}
 	}
-
-	app := auth.App(ctx)
-	if user.Name != "admin" && app == nil {
-		return nil, errors.Forbidden("collections are only readable within a registered application")
-	}
-
-	if user.Name == "" {
-		return nil, errors.Forbidden("Resource access refused", errors.Details{Key: "user", Value: user})
-	}
-
 	return p.BaseHandler.GetCollection(ctx, id)
 }
 
 func (p *PolicyHandler) ListCollections(ctx context.Context) ([]*Collection, error) {
-	user := auth.Get(ctx)
-	if user == nil {
-		return nil, errors.Forbidden("no user provided")
+	if !p.isAdmin(ctx) {
+		clientApp := auth.App(ctx)
+		if clientApp == nil || !clientApp.Collections.View {
+			return nil, errors.Forbidden("not allowed to list collections")
+		}
 	}
-
-	app := auth.App(ctx)
-	if user.Name != "admin" && app == nil {
-		return nil, errors.Forbidden("collections are only readable within a registered application")
-	}
-
-	if user.Name == "" {
-		return nil, errors.Forbidden("Resource access refused", errors.Details{Key: "user", Value: user})
-	}
-
 	return p.BaseHandler.ListCollections(ctx)
 }
 
 func (p *PolicyHandler) DeleteCollection(ctx context.Context, id string) error {
-	if !p.isAdmin(ctx) {
-		return errors.Forbidden("access forbidden")
+	clientApp := auth.App(ctx)
+	if !p.isAdmin(ctx) || (clientApp == nil || !clientApp.Collections.Delete) {
+		return errors.Forbidden("not allowed to delete collections")
 	}
 	return p.BaseHandler.DeleteCollection(ctx, id)
 }
