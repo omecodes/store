@@ -13,26 +13,20 @@ import (
 )
 
 type ObjectsConfig struct {
-	Type int
-	Name string
-
-	Domains []string
-	IP      string
-
-	CAAddress      string
-	CAAccess       string
-	CaSecret       string
-	CACertFilename string
-
+	Name            string
+	Domain          string
+	IP              string
+	CAAddress       string
+	CAAccess        string
+	CASecret        string
+	CACertFilename  string
 	RegistryAddress string
+	WorkingDir      string
+	Database        string
+}
 
-	GRPCPort int
-	HTTPPort int
-
-	WorkingDir string
-
-	Database string
-	Cache    string
+func NewObjects(config ObjectsConfig) *Objects {
+	return &Objects{config: &config}
 }
 
 type Objects struct {
@@ -55,11 +49,11 @@ func (o *Objects) init() error {
 	o.box = service.CreateBox(
 		service.Dir(o.config.WorkingDir),
 		service.Ip(o.config.IP),
-		service.Domain(o.config.Domains[0], o.config.Domains[1:]...),
+		service.Domain(o.config.Domain),
 		service.RegAddr(o.config.RegistryAddress),
 		service.Name(o.config.Name),
 		service.CAApiKey(o.config.CAAccess),
-		service.CAApiSecret(o.config.CaSecret),
+		service.CAApiSecret(o.config.CASecret),
 		service.CAAddr(o.config.CAAddress),
 		service.CACertFile(o.config.CACertFilename),
 	)
@@ -71,6 +65,7 @@ func (o *Objects) updatedGRPCIncomingContext(ctx context.Context) (context.Conte
 	ctx = objects.ContextWithStore(ctx, o.objectsDB)
 	ctx = objects.ContextWithACLManager(ctx, objects.NewACLManagerServiceClient())
 	ctx = objects.WithACLGrpcClientProvider(ctx, &objects.DefaultACLGrpcProvider{})
+	ctx = objects.WithACLGrpcClientProvider(ctx, objects.NewDefaultACLGRPCClientProvider(common.ServiceTypeACLStore))
 	ctx = objects.ContextWithRouterProvider(ctx, objects.RouterProvideFunc(
 		func(ctx context.Context) objects.Router {
 			return objects.NewCustomRouter(&objects.ExecHandler{})
@@ -89,7 +84,7 @@ func (o *Objects) Start() error {
 		RegisterHandlerFunc: func(server *grpc.Server) {
 			objects.RegisterObjectsServer(server, objects.NewGRPCHandler())
 		},
-		ServiceType: common.ServiceTypeACL,
+		ServiceType: common.ServiceTypeObjectsStorage,
 		ServiceID:   o.config.Name,
 		Name:        o.config.Name + "-grpc",
 		Meta:        nil,

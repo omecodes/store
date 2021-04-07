@@ -2,17 +2,20 @@ package files
 
 import (
 	"context"
-	"github.com/omecodes/store/common"
 )
 
-func NewSourcesManagerServiceClient() SourceManager {
-	return &sourcesManagerServiceClient{}
+func NewSourcesManagerServiceClient(serviceType uint32) SourceManager {
+	return &sourcesManagerServiceClient{
+		serviceType: serviceType,
+	}
 }
 
-type sourcesManagerServiceClient struct{}
+type sourcesManagerServiceClient struct {
+	serviceType uint32
+}
 
 func (s *sourcesManagerServiceClient) Save(ctx context.Context, source *Source) (string, error) {
-	client, err := NewSourcesServiceClient(ctx, common.ServiceTypeSource)
+	client, err := NewSourcesServiceClient(ctx, s.serviceType)
 	if err != nil {
 		return "", err
 	}
@@ -21,7 +24,7 @@ func (s *sourcesManagerServiceClient) Save(ctx context.Context, source *Source) 
 }
 
 func (s *sourcesManagerServiceClient) Get(ctx context.Context, id string) (*Source, error) {
-	client, err := NewSourcesServiceClient(ctx, common.ServiceTypeSource)
+	client, err := NewSourcesServiceClient(ctx, s.serviceType)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +37,7 @@ func (s *sourcesManagerServiceClient) Get(ctx context.Context, id string) (*Sour
 }
 
 func (s *sourcesManagerServiceClient) Delete(ctx context.Context, id string) error {
-	client, err := NewSourcesServiceClient(ctx, common.ServiceTypeSource)
+	client, err := NewSourcesServiceClient(ctx, s.serviceType)
 	if err != nil {
 		return err
 	}
@@ -51,7 +54,7 @@ func (s *sourcesManagerServiceClient) Delete(ctx context.Context, id string) err
 }
 
 func (s *sourcesManagerServiceClient) UserSources(ctx context.Context, username string) ([]*Source, error) {
-	client, err := NewSourcesServiceClient(ctx, common.ServiceTypeSource)
+	client, err := NewSourcesServiceClient(ctx, s.serviceType)
 	if err != nil {
 		return nil, err
 	}

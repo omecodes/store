@@ -3,7 +3,6 @@ package objects
 import (
 	"context"
 	"github.com/omecodes/store/auth"
-	"github.com/omecodes/store/common"
 	se "github.com/omecodes/store/search-engine"
 )
 
@@ -90,7 +89,7 @@ func (g *gRPCClientHandler) PutObject(ctx context.Context, collection string, ob
 }
 
 func (g *gRPCClientHandler) PatchObject(ctx context.Context, collection string, patch *Patch, opts PatchOptions) error {
-	client, err := grpcClient(ctx, common.ServiceTypeFilesHandler)
+	client, err := grpcClient(ctx, g.nodeType)
 	if err != nil {
 		return err
 	}
@@ -108,7 +107,7 @@ func (g *gRPCClientHandler) PatchObject(ctx context.Context, collection string, 
 }
 
 func (g *gRPCClientHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *PathAccessRules, opts MoveOptions) error {
-	client, err := grpcClient(ctx, common.ServiceTypeFilesHandler)
+	client, err := grpcClient(ctx, g.nodeType)
 	if err != nil {
 		return err
 	}
@@ -127,7 +126,7 @@ func (g *gRPCClientHandler) MoveObject(ctx context.Context, collection string, o
 }
 
 func (g *gRPCClientHandler) GetObject(ctx context.Context, collection string, id string, opts GetOptions) (*Object, error) {
-	client, err := grpcClient(ctx, common.ServiceTypeFilesHandler)
+	client, err := grpcClient(ctx, g.nodeType)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +150,7 @@ func (g *gRPCClientHandler) GetObject(ctx context.Context, collection string, id
 }
 
 func (g *gRPCClientHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*Header, error) {
-	client, err := grpcClient(ctx, common.ServiceTypeFilesHandler)
+	client, err := grpcClient(ctx, g.nodeType)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +171,7 @@ func (g *gRPCClientHandler) GetObjectHeader(ctx context.Context, collection stri
 }
 
 func (g *gRPCClientHandler) DeleteObject(ctx context.Context, collection string, id string) error {
-	client, err := grpcClient(ctx, common.ServiceTypeFilesHandler)
+	client, err := grpcClient(ctx, g.nodeType)
 	if err != nil {
 		return err
 	}
@@ -190,7 +189,7 @@ func (g *gRPCClientHandler) DeleteObject(ctx context.Context, collection string,
 }
 
 func (g *gRPCClientHandler) ListObjects(ctx context.Context, collection string, opts ListOptions) (*Cursor, error) {
-	client, err := grpcClient(ctx, common.ServiceTypeFilesHandler)
+	client, err := grpcClient(ctx, g.nodeType)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +219,7 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, collection string, 
 }
 
 func (g *gRPCClientHandler) SearchObjects(ctx context.Context, collection string, query *se.SearchQuery) (*Cursor, error) {
-	client, err := grpcClient(ctx, common.ServiceTypeFilesHandler)
+	client, err := grpcClient(ctx, g.nodeType)
 	if err != nil {
 		return nil, err
 	}

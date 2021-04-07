@@ -30,6 +30,12 @@ type ACLConfig struct {
 	WorkingDir string
 }
 
+func NewACL(config ACLConfig) *ACL {
+	return &ACL{
+		config: &config,
+	}
+}
+
 type ACL struct {
 	config  *ACLConfig
 	box     *service.Box
@@ -72,7 +78,7 @@ func (a *ACL) Start() error {
 		RegisterHandlerFunc: func(server *grpc.Server) {
 			objects.RegisterACLServer(server, objects.NewACLManagerServiceServerHandler())
 		},
-		ServiceType: common.ServiceTypeACL,
+		ServiceType: common.ServiceTypeACLStore,
 		ServiceID:   a.config.Name,
 		Name:        a.config.Name + "-grpc",
 		Meta:        nil,

@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/service"
-	"github.com/omecodes/store/common"
 )
 
 func aclGrpcClient(ctx context.Context) (ACLClient, error) {
@@ -62,16 +61,9 @@ func ACLGrpcClientProvider(ctx context.Context) ACLClientProvider {
 type DefaultClientProvider struct{}
 
 func (p *DefaultClientProvider) GetClient(ctx context.Context, serviceType uint32) (ObjectsClient, error) {
-	switch serviceType {
-	case common.ServiceTypeObjectsHandler, common.ServiceTypeObjectsStorage:
-		conn, err := service.Connect(ctx, serviceType)
-		if err != nil {
-			return nil, err
-		}
-		return NewObjectsClient(conn), nil
-
-	default:
-		return nil, errors.Unsupported("no client for this service type", errors.Details{Key: "service-type", Value: serviceType})
+	conn, err := service.Connect(ctx, serviceType)
+	if err != nil {
+		return nil, err
 	}
-
+	return NewObjectsClient(conn), nil
 }

@@ -31,6 +31,10 @@ type SourcesConfig struct {
 	WorkingDir string
 }
 
+func NewSources(config SourcesConfig) *Sources {
+	return &Sources{config: &config}
+}
+
 type Sources struct {
 	config  *SourcesConfig
 	box     *service.Box
@@ -73,7 +77,7 @@ func (s *Sources) Start() error {
 		RegisterHandlerFunc: func(server *grpc.Server) {
 			files.RegisterSourcesServer(server, files.NewSourceServerHandler())
 		},
-		ServiceType: common.ServiceTypeACL,
+		ServiceType: common.ServiceTypeFileSources,
 		ServiceID:   s.config.Name,
 		Name:        s.config.Name + "-grpc",
 		Meta:        nil,

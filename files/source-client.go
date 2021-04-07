@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/service"
-	"github.com/omecodes/store/common"
 	"sync"
 )
 
@@ -30,16 +29,11 @@ func (p *DefaultSourcesServiceClientProvider) getBalanceIndex() int {
 }
 
 func (p *DefaultSourcesServiceClientProvider) GetClient(ctx context.Context, serviceType uint32) (SourcesClient, error) {
-	switch serviceType {
-	case common.ServiceTypeSource:
-		conn, err := service.Connect(ctx, serviceType)
-		if err != nil {
-			return nil, err
-		}
-		return NewSourcesClient(conn), nil
-	default:
-		return nil, errors.Unsupported("no client for this service type", errors.Details{Key: "service-type", Value: serviceType})
+	conn, err := service.Connect(ctx, serviceType)
+	if err != nil {
+		return nil, err
 	}
+	return NewSourcesClient(conn), nil
 }
 
 // NewSourcesServiceClient is a source service client constructor

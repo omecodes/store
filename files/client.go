@@ -7,7 +7,6 @@ import (
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/service"
-	"github.com/omecodes/store/common"
 )
 
 type ClientProvider interface {
@@ -32,44 +31,39 @@ func (p *DefaultClientProvider) getBalanceIndex() int {
 }
 
 func (p *DefaultClientProvider) GetClient(ctx context.Context, serviceType uint32) (FilesClient, error) {
-	switch serviceType {
-	case common.ServiceTypeFilesHandler, common.ServiceTypeFilesStorage:
-		infoList, err := service.GetRegistry(ctx).GetOfType(serviceType)
+	infoList, err := service.GetRegistry(ctx).GetOfType(serviceType)
+	if err != nil {
+		return nil, err
+	}
+
+	defer p.incrementBalanceIndex()
+	balanceIndex := p.getBalanceIndex()
+	lastBalanceIndex := balanceIndex % len(infoList)
+
+	if len(infoList) == 0 {
+		return nil, errors.ServiceUnavailable("could not find service ", errors.Details{Key: "type", Value: serviceType})
+	}
+
+	if len(infoList) == 1 {
+		info := infoList[0]
+		conn, err := service.ConnectToSpecificService(ctx, info.Id)
 		if err != nil {
 			return nil, err
 		}
-
-		defer p.incrementBalanceIndex()
-		balanceIndex := p.getBalanceIndex()
-		lastBalanceIndex := balanceIndex % len(infoList)
-
-		if len(infoList) == 0 {
-			return nil, errors.ServiceUnavailable("could not find service ", errors.Details{Key: "type", Value: serviceType})
-		}
-
-		if len(infoList) == 1 {
-			info := infoList[0]
-			conn, err := service.ConnectToSpecificService(ctx, info.Id)
-			if err != nil {
-				return nil, err
-			}
-			return NewFilesClient(conn), nil
-		}
-
-		for i := balanceIndex + 1; i%len(infoList) != lastBalanceIndex; i++ {
-			info := infoList[balanceIndex%len(infoList)]
-			conn, err := service.ConnectToSpecificService(ctx, info.Id)
-			if err != nil {
-				logs.Error("could not connect to service", logs.Details("service-id", info.Id))
-				continue
-			}
-			return NewFilesClient(conn), nil
-		}
-		return nil, errors.ServiceUnavailable("could not find service ", errors.Details{Key: "type", Value: serviceType})
-
-	default:
-		return nil, errors.Unsupported("no client for this service type", errors.Details{Key: "service-type", Value: serviceType})
+		return NewFilesClient(conn), nil
 	}
+
+	for i := balanceIndex + 1; i%len(infoList) != lastBalanceIndex; i++ {
+		info := infoList[balanceIndex%len(infoList)]
+		conn, err := service.ConnectToSpecificService(ctx, info.Id)
+		if err != nil {
+			logs.Error("could not connect to service", logs.Details("service-id", info.Id))
+			continue
+		}
+		return NewFilesClient(conn), nil
+	}
+	return nil, errors.ServiceUnavailable("could not find service ", errors.Details{Key: "type", Value: serviceType})
+
 }
 
 // NewClient is a FilesClient constructor

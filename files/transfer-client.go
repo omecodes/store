@@ -97,39 +97,33 @@ func (p *DefaultTransfersServiceClientProvider) getBalanceIndex() int {
 }
 
 func (p *DefaultTransfersServiceClientProvider) GetClient(ctx context.Context, serviceType uint32) (TransferClient, error) {
-	switch serviceType {
-	case common.ServiceTypeFilesHandler, common.ServiceTypeFilesStorage:
-		infoList, err := service.GetRegistry(ctx).GetOfType(serviceType)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(infoList) == 0 {
-			return nil, errors.ServiceUnavailable("could not find service ", errors.Details{Key: "type", Value: serviceType})
-		}
-
-		if len(infoList) == 1 {
-			return p.getNodeClient(ctx, infoList[0])
-		}
-
-		defer p.incrementBalanceIndex()
-		balanceIndex := p.getBalanceIndex()
-		lastBalanceIndex := balanceIndex % len(infoList)
-
-		for i := p.balanceIndex + 1; i%len(infoList) != lastBalanceIndex; i++ {
-			info := infoList[p.balanceIndex%len(infoList)]
-			client, err := p.getNodeClient(ctx, info)
-			if err != nil {
-				logs.Error("could not connect to service", logs.Err(err))
-				continue
-			}
-			return client, nil
-		}
-		return nil, errors.ServiceUnavailable("could not find service ", errors.Details{Key: "type", Value: serviceType})
-
-	default:
-		return nil, errors.Unsupported("no client for this service type", errors.Details{Key: "service-type", Value: serviceType})
+	infoList, err := service.GetRegistry(ctx).GetOfType(serviceType)
+	if err != nil {
+		return nil, err
 	}
+
+	if len(infoList) == 0 {
+		return nil, errors.ServiceUnavailable("could not find service ", errors.Details{Key: "type", Value: serviceType})
+	}
+
+	if len(infoList) == 1 {
+		return p.getNodeClient(ctx, infoList[0])
+	}
+
+	defer p.incrementBalanceIndex()
+	balanceIndex := p.getBalanceIndex()
+	lastBalanceIndex := balanceIndex % len(infoList)
+
+	for i := p.balanceIndex + 1; i%len(infoList) != lastBalanceIndex; i++ {
+		info := infoList[p.balanceIndex%len(infoList)]
+		client, err := p.getNodeClient(ctx, info)
+		if err != nil {
+			logs.Error("could not connect to service", logs.Err(err))
+			continue
+		}
+		return client, nil
+	}
+	return nil, errors.ServiceUnavailable("could not find service ", errors.Details{Key: "type", Value: serviceType})
 }
 
 func (p *DefaultTransfersServiceClientProvider) getNodeClient(ctx context.Context, info *ome.ServiceInfo) (TransferClient, error) {

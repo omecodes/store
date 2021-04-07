@@ -144,14 +144,14 @@ func (f *Front) init() error {
 
 func (f *Front) provideFilesRouter(ctx context.Context) files.Router {
 	return files.NewCustomRouter(
-		files.NewHandlerServiceClient(common.ServiceTypeFilesHandler),
+		files.NewHandlerServiceClient(common.ServiceTypeSecurityAccess),
 		files.WithDefaultParamsHandler(),
 	)
 }
 
 func (f *Front) provideObjectsRouter(ctx context.Context) objects.Router {
 	return objects.NewCustomRouter(
-		objects.NewGRPCObjectsClientHandler(common.ServiceTypeObjectsHandler),
+		objects.NewGRPCObjectsClientHandler(common.ServiceTypeSecurityAccess),
 		objects.WithDefaultParamsHandler(),
 	)
 }
@@ -224,7 +224,7 @@ func (f *Front) startCAServer() error {
 		return err
 	}
 
-	port := f.config.Port
+	port := f.config.CAPort
 	if port == 0 {
 		port = ports.CA
 	}
@@ -348,23 +348,35 @@ func (f *Front) Start() error {
 	err := f.init()
 	if err != nil {
 		return err
-	}
+	} else {
+		if f.config.Dev {
+			err = f.startDev()
+			if err != nil {
+				return err
+			}
+		} else {
+			if f.config.TLS {
+				if f.config.TLSAuto {
+					err = f.startProductionWithTLSAutoCert()
+				} else {
+					err = f.startProductionWithTLS()
+				}
+			} else {
+				err = f.startProductionWithoutTLS()
+			}
 
-	if f.config.Dev {
-		return f.startDev()
-	}
-
-	if f.config.TLS {
-		if f.config.TLSAuto {
-			logs.Info("starting front HTTP server over tls with auto-cert")
-			return f.startProductionWithTLSAutoCert()
+			if err != nil {
+				return err
+			}
 		}
-
-		logs.Info("starting front HTTP server over TLS")
-		return f.startProductionWithTLS()
 	}
 
-	return f.startProductionWithoutTLS()
+	err = f.startCAServer()
+	if err != nil {
+		return err
+	}
+
+	return f.startRegistryServer()
 }
 
 func (f *Front) Stop() error {

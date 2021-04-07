@@ -9,12 +9,12 @@ var (
 	domains                    []string
 	ip                         string
 	caPort, registryPort, port int
-	databaseUri                string
 	name                       string
 	dev                        bool
 	caSecret                   string
 	caCert                     string
 	caAddress                  string
+	registryAddress            string
 
 	adminAuth string
 
@@ -26,7 +26,7 @@ var (
 	workingDir string
 	fsDir      string
 	wwwDir     string
-	dsn        string
+	dbURI      string
 )
 
 func init() {

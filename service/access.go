@@ -25,6 +25,10 @@ type AccessConfig struct {
 	WorkingDir      string
 }
 
+func NewAccess(config AccessConfig) *Access {
+	return &Access{config: &config}
+}
+
 type Access struct {
 	config     *AccessConfig
 	box        *service.Box
@@ -44,6 +48,10 @@ func (a *Access) init() error {
 		service.CAAddr(a.config.CAAddress),
 		service.CACertFile(a.config.CACertFilename),
 	)
+
+	if a.config.Name == "" {
+		a.config.Name = "access-service"
+	}
 	return nil
 }
 
@@ -51,14 +59,14 @@ func (a *Access) updateIncomingRequestContext(ctx context.Context) context.Conte
 	ctx = service.ContextWithBox(ctx, a.box)
 
 	ctx = files.ContextWithRouterProvider(ctx, files.RouterProvideFunc(a.provideFilesRouter))
-	ctx = files.ContextWithSourceManager(ctx, files.NewSourcesManagerServiceClient())
+	ctx = files.ContextWithSourceManager(ctx, files.NewSourcesManagerServiceClient(common.ServiceTypeFileSources))
 	ctx = files.ContextWithSourcesServiceClientProvider(ctx, &files.DefaultSourcesServiceClientProvider{})
 	ctx = files.ContextWithTransfersServiceClientProvider(ctx, &files.DefaultTransfersServiceClientProvider{})
 	ctx = files.ContextWithClientProvider(ctx, &files.DefaultClientProvider{})
 
 	ctx = objects.ContextWithRouterProvider(ctx, objects.RouterProvideFunc(a.provideObjectsRouter))
 	ctx = objects.ContextWithACLManager(ctx, objects.NewACLManagerServiceClient())
-	ctx = objects.WithACLGrpcClientProvider(ctx, &objects.DefaultACLGrpcProvider{})
+	ctx = objects.WithACLGrpcClientProvider(ctx, objects.NewDefaultACLGRPCClientProvider(common.ServiceTypeACLStore))
 	ctx = objects.WithObjectsGrpcClientProvider(ctx, &objects.DefaultClientProvider{})
 
 	return ctx
@@ -104,7 +112,7 @@ func (a *Access) startHTTPTransferServer() error {
 		},
 		ProvideRouter: a.filesTransferHandler,
 		Security:      ome.Security_MutualTls,
-		ServiceType:   common.ServiceTypeACL,
+		ServiceType:   common.ServiceTypeSecurityAccess,
 		ServiceID:     a.config.Name,
 		Name:          a.config.Name + "-http",
 		Meta:          nil,
@@ -118,7 +126,7 @@ func (a *Access) startGRPCServer() error {
 			objects.RegisterObjectsServer(server, objects.NewGRPCHandler())
 			files.RegisterFilesServer(server, files.NewFilesServerHandler())
 		},
-		ServiceType: common.ServiceTypeACL,
+		ServiceType: common.ServiceTypeSecurityAccess,
 		ServiceID:   a.config.Name,
 		Name:        a.config.Name + "-grpc",
 		Meta:        nil,

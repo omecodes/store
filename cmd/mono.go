@@ -24,7 +24,7 @@ func init() {
 	flags.StringVar(&workingDir, "dir", "./", "Data directory")
 	flags.StringVar(&fsDir, "fs", "./files", "File storage root directory")
 	flags.StringVar(&wwwDir, "www", "./www", "Web apps directory (apache www equivalent)")
-	flags.StringVar(&dsn, "db", "store:store@(127.0.0.1:3306)/store?charset=utf8", "MySQL database uri")
+	flags.StringVar(&dbURI, "db", "store:store@(127.0.0.1:3306)/store?charset=utf8", "MySQL database uri")
 }
 
 var MonolithicCMD = &cobra.Command{
@@ -81,7 +81,7 @@ var MonolithicCMD = &cobra.Command{
 			CertFilename: certFilename,
 			KeyFilename:  keyFilename,
 			TLS:          enableTLS,
-			DSN:          dsn,
+			DSN:          dbURI,
 		})
 
 		err = s.Start()

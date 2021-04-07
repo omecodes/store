@@ -1,12 +1,11 @@
 package common
 
 const (
-	ServiceTypeObjectsHandler = 1
-	ServiceTypeObjectsStorage = 2
-	ServiceTypeACL            = 3
-	ServiceTypeSource         = 4
-	ServiceTypeFilesHandler   = 5
-	ServiceTypeFilesStorage   = 6
+	ServiceTypeACLStore       = 1
+	ServiceTypeSecurityAccess = 2
+	ServiceTypeFileSources    = 3
+	ServiceTypeObjectsStorage = 4
+	ServiceTypeFilesStorage   = 5
 )
 
 const (

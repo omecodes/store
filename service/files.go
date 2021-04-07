@@ -13,22 +13,19 @@ import (
 )
 
 type FilesConfig struct {
-	Type int
-	Name string
-
-	Domains []string
-	IPs     []string
-
-	CAAddress      string
-	CAAccess       string
-	CaSecret       string
-	CACertFilename string
-
+	Name            string
+	Domain          string
+	IP              string
+	CAAddress       string
+	CAAccess        string
+	CASecret        string
+	CACertFilename  string
 	RegistryAddress string
+	WorkingDir      string
+}
 
-	GRPCPort   int
-	HTTPPort   int
-	WorkingDir string
+func NewFiles(config FilesConfig) *Files {
+	return &Files{config: &config}
 }
 
 type Files struct {
@@ -37,12 +34,23 @@ type Files struct {
 }
 
 func (f *Files) init() error {
+	f.box = service.CreateBox(
+		service.Dir(f.config.WorkingDir),
+		service.Ip(f.config.IP),
+		service.Domain(f.config.Domain),
+		service.RegAddr(f.config.RegistryAddress),
+		service.Name(f.config.Name),
+		service.CAApiKey(f.config.CAAccess),
+		service.CAApiSecret(f.config.CASecret),
+		service.CAAddr(f.config.CAAddress),
+		service.CACertFile(f.config.CACertFilename),
+	)
 	return nil
 }
 
 func (f *Files) updateIncomingRequestContext(ctx context.Context) context.Context {
 	ctx = service.ContextWithBox(ctx, f.box)
-	ctx = files.ContextWithSourceManager(ctx, files.NewSourcesManagerServiceClient())
+	ctx = files.ContextWithSourceManager(ctx, files.NewSourcesManagerServiceClient(common.ServiceTypeFileSources))
 	ctx = files.ContextWithSourcesServiceClientProvider(ctx, &files.DefaultSourcesServiceClientProvider{})
 	ctx = files.ContextWithRouterProvider(ctx, files.RouterProvideFunc(
 		func(ctx context.Context) files.Router {
@@ -78,7 +86,7 @@ func (f *Files) startHTTPTransferServer() error {
 		},
 		ProvideRouter: f.filesTransferHandler,
 		Security:      ome.Security_MutualTls,
-		ServiceType:   common.ServiceTypeACL,
+		ServiceType:   common.ServiceTypeFilesStorage,
 		ServiceID:     f.config.Name,
 		Name:          f.config.Name + "-http",
 		Meta:          nil,
@@ -91,7 +99,7 @@ func (f *Files) startGRPCServer() error {
 		RegisterHandlerFunc: func(server *grpc.Server) {
 			files.RegisterFilesServer(server, files.NewFilesServerHandler())
 		},
-		ServiceType: common.ServiceTypeACL,
+		ServiceType: common.ServiceTypeFilesStorage,
 		ServiceID:   f.config.Name,
 		Name:        f.config.Name + "-grpc",
 		Meta:        nil,
