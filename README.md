@@ -2,74 +2,72 @@
 
 Store is a backend application that combines:
 
-- A JSON document storage with a search engine to find according to json path value
-- A file storage
-- A search engine for files and JSON documents
+- A JSON documents storage
+- A files storage
+- A search engine for both files and JSON documents
 - A rule-based ACL mechanism over files and JSON documents
+- Supports microservices architecture deployment for supporting high load
+
 
 # Install and setup
 
-
 ### Requirements
 
-Store requires only a MySQL database that runs at:
+Store requires only a MySQL database. By default, Store targets at:
 
 ```
 store:store@tcp(localhost:3306)/store
 ```
 
-### Build store and admin-cli
+### Build
 
 ```shell
 git clone https://github.com/omecodes/store.git
 cd store
 go get -v -t -d ./...
 
-go build -o store ./apps/server.go
-go build ./apps/admin-cli.go
+go build store.go
+go build -o scli store-cli.go
 ```
-
-### Generate the admin credentials
-
-In order to run a Store server you first have to generate admin credentials with admin-cli.
-Build the admin-cli tool with the following command:
-```shell
-go build -o admin-cli apps/admin-cli.go
-```
-
-Then you generate the admin credentials:
-```shell
-./admin-cli auth gen 
-```
-
-this command generates a file "admin-auth" that contains a string which is the admin credentials to be used to run an instance of a Store server.
 
 ### Start the server
 
+#### 1 - Monolithic architecture
+
 Execute this command to run a server:
 ```shell
-./store run [--dev] --admin="content_of_admin_auth"
+./store mono
 ```
 
-The `run` command supports additional flags and, you can display them by simply run `./store run`:
+The `mono` command supports additional flags and, you can display them with: `./store mono --help`:
+
 ```
+Runs Store backend application
+
 Usage:
-  store run [flags]
+  store mono [flags]
 
 Flags:
-      --admin string          Admin password info
       --auto-cert             Run TLS server with auto generated certificate/key pair
       --cert string           Certificate filename
-      --db-uri string         MySQL database uri (default "store:store@(127.0.0.1:3306)/store?charset=utf8")
+      --db string             MySQL database uri (default "store:store@(127.0.0.1:3306)/store?charset=utf8")
       --dev                   Enable development mode. Enables CORS
       --dir string            Data directory (default "./")
       --domains stringArray   Domains name for auto cert
       --fs string             File storage root directory (default "./files")
-  -h, --help                  help for run
+  -h, --help                  help for mono
       --key string            Key filename
       --tls                   Enable TLS secure connexion
       --www string            Web apps directory (apache www equivalent) (default "./www")
+
 ```
+
+
+#### 2 - Microservice architecture
+
+Store is made of independent deployable components that interacting together with secure gRPC and HTTP connections. In a context of high demand production environment some of these components can be duplicated to balance load.
+[Read](../service/README.md) about how these components are built and how to run Store as sets of interacting microservices.
+
 
 ### Authentication
 
@@ -78,7 +76,7 @@ Store allows authentication for both users and client applications.
 #### 1 - Registering a client application
 
 ```shell
-./admin-cli auth access set --server=http://localhost:8080/api/auth --in=accesses.json --password=<admin-secret>
+./scli auth access set --server=http://localhost:8080/api/auth --in=accesses.json --auth=<user:password>
 ```
 
 where `access.json` file that contains sequence of json:
@@ -89,24 +87,41 @@ where `access.json` file that contains sequence of json:
   "secret": "client-app1-secret",
   "collections": {
     "create": true,
-    "read": false
+    "view": false,
+    "delete": false
   },
   "sources": {
     "restricted": true,
     "create": true,
-    "view": true
+    "view": true,
+    "delete": true
   },
   "users": {
     "create": true,
-    "view": true
+    "view": true,
+    "delete": true
   }
 }
 ```
 
+For the `--auth` flag one can use the admin credentials. When running for the first time, Store generates the admin authentication data and stores in a file named `admin.auth` located in the Store app working directory.
+The `admin.auth` content is formatted as following:
+
+```
+<secret>:<blob>
+```
+
+Use the `secret` part as the password so that the command above looks like:
+
+```shell
+./scli auth access set --server=http://localhost:8080/api/auth --in=accesses.json --auth=admin:<secret>
+```
+
+
 #### 2 - Registering users
 
 ```shell
-./admin-cli auth users new --server=http://localhost:8080/api/auth --in=users.json --password=<admin-secret>
+./scli auth users new --server=http://localhost:8080/api/auth --in=users.json --password=<admin-secret>
 ```
 
 where `access.json` file that contains sequence of json:
@@ -124,7 +139,7 @@ where `access.json` file that contains sequence of json:
 
 #### 3 - Authenticated request
 
-Authentication data are passed through request HTTP headers. Client applications and users authentication are passed through `X-STORE-CLIENT-APP-AUTHENTICATION` and `Authentication`HTTP headers respectively.
+Authentication for both client applications and users use HTTP Basic authentication and are passed with `X-STORE-CLIENT-APP-AUTHENTICATION` and `Authentication` HTTP headers respectively.
 
 # ACL: security rules
 
@@ -182,7 +197,7 @@ Below are examples of valid rules:
 JSON documents are organized in collections. Create a collection with the following command:
 
 ```shell
-./admin-cli objects collections new --in=collections.json --server="http://localhost:8080/api/objects" --password=<admin-secret>
+./sclient objects collections new --in=collections.json --server="http://localhost:8080/api/objects" --password=<admin-secret>
 ```
 
 with the `collections.json` file that contains sequence of JSON definition of collections:
@@ -236,7 +251,7 @@ Here is how to create a file source using the admin-cli:
 
 ```shell
 
-./admin-cli files sources new --in=source.json --server=http://localhost:8080/api/files --password=<admin-secret>
+./sclient files sources new --in=source.json --server=http://localhost:8080/api/files --password=<admin-secret>
 ```
 
 with the `source.json` file that contains sequence of JSON definition of collections:
