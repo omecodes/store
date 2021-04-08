@@ -95,7 +95,7 @@ func (s *Server) init() error {
 	var err error
 
 	if s.config.AdminInfo == "" {
-		adminAuthContent, err := ioutil.ReadFile("./admin-auth")
+		adminAuthContent, err := ioutil.ReadFile(common.AdminAuthFile)
 		if err != nil && !os.IsNotExist(err) {
 			return err
 		}
@@ -117,7 +117,7 @@ func (s *Server) init() error {
 			}
 
 			s.config.AdminInfo = base64.RawStdEncoding.EncodeToString(data)
-			err = ioutil.WriteFile("./admin-auth", []byte(phrase+":"+s.config.AdminInfo), os.ModePerm)
+			err = ioutil.WriteFile(common.AdminAuthFile, []byte(phrase+":"+s.config.AdminInfo), os.ModePerm)
 			if err != nil {
 				return err
 			}
