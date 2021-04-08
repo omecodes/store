@@ -29,9 +29,9 @@ func init() {
 
 var MonolithicCMD = &cobra.Command{
 	Use:   "mono",
-	Short: "Runs a objects backend application",
+	Short: "Runs Store backend application",
 	Run: func(cmd *cobra.Command, args []string) {
-		if !dev && len(domains) == 0 {
+		if !dev && len(domains) == 0 && autoCert {
 			fmt.Println("Flag --domains is required when --auto-cert is set")
 			os.Exit(-1)
 		}
