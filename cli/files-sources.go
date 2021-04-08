@@ -1,9 +1,8 @@
-package admin
+package cli
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/omecodes/common/utils/prompt"
 	"github.com/omecodes/store/files"
 	"github.com/spf13/cobra"
 	"io"
@@ -13,33 +12,13 @@ import (
 func init() {
 	flags := createFileSourceCMD.PersistentFlags()
 	flags.StringVar(&input, "in", "", "Input file containing sequence of JSON encoded collection")
-	flags.StringVar(&server, "server", "", "Server API location")
-	flags.StringVar(&password, "password", "", "Admin password")
-	if err := cobra.MarkFlagRequired(flags, "server"); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
 	if err := cobra.MarkFlagRequired(flags, "in"); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
 
-	flags = getFileSourcesCMD.PersistentFlags()
-	flags.StringVar(&server, "server", "", "Server API location")
-	flags.StringVar(&password, "password", "", "Admin password")
-	if err := cobra.MarkFlagRequired(flags, "server"); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
-
 	flags = deleteFileSourcesCMD.PersistentFlags()
-	flags.StringVar(&server, "server", "", "Server API location")
-	flags.StringVar(&password, "password", "", "admin password")
 	flags.StringArrayVar(&ids, "id", nil, "source id")
-	if err := cobra.MarkFlagRequired(flags, "server"); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
 	if err := cobra.MarkFlagRequired(flags, "id"); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -63,15 +42,8 @@ var getFileSourcesCMD = &cobra.Command{
 	Short: "Get list of all file sources",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
-		if password == "" {
-			password, err = prompt.Password("password")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(-1)
-			}
-		}
 
-		err = listFileSources(password, output)
+		err = listFileSources(output)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
@@ -84,13 +56,6 @@ var createFileSourceCMD = &cobra.Command{
 	Short: "Create one or many file sources",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
-		if password == "" {
-			password, err = prompt.Password("password")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(-1)
-			}
-		}
 
 		file, err := os.Open(input)
 		if err != nil {
@@ -110,7 +75,7 @@ var createFileSourceCMD = &cobra.Command{
 				return
 			}
 
-			err = putFileSource(password, source)
+			err = putFileSource(source)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -123,16 +88,9 @@ var deleteFileSourcesCMD = &cobra.Command{
 	Short: "Delete one or many file sources",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
-		if password == "" {
-			password, err = prompt.Password("password")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(-1)
-			}
-		}
 
 		for _, id := range ids {
-			err = deleteFileSources(password, id)
+			err = deleteFileSources(id)
 			if err != nil {
 				fmt.Println(err)
 			}

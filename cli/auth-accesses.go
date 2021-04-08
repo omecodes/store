@@ -1,4 +1,4 @@
-package admin
+package cli
 
 import (
 	"encoding/json"
@@ -9,41 +9,21 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-
-	"github.com/omecodes/common/utils/prompt"
 )
 
 func init() {
 	flags := saveAccessCMD.PersistentFlags()
 	flags.StringVar(&input, "in", "", "Input file containing sequence of JSON encoded access")
-	flags.StringVar(&server, "server", "", "Server API location")
-	flags.StringVar(&password, "password", "", "admin password")
-	if err := cobra.MarkFlagRequired(flags, "server"); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
 	if err := cobra.MarkFlagRequired(flags, "in"); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
 
 	flags = getAccessesCMD.PersistentFlags()
-	flags.StringVar(&server, "server", "", "Server API location")
-	flags.StringVar(&password, "password", "", "admin password")
 	flags.StringVar(&output, "out", "", "Output file")
-	if err := cobra.MarkFlagRequired(flags, "server"); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
 
 	flags = deleteAccessesCMD.PersistentFlags()
-	flags.StringVar(&server, "server", "", "Server API location")
-	flags.StringVar(&password, "password", "", "admin password")
 	flags.StringArrayVar(&ids, "id", nil, "Access ID")
-	if err := cobra.MarkFlagRequired(flags, "server"); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
 	if err := cobra.MarkFlagRequired(flags, "id"); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -67,13 +47,6 @@ var saveAccessCMD = &cobra.Command{
 	Short: "save accesses",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
-		if password == "" {
-			password, err = prompt.Password("password")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(-1)
-			}
-		}
 
 		file, err := os.Open(input)
 		if err != nil {
@@ -101,7 +74,7 @@ var saveAccessCMD = &cobra.Command{
 				}
 			}
 
-			err = putAccess(password, access)
+			err = putAccess(access)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -114,15 +87,8 @@ var getAccessesCMD = &cobra.Command{
 	Short: "Get all accesses",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
-		if password == "" {
-			password, err = prompt.Password("password")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(-1)
-			}
-		}
 
-		err = getAccesses(password, output)
+		err = getAccesses(output)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
@@ -135,16 +101,9 @@ var deleteAccessesCMD = &cobra.Command{
 	Short: "Delete accesses",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
-		if password == "" {
-			password, err = prompt.Password("password")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(-1)
-			}
-		}
 
 		for _, id := range ids {
-			err = deleteAccess(password, id)
+			err = deleteAccess(id)
 			if err != nil {
 				fmt.Println(err)
 			}

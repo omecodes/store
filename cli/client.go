@@ -1,4 +1,4 @@
-package admin
+package cli
 
 import (
 	"bytes"
@@ -16,10 +16,15 @@ import (
 	"github.com/omecodes/store/auth"
 )
 
-func putAccess(adminPassword string, clientApp *auth.ClientApp) error {
-	endpoint := fmt.Sprintf("%s/accesses", server)
+func putAccess(clientApp *auth.ClientApp) error {
+	endpoint := fmt.Sprintf("%s/auth/accesses", fullAPILocation())
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
+	}
+
+	username, password, err := promptAuthentication()
+	if err != nil {
+		return err
 	}
 
 	encoded, err := json.Marshal(clientApp)
@@ -31,7 +36,7 @@ func putAccess(adminPassword string, clientApp *auth.ClientApp) error {
 	if err != nil {
 		return err
 	}
-	req.SetBasicAuth("admin", adminPassword)
+	req.SetBasicAuth(username, password)
 	req.Header.Set("Content-Type", "application/json")
 	req.Close = true
 
@@ -53,8 +58,8 @@ func putAccess(adminPassword string, clientApp *auth.ClientApp) error {
 	return nil
 }
 
-func getAccesses(adminPassword string, outputFilename string) error {
-	endpoint := fmt.Sprintf("%s/accesses", server)
+func getAccesses(outputFilename string) error {
+	endpoint := fmt.Sprintf("%s/auth/accesses", fullAPILocation())
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -67,12 +72,17 @@ func getAccesses(adminPassword string, outputFilename string) error {
 		outputFilename = fmt.Sprintf("%s.accesses.json", u.Host)
 	}
 
+	username, password, err := promptAuthentication()
+	if err != nil {
+		return err
+	}
+
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
 		return err
 	}
 
-	req.SetBasicAuth("admin", adminPassword)
+	req.SetBasicAuth(username, password)
 	req.Header.Set("Content-Type", "application/json")
 	req.Close = true
 
@@ -119,17 +129,22 @@ func getAccesses(adminPassword string, outputFilename string) error {
 	return nil
 }
 
-func deleteAccess(adminPassword string, accessID string) error {
-	endpoint := fmt.Sprintf("%s/access/%s", server, accessID)
+func deleteAccess(accessID string) error {
+	endpoint := fmt.Sprintf("%s/auth/access/%s", fullAPILocation(), accessID)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
+	}
+
+	username, password, err := promptAuthentication()
+	if err != nil {
+		return err
 	}
 
 	req, err := http.NewRequest(http.MethodDelete, endpoint, nil)
 	if err != nil {
 		return err
 	}
-	req.SetBasicAuth("admin", adminPassword)
+	req.SetBasicAuth(username, password)
 	req.Header.Set("Content-Type", "application/json")
 	req.Close = true
 
@@ -151,8 +166,8 @@ func deleteAccess(adminPassword string, accessID string) error {
 	return nil
 }
 
-func putUser(adminPassword string, user *auth.UserCredentials) error {
-	endpoint := fmt.Sprintf("%s/users", server)
+func putUser(user *auth.UserCredentials) error {
+	endpoint := fmt.Sprintf("%s/auth/users", fullAPILocation())
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -162,11 +177,16 @@ func putUser(adminPassword string, user *auth.UserCredentials) error {
 		return err
 	}
 
+	username, password, err := promptAuthentication()
+	if err != nil {
+		return err
+	}
+
 	req, err := http.NewRequest(http.MethodPut, endpoint, bytes.NewBuffer(encoded))
 	if err != nil {
 		return err
 	}
-	req.SetBasicAuth("admin", adminPassword)
+	req.SetBasicAuth(username, password)
 	req.Header.Set("Content-Type", "application/json")
 	req.Close = true
 
@@ -188,8 +208,8 @@ func putUser(adminPassword string, user *auth.UserCredentials) error {
 	return nil
 }
 
-func putCollections(adminPassword string, collection *objects.Collection) error {
-	endpoint := fmt.Sprintf("%s/collections", server)
+func putCollections(collection *objects.Collection) error {
+	endpoint := fmt.Sprintf("%s/objects/collections", fullAPILocation())
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -199,11 +219,16 @@ func putCollections(adminPassword string, collection *objects.Collection) error 
 		return err
 	}
 
+	username, password, err := promptAuthentication()
+	if err != nil {
+		return err
+	}
+
 	req, err := http.NewRequest(http.MethodPut, endpoint, bytes.NewBuffer(encoded))
 	if err != nil {
 		return err
 	}
-	req.SetBasicAuth("admin", adminPassword)
+	req.SetBasicAuth(username, password)
 	req.Header.Set("Content-Type", "application/json")
 	req.Close = true
 
@@ -225,8 +250,8 @@ func putCollections(adminPassword string, collection *objects.Collection) error 
 	return nil
 }
 
-func listCollections(adminPassword string, outputFilename string) error {
-	endpoint := fmt.Sprintf("%s/collections", server)
+func listCollections(outputFilename string) error {
+	endpoint := fmt.Sprintf("%s/objects/collections", fullAPILocation())
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -239,12 +264,17 @@ func listCollections(adminPassword string, outputFilename string) error {
 		outputFilename = fmt.Sprintf("%s.objects-collections.json", u.Host)
 	}
 
+	username, password, err := promptAuthentication()
+	if err != nil {
+		return err
+	}
+
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
 		return err
 	}
 
-	req.SetBasicAuth("admin", adminPassword)
+	req.SetBasicAuth(username, password)
 	req.Header.Set("Content-Type", "application/json")
 	req.Close = true
 
@@ -291,8 +321,8 @@ func listCollections(adminPassword string, outputFilename string) error {
 	return nil
 }
 
-func putFileSource(adminPassword string, source *files.Source) error {
-	endpoint := fmt.Sprintf("%s/sources", server)
+func putFileSource(source *files.Source) error {
+	endpoint := fmt.Sprintf("%s/files/sources", fullAPILocation())
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -302,11 +332,17 @@ func putFileSource(adminPassword string, source *files.Source) error {
 		return err
 	}
 
+	username, password, err := promptAuthentication()
+	if err != nil {
+		return err
+	}
+
 	req, err := http.NewRequest(http.MethodPut, endpoint, bytes.NewBuffer(encoded))
 	if err != nil {
 		return err
 	}
-	req.SetBasicAuth("admin", adminPassword)
+
+	req.SetBasicAuth(username, password)
 	req.Header.Set("Content-Type", "application/json")
 	req.Close = true
 
@@ -328,8 +364,8 @@ func putFileSource(adminPassword string, source *files.Source) error {
 	return nil
 }
 
-func listFileSources(adminPassword string, outputFilename string) error {
-	endpoint := fmt.Sprintf("%s/sources", server)
+func listFileSources(outputFilename string) error {
+	endpoint := fmt.Sprintf("%s/files/sources", fullAPILocation())
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
 	}
@@ -342,12 +378,17 @@ func listFileSources(adminPassword string, outputFilename string) error {
 		outputFilename = fmt.Sprintf("%s.files-sources.json", u.Host)
 	}
 
+	username, password, err := promptAuthentication()
+	if err != nil {
+		return err
+	}
+
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
 		return err
 	}
 
-	req.SetBasicAuth("admin", adminPassword)
+	req.SetBasicAuth(username, password)
 	req.Header.Set("Content-Type", "application/json")
 	req.Close = true
 
@@ -394,17 +435,22 @@ func listFileSources(adminPassword string, outputFilename string) error {
 	return nil
 }
 
-func deleteFileSources(adminPassword string, sourceID string) error {
-	endpoint := fmt.Sprintf("%s/sources/%s", server, sourceID)
+func deleteFileSources(sourceID string) error {
+	endpoint := fmt.Sprintf("%s/files/sources/%s", fullAPILocation(), sourceID)
 	if !strings.HasPrefix(endpoint, "http") {
 		endpoint = "https://" + endpoint
+	}
+
+	username, password, err := promptAuthentication()
+	if err != nil {
+		return err
 	}
 
 	req, err := http.NewRequest(http.MethodDelete, endpoint, nil)
 	if err != nil {
 		return err
 	}
-	req.SetBasicAuth("admin", adminPassword)
+	req.SetBasicAuth(username, password)
 	req.Header.Set("Content-Type", "application/json")
 	req.Close = true
 

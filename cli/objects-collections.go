@@ -1,9 +1,8 @@
-package admin
+package cli
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/omecodes/common/utils/prompt"
 	"github.com/omecodes/store/objects"
 	"github.com/spf13/cobra"
 	"io"
@@ -13,21 +12,7 @@ import (
 func init() {
 	flags := createCollectionsCMD.PersistentFlags()
 	flags.StringVar(&input, "in", "", "Input file containing sequence of JSON encoded collection")
-	flags.StringVar(&server, "server", "", "Server API location")
-	flags.StringVar(&password, "password", "", "Admin password")
-	if err := cobra.MarkFlagRequired(flags, "server"); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
 	if err := cobra.MarkFlagRequired(flags, "in"); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
-
-	flags = getCollectionsCMD.PersistentFlags()
-	flags.StringVar(&server, "server", "", "Server API location")
-	flags.StringVar(&password, "password", "", "Admin password")
-	if err := cobra.MarkFlagRequired(flags, "server"); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
@@ -49,15 +34,7 @@ var getCollectionsCMD = &cobra.Command{
 	Short: "List all collections",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
-		if password == "" {
-			password, err = prompt.Password("password")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(-1)
-			}
-		}
-
-		err = listCollections(password, output)
+		err = listCollections(output)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
@@ -70,13 +47,6 @@ var createCollectionsCMD = &cobra.Command{
 	Short: "Create a new collection",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
-		if password == "" {
-			password, err = prompt.Password("password")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(-1)
-			}
-		}
 
 		file, err := os.Open(input)
 		if err != nil {
@@ -96,7 +66,7 @@ var createCollectionsCMD = &cobra.Command{
 				return
 			}
 
-			err = putCollections(password, col)
+			err = putCollections(col)
 			if err != nil {
 				fmt.Println(err)
 			}
