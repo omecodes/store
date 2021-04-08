@@ -121,7 +121,7 @@ Use the `secret` part as the password so that the command above looks like:
 #### 2 - Registering users
 
 ```shell
-./scli auth users new --server=http://localhost:8080/api/auth --in=users.json --password=<admin-secret>
+./scli auth users new --server=http://localhost:8080/api/auth --in=users.json --password=<user:password>
 ```
 
 where `access.json` file that contains sequence of json:
@@ -197,7 +197,7 @@ Below are examples of valid rules:
 JSON documents are organized in collections. Create a collection with the following command:
 
 ```shell
-./sclient objects collections new --in=collections.json --server="http://localhost:8080/api/objects" --password=<admin-secret>
+./scli objects collections new --in=collections.json --server="http://localhost:8080/api/objects" --auth=<user:password>
 ```
 
 with the `collections.json` file that contains sequence of JSON definition of collections:
@@ -251,7 +251,7 @@ Here is how to create a file source using the admin-cli:
 
 ```shell
 
-./sclient files sources new --in=source.json --server=http://localhost:8080/api/files --password=<admin-secret>
+./scli files sources new --in=source.json --server=http://localhost:8080/api/files --auth=<user:password>
 ```
 
 with the `source.json` file that contains sequence of JSON definition of collections:
