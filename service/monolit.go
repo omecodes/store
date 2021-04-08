@@ -90,7 +90,7 @@ func (s *Server) init() error {
 		}
 	}
 
-	s.db = common.GetDB("mysql", s.config.DSN)
+	s.db = common.GetDB(bome.MySQL, s.config.DSN)
 
 	var err error
 
@@ -191,7 +191,7 @@ func (s *Server) init() error {
 		}
 	}
 
-	cookiesKey, err := common.LoadOrGenerateKey("cookies.key", 64)
+	cookiesKey, err := common.LoadOrGenerateKey(common.CookiesKeyFilename, 64)
 	if err != nil {
 		return err
 	}

@@ -28,7 +28,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -78,7 +77,7 @@ func (f *Front) init() error {
 	var err error
 
 	if f.config.AdminAuth == "" {
-		adminAuthContent, err := ioutil.ReadFile("./admin-auth")
+		adminAuthContent, err := ioutil.ReadFile(common.AdminAuthFile)
 		if err != nil && !os.IsNotExist(err) {
 			return err
 		}
@@ -100,7 +99,7 @@ func (f *Front) init() error {
 			}
 
 			f.config.AdminAuth = base64.RawStdEncoding.EncodeToString(data)
-			err = ioutil.WriteFile("./admin-auth", []byte(phrase+":"+f.config.AdminAuth), os.ModePerm)
+			err = ioutil.WriteFile(common.AdminAuthFile, []byte(phrase+":"+f.config.AdminAuth), os.ModePerm)
 			if err != nil {
 				return err
 			}
@@ -131,7 +130,7 @@ func (f *Front) init() error {
 		return err
 	}
 
-	cookiesKey, err := common.LoadOrGenerateKey("cookies.key", 64)
+	cookiesKey, err := common.LoadOrGenerateKey(common.CookiesKeyFilename, 64)
 	if err != nil {
 		return err
 	}
@@ -218,23 +217,16 @@ func (f *Front) startRegistryServer() (err error) {
 }
 
 func (f *Front) startCAServer() error {
-	workingDir := filepath.Join(f.config.WorkingDir, "ca")
-	err := os.MkdirAll(workingDir, os.ModePerm)
-	if err != nil {
-		return err
-	}
-
 	port := f.config.CAPort
 	if port == 0 {
 		port = ports.CA
 	}
 
 	cfg := &sca.ServerConfig{
-		Manager:    sca.CredentialsManagerFunc(f.getServiceSecret),
-		Domain:     f.config.Domains[0],
-		Port:       port,
-		BindIP:     f.config.IP,
-		WorkingDir: workingDir,
+		Manager: sca.CredentialsManagerFunc(f.getServiceSecret),
+		Domain:  f.config.Domains[0],
+		Port:    port,
+		BindIP:  f.config.IP,
 	}
 
 	f.caServer = sca.NewServer(cfg)
