@@ -56,8 +56,8 @@ func HTTPHandlePutObject(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	collection := vars[pathItemCollection]
 
-	contentType := r.Header.Get("Content-Type")
-	if contentType != "application/json" {
+	contentType := r.Header.Get(common.HttpHeaderContentType)
+	if contentType != common.ContentTypeJSON {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -81,15 +81,15 @@ func HTTPHandlePutObject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add(common.HttpHeaderContentType, common.ContentTypeJSON)
 	_, _ = w.Write([]byte(fmt.Sprintf("{\"id\": \"%s\"}", id)))
 }
 
 func HTTPHandlePatchObject(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	contentType := r.Header.Get("Content-Type")
-	if contentType != "application/json" {
+	contentType := r.Header.Get(common.HttpHeaderContentType)
+	if contentType != common.ContentTypeJSON {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -116,8 +116,8 @@ func HTTPHandlePatchObject(w http.ResponseWriter, r *http.Request) {
 func HTTPHandleMoveObject(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	contentType := r.Header.Get("Content-Type")
-	if contentType != "application/json" {
+	contentType := r.Header.Get(common.HttpHeaderContentType)
+	if contentType != common.ContentTypeJSON {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -160,7 +160,7 @@ func HTTPHandleGetObject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add(common.HttpHeaderContentType, common.ContentTypeJSON)
 	_, err = w.Write([]byte(object.Data))
 	if err != nil {
 		logs.Error("failed to write response", logs.Err(err))
@@ -212,7 +212,7 @@ func HTTPHandleListObjects(w http.ResponseWriter, r *http.Request) {
 			logs.Error("cursor closed with an error", logs.Err(cErr))
 		}
 	}()
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add(common.HttpHeaderContentType, common.ContentTypeJSON)
 
 	_, err = w.Write([]byte("{"))
 	position := 0
@@ -267,7 +267,7 @@ func HTTPHandleSearchObjects(w http.ResponseWriter, r *http.Request) {
 			logs.Error("cursor closed with an error", logs.Err(cErr))
 		}
 	}()
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add(common.HttpHeaderContentType, common.ContentTypeJSON)
 
 	_, err = w.Write([]byte("{"))
 	position := 0
@@ -363,7 +363,7 @@ func HTTPHandleGetSettings(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(errors.HTTPStatus(err))
 	}
 
-	w.Header().Add("Content-Type", "text/plain")
+	w.Header().Add(common.HttpHeaderContentType, "text/plain")
 	_, _ = w.Write([]byte(value))
 }
 
@@ -395,7 +395,7 @@ func HTTPHandleListCollections(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add(common.HttpHeaderContentType, common.ContentTypeJSON)
 	if collections == nil {
 		_, _ = w.Write([]byte("[]"))
 		return
@@ -421,7 +421,7 @@ func HTTPHandleGetCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add(common.HttpHeaderContentType, common.ContentTypeJSON)
 
 	data, err := json.Marshal(collection)
 	if err != nil {
