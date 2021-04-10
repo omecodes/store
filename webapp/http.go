@@ -3,6 +3,7 @@ package webapp
 import (
 	"context"
 	"fmt"
+	"github.com/omecodes/store/common"
 	"io"
 	"net/http"
 	"os"
@@ -40,7 +41,7 @@ func ServeApps(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	if contentType != "" {
-		w.Header().Set("Content-Type", contentType)
+		w.Header().Set(common.HttpHeaderContentType, contentType)
 	}
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", size))
 	w.WriteHeader(http.StatusOK)

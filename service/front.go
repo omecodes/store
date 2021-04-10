@@ -313,7 +313,7 @@ func (f *Front) startProductionWithTLS() error {
 			b.WriteString(fmt.Sprintf("\t<meta http-equiv=\"refresh\" content=\"0; URL=%s\" />\n", redirectURL))
 			b.WriteString(fmt.Sprintf("</head>"))
 			contentBytes := []byte(b.String())
-			w.Header().Set("Content-Type", r.Header.Get("Accept"))
+			w.Header().Set(common.HttpHeaderContentType, r.Header.Get("Accept"))
 			w.Header().Set("Location", redirectURL)
 			w.WriteHeader(http.StatusPermanentRedirect)
 			_, _ = w.Write(contentBytes)

@@ -205,8 +205,8 @@ func (c *Client) GetObject(collectionId string, objectId string, opts objects.Ge
 
 	if opts.Info || opts.At != "" {
 		values := url.Values{}
-		values.Set(common.ApiQueryParamHeader, fmt.Sprintf("%v", opts.Info))
-		values.Set(common.ApiQueryParamAt, opts.At)
+		values.Set(common.ApiParamHeader, fmt.Sprintf("%v", opts.Info))
+		values.Set(common.ApiParamAt, opts.At)
 		endpoint = fmt.Sprintf("%s?%s", endpoint, values.Encode())
 	}
 
@@ -285,8 +285,8 @@ func (c *Client) ListObjects(collectionId string, opts objects.ListOptions) ([]*
 	endpoint = strings.Replace(endpoint, common.ApiRouteVarCollection, collectionId, 1)
 	if opts.Offset > 0 || opts.At != "" {
 		values := url.Values{}
-		values.Set(common.ApiQueryParamHeader, fmt.Sprintf("%d", opts.Offset))
-		values.Set(common.ApiQueryParamAt, opts.At)
+		values.Set(common.ApiParamHeader, fmt.Sprintf("%d", opts.Offset))
+		values.Set(common.ApiParamAt, opts.At)
 		endpoint = fmt.Sprintf("%s?%s", endpoint, values.Encode())
 	}
 

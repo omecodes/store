@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/omecodes/store/common"
 	"github.com/omecodes/store/files"
 	"github.com/omecodes/store/objects"
 	"io"
@@ -37,7 +38,7 @@ func putAccess(clientApp *auth.ClientApp) error {
 		return err
 	}
 	req.SetBasicAuth(username, password)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(common.HttpHeaderContentType, common.ContentTypeJSON)
 	req.Close = true
 
 	client := &http.Client{}
@@ -83,7 +84,7 @@ func getAccesses(outputFilename string) error {
 	}
 
 	req.SetBasicAuth(username, password)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(common.HttpHeaderContentType, common.ContentTypeJSON)
 	req.Close = true
 
 	client := &http.Client{}
@@ -145,7 +146,7 @@ func deleteAccess(accessID string) error {
 		return err
 	}
 	req.SetBasicAuth(username, password)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(common.HttpHeaderContentType, common.ContentTypeJSON)
 	req.Close = true
 
 	client := &http.Client{}
@@ -187,7 +188,7 @@ func putUser(user *auth.UserCredentials) error {
 		return err
 	}
 	req.SetBasicAuth(username, password)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(common.HttpHeaderContentType, common.ContentTypeJSON)
 	req.Close = true
 
 	client := &http.Client{}
@@ -229,7 +230,7 @@ func putCollections(collection *objects.Collection) error {
 		return err
 	}
 	req.SetBasicAuth(username, password)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(common.HttpHeaderContentType, common.ContentTypeJSON)
 	req.Close = true
 
 	client := &http.Client{}
@@ -275,7 +276,7 @@ func listCollections(outputFilename string) error {
 	}
 
 	req.SetBasicAuth(username, password)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(common.HttpHeaderContentType, common.ContentTypeJSON)
 	req.Close = true
 
 	client := &http.Client{}
@@ -343,7 +344,7 @@ func putFileSource(source *files.Source) error {
 	}
 
 	req.SetBasicAuth(username, password)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(common.HttpHeaderContentType, common.ContentTypeJSON)
 	req.Close = true
 
 	client := &http.Client{}
@@ -389,7 +390,7 @@ func listFileSources(outputFilename string) error {
 	}
 
 	req.SetBasicAuth(username, password)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(common.HttpHeaderContentType, common.ContentTypeJSON)
 	req.Close = true
 
 	client := &http.Client{}
@@ -451,7 +452,7 @@ func deleteFileSources(sourceID string) error {
 		return err
 	}
 	req.SetBasicAuth(username, password)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(common.HttpHeaderContentType, common.ContentTypeJSON)
 	req.Close = true
 
 	client := &http.Client{}

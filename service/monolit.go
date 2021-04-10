@@ -306,7 +306,7 @@ func (s *Server) startSecureAPIServer() error {
 			b.WriteString(fmt.Sprintf("</head>"))
 			contentBytes := []byte(b.String())
 
-			w.Header().Set("Content-Type", "text/html")
+			w.Header().Set(common.HttpHeaderContentType, "text/html")
 			w.Header().Set("Location", redirectURL)
 			w.WriteHeader(http.StatusPermanentRedirect)
 			_, _ = w.Write(contentBytes)
@@ -351,13 +351,15 @@ func (s *Server) httpRouter() http.Handler {
 		session.WithHTTPSessionMiddleware(s.cookieStore),
 		common.MiddlewareLogger,
 	}
-	r := mux.NewRouter()
 
-	r.PathPrefix("/api/files/").Subrouter().Name("ServeFiles").Handler(http.StripPrefix("/api/files", s.filesHandler()))
-	r.PathPrefix("/api/objects/").Subrouter().Name("ServeObjects").Handler(http.StripPrefix("/api/objects", s.objectsHandler()))
-	r.PathPrefix("/api/auth/").Subrouter().Name("ManageAuthentication").Handler(http.StripPrefix("/api/auth", auth.MuxRouter()))
+	r := mux.NewRouter()
+	apiSubRouter := r.PathPrefix(common.ApiDefaultLocation)
+	apiSubRouter.Name("ServeFiles").Handler(http.StripPrefix(common.ApiDefaultLocation, s.filesHandler()))
+	apiSubRouter.Name("ServeObjects").Handler(http.StripPrefix(common.ApiDefaultLocation, s.objectsHandler()))
+	apiSubRouter.Name("ManageAuthentication").Handler(http.StripPrefix(common.ApiDefaultLocation, auth.MuxRouter()))
+	apiSubRouter.Name("ManageAccounts").Handler(http.StripPrefix(common.ApiDefaultLocation, accounts.MuxRouter()))
+
 	r.Handle("/login", auth.UserSessionHandler()).Methods(http.MethodPost)
-	r.PathPrefix("/api/accounts/").Subrouter().Name("ManageAccounts").Handler(http.StripPrefix("/api/accounts", accounts.MuxRouter()))
 
 	staticFilesRouter := http.HandlerFunc(webapp.ServeApps)
 	r.NotFoundHandler = staticFilesRouter

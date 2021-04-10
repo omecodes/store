@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/golang/protobuf/jsonpb"
+	"github.com/omecodes/store/common"
 	"net/http"
 	"net/url"
 	"strings"
@@ -16,12 +17,6 @@ import (
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/session"
 )
-
-const pathItemKey = "key"
-const pathItemName = "name"
-const formValueUsername = "username"
-const formValuePassword = "password"
-const queryContinueURL = "continue"
 
 func ToHttpHeaders(ctx context.Context) (http.Header, error) {
 	headers := http.Header{}
@@ -45,22 +40,21 @@ func ToHttpHeaders(ctx context.Context) (http.Header, error) {
 		}
 		headers.Set(AppHeader, encodedApp)
 	}
-
 	return headers, nil
 }
 
 func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	r := mux.NewRouter()
-	r.Name("SaveAuthProvider").Methods(http.MethodPut).Path("/providers").Handler(http.HandlerFunc(SaveProvider))
-	r.Name("GetAuthProvider").Methods(http.MethodGet).Path("/providers/{name}").Handler(http.HandlerFunc(GetProvider))
-	r.Name("DeleteAuthProvider").Methods(http.MethodDelete).Path("/providers/{name}").Handler(http.HandlerFunc(DeleteProvider))
-	r.Name("ListProviders").Methods(http.MethodGet).Path("/providers").Handler(http.HandlerFunc(ListProviders))
-	r.Name("CreateAccess").Methods(http.MethodPut).Path("/accesses").Handler(http.HandlerFunc(CreateAccess))
-	r.Name("ListAccesses").Methods(http.MethodGet).Path("/accesses").Handler(http.HandlerFunc(ListAccesses))
-	r.Name("DeleteAccess").Methods(http.MethodDelete).Path("/accesses/{key}").Handler(http.HandlerFunc(DeleteAccess))
-	r.Name("InitWebClientSession").Methods(http.MethodPost).Path("/sessions/client-app").Handler(http.HandlerFunc(InitClientAppSession))
-	r.Name("CreateUser").Methods(http.MethodPut).Path("/users").Handler(http.HandlerFunc(SaveUser))
-	r.Name("SearchUser").Methods(http.MethodGet).Path("/users").Handler(http.HandlerFunc(SearchUsers))
+	r.Name("SaveAuthProvider").Methods(http.MethodPut).Path(common.ApiSaveAuthProviderRoute).Handler(http.HandlerFunc(SaveProvider))
+	r.Name("GetAuthProvider").Methods(http.MethodGet).Path(common.ApiGetAuthProviderRoute).Handler(http.HandlerFunc(GetProvider))
+	r.Name("DeleteAuthProvider").Methods(http.MethodDelete).Path(common.ApiDeleteAuthProviderRoute).Handler(http.HandlerFunc(DeleteProvider))
+	r.Name("ListProviders").Methods(http.MethodGet).Path(common.ApiListAuthProvidersRoute).Handler(http.HandlerFunc(ListProviders))
+	r.Name("CreateAccess").Methods(http.MethodPut).Path(common.ApiCreateAccessRoute).Handler(http.HandlerFunc(CreateAccess))
+	r.Name("ListAccesses").Methods(http.MethodGet).Path(common.ApiListAccessesRoute).Handler(http.HandlerFunc(ListAccesses))
+	r.Name("DeleteAccess").Methods(http.MethodDelete).Path(common.ApiDeleteAccessRoute).Handler(http.HandlerFunc(DeleteAccess))
+	r.Name("InitWebClientSession").Methods(http.MethodPost).Path(common.ApiCreateAppSessionRoute).Handler(http.HandlerFunc(InitClientAppSession))
+	r.Name("CreateUser").Methods(http.MethodPut).Path(common.ApiCreateUserRoute).Handler(http.HandlerFunc(SaveUser))
+	r.Name("SearchUser").Methods(http.MethodGet).Path(common.ApiSearchUsersRoute).Handler(http.HandlerFunc(SearchUsers))
 
 	var handler http.Handler
 	handler = r
@@ -90,7 +84,7 @@ func redirectToLocation(w http.ResponseWriter, status int, location string, para
 	b.WriteString(fmt.Sprintf("</head>"))
 	contentBytes := []byte(b.String())
 
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(common.HttpHeaderContentType, "text/html")
 	w.Header().Set("Location", location)
 	w.WriteHeader(status)
 	_, _ = w.Write(contentBytes)
@@ -149,9 +143,10 @@ func GetProvider(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	provider, err := providers.Get(vars[pathItemName])
+	providerId := vars[common.ApiRouteVarIdName]
+	provider, err := providers.Get(providerId)
 	if err != nil {
-		logs.Error("failed to get provider", logs.Details("id", vars[pathItemName]), logs.Err(err))
+		logs.Error("failed to get provider", logs.Details("id", providerId), logs.Err(err))
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
@@ -183,8 +178,8 @@ func DeleteProvider(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	name := vars[pathItemName]
-	err := providers.Delete(name)
+	providerId := vars[common.ApiRouteVarIdName]
+	err := providers.Delete(providerId)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -209,9 +204,11 @@ func ListProviders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	providerId := vars[common.ApiRouteVarIdName]
+
 	providerList, err := providers.GetAll(user.Name != "admin")
 	if err != nil {
-		logs.Error("failed to get provider", logs.Details("id", vars[pathItemName]), logs.Err(err))
+		logs.Error("failed to get provider", logs.Details("id", providerId), logs.Err(err))
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
 	}
@@ -292,7 +289,7 @@ func DeleteAccess(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	name := vars[pathItemKey]
+	accessId := vars[common.ApiRouteVarIdName]
 
 	manager := GetCredentialsManager(ctx)
 	if manager == nil {
@@ -301,7 +298,7 @@ func DeleteAccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := manager.DeleteClientApp(name)
+	err := manager.DeleteClientApp(accessId)
 	if err != nil {
 		logs.Error("could not get access", logs.Err(err))
 		w.WriteHeader(http.StatusNotFound)
@@ -394,7 +391,7 @@ func CreateUserWebSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	continueURL := r.URL.Query().Get(queryContinueURL)
+	continueURL := r.URL.Query().Get(common.ApiParamContinueURL)
 	if continueURL == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -407,8 +404,8 @@ func CreateUserWebSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	username := r.Form.Get(formValueUsername)
-	password := r.Form.Get(formValuePassword)
+	username := r.Form.Get(common.ApiParamUsername)
+	password := r.Form.Get(common.ApiParamPassword)
 
 	logs.Info("login", logs.Details("username", username), logs.Details("password", password))
 

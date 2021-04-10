@@ -5,17 +5,16 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/store/auth"
+	"github.com/omecodes/store/common"
 	"net/http"
 	"strings"
 )
 
-const pathItemName = "name"
-
 func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	r := mux.NewRouter()
-	r.Name("GetAccount").Methods(http.MethodGet).Path("/accounts/{name}").Handler(http.HandlerFunc(GetAccount))
-	r.Name("FindAccount").Methods(http.MethodPost).Path("/accounts/{name}").Handler(http.HandlerFunc(FindAccount))
-	r.Name("CreateAccount").Methods(http.MethodPut).Path("/accounts/{name}").Handler(http.HandlerFunc(CreateAccount))
+	r.Name("GetAccount").Methods(http.MethodGet).Path(common.ApiGetAccountRoute).Handler(http.HandlerFunc(GetAccount))
+	r.Name("FindAccount").Methods(http.MethodPost).Path(common.ApiFindAccountRoute).Handler(http.HandlerFunc(FindAccount))
+	r.Name("CreateAccount").Methods(http.MethodPut).Path(common.ApiCreateAccountRoute).Handler(http.HandlerFunc(CreateAccount))
 	var handler http.Handler
 	handler = r
 	for _, m := range middleware {
@@ -41,7 +40,7 @@ func FindAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add(common.HttpHeaderContentType, common.ContentTypeJSON)
 	_ = json.NewEncoder(w).Encode(account)
 }
 
@@ -54,8 +53,8 @@ func CreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contentType := r.Header.Get("Content-Type")
-	if !strings.HasPrefix(contentType, "application/json") {
+	contentType := r.Header.Get(common.HttpHeaderContentType)
+	if !strings.HasPrefix(contentType, common.ContentTypeJSON) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -92,7 +91,7 @@ func GetAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	name := vars[pathItemName]
+	name := vars[common.ApiRouteVarIdName]
 
 	if name == "admin" {
 		w.WriteHeader(http.StatusNotFound)
@@ -107,6 +106,6 @@ func GetAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add(common.HttpHeaderContentType, common.ContentTypeJSON)
 	_ = json.NewEncoder(w).Encode(account)
 }

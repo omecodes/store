@@ -34,21 +34,49 @@ const (
 )
 
 const (
+	ApiDefaultLocation = "/api"
+
 	ApiQueryParamOffset = "offset"
-	ApiQueryParamAt     = "at"
+	ApiParamAt          = "at"
+	ApiParamUsername    = "username"
+	ApiParamPassword    = "password"
 	ApiQueryParamPath   = "path"
-	ApiQueryParamHeader = "header"
+	ApiParamHeader      = "header"
+	ApiParamContinueURL = "continue"
 
 	ApiSetSettingsRoute = "/objects/settings"
 	ApiGetSettingsRoute = "/objects/settings"
 
 	ApiRouteVarId         = "{id}"
+	ApiRouteVarKey        = "{key}"
 	ApiRouteVarSource     = "{source}"
+	ApiRouteVarName       = "{name}"
 	ApiRouteVarCollection = "{collection}"
 
 	ApiRouteVarIdName         = "id"
+	ApiRouteVarKeyName        = "key"
 	ApiRouteVarSourceName     = "source"
+	ApiRouteVarNameName       = "name"
 	ApiRouteVarCollectionName = "collection"
+
+	// API Routes
+	//
+
+	ApiGetAccountRoute    = "/accounts/{id}"
+	ApiCreateAccountRoute = "/accounts/{id}"
+	ApiFindAccountRoute   = "/accounts/{id}"
+
+	ApiSaveAuthProviderRoute   = "/auth/providers"
+	ApiGetAuthProviderRoute    = "/auth/providers/{id}"
+	ApiDeleteAuthProviderRoute = "/auth/providers/{id}"
+	ApiListAuthProvidersRoute  = "/auth/providers"
+
+	ApiCreateAccessRoute     = "/auth/accesses"
+	ApiListAccessesRoute     = "/auth/accesses"
+	ApiDeleteAccessRoute     = "/auth/accesses/{id}"
+	ApiCreateAppSessionRoute = "/auth/sessions/client-app"
+	ApiCreateUserRoute       = "/auth/users"
+	ApiSearchUsersRoute      = "/auth/users"
 
 	ApiCreateCollectionRoute = "/objects/collections"
 	ApiListCollectionRoute   = "/objects/collections"
