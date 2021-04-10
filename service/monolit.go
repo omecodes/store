@@ -359,7 +359,7 @@ func (s *Server) httpRouter() http.Handler {
 	apiSubRouter.Name("ManageAuthentication").Handler(http.StripPrefix(common.ApiDefaultLocation, auth.MuxRouter()))
 	apiSubRouter.Name("ManageAccounts").Handler(http.StripPrefix(common.ApiDefaultLocation, accounts.MuxRouter()))
 
-	r.Handle("/login", auth.UserSessionHandler()).Methods(http.MethodPost)
+	r.Handle(common.ApiLoginRoute, auth.UserSessionHandler()).Methods(http.MethodPost)
 
 	staticFilesRouter := http.HandlerFunc(webapp.ServeApps)
 	r.NotFoundHandler = staticFilesRouter

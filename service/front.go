@@ -168,11 +168,12 @@ func (f *Front) httpRouter() http.Handler {
 	}
 	r := mux.NewRouter()
 
-	r.PathPrefix("/api/files/").Subrouter().Name("ServeFiles").Handler(http.StripPrefix("/api/files", f.filesHandler()))
-	r.PathPrefix("/api/objects/").Subrouter().Name("ServeObjects").Handler(http.StripPrefix("/api/objects", f.objectsHandler()))
-	r.PathPrefix("/api/auth/").Subrouter().Name("ManageAuthentication").Handler(http.StripPrefix("/api/auth", auth.MuxRouter()))
-	r.Handle("/login", auth.UserSessionHandler()).Methods(http.MethodPost)
-	r.PathPrefix("/api/accounts/").Subrouter().Name("ManageAccounts").Handler(http.StripPrefix("/api/accounts", accounts.MuxRouter()))
+	subRouter := r.PathPrefix(common.ApiDefaultLocation).Subrouter()
+	subRouter.Name("ServeFiles").Handler(http.StripPrefix(common.ApiDefaultLocation, f.filesHandler()))
+	subRouter.Name("ServeObjects").Handler(http.StripPrefix(common.ApiDefaultLocation, f.objectsHandler()))
+	subRouter.Name("ManageAuthentication").Handler(http.StripPrefix(common.ApiDefaultLocation, auth.MuxRouter()))
+	subRouter.Name("ManageAccounts").Handler(http.StripPrefix(common.ApiDefaultLocation, accounts.MuxRouter()))
+	r.Handle(common.ApiLoginRoute, auth.UserSessionHandler()).Methods(http.MethodPost)
 
 	staticFilesRouter := http.HandlerFunc(webapp.ServeApps)
 	r.NotFoundHandler = staticFilesRouter

@@ -62,6 +62,8 @@ const (
 	// API Routes
 	//
 
+	ApiLoginRoute = "/login"
+
 	ApiGetAccountRoute    = "/accounts/{id}"
 	ApiCreateAccountRoute = "/accounts/{id}"
 	ApiFindAccountRoute   = "/accounts/{id}"

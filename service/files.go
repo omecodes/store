@@ -10,6 +10,7 @@ import (
 	"github.com/omecodes/store/files"
 	"google.golang.org/grpc"
 	"net/http"
+	"path"
 )
 
 type FilesConfig struct {
@@ -72,9 +73,11 @@ func (f *Files) middlewareUpdateContext(next http.Handler) http.Handler {
 
 func (f *Files) filesTransferHandler() *mux.Router {
 	r := mux.NewRouter()
-	dataRoute := r.PathPrefix("/api/files/data/").Subrouter()
-	dataRoute.Name("Download").Methods(http.MethodGet).Handler(http.StripPrefix("/api/files/data/", http.HandlerFunc(files.HTTPHandleDownloadFile)))
-	dataRoute.Name("Upload").Methods(http.MethodPut, http.MethodPost).Handler(http.StripPrefix("/api/files/data/", http.HandlerFunc(files.HTTPHandleUploadFile)))
+
+	routePrefix := path.Join(common.ApiDefaultLocation + common.ApiFileDataRoutePrefix)
+	dataRoute := r.PathPrefix(routePrefix).Subrouter()
+	dataRoute.Name("Download").Methods(http.MethodGet).Handler(http.StripPrefix(routePrefix, http.HandlerFunc(files.HTTPHandleDownloadFile)))
+	dataRoute.Name("Upload").Methods(http.MethodPut, http.MethodPost).Handler(http.StripPrefix(routePrefix, http.HandlerFunc(files.HTTPHandleUploadFile)))
 	return r
 }
 
