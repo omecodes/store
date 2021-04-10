@@ -13,32 +13,28 @@ import (
 	"strings"
 )
 
-const (
-	pathVarId = "id"
-)
-
 func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	r := mux.NewRouter()
 
 	treeRoute := r.PathPrefix("/tree/").Subrouter()
-	treeRoute.Name("CreateFile").Methods(http.MethodPut).Handler(http.StripPrefix("/tree/", http.HandlerFunc(HTTPHandleCreateFile)))
-	treeRoute.Name("ListDir").Methods(http.MethodPost).Handler(http.StripPrefix("/tree/", http.HandlerFunc(HTTPHandleListDir)))
-	treeRoute.Name("GetFileInfo").Methods(http.MethodGet).Handler(http.StripPrefix("/tree/", http.HandlerFunc(HTTPHandleGetFileInfo)))
-	treeRoute.Name("DeleteFile").Methods(http.MethodDelete).Handler(http.StripPrefix("/tree/", http.HandlerFunc(HTTPHandleDeleteFile)))
-	treeRoute.Name("PatchTree").Methods(http.MethodPatch).Handler(http.StripPrefix("/tree/", http.HandlerFunc(HTTPHandlePatchFileTree)))
+	treeRoute.Name(common.ApiFileTreeRoutePrefix).Methods(http.MethodPut).Handler(http.StripPrefix(common.ApiFileTreeRoutePrefix, http.HandlerFunc(HTTPHandleCreateFile)))
+	treeRoute.Name("ListDir").Methods(http.MethodPost).Handler(http.StripPrefix(common.ApiFileTreeRoutePrefix, http.HandlerFunc(HTTPHandleListDir)))
+	treeRoute.Name("GetFileInfo").Methods(http.MethodGet).Handler(http.StripPrefix(common.ApiFileTreeRoutePrefix, http.HandlerFunc(HTTPHandleGetFileInfo)))
+	treeRoute.Name("DeleteFile").Methods(http.MethodDelete).Handler(http.StripPrefix(common.ApiFileTreeRoutePrefix, http.HandlerFunc(HTTPHandleDeleteFile)))
+	treeRoute.Name("PatchTree").Methods(http.MethodPatch).Handler(http.StripPrefix(common.ApiFileTreeRoutePrefix, http.HandlerFunc(HTTPHandlePatchFileTree)))
 
-	attrRoute := r.PathPrefix("/attr/").Subrouter()
-	attrRoute.Name("GetFileAttributes").Methods(http.MethodGet).Handler(http.StripPrefix("/attr/", http.HandlerFunc(HTTPHandleGetFileAttributes)))
-	attrRoute.Name("SetFileAttributes").Methods(http.MethodPut).Handler(http.StripPrefix("/attr/", http.HandlerFunc(HTTPHandleSetFileAttributes)))
+	attrRoute := r.PathPrefix(common.ApiFileAttributesRoutePrefix).Subrouter()
+	attrRoute.Name("GetFileAttributes").Methods(http.MethodGet).Handler(http.StripPrefix(common.ApiFileAttributesRoutePrefix, http.HandlerFunc(HTTPHandleGetFileAttributes)))
+	attrRoute.Name("SetFileAttributes").Methods(http.MethodPost).Handler(http.StripPrefix(common.ApiFileTreeRoutePrefix, http.HandlerFunc(HTTPHandleSetFileAttributes)))
 
-	dataRoute := r.PathPrefix("/data/").Subrouter()
-	dataRoute.Name("Download").Methods(http.MethodGet).Handler(http.StripPrefix("/data/", http.HandlerFunc(HTTPHandleDownloadFile)))
-	dataRoute.Name("Upload").Methods(http.MethodPut, http.MethodPost).Handler(http.StripPrefix("/data/", http.HandlerFunc(HTTPHandleUploadFile)))
+	dataRoute := r.PathPrefix(common.ApiFileDataRoutePrefix).Subrouter()
+	dataRoute.Name("Download").Methods(http.MethodGet).Handler(http.StripPrefix(common.ApiFileDataRoutePrefix, http.HandlerFunc(HTTPHandleDownloadFile)))
+	dataRoute.Name("Upload").Methods(http.MethodPut, http.MethodPost).Handler(http.StripPrefix(common.ApiFileDataRoutePrefix, http.HandlerFunc(HTTPHandleUploadFile)))
 
-	r.Name("CreateSource").Path("/sources").Methods(http.MethodPut).HandlerFunc(HTTPHandleCreateSource)
-	r.Name("ListSources").Path("/sources").Methods(http.MethodGet).HandlerFunc(HTTPHandleListSources)
-	r.Name("GetSource").Path("/sources/{id}").Methods(http.MethodGet).HandlerFunc(HTTPHandleGetSource)
-	r.Name("DeleterSource").Path("/sources/{id}").Methods(http.MethodDelete).HandlerFunc(HTTPHandleDeleteSource)
+	r.Name("CreateSource").Path(common.ApiCreateFileSource).Methods(http.MethodPut).HandlerFunc(HTTPHandleCreateSource)
+	r.Name("ListSources").Path(common.ApiListFileSources).Methods(http.MethodGet).HandlerFunc(HTTPHandleListSources)
+	r.Name("GetSource").Path(common.ApiGetFileSource).Methods(http.MethodGet).HandlerFunc(HTTPHandleGetSource)
+	r.Name("DeleteSource").Path(common.ApiDeleteFileSource).Methods(http.MethodDelete).HandlerFunc(HTTPHandleDeleteSource)
 
 	var handler http.Handler
 	handler = r
@@ -135,7 +131,7 @@ func HTTPHandlePatchFileTree(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if patchInfo.Rename {
-		err = RenameFile(ctx, sourceID, filename, strings.TrimPrefix(patchInfo.Value, sourceID))
+		err = RenameFile(ctx, sourceID, filename, patchInfo.Value)
 	} else {
 		err = MoveFile(ctx, sourceID, filename, strings.TrimPrefix(patchInfo.Value, sourceID))
 	}
@@ -282,7 +278,7 @@ func HTTPHandleListSources(w http.ResponseWriter, r *http.Request) {
 
 func HTTPHandleGetSource(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	sourceID := vars[pathVarId]
+	sourceID := vars[common.ApiRouteVarId]
 
 	ctx := r.Context()
 
@@ -296,7 +292,7 @@ func HTTPHandleGetSource(w http.ResponseWriter, r *http.Request) {
 
 func HTTPHandleDeleteSource(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	sourceID := vars[pathVarId]
+	sourceID := vars[common.ApiRouteVarId]
 
 	ctx := r.Context()
 

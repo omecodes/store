@@ -1,9 +1,12 @@
 package common
 
 import (
-	"github.com/gorilla/mux"
+	"io/ioutil"
 	"net/http"
 	"strconv"
+
+	"github.com/gorilla/mux"
+	"github.com/omecodes/errors"
 )
 
 func Int64QueryParam(r *http.Request, name string) (int64, error) {
@@ -22,4 +25,41 @@ func MiddlewareWithSettings(manager SettingsManager) mux.MiddlewareFunc {
 			next.ServeHTTP(w, r.WithContext(updatedContext))
 		})
 	}
+}
+
+func ErrorFromHttpResponse(rsp *http.Response) error {
+	var err *errors.Error
+
+	if rsp.StatusCode != 200 {
+
+		switch rsp.StatusCode {
+
+		case http.StatusBadRequest:
+			err = errors.BadRequest(rsp.Status)
+
+		case http.StatusInternalServerError:
+			err = errors.Internal(rsp.Status)
+
+		case http.StatusBadGateway:
+			err = errors.ServiceUnavailable(rsp.Status)
+
+		case http.StatusForbidden:
+			err = errors.Forbidden(rsp.Status)
+
+		case http.StatusUnauthorized:
+			err = errors.Unauthorized(rsp.Status)
+
+		case http.StatusNotFound:
+			err = errors.NotFound(rsp.Status)
+
+		default:
+			err = errors.New(rsp.Status)
+		}
+
+		if rsp.ContentLength > 0 {
+			body, _ := ioutil.ReadAll(rsp.Body)
+			err.AddDetails("content", string(body))
+		}
+	}
+	return err
 }

@@ -13,48 +13,47 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 const (
-	queryOffset        = "offset"
-	queryAt            = "at"
-	queryHeader        = "header"
-	pathItemId         = "id"
-	pathItemCollection = "collection"
+	queryOffset = "offset"
+	queryAt     = "at"
+	queryHeader = "header"
 )
 
 func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	r := mux.NewRouter()
 
-	r.Name("SetSettings").Methods(http.MethodPut).Path("/settings").Handler(http.HandlerFunc(HTTPHandleSetSettings))
-	r.Name("GetSettings").Methods(http.MethodGet).Path("/settings").Handler(http.HandlerFunc(HTTPHandleGetSettings))
+	r.Name("SetSettings").Methods(http.MethodPut).Path(common.ApiSetSettingsRoute).Handler(http.HandlerFunc(HTTPHandleSetSettings))
+	r.Name("GetSettings").Methods(http.MethodGet).Path(common.ApiGetSettingsRoute).Handler(http.HandlerFunc(HTTPHandleGetSettings))
 
-	r.Name("CreateCollection").Methods(http.MethodPut).Path("/collections").Handler(http.HandlerFunc(HTTPHandleCreateCollection))
-	r.Name("ListCollections").Methods(http.MethodGet).Path("/collections").Handler(http.HandlerFunc(HTTPHandleListCollections))
-	r.Name("DeleteCollection").Methods(http.MethodGet).Path("/collections/{id}").Handler(http.HandlerFunc(HTTPHandleDeleteCollection))
-	r.Name("GetCollection").Methods(http.MethodGet).Path("/collections/{id}").Handler(http.HandlerFunc(HTTPHandleGetCollection))
+	r.Name("CreateCollection").Methods(http.MethodPut).Path(common.ApiCreateCollectionRoute).Handler(http.HandlerFunc(HTTPHandleCreateCollection))
+	r.Name("ListCollections").Methods(http.MethodGet).Path(common.ApiListCollectionRoute).Handler(http.HandlerFunc(HTTPHandleListCollections))
+	r.Name("DeleteCollection").Methods(http.MethodGet).Path(common.ApiDeleteCollectionRoute).Handler(http.HandlerFunc(HTTPHandleDeleteCollection))
+	r.Name("GetCollection").Methods(http.MethodGet).Path(common.ApiGetCollectionRoute).Handler(http.HandlerFunc(HTTPHandleGetCollection))
 
-	r.Name("PutObject").Methods(http.MethodPut).Path("/data/{collection}").Handler(http.HandlerFunc(HTTPHandlePutObject))
-	r.Name("PatchObject").Methods(http.MethodPatch).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(HTTPHandlePatchObject))
-	r.Name("MoveObject").Methods(http.MethodPost).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(HTTPHandleMoveObject))
-	r.Name("GetObject").Methods(http.MethodGet).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(HTTPHandleGetObject))
-	r.Name("DeleteObject").Methods(http.MethodDelete).Path("/data/{collection}/{id}").Handler(http.HandlerFunc(HTTPHandleDeleteObject))
-	r.Name("GetObjects").Methods(http.MethodGet).Path("/data/{collection}").Handler(http.HandlerFunc(HTTPHandleListObjects))
-	r.Name("SearchObjects").Methods(http.MethodPost).Path("/data/{collection}").Handler(http.HandlerFunc(HTTPHandleSearchObjects))
+	r.Name("PutObject").Methods(http.MethodPut).Path(common.ApiPutObjectRoute).Handler(http.HandlerFunc(HTTPHandlePutObject))
+	r.Name("PatchObject").Methods(http.MethodPatch).Path(common.ApiPatchObjectRoute).Handler(http.HandlerFunc(HTTPHandlePatchObject))
+	r.Name("MoveObject").Methods(http.MethodPost).Path(common.ApiMoveObjectRoute).Handler(http.HandlerFunc(HTTPHandleMoveObject))
+	r.Name("GetObject").Methods(http.MethodGet).Path(common.ApiGetObjectRoute).Handler(http.HandlerFunc(HTTPHandleGetObject))
+	r.Name("DeleteObject").Methods(http.MethodDelete).Path(common.ApiDeleteObjectRoute).Handler(http.HandlerFunc(HTTPHandleDeleteObject))
+	r.Name("ListObjects").Methods(http.MethodGet).Path(common.ApiListObjectsRoute).Handler(http.HandlerFunc(HTTPHandleListObjects))
+	r.Name("SearchObjects").Methods(http.MethodPost).Path(common.ApiSearchObjectsRoute).Handler(http.HandlerFunc(HTTPHandleSearchObjects))
 
-	var handler http.Handler
-	handler = r
+	var h http.Handler
+	h = r
 	for _, m := range middleware {
-		handler = m(handler)
+		h = m(h)
 	}
-	return handler
+	return h
 }
 
 func HTTPHandlePutObject(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	vars := mux.Vars(r)
-	collection := vars[pathItemCollection]
+	collection := vars[common.ApiRouteVarCollectionName]
 
 	contentType := r.Header.Get(common.HttpHeaderContentType)
 	if contentType != common.ContentTypeJSON {
@@ -103,8 +102,8 @@ func HTTPHandlePatchObject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	collection := vars[pathItemCollection]
-	patch.ObjectId = vars[pathItemId]
+	collection := vars[common.ApiRouteVarCollectionName]
+	patch.ObjectId = vars[common.ApiRouteVarIdName]
 
 	err = PatchObject(ctx, collection, &patch, PatchOptions{})
 	if err != nil {
@@ -131,8 +130,8 @@ func HTTPHandleMoveObject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	collection := vars[pathItemCollection]
-	objectId := vars[pathItemId]
+	collection := vars[common.ApiRouteVarCollectionName]
+	objectId := vars[common.ApiRouteVarIdName]
 
 	err = MoveObject(ctx, collection, objectId, request.TargetCollection, request.AccessSecurityRules, MoveOptions{})
 	if err != nil {
@@ -145,8 +144,8 @@ func HTTPHandleGetObject(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	vars := mux.Vars(r)
-	collection := vars[pathItemCollection]
-	id := vars[pathItemId]
+	collection := vars[common.ApiRouteVarCollectionName]
+	id := vars[common.ApiRouteVarIdName]
 
 	header := r.URL.Query().Get(queryHeader)
 	at := r.URL.Query().Get(queryAt)
@@ -171,8 +170,8 @@ func HTTPHandleDeleteObject(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	vars := mux.Vars(r)
-	collection := vars[pathItemCollection]
-	id := vars[pathItemId]
+	collection := vars[common.ApiRouteVarCollectionName]
+	id := vars[common.ApiRouteVarIdName]
 
 	err := DeleteObject(ctx, collection, id)
 	if err != nil {
@@ -190,7 +189,7 @@ func HTTPHandleListObjects(w http.ResponseWriter, r *http.Request) {
 	)
 
 	vars := mux.Vars(r)
-	collection := vars[pathItemCollection]
+	collection := vars[common.ApiRouteVarCollectionName]
 
 	opts.Offset, err = common.Int64QueryParam(r, queryOffset)
 	if err != nil {
@@ -212,9 +211,21 @@ func HTTPHandleListObjects(w http.ResponseWriter, r *http.Request) {
 			logs.Error("cursor closed with an error", logs.Err(cErr))
 		}
 	}()
-	w.Header().Add(common.HttpHeaderContentType, common.ContentTypeJSON)
 
-	_, err = w.Write([]byte("{"))
+	accept := r.Header.Get(common.HttpHeaderAccept)
+	acceptsJsonStream := strings.Contains(accept, common.ContentTypeJSONStream)
+	if acceptsJsonStream {
+		w.Header().Set(common.HttpHeaderContentType, common.ContentTypeJSONStream)
+	} else {
+		w.Header().Set(common.HttpHeaderContentType, common.ContentTypeJSON)
+	}
+
+	encoder := json.NewEncoder(w)
+
+	if !acceptsJsonStream {
+		_, err = w.Write([]byte("["))
+	}
+
 	position := 0
 	for {
 		object, err2 := cursor.Browse()
@@ -227,20 +238,29 @@ func HTTPHandleListObjects(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var item string
-		if position == 0 {
-			position++
-		} else {
-			item = ","
+		if !acceptsJsonStream {
+			if position == 0 {
+				position++
+			} else {
+				item = ","
+			}
+			_, err = w.Write([]byte(item))
+			if err != nil {
+				logs.Error("GetObjects: failed to write result objects", logs.Err(err))
+				return
+			}
 		}
 
-		item = item + fmt.Sprintf("\"%s\": %s", object.Header.Id, object.Data)
-		_, err = w.Write([]byte(item))
+		err = encoder.Encode(object)
 		if err != nil {
-			logs.Error("GetObjects: failed to write result item", logs.Err(err))
+			logs.Error("GetObjects: failed to write result objects", logs.Err(err))
 			return
 		}
 	}
-	_, err = w.Write([]byte("}"))
+
+	if !acceptsJsonStream {
+		_, err = w.Write([]byte("]"))
+	}
 }
 
 func HTTPHandleSearchObjects(w http.ResponseWriter, r *http.Request) {
@@ -255,7 +275,7 @@ func HTTPHandleSearchObjects(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	collection := vars[pathItemCollection]
+	collection := vars[common.ApiRouteVarCollectionName]
 
 	cursor, err := SearchObjects(ctx, collection, &query)
 	if err != nil {
@@ -267,9 +287,21 @@ func HTTPHandleSearchObjects(w http.ResponseWriter, r *http.Request) {
 			logs.Error("cursor closed with an error", logs.Err(cErr))
 		}
 	}()
-	w.Header().Add(common.HttpHeaderContentType, common.ContentTypeJSON)
 
-	_, err = w.Write([]byte("{"))
+	accept := r.Header.Get(common.HttpHeaderAccept)
+	acceptsJsonStream := strings.Contains(accept, common.ContentTypeJSONStream)
+	if acceptsJsonStream {
+		w.Header().Set(common.HttpHeaderContentType, common.ContentTypeJSONStream)
+	} else {
+		w.Header().Set(common.HttpHeaderContentType, common.ContentTypeJSON)
+	}
+
+	encoder := json.NewEncoder(w)
+
+	if !acceptsJsonStream {
+		_, err = w.Write([]byte("["))
+	}
+
 	position := 0
 	for {
 		object, err2 := cursor.Browse()
@@ -278,26 +310,33 @@ func HTTPHandleSearchObjects(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			w.WriteHeader(errors.HTTPStatus(err2))
-			_, err = w.Write([]byte("}"))
 			return
 		}
 
 		var item string
-		if position == 0 {
-			position++
-		} else {
-			item = ","
+		if !acceptsJsonStream {
+			if position == 0 {
+				position++
+			} else {
+				item = ","
+			}
+			_, err = w.Write([]byte(item))
+			if err != nil {
+				logs.Error("GetObjects: failed to write result objects", logs.Err(err))
+				return
+			}
 		}
 
-		item = item + fmt.Sprintf("\"%s\": %s", object.Header.Id, object.Data)
-		_, err = w.Write([]byte(item))
+		err = encoder.Encode(object)
 		if err != nil {
-			_, err = w.Write([]byte("}"))
-			logs.Error("GetObjects: failed to write result item", logs.Err(err))
+			logs.Error("GetObjects: failed to write result objects", logs.Err(err))
 			return
 		}
 	}
-	_, err = w.Write([]byte("}"))
+
+	if !acceptsJsonStream {
+		_, err = w.Write([]byte("]"))
+	}
 }
 
 func HTTPHandleSetSettings(w http.ResponseWriter, r *http.Request) {
@@ -413,7 +452,7 @@ func HTTPHandleGetCollection(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	vars := mux.Vars(r)
-	id := vars[pathItemId]
+	id := vars[common.ApiRouteVarIdName]
 
 	collection, err := GetCollection(ctx, id)
 	if err != nil {
@@ -436,7 +475,7 @@ func HTTPHandleDeleteCollection(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	vars := mux.Vars(r)
-	id := vars[pathItemId]
+	id := vars[common.ApiRouteVarIdName]
 
 	err := DeleteCollection(ctx, id)
 	if err != nil {
