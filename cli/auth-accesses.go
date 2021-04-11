@@ -36,15 +36,15 @@ func init() {
 
 var accessCMD = &cobra.Command{
 	Use:   "access",
-	Short: "Manage store accesses",
+	Short: "Manage store client applications",
 	Run: func(cmd *cobra.Command, args []string) {
 		_ = cmd.Help()
 	},
 }
 
 var saveAccessCMD = &cobra.Command{
-	Use:   "set",
-	Short: "save accesses",
+	Use:   "save",
+	Short: "Saves client application info",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 
@@ -86,7 +86,7 @@ var saveAccessCMD = &cobra.Command{
 
 var getAccessesCMD = &cobra.Command{
 	Use:   "get",
-	Short: "Get all accesses",
+	Short: "Get all registered client applications",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 
@@ -102,7 +102,7 @@ var getAccessesCMD = &cobra.Command{
 
 var deleteAccessesCMD = &cobra.Command{
 	Use:   "del",
-	Short: "Delete accesses",
+	Short: "Delete client aplications",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 

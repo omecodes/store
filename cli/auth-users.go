@@ -14,27 +14,26 @@ import (
 )
 
 func init() {
-	flags := saveUserCMD.PersistentFlags()
+	flags := saveCredentials.PersistentFlags()
 	flags.StringVar(&input, "in", "", "Input file containing sequence of JSON encoded access")
 	if err := cobra.MarkFlagRequired(flags, "in"); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
-
-	usersCMD.AddCommand(saveUserCMD)
+	credentialsCMD.AddCommand(saveCredentials)
 }
 
-var usersCMD = &cobra.Command{
+var credentialsCMD = &cobra.Command{
 	Use:   "users",
-	Short: "Manage store accesses",
+	Short: "Manage user credentials",
 	Run: func(cmd *cobra.Command, args []string) {
 		_ = cmd.Help()
 	},
 }
 
-var saveUserCMD = &cobra.Command{
-	Use:   "new",
-	Short: "Save user credentials",
+var saveCredentials = &cobra.Command{
+	Use:   "create",
+	Short: "Creates user credentials",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 

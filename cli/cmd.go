@@ -3,9 +3,11 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/omecodes/common/utils/prompt"
 	"github.com/omecodes/store/client"
 	"github.com/spf13/cobra"
 	"os"
+	"strings"
 )
 
 var (
@@ -41,6 +43,22 @@ func init() {
 	CMD.AddCommand(authCMD)
 	CMD.AddCommand(objectsCMD)
 	CMD.AddCommand(filesCMD)
+}
+
+func promptAuthentication() (username, password string, err error) {
+	if len(authentication) != 0 {
+		parts := strings.Split(strings.Trim(authentication, " "), ":")
+		if len(parts) == 2 {
+			return parts[0], parts[1], nil
+		}
+	}
+
+	username, err = prompt.Text("username", false)
+	if err != nil {
+		return
+	}
+	password, err = prompt.Password(fmt.Sprintf("%s's password", username))
+	return
 }
 
 func newClient() *client.Client {
