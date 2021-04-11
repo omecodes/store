@@ -1,9 +1,11 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/omecodes/store/client"
 	"github.com/spf13/cobra"
-	"path"
+	"os"
 )
 
 var (
@@ -41,9 +43,35 @@ func init() {
 	CMD.AddCommand(filesCMD)
 }
 
-func fullAPILocation() string {
-	if noTLS {
-		return fmt.Sprintf("http://localhost:%d%s", port, path.Join("/", apiLocation))
+func newClient() *client.Client {
+	username, password, err := promptAuthentication()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
 	}
-	return fmt.Sprintf("https://localhost:%d%s", port, path.Join("/", apiLocation))
+
+	var opts []client.Option
+	opts = append(opts, client.WithUserBasicAuthentication(username, password))
+	opts = append(opts, client.WithAPILocation(apiLocation))
+	if port > 0 {
+		opts = append(opts, client.WithPort(port))
+	}
+	if noTLS {
+		opts = append(opts, client.WithoutTLS())
+	}
+
+	return client.New("localhost", opts...)
+}
+
+func writeToFile(o interface{}, filename string) {
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+
+	defer func() {
+		_ = file.Close()
+	}()
+	_ = json.NewEncoder(file).Encode(o)
 }

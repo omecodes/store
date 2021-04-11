@@ -21,19 +21,7 @@ func init() {
 		os.Exit(-1)
 	}
 
-	flags = getUsersCMD.PersistentFlags()
-	flags.StringVar(&output, "out", "", "Output file")
-
-	flags = deleteUserCMD.PersistentFlags()
-	flags.StringArrayVar(&ids, "id", nil, "Access ID")
-	if err := cobra.MarkFlagRequired(flags, "id"); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
-
 	usersCMD.AddCommand(saveUserCMD)
-	usersCMD.AddCommand(getUsersCMD)
-	usersCMD.AddCommand(deleteUserCMD)
 }
 
 var usersCMD = &cobra.Command{
@@ -60,6 +48,7 @@ var saveUserCMD = &cobra.Command{
 			_ = file.Close()
 		}()
 
+		cl := newClient()
 		decoder := json.NewDecoder(file)
 		for {
 			var userCredentials *auth.UserCredentials
@@ -77,36 +66,7 @@ var saveUserCMD = &cobra.Command{
 				logs.Info("Generated password for user", logs.Details("user", userCredentials.Username), logs.Details("password", userCredentials.Password))
 			}
 
-			err = putUser(userCredentials)
-			if err != nil {
-				fmt.Println(err)
-			}
-		}
-	},
-}
-
-var getUsersCMD = &cobra.Command{
-	Use:   "get",
-	Short: "Get all accesses",
-	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-
-		err = getAccesses(output)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(-1)
-		}
-	},
-}
-
-var deleteUserCMD = &cobra.Command{
-	Use:   "del",
-	Short: "Delete accesses",
-	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-
-		for _, id := range ids {
-			err = deleteAccess(id)
+			err = cl.CreateUserCredentials(userCredentials)
 			if err != nil {
 				fmt.Println(err)
 			}

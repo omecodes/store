@@ -58,6 +58,8 @@ var saveAccessCMD = &cobra.Command{
 			_ = file.Close()
 		}()
 
+		cl := newClient()
+
 		decoder := json.NewDecoder(file)
 		for {
 			var access *auth.ClientApp
@@ -74,7 +76,7 @@ var saveAccessCMD = &cobra.Command{
 				}
 			}
 
-			err = putAccess(access)
+			err = cl.SaveClientApplicationInfo(access)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -88,11 +90,13 @@ var getAccessesCMD = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 
-		err = getAccesses(output)
+		cl := newClient()
+		clientApps, err := cl.ListClientApplications()
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
+		writeToFile(clientApps, output)
 	},
 }
 
@@ -102,8 +106,9 @@ var deleteAccessesCMD = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 
+		cl := newClient()
 		for _, id := range ids {
-			err = deleteAccess(id)
+			err = cl.DeleteClientApplication(id)
 			if err != nil {
 				fmt.Println(err)
 			}

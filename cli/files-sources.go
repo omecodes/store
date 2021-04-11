@@ -41,13 +41,14 @@ var getFileSourcesCMD = &cobra.Command{
 	Use:   "get",
 	Short: "Get list of all file sources",
 	Run: func(cmd *cobra.Command, args []string) {
-		var err error
+		cl := newClient()
 
-		err = listFileSources(output)
+		sources, err := cl.ListFileSources()
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
+		writeToFile(sources, "sources.json")
 	},
 }
 
@@ -67,6 +68,7 @@ var createFileSourceCMD = &cobra.Command{
 			_ = file.Close()
 		}()
 
+		cl := newClient()
 		decoder := json.NewDecoder(file)
 		for {
 			var source *files.Source
@@ -75,7 +77,7 @@ var createFileSourceCMD = &cobra.Command{
 				return
 			}
 
-			err = putFileSource(source)
+			err = cl.CreateFileSource(source)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -89,8 +91,9 @@ var deleteFileSourcesCMD = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 
+		cl := newClient()
 		for _, id := range ids {
-			err = deleteFileSources(id)
+			err = cl.DeleteFilesSource(id)
 			if err != nil {
 				fmt.Println(err)
 			}

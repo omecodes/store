@@ -33,20 +33,22 @@ var getCollectionsCMD = &cobra.Command{
 	Use:   "get",
 	Short: "List all collections",
 	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-		err = listCollections(output)
+		collections, err := newClient().ListCollections()
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
+		}
+
+		if collections != nil {
+			writeToFile(collections, "collections.json")
 		}
 	},
 }
 
 var createCollectionsCMD = &cobra.Command{
-	Use:   "new",
+	Use:   "create",
 	Short: "Create a new collection",
 	Run: func(cmd *cobra.Command, args []string) {
-		var err error
 
 		file, err := os.Open(input)
 		if err != nil {
@@ -58,6 +60,7 @@ var createCollectionsCMD = &cobra.Command{
 			_ = file.Close()
 		}()
 
+		cl := newClient()
 		decoder := json.NewDecoder(file)
 		for {
 			var col *objects.Collection
@@ -66,7 +69,7 @@ var createCollectionsCMD = &cobra.Command{
 				return
 			}
 
-			err = putCollections(col)
+			err = cl.CreateObjectsCollection(col)
 			if err != nil {
 				fmt.Println(err)
 			}
