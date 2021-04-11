@@ -18,10 +18,10 @@ RUN go get -d -v ./...
 # Install the package
 RUN go install -v ./...
 
-RUN go build -o ./app/store ./app/server.go
+RUN go build store.go
 
 # This container exposes port 8080 to the outside world
 EXPOSE 8080
 
 # Run the executable
-CMD ["./apps/store run"]
+CMD ["./store mono"]

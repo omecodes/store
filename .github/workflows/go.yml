@@ -33,7 +33,7 @@ jobs:
         fi
 
     - name: Build
-      run: go build -o storeDB -v .
+      run: go build store.go
 
     - name: Test
       run: go test -v .
