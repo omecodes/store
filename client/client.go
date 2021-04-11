@@ -841,3 +841,46 @@ func (c *Client) GetAccount(id string) (*accounts.Account, error) {
 	var a *accounts.Account
 	return a, json.NewDecoder(rsp.Body).Decode(&a)
 }
+
+func (c *Client) SaveSettings(name string, value string) error {
+	values := url.Values{}
+	values.Set(common.ApiParamName, name)
+
+	endpoint := c.fullAPILocation() + common.ApiSetSettingsRoute
+	endpoint = endpoint + "?" + values.Encode()
+
+	rsp, err := c.request(http.MethodPut, endpoint, nil, strings.NewReader(value))
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
+
+	return common.ErrorFromHttpResponse(rsp)
+}
+
+func (c *Client) GetSettings(name string) (string, error) {
+	values := url.Values{}
+	values.Set(common.ApiParamName, name)
+
+	endpoint := c.fullAPILocation() + common.ApiSetSettingsRoute
+	endpoint = endpoint + "?" + values.Encode()
+
+	rsp, err := c.request(http.MethodPut, endpoint, nil, nil)
+	if err != nil {
+		return "", err
+	}
+
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
+
+	if err = common.ErrorFromHttpResponse(rsp); err != nil {
+		return "", err
+	}
+
+	valueBytes, err := io.ReadAll(rsp.Body)
+	return string(valueBytes), err
+}
