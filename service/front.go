@@ -166,13 +166,12 @@ func (f *Front) httpRouter() http.Handler {
 		common.MiddlewareWithSettings(f.settings),
 		common.MiddlewareLogger,
 	}
-	r := mux.NewRouter()
 
-	subRouter := r.PathPrefix(common.ApiDefaultLocation).Subrouter()
-	subRouter.Name("ServeFiles").Handler(http.StripPrefix(common.ApiDefaultLocation, f.filesHandler()))
-	subRouter.Name("ServeObjects").Handler(http.StripPrefix(common.ApiDefaultLocation, f.objectsHandler()))
-	subRouter.Name("ManageAuthentication").Handler(http.StripPrefix(common.ApiDefaultLocation, auth.MuxRouter()))
-	subRouter.Name("ManageAccounts").Handler(http.StripPrefix(common.ApiDefaultLocation, accounts.MuxRouter()))
+	r := mux.NewRouter()
+	r.PathPrefix(common.ApiFilesRoutePrefix).Name("ServeFiles").Handler(http.StripPrefix(common.ApiDefaultLocation, f.filesHandler()))
+	r.PathPrefix(common.ApiObjectsRoutePrefix).Name("ServeObjects").Handler(http.StripPrefix(common.ApiDefaultLocation, f.objectsHandler()))
+	r.PathPrefix(common.ApiAuthRoutePrefix).Name("ManageAuthentication").Handler(http.StripPrefix(common.ApiDefaultLocation, auth.MuxRouter()))
+	r.PathPrefix(common.ApiAccountsRoutePrefix).Name("ManageAccounts").Handler(http.StripPrefix(common.ApiDefaultLocation, accounts.MuxRouter()))
 	r.Handle(common.ApiLoginRoute, auth.UserSessionHandler()).Methods(http.MethodPost)
 
 	staticFilesRouter := http.HandlerFunc(webapp.ServeApps)

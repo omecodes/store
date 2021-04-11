@@ -353,11 +353,11 @@ func (s *Server) httpRouter() http.Handler {
 	}
 
 	r := mux.NewRouter()
-	apiSubRouter := r.PathPrefix(common.ApiDefaultLocation)
-	apiSubRouter.Name("ServeFiles").Handler(http.StripPrefix(common.ApiDefaultLocation, s.filesHandler()))
-	apiSubRouter.Name("ServeObjects").Handler(http.StripPrefix(common.ApiDefaultLocation, s.objectsHandler()))
-	apiSubRouter.Name("ManageAuthentication").Handler(http.StripPrefix(common.ApiDefaultLocation, auth.MuxRouter()))
-	apiSubRouter.Name("ManageAccounts").Handler(http.StripPrefix(common.ApiDefaultLocation, accounts.MuxRouter()))
+
+	r.PathPrefix(common.ApiFilesRoutePrefix).Name("ServeFiles").Handler(http.StripPrefix(common.ApiDefaultLocation, s.filesHandler()))
+	r.PathPrefix(common.ApiObjectsRoutePrefix).Name("ServeObjects").Handler(http.StripPrefix(common.ApiDefaultLocation, s.objectsHandler()))
+	r.PathPrefix(common.ApiAuthRoutePrefix).Name("ManageAuthentication").Handler(http.StripPrefix(common.ApiDefaultLocation, auth.MuxRouter()))
+	r.PathPrefix(common.ApiAccountsRoutePrefix).Name("ManageAccounts").Handler(http.StripPrefix(common.ApiDefaultLocation, accounts.MuxRouter()))
 
 	r.Handle(common.ApiLoginRoute, auth.UserSessionHandler()).Methods(http.MethodPost)
 
