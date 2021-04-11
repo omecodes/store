@@ -64,7 +64,7 @@ func HTTPHandleSetSettings(w http.ResponseWriter, r *http.Request) {
 
 func HTTPHandleGetSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	name := r.URL.Query().Get("name")
+	name := r.URL.Query().Get(common.ApiParamName)
 
 	user := auth.Get(ctx)
 	if user == nil {
