@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
 	"github.com/omecodes/errors"
 )
 
@@ -23,15 +22,6 @@ func AllowCORSMiddleware(next http.Handler) http.Handler {
 		w.Header().Set(HttpHeaderAccessControlAllowOrigin, "*")
 		next.ServeHTTP(w, r)
 	})
-}
-
-func MiddlewareWithSettings(manager SettingsManager) mux.MiddlewareFunc {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			updatedContext := ContextWithSettings(r.Context(), manager)
-			next.ServeHTTP(w, r.WithContext(updatedContext))
-		})
-	}
 }
 
 func ErrorFromHttpResponse(rsp *http.Response) error {

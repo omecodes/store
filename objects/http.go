@@ -7,11 +7,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
-	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/common"
 	se "github.com/omecodes/store/search-engine"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 )
@@ -24,9 +22,6 @@ const (
 
 func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	r := mux.NewRouter()
-
-	r.Name("SetSettings").Methods(http.MethodPut).Path(common.ApiSetSettingsRoute).Handler(http.HandlerFunc(HTTPHandleSetSettings))
-	r.Name("GetSettings").Methods(http.MethodGet).Path(common.ApiGetSettingsRoute).Handler(http.HandlerFunc(HTTPHandleGetSettings))
 
 	r.Name("CreateCollection").Methods(http.MethodPut).Path(common.ApiCreateCollectionRoute).Handler(http.HandlerFunc(HTTPHandleCreateCollection))
 	r.Name("ListCollections").Methods(http.MethodGet).Path(common.ApiListCollectionRoute).Handler(http.HandlerFunc(HTTPHandleListCollections))
@@ -337,73 +332,6 @@ func HTTPHandleSearchObjects(w http.ResponseWriter, r *http.Request) {
 	if !acceptsJsonStream {
 		_, err = w.Write([]byte("]"))
 	}
-}
-
-func HTTPHandleSetSettings(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	user := auth.Get(ctx)
-	if user == nil {
-		w.WriteHeader(http.StatusForbidden)
-		return
-	}
-
-	if user.Name != "admin" {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-
-	name := r.URL.Query().Get("name")
-
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		logs.Error("could not read request body", logs.Err(err))
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	settings := common.Settings(ctx)
-	if settings == nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	err = settings.Set(name, string(data))
-	if err != nil {
-		logs.Error("failed to set settings", logs.Err(err))
-		w.WriteHeader(errors.HTTPStatus(err))
-	}
-}
-
-func HTTPHandleGetSettings(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	name := r.URL.Query().Get("name")
-
-	user := auth.Get(ctx)
-	if user == nil {
-		w.WriteHeader(http.StatusForbidden)
-		return
-	}
-
-	if user.Name != "admin" {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-
-	settings := common.Settings(ctx)
-	if settings == nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	value, err := settings.Get(name)
-	if err != nil {
-		logs.Error("failed to set settings", logs.Err(err))
-		w.WriteHeader(errors.HTTPStatus(err))
-	}
-
-	w.Header().Add(common.HttpHeaderContentType, "text/plain")
-	_, _ = w.Write([]byte(value))
 }
 
 func HTTPHandleCreateCollection(w http.ResponseWriter, r *http.Request) {

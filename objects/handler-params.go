@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
-	"github.com/omecodes/store/common"
 	se "github.com/omecodes/store/search-engine"
+	"github.com/omecodes/store/settings"
 	"io"
 	"strconv"
 )
@@ -41,12 +41,12 @@ func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object
 		return "", errors.BadRequest("requires a collection ID and object with header and data")
 	}
 
-	settings := common.Settings(ctx)
-	if settings == nil {
+	settingsManager := settings.GetManager(ctx)
+	if settingsManager == nil {
 		return "", errors.Internal("missing settings in context")
 	}
 
-	s, err := settings.Get(common.SettingsDataMaxSizePath)
+	s, err := settingsManager.Get(settings.DataMaxSizePath)
 	if err != nil {
 		logs.Error("could not get data max length from settings", logs.Err(err))
 		return "", errors.Internal("could not get data-max-size config")
@@ -77,12 +77,12 @@ func (p *ParamsHandler) PatchObject(ctx context.Context, collection string, patc
 		return errors.BadRequest("requires a collection ID a patch, with object ID content data and the path")
 	}
 
-	settings := common.Settings(ctx)
-	if settings == nil {
+	settingsManager := settings.GetManager(ctx)
+	if settingsManager == nil {
 		return errors.Internal("missing settings in context")
 	}
 
-	s, err := settings.Get(common.SettingsDataMaxSizePath)
+	s, err := settingsManager.Get(settings.DataMaxSizePath)
 	if err != nil {
 		logs.Error("could not get data max length from settings", logs.Err(err))
 		return errors.Internal("could not get data-max-size config")
@@ -135,12 +135,12 @@ func (p *ParamsHandler) ListObjects(ctx context.Context, collection string, opts
 		return nil, errors.BadRequest("requires a collection ID ")
 	}
 
-	settings := common.Settings(ctx)
-	if settings == nil {
+	settingsManager := settings.GetManager(ctx)
+	if settingsManager == nil {
 		return nil, errors.Internal("missing settings in context")
 	}
 
-	s, err := settings.Get(common.SettingsObjectListMaxCount)
+	s, err := settingsManager.Get(settings.ObjectListMaxCount)
 	if err != nil {
 		logs.Error("could not get data max length from settings", logs.Err(err))
 		return nil, errors.Internal("could not get data-max-size config")

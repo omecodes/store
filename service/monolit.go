@@ -20,6 +20,7 @@ import (
 	"github.com/omecodes/store/files"
 	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/session"
+	"github.com/omecodes/store/settings"
 	"github.com/omecodes/store/webapp"
 	"golang.org/x/crypto/acme/autocert"
 	"io/ioutil"
@@ -62,7 +63,7 @@ type Server struct {
 	autoCertDir string
 
 	objects                 objects.DB
-	settings                common.SettingsManager
+	settings                settings.Manager
 	accountsManager         accounts.Manager
 	authenticationProviders auth.ProviderManager
 	credentialsManager      auth.CredentialsManager
@@ -133,7 +134,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	s.settings, err = common.NewSQLSettings(s.db, bome.MySQL, "store_settings")
+	s.settings, err = settings.NewSQLManager(s.db, bome.MySQL, "store_settings")
 	if err != nil {
 		return err
 	}
@@ -158,34 +159,34 @@ func (s *Server) init() error {
 		return err
 	}
 
-	_, err = s.settings.Get(common.SettingsDataMaxSizePath)
+	_, err = s.settings.Get(settings.DataMaxSizePath)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
-		err = s.settings.Set(common.SettingsDataMaxSizePath, common.DefaultSettings[common.SettingsDataMaxSizePath])
+		err = s.settings.Set(settings.DataMaxSizePath, settings.Default[settings.DataMaxSizePath])
 		if err != nil && !errors.IsConflict(err) {
 			return err
 		}
 	}
 
-	_, err = s.settings.Get(common.SettingsDataMaxSizePath)
+	_, err = s.settings.Get(settings.DataMaxSizePath)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
-		err = s.settings.Set(common.SettingsCreateDataSecurityRule, common.DefaultSettings[common.SettingsCreateDataSecurityRule])
+		err = s.settings.Set(settings.CreateDataSecurityRule, settings.Default[settings.CreateDataSecurityRule])
 		if err != nil && !errors.IsConflict(err) {
 			return err
 		}
 	}
 
-	_, err = s.settings.Get(common.SettingsObjectListMaxCount)
+	_, err = s.settings.Get(settings.ObjectListMaxCount)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
-		err = s.settings.Set(common.SettingsObjectListMaxCount, common.DefaultSettings[common.SettingsObjectListMaxCount])
+		err = s.settings.Set(settings.ObjectListMaxCount, settings.Default[settings.ObjectListMaxCount])
 		if err != nil && !errors.IsConflict(err) {
 			return err
 		}
@@ -357,10 +358,11 @@ func (s *Server) httpRouter() http.Handler {
 
 	r := mux.NewRouter()
 
-	r.PathPrefix(common.ApiFilesRoutePrefix).Name("ServeFiles").Handler(http.StripPrefix(common.ApiDefaultLocation, s.filesHandler()))
-	r.PathPrefix(common.ApiObjectsRoutePrefix).Name("ServeObjects").Handler(http.StripPrefix(common.ApiDefaultLocation, s.objectsHandler()))
+	r.PathPrefix(common.ApiFilesRoutePrefix).Name("ManageFiles").Handler(http.StripPrefix(common.ApiDefaultLocation, s.filesHandler()))
+	r.PathPrefix(common.ApiObjectsRoutePrefix).Name("ManageJSONObjects").Handler(http.StripPrefix(common.ApiDefaultLocation, s.objectsHandler()))
 	r.PathPrefix(common.ApiAuthRoutePrefix).Name("ManageAuthentication").Handler(http.StripPrefix(common.ApiDefaultLocation, auth.MuxRouter()))
 	r.PathPrefix(common.ApiAccountsRoutePrefix).Name("ManageAccounts").Handler(http.StripPrefix(common.ApiDefaultLocation, accounts.MuxRouter()))
+	r.PathPrefix(common.ApiSettingsRoutePrefix).Name("ManageSettings").Handler(http.StripPrefix(common.ApiDefaultLocation, settings.MuxRouter()))
 
 	r.Handle(common.ApiLoginRoute, auth.UserSessionHandler()).Methods(http.MethodPost)
 
@@ -380,7 +382,7 @@ func (s *Server) objectsHandler() http.Handler {
 			objects.MiddlewareWithACLManager(s.accessStore),
 			objects.MiddlewareWithDB(s.objects),
 		),
-		common.MiddlewareWithSettings(s.settings),
+		settings.MiddlewareWithManager(s.settings),
 	)
 }
 

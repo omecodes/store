@@ -22,6 +22,7 @@ import (
 	"github.com/omecodes/store/files"
 	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/session"
+	"github.com/omecodes/store/settings"
 	"github.com/omecodes/store/webapp"
 	"golang.org/x/crypto/acme/autocert"
 	"io/ioutil"
@@ -56,7 +57,7 @@ type Front struct {
 	config *FrontConfig
 
 	cookieStore *sessions.CookieStore
-	settings    common.SettingsManager
+	settings    settings.Manager
 	accounts    accounts.Manager
 	idProviders auth.ProviderManager
 	credentials auth.CredentialsManager
@@ -110,7 +111,7 @@ func (f *Front) init() error {
 		}
 	}
 
-	f.settings, err = common.NewSQLSettings(f.db, bome.MySQL, "store_settings")
+	f.settings, err = settings.NewSQLManager(f.db, bome.MySQL, "store_settings")
 	if err != nil {
 		return err
 	}
@@ -163,7 +164,7 @@ func (f *Front) httpRouter() http.Handler {
 		),
 		accounts.Middleware(accounts.MiddlewareWithAccountManager(f.accounts)),
 		session.WithHTTPSessionMiddleware(f.cookieStore),
-		common.MiddlewareWithSettings(f.settings),
+		settings.MiddlewareWithManager(f.settings),
 		common.MiddlewareLogger,
 	}
 
@@ -172,10 +173,13 @@ func (f *Front) httpRouter() http.Handler {
 	}
 
 	r := mux.NewRouter()
-	r.PathPrefix(common.ApiFilesRoutePrefix).Name("ServeFiles").Handler(http.StripPrefix(common.ApiDefaultLocation, f.filesHandler()))
-	r.PathPrefix(common.ApiObjectsRoutePrefix).Name("ServeObjects").Handler(http.StripPrefix(common.ApiDefaultLocation, f.objectsHandler()))
+
+	r.PathPrefix(common.ApiFilesRoutePrefix).Name("ManageFiles").Handler(http.StripPrefix(common.ApiDefaultLocation, f.filesHandler()))
+	r.PathPrefix(common.ApiObjectsRoutePrefix).Name("ManageJSONObjects").Handler(http.StripPrefix(common.ApiDefaultLocation, f.objectsHandler()))
 	r.PathPrefix(common.ApiAuthRoutePrefix).Name("ManageAuthentication").Handler(http.StripPrefix(common.ApiDefaultLocation, auth.MuxRouter()))
 	r.PathPrefix(common.ApiAccountsRoutePrefix).Name("ManageAccounts").Handler(http.StripPrefix(common.ApiDefaultLocation, accounts.MuxRouter()))
+	r.PathPrefix(common.ApiSettingsRoutePrefix).Name("ManageSettings").Handler(http.StripPrefix(common.ApiDefaultLocation, settings.MuxRouter()))
+
 	r.Handle(common.ApiLoginRoute, auth.UserSessionHandler()).Methods(http.MethodPost)
 
 	staticFilesRouter := http.HandlerFunc(webapp.ServeApps)

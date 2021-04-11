@@ -40,9 +40,11 @@ const (
 	ApiFilesRoutePrefix    = "/api/files"
 	ApiAuthRoutePrefix     = "/api/auth"
 	ApiAccountsRoutePrefix = "/api/accounts"
+	ApiSettingsRoutePrefix = "/api/settings"
 
 	ApiQueryParamOffset = "offset"
 	ApiParamAt          = "at"
+	ApiParamName        = "name"
 	ApiParamQuery       = "q"
 	ApiParamUsername    = "username"
 	ApiParamPassword    = "password"

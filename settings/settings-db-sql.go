@@ -1,4 +1,4 @@
-package common
+package settings
 
 import (
 	"database/sql"
@@ -6,41 +6,41 @@ import (
 	"github.com/omecodes/errors"
 )
 
-func NewSQLSettings(db *sql.DB, dialect string, tableName string) (SettingsManager, error) {
+func NewSQLManager(db *sql.DB, dialect string, tableName string) (Manager, error) {
 	m, err := bome.Build().SetConn(db).SetDialect(dialect).SetTableName(tableName).Map()
 	if err != nil {
 		return nil, err
 	}
 
-	settings := &settingsSQL{bMap: m}
-	_, err = settings.Get(SettingsDataMaxSizePath)
+	settings := &sqlManager{bMap: m}
+	_, err = settings.Get(DataMaxSizePath)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return nil, err
 		}
-		err = settings.Set(SettingsDataMaxSizePath, DefaultSettings[SettingsDataMaxSizePath])
+		err = settings.Set(DataMaxSizePath, Default[DataMaxSizePath])
 		if err != nil && !errors.IsConflict(err) {
 			return nil, err
 		}
 	}
 
-	_, err = settings.Get(SettingsDataMaxSizePath)
+	_, err = settings.Get(DataMaxSizePath)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return nil, err
 		}
-		err = settings.Set(SettingsCreateDataSecurityRule, DefaultSettings[SettingsCreateDataSecurityRule])
+		err = settings.Set(CreateDataSecurityRule, Default[CreateDataSecurityRule])
 		if err != nil && !errors.IsConflict(err) {
 			return nil, err
 		}
 	}
 
-	_, err = settings.Get(SettingsObjectListMaxCount)
+	_, err = settings.Get(ObjectListMaxCount)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return nil, err
 		}
-		err = settings.Set(SettingsObjectListMaxCount, DefaultSettings[SettingsObjectListMaxCount])
+		err = settings.Set(ObjectListMaxCount, Default[ObjectListMaxCount])
 		if err != nil && !errors.IsConflict(err) {
 			return nil, err
 		}
@@ -49,29 +49,29 @@ func NewSQLSettings(db *sql.DB, dialect string, tableName string) (SettingsManag
 	return settings, nil
 }
 
-type settingsSQL struct {
+type sqlManager struct {
 	bMap *bome.Map
 }
 
-func (s *settingsSQL) Set(name string, value string) error {
+func (s *sqlManager) Set(name string, value string) error {
 	return s.bMap.Upsert(&bome.MapEntry{
 		Key:   name,
 		Value: value,
 	})
 }
 
-func (s *settingsSQL) Get(name string) (string, error) {
+func (s *sqlManager) Get(name string) (string, error) {
 	return s.bMap.Get(name)
 }
 
-func (s *settingsSQL) Delete(name string) error {
+func (s *sqlManager) Delete(name string) error {
 	return s.bMap.Delete(name)
 }
 
-func (s *settingsSQL) Clear() error {
+func (s *sqlManager) Clear() error {
 	return s.bMap.Clear()
 }
 
-func (s *settingsSQL) Close() error {
+func (s *sqlManager) Close() error {
 	return s.bMap.Close()
 }
