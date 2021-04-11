@@ -24,7 +24,7 @@ require (
 	github.com/pkg/xattr v0.4.3
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/cobra v1.1.1
-	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/tidwall/gjson v1.6.8
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
