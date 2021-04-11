@@ -451,7 +451,13 @@ func (c *Client) CreateFile(sourceId string, file *files.File) error {
 func (c *Client) Ls(sourceId string, dirname string, opts files.ListDirOptions) (*files.DirContent, error) {
 	endpoint := c.fullAPILocation() + path.Join(common.ApiFileTreeRoutePrefix, sourceId, dirname)
 
-	rsp, err := c.request(http.MethodGet, endpoint, nil, nil)
+	buff := bytes.NewBuffer(nil)
+	err := json.NewEncoder(buff).Encode(&opts)
+	if err != nil {
+		return nil, err
+	}
+
+	rsp, err := c.request(http.MethodPost, endpoint, nil, buff)
 	if err != nil {
 		return nil, err
 	}
