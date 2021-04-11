@@ -34,10 +34,15 @@ const (
 )
 
 const (
-	ApiDefaultLocation = "/api"
+	ApiDefaultLocation     = "/api"
+	ApiObjectsRoutePrefix  = "/api/objects"
+	ApiFilesRoutePrefix    = "/api/files"
+	ApiAuthRoutePrefix     = "/api/auth"
+	ApiAccountsRoutePrefix = "/api/accounts"
 
 	ApiQueryParamOffset = "offset"
 	ApiParamAt          = "at"
+	ApiParamQuery       = "q"
 	ApiParamUsername    = "username"
 	ApiParamPassword    = "password"
 	ApiQueryParamPath   = "path"
@@ -73,9 +78,10 @@ const (
 	ApiDeleteAuthProviderRoute = "/auth/providers/{id}"
 	ApiListAuthProvidersRoute  = "/auth/providers"
 
-	ApiCreateAccessRoute     = "/auth/accesses"
-	ApiListAccessesRoute     = "/auth/accesses"
-	ApiDeleteAccessRoute     = "/auth/accesses/{id}"
+	ApiSaveClientAppRoute    = "/auth/apps"
+	ApiListClientAppsRoute   = "/auth/apps"
+	ApiGetClientAppRoute     = "/auth/apps/{id}"
+	ApiDeleteClientAppRoute  = "/auth/apps/{id}"
 	ApiCreateAppSessionRoute = "/auth/sessions/client-app"
 	ApiCreateUserRoute       = "/auth/users"
 	ApiSearchUsersRoute      = "/auth/users"

@@ -28,7 +28,7 @@ func MiddlewareWithSettings(manager SettingsManager) mux.MiddlewareFunc {
 }
 
 func ErrorFromHttpResponse(rsp *http.Response) error {
-	var err *errors.Error
+	var err error
 
 	if rsp.StatusCode != 200 {
 
@@ -58,7 +58,7 @@ func ErrorFromHttpResponse(rsp *http.Response) error {
 
 		if rsp.ContentLength > 0 {
 			body, _ := ioutil.ReadAll(rsp.Body)
-			err.AddDetails("content", string(body))
+			err.(*errors.Error).AddDetails("content", string(body))
 		}
 	}
 	return err

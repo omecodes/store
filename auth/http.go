@@ -49,9 +49,10 @@ func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	r.Name("GetAuthProvider").Methods(http.MethodGet).Path(common.ApiGetAuthProviderRoute).Handler(http.HandlerFunc(GetProvider))
 	r.Name("DeleteAuthProvider").Methods(http.MethodDelete).Path(common.ApiDeleteAuthProviderRoute).Handler(http.HandlerFunc(DeleteProvider))
 	r.Name("ListProviders").Methods(http.MethodGet).Path(common.ApiListAuthProvidersRoute).Handler(http.HandlerFunc(ListProviders))
-	r.Name("CreateAccess").Methods(http.MethodPut).Path(common.ApiCreateAccessRoute).Handler(http.HandlerFunc(CreateAccess))
-	r.Name("ListAccesses").Methods(http.MethodGet).Path(common.ApiListAccessesRoute).Handler(http.HandlerFunc(ListAccesses))
-	r.Name("DeleteAccess").Methods(http.MethodDelete).Path(common.ApiDeleteAccessRoute).Handler(http.HandlerFunc(DeleteAccess))
+	r.Name("SaveClientApp").Methods(http.MethodPut).Path(common.ApiSaveClientAppRoute).Handler(http.HandlerFunc(SaveClientApp))
+	r.Name("GetClientApp").Methods(http.MethodPut).Path(common.ApiGetClientAppRoute).Handler(http.HandlerFunc(GetClientApp))
+	r.Name("ListClientApps").Methods(http.MethodGet).Path(common.ApiListClientAppsRoute).Handler(http.HandlerFunc(ListClientApps))
+	r.Name("DeleteClientApp").Methods(http.MethodDelete).Path(common.ApiDeleteClientAppRoute).Handler(http.HandlerFunc(DeleteClientApp))
 	r.Name("InitWebClientSession").Methods(http.MethodPost).Path(common.ApiCreateAppSessionRoute).Handler(http.HandlerFunc(InitClientAppSession))
 	r.Name("CreateUser").Methods(http.MethodPut).Path(common.ApiCreateUserRoute).Handler(http.HandlerFunc(SaveUser))
 	r.Name("SearchUser").Methods(http.MethodGet).Path(common.ApiSearchUsersRoute).Handler(http.HandlerFunc(SearchUsers))
@@ -219,7 +220,7 @@ func ListProviders(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func CreateAccess(w http.ResponseWriter, r *http.Request) {
+func SaveClientApp(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user := Get(ctx)
 
@@ -250,7 +251,38 @@ func CreateAccess(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ListAccesses(w http.ResponseWriter, r *http.Request) {
+func GetClientApp(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	user := Get(ctx)
+
+	if user == nil || user.Name != "admin" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	var access *ClientApp
+	err := json.NewDecoder(r.Body).Decode(&access)
+	if err != nil {
+		logs.Error("failed to decode request body", logs.Err(err))
+		return
+	}
+
+	manager := GetCredentialsManager(ctx)
+	if manager == nil {
+		logs.Error("missing credentials manager in context")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = manager.SaveClientApp(access)
+	if err != nil {
+		logs.Error("failed to save access", logs.Err(err))
+		w.WriteHeader(errors.HTTPStatus(err))
+		return
+	}
+}
+
+func ListClientApps(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user := Get(ctx)
 
@@ -279,7 +311,7 @@ func ListAccesses(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func DeleteAccess(w http.ResponseWriter, r *http.Request) {
+func DeleteClientApp(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user := Get(ctx)
 
