@@ -22,9 +22,10 @@ const (
 )
 
 const (
-	HttpHeaderContentType   = "Content-Type"
-	HttpHeaderContentLength = "Content-Length"
-	HttpHeaderAccept        = "Accept"
+	HttpHeaderContentType              = "Content-Type"
+	HttpHeaderContentLength            = "Content-Length"
+	HttpHeaderAccept                   = "Accept"
+	HttpHeaderAccessControlAllowOrigin = "Access-Control-Allow-Origin"
 )
 
 const (

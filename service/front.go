@@ -167,6 +167,10 @@ func (f *Front) httpRouter() http.Handler {
 		common.MiddlewareLogger,
 	}
 
+	if f.config.Dev {
+		middleware = append(middleware, common.AllowCORSMiddleware)
+	}
+
 	r := mux.NewRouter()
 	r.PathPrefix(common.ApiFilesRoutePrefix).Name("ServeFiles").Handler(http.StripPrefix(common.ApiDefaultLocation, f.filesHandler()))
 	r.PathPrefix(common.ApiObjectsRoutePrefix).Name("ServeObjects").Handler(http.StripPrefix(common.ApiDefaultLocation, f.objectsHandler()))

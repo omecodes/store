@@ -18,6 +18,13 @@ func Int64QueryParam(r *http.Request, name string) (int64, error) {
 	}
 }
 
+func AllowCORSMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(HttpHeaderAccessControlAllowOrigin, "*")
+		next.ServeHTTP(w, r)
+	})
+}
+
 func MiddlewareWithSettings(manager SettingsManager) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

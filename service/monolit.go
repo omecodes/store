@@ -351,6 +351,9 @@ func (s *Server) httpRouter() http.Handler {
 		session.WithHTTPSessionMiddleware(s.cookieStore),
 		common.MiddlewareLogger,
 	}
+	if s.config.Dev {
+		middleware = append(middleware, common.AllowCORSMiddleware)
+	}
 
 	r := mux.NewRouter()
 
