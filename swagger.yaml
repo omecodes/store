@@ -8,7 +8,7 @@ info:
     email: "omecodes@gmail.com"
   license:
     name: "GNU Affero General Public License v3.0"
-host: "http://localhost:8080"
+host: "localhost:8080"
 basePath: "/api"
 tags:
   - name: "AUTH"
