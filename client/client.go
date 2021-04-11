@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/omecodes/errors"
+	"github.com/omecodes/store/accounts"
+	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/common"
 	"github.com/omecodes/store/files"
 	"github.com/omecodes/store/objects"
@@ -17,15 +19,16 @@ import (
 	"strings"
 )
 
-func New(server string, opts ...Option) *Client {
+func New(host string, opts ...Option) *Client {
 	c := &Client{
-		Server: server,
+		host: host,
 	}
-	c.options.apiLocation = "/api"
+	c.options.apiLocation = common.ApiDefaultLocation
 	c.options.port = 443
 	for _, opt := range opts {
 		opt(&c.options)
 	}
+
 	c.httpClient = &http.Client{
 		Transport: &http.Transport{TLSClientConfig: c.options.tlsConfig},
 	}
@@ -33,16 +36,16 @@ func New(server string, opts ...Option) *Client {
 }
 
 type Client struct {
-	Server     string
+	host       string
 	options    options
 	httpClient *http.Client
 }
 
 func (c *Client) fullAPILocation() string {
 	if c.options.noTLS {
-		return fmt.Sprintf("http://localhost:%d%s", c.options.port, path.Join("/", c.options.apiLocation))
+		return fmt.Sprintf("http://%s:%d%s", c.host, c.options.port, path.Join("/", c.options.apiLocation))
 	}
-	return fmt.Sprintf("https://localhost:%d%s", c.options.port, path.Join("/", c.options.apiLocation))
+	return fmt.Sprintf("https://%s:%d%s", c.host, c.options.port, path.Join("/", c.options.apiLocation))
 }
 
 func (c *Client) request(method string, endpoint string, headers http.Header, body io.Reader) (*http.Response, error) {
@@ -53,6 +56,8 @@ func (c *Client) request(method string, endpoint string, headers http.Header, bo
 			endpoint = "https://" + endpoint
 		}
 	}
+
+	fmt.Println(method + " " + endpoint)
 
 	req, err := http.NewRequest(method, endpoint, body)
 	if err != nil {
@@ -82,9 +87,7 @@ func (c *Client) CreateObjectsCollection(collection *objects.Collection) error {
 		return err
 	}
 
-	headers := http.Header{}
-	headers.Set(common.HttpHeaderAccept, common.AllJSONContentTypes)
-	rsp, err := c.request(http.MethodPut, endpoint, headers, bytes.NewBuffer(encoded))
+	rsp, err := c.request(http.MethodPut, endpoint, nil, bytes.NewBuffer(encoded))
 	if err != nil {
 		return err
 	}
@@ -99,10 +102,7 @@ func (c *Client) CreateObjectsCollection(collection *objects.Collection) error {
 func (c *Client) ListCollections() ([]*objects.Collection, error) {
 	endpoint := fmt.Sprintf(c.fullAPILocation() + common.ApiListCollectionRoute)
 
-	headers := http.Header{}
-	headers.Set(common.HttpHeaderAccept, common.AllJSONContentTypes)
-
-	rsp, err := c.request(http.MethodGet, endpoint, headers, nil)
+	rsp, err := c.request(http.MethodGet, endpoint, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -110,28 +110,14 @@ func (c *Client) ListCollections() ([]*objects.Collection, error) {
 	defer func() {
 		_ = rsp.Body.Close()
 	}()
+
 	if err = common.ErrorFromHttpResponse(rsp); err != nil {
 		return nil, err
 	}
 
 	var collections []*objects.Collection
-
-	contentType := rsp.Header.Get(common.HttpHeaderContentType)
-	if strings.HasPrefix(contentType, common.ContentTypeJSONStream) {
-		col := new(objects.Collection)
-		for {
-			err = jsonpb.Unmarshal(rsp.Body, col)
-			if err != nil {
-				if err == io.EOF {
-					return collections, nil
-				}
-				return nil, errors.Unsupported("response encoding")
-			}
-			collections = append(collections, col)
-		}
-	}
-
-	return collections, json.NewDecoder(rsp.Body).Decode(&collections)
+	err = json.NewDecoder(rsp.Body).Decode(&collections)
+	return collections, err
 }
 
 func (c *Client) GetCollection(collectionId string) (*objects.Collection, error) {
@@ -290,10 +276,7 @@ func (c *Client) ListObjects(collectionId string, opts objects.ListOptions) ([]*
 		endpoint = fmt.Sprintf("%s?%s", endpoint, values.Encode())
 	}
 
-	headers := http.Header{}
-	headers.Set(common.HttpHeaderAccept, common.AllJSONContentTypes)
-
-	rsp, err := c.request(http.MethodGet, endpoint, headers, nil)
+	rsp, err := c.request(http.MethodGet, endpoint, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -329,9 +312,6 @@ func (c *Client) SearchObjects(collectionId string, query *se.SearchQuery) ([]*o
 	endpoint := c.fullAPILocation() + common.ApiSearchObjectsRoute
 	endpoint = strings.Replace(endpoint, common.ApiRouteVarCollection, collectionId, 1)
 
-	headers := http.Header{}
-	headers.Set(common.HttpHeaderAccept, common.AllJSONContentTypes)
-
 	buff := bytes.NewBuffer(nil)
 	encoder := jsonpb.Marshaler{EnumsAsInts: true}
 	err := encoder.Marshal(buff, query)
@@ -339,7 +319,7 @@ func (c *Client) SearchObjects(collectionId string, query *se.SearchQuery) ([]*o
 		return nil, err
 	}
 
-	rsp, err := c.request(http.MethodPost, endpoint, headers, buff)
+	rsp, err := c.request(http.MethodPost, endpoint, nil, buff)
 	if err != nil {
 		return nil, err
 	}
@@ -353,22 +333,6 @@ func (c *Client) SearchObjects(collectionId string, query *se.SearchQuery) ([]*o
 	}
 
 	var list []*objects.Object
-
-	contentType := rsp.Header.Get(common.HttpHeaderContentType)
-	if strings.HasPrefix(contentType, common.ContentTypeJSONStream) {
-		o := new(objects.Object)
-		for {
-			err = jsonpb.Unmarshal(rsp.Body, o)
-			if err != nil {
-				if err == io.EOF {
-					return list, nil
-				}
-				return nil, errors.Unsupported("response encoding")
-			}
-			list = append(list, o)
-		}
-	}
-
 	return list, json.NewDecoder(rsp.Body).Decode(&list)
 }
 
@@ -411,10 +375,7 @@ func (c *Client) CreateFileSource(source *files.Source) error {
 func (c *Client) ListFileSources() ([]*files.Source, error) {
 	endpoint := c.fullAPILocation() + common.ApiListFileSources
 
-	headers := http.Header{}
-	headers.Set(common.HttpHeaderAccept, common.AllJSONContentTypes)
-
-	rsp, err := c.request(http.MethodGet, endpoint, headers, nil)
+	rsp, err := c.request(http.MethodGet, endpoint, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -428,21 +389,6 @@ func (c *Client) ListFileSources() ([]*files.Source, error) {
 	}
 
 	var sources []*files.Source
-	contentType := rsp.Header.Get(common.HttpHeaderContentType)
-
-	if strings.HasPrefix(contentType, common.ContentTypeJSONStream) {
-		source := new(files.Source)
-		for {
-			err = jsonpb.Unmarshal(rsp.Body, source)
-			if err != nil {
-				if err == io.EOF {
-					return sources, nil
-				}
-				return nil, errors.Unsupported("response encoding")
-			}
-			sources = append(sources, source)
-		}
-	}
 	return sources, json.NewDecoder(rsp.Body).Decode(&sources)
 }
 
@@ -505,10 +451,7 @@ func (c *Client) CreateFile(sourceId string, file *files.File) error {
 func (c *Client) Ls(sourceId string, dirname string, opts files.ListDirOptions) (*files.DirContent, error) {
 	endpoint := c.fullAPILocation() + path.Join(common.ApiFileTreeRoutePrefix, sourceId, dirname)
 
-	headers := http.Header{}
-	headers.Set(common.HttpHeaderAccept, common.ContentTypeJSON)
-
-	rsp, err := c.request(http.MethodGet, endpoint, headers, nil)
+	rsp, err := c.request(http.MethodGet, endpoint, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -666,4 +609,235 @@ func (c *Client) GetFileAttributes(sourceId string, filename string) (files.Attr
 	var attrs files.Attributes
 	err = json.NewDecoder(rsp.Body).Decode(&attrs)
 	return attrs, err
+}
+
+func (c *Client) SaveAuthenticationProvider(provider *auth.Provider) error {
+	endpoint := c.fullAPILocation() + common.ApiSaveAuthProviderRoute
+
+	encoded, err := json.Marshal(provider)
+	if err != nil {
+		return err
+	}
+
+	rsp, err := c.request(http.MethodPut, endpoint, nil, bytes.NewBuffer(encoded))
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
+	return common.ErrorFromHttpResponse(rsp)
+}
+
+func (c *Client) GetAuthenticationProvider(providerId string) (*auth.Provider, error) {
+	endpoint := c.fullAPILocation() + common.ApiGetAuthProviderRoute
+	endpoint = strings.Replace(endpoint, common.ApiRouteVarId, providerId, 1)
+
+	rsp, err := c.request(http.MethodGet, endpoint, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
+
+	if err = common.ErrorFromHttpResponse(rsp); err != nil {
+		return nil, err
+	}
+
+	var provider *auth.Provider
+	return provider, json.NewDecoder(rsp.Body).Decode(&provider)
+}
+
+func (c *Client) ListAuthenticationProvider() ([]*auth.Provider, error) {
+	endpoint := c.fullAPILocation() + common.ApiListAuthProvidersRoute
+
+	rsp, err := c.request(http.MethodGet, endpoint, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
+
+	if err = common.ErrorFromHttpResponse(rsp); err != nil {
+		return nil, err
+	}
+
+	var list []*auth.Provider
+	return list, json.NewDecoder(rsp.Body).Decode(&list)
+}
+
+func (c *Client) DeleteAuthProvider(providerId string) error {
+	endpoint := c.fullAPILocation() + common.ApiDeleteAuthProviderRoute
+	endpoint = strings.Replace(endpoint, common.ApiRouteVarId, providerId, 1)
+
+	rsp, err := c.request(http.MethodDelete, endpoint, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
+
+	return common.ErrorFromHttpResponse(rsp)
+}
+
+func (c *Client) CreateUserCredentials(credentials *auth.UserCredentials) error {
+	endpoint := c.fullAPILocation() + common.ApiSaveAuthProviderRoute
+
+	encoded, err := json.Marshal(credentials)
+	if err != nil {
+		return err
+	}
+
+	rsp, err := c.request(http.MethodPut, endpoint, nil, bytes.NewBuffer(encoded))
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
+	return common.ErrorFromHttpResponse(rsp)
+}
+
+func (c *Client) SearchUsers(pattern string) ([]string, error) {
+	values := url.Values{}
+	values.Set(common.ApiParamQuery, pattern)
+
+	endpoint := c.fullAPILocation() + common.ApiSaveAuthProviderRoute
+	endpoint = endpoint + "?" + values.Encode()
+
+	rsp, err := c.request(http.MethodGet, endpoint, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
+
+	if err = common.ErrorFromHttpResponse(rsp); err != nil {
+		return nil, err
+	}
+
+	var list []string
+	return list, json.NewDecoder(rsp.Body).Decode(&list)
+}
+
+func (c *Client) SaveClientApplicationInfo(clientApp *auth.ClientApp) error {
+	endpoint := c.fullAPILocation() + common.ApiSaveClientAppRoute
+
+	encoded, err := json.Marshal(clientApp)
+	if err != nil {
+		return err
+	}
+
+	rsp, err := c.request(http.MethodPut, endpoint, nil, bytes.NewBuffer(encoded))
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
+	return common.ErrorFromHttpResponse(rsp)
+}
+
+func (c *Client) GetClientApplicationInfo(appID string) (*auth.ClientApp, error) {
+	endpoint := c.fullAPILocation() + common.ApiListClientAppsRoute
+	endpoint = strings.Replace(endpoint, common.ApiRouteVarId, appID, 1)
+
+	rsp, err := c.request(http.MethodGet, endpoint, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
+
+	if err = common.ErrorFromHttpResponse(rsp); err != nil {
+		return nil, err
+	}
+
+	var clientApp *auth.ClientApp
+	return clientApp, json.NewDecoder(rsp.Body).Decode(&clientApp)
+}
+
+func (c *Client) ListClientApplications() ([]*auth.ClientApp, error) {
+	endpoint := c.fullAPILocation() + common.ApiListClientAppsRoute
+
+	rsp, err := c.request(http.MethodGet, endpoint, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
+
+	if err = common.ErrorFromHttpResponse(rsp); err != nil {
+		return nil, err
+	}
+
+	var list []*auth.ClientApp
+	return list, json.NewDecoder(rsp.Body).Decode(&list)
+}
+
+func (c *Client) DeleteClientApplication(appID string) error {
+	endpoint := c.fullAPILocation() + common.ApiDeleteClientAppRoute
+	endpoint = strings.Replace(endpoint, common.ApiRouteVarId, appID, 1)
+
+	rsp, err := c.request(http.MethodDelete, endpoint, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
+
+	return common.ErrorFromHttpResponse(rsp)
+}
+
+func (c *Client) CreateAccount(a *accounts.Account) error {
+	endpoint := c.fullAPILocation() + common.ApiCreateAccountRoute
+
+	encoded, err := json.Marshal(a)
+	if err != nil {
+		return err
+	}
+
+	rsp, err := c.request(http.MethodPut, endpoint, nil, bytes.NewBuffer(encoded))
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
+	return common.ErrorFromHttpResponse(rsp)
+}
+
+func (c *Client) GetAccount(id string) (*accounts.Account, error) {
+	endpoint := c.fullAPILocation() + common.ApiGetAccountRoute
+	endpoint = strings.Replace(endpoint, common.ApiRouteVarId, id, 1)
+
+	rsp, err := c.request(http.MethodGet, endpoint, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		_ = rsp.Body.Close()
+	}()
+
+	if err = common.ErrorFromHttpResponse(rsp); err != nil {
+		return nil, err
+	}
+
+	var a *accounts.Account
+	return a, json.NewDecoder(rsp.Body).Decode(&a)
 }

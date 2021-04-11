@@ -35,7 +35,9 @@ func WithUserBearerTokenAuthentication(token string) Option {
 
 func WithAPILocation(location string) Option {
 	return func(o *options) {
-		o.apiLocation = location
+		if len(location) > 0 {
+			o.apiLocation = location
+		}
 	}
 }
 
@@ -57,5 +59,13 @@ func WithHeader(name, value string) Option {
 			o.headers = http.Header{}
 		}
 		o.headers.Set(name, value)
+	}
+}
+
+func WithPort(port int) Option {
+	return func(o *options) {
+		if port > 0 {
+			o.port = port
+		}
 	}
 }
