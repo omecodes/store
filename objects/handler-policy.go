@@ -24,6 +24,8 @@ func (p *PolicyHandler) isAdmin(ctx context.Context) bool {
 	if user == nil {
 		return false
 	}
+
+	logs.Info("context user", logs.Details("name", user.Name))
 	return user.Name == "admin"
 }
 
@@ -160,8 +162,10 @@ func (p *PolicyHandler) assetActionAllowedOnObject(ctx context.Context, collecti
 
 func (p *PolicyHandler) CreateCollection(ctx context.Context, collection *Collection) error {
 	clientApp := auth.App(ctx)
-	if !p.isAdmin(ctx) || (clientApp == nil || !clientApp.Collections.Create) {
-		return errors.Forbidden("not allowed to create collections")
+	if !p.isAdmin(ctx) {
+		if clientApp == nil || !clientApp.Collections.Create {
+			return errors.Forbidden("not allowed to create collections")
+		}
 	}
 	return p.BaseHandler.CreateCollection(ctx, collection)
 }
