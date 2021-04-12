@@ -1,11 +1,6 @@
 package common
 
 const (
-	UserAuthenticationHeaderName = "Authorization"
-	AppAuthenticationHeaderName  = "X-STORE-CLIENT-APP-AUTHENTICATION"
-)
-
-const (
 	AccessInfoEncryptedSecret     = "encrypted_secret"
 	AccessInfoSecretEncryptParams = "encrypted_secret_params"
 )
@@ -26,6 +21,8 @@ const (
 	HttpHeaderContentLength            = "Content-Length"
 	HttpHeaderAccept                   = "Accept"
 	HttpHeaderAccessControlAllowOrigin = "Access-Control-Allow-Origin"
+	HttpHeaderUserAuthorization        = "Authorization"
+	HttpHeaderAppAuthorization         = "X-STORE-CLIENT-APP-AUTHENTICATION"
 )
 
 const (

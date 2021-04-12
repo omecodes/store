@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/omecodes/libome/logs"
+	"github.com/omecodes/store/common"
 	"github.com/omecodes/store/session"
 	"net/http"
 	"strings"
@@ -70,7 +71,48 @@ func Middleware(opts ...MiddlewareOption) mux.MiddlewareFunc {
 func userContext(r *http.Request) (context.Context, error) {
 	ctx := r.Context()
 
-	authorization := r.Header.Get("X-STORE-API-Authorization")
+	authorization := r.Header.Get(common.HttpHeaderUserAuthorization)
+	if authorization != "" {
+		authorizationParts := strings.SplitN(authorization, " ", 2)
+		authType := strings.ToLower(authorizationParts[0])
+		if len(authorizationParts) > 1 {
+			authorization = authorizationParts[1]
+		}
+
+		if authType == "basic" {
+			if authorization == "" {
+				return nil, errors.Forbidden("malformed authentication")
+			}
+			return updateContextWithBasic(ctx, authorization)
+
+		} else if authType == "bearer" {
+			if authorization == "" {
+				return nil, errors.Forbidden("malformed authentication")
+			}
+			return updateContextWithOauth2(r.Context(), authorization)
+		}
+
+	} else {
+		userSession, err := session.GetWebSession(session.UserSession, r)
+		if err != nil {
+			logs.Error("could not get web session", logs.Err(err))
+			return nil, err
+		}
+
+		if username := userSession.String(session.KeyUsername); username != "" {
+			logs.Info("detected user authentication", logs.Details("user", username))
+			return context.WithValue(r.Context(), ctxUser{}, &User{
+				Name: username,
+			}), nil
+		}
+	}
+	return ctx, nil
+}
+
+func clientAppContext(r *http.Request) (context.Context, error) {
+	ctx := r.Context()
+
+	authorization := r.Header.Get(common.HttpHeaderAppAuthorization)
 	if authorization != "" {
 		authorizationParts := strings.SplitN(authorization, " ", 2)
 		authType := strings.ToLower(authorizationParts[0])
@@ -107,48 +149,6 @@ func userContext(r *http.Request) (context.Context, error) {
 				}
 			}
 			return context.WithValue(r.Context(), ctxApp{}, clientApp), nil
-		}
-	}
-
-	return ctx, nil
-}
-
-func clientAppContext(r *http.Request) (context.Context, error) {
-	ctx := r.Context()
-
-	authorization := r.Header.Get("Authorization")
-	if authorization != "" {
-		authorizationParts := strings.SplitN(authorization, " ", 2)
-		authType := strings.ToLower(authorizationParts[0])
-		if len(authorizationParts) > 1 {
-			authorization = authorizationParts[1]
-		}
-
-		if authType == "basic" {
-			if authorization == "" {
-				return nil, errors.Forbidden("malformed authentication")
-			}
-			return updateContextWithBasic(ctx, authorization)
-
-		} else if authType == "bearer" {
-			if authorization == "" {
-				return nil, errors.Forbidden("malformed authentication")
-			}
-			return updateContextWithOauth2(r.Context(), authorization)
-		}
-
-	} else {
-		userSession, err := session.GetWebSession(session.UserSession, r)
-		if err != nil {
-			logs.Error("could not get web session", logs.Err(err))
-			return nil, err
-		}
-
-		if username := userSession.String(session.KeyUsername); username != "" {
-			logs.Info("detected user authentication", logs.Details("user", username))
-			return context.WithValue(r.Context(), ctxUser{}, &User{
-				Name: username,
-			}), nil
 		}
 	}
 	return ctx, nil

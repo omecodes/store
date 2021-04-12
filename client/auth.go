@@ -17,7 +17,7 @@ type userBasicAuthentication struct {
 }
 
 func (b *userBasicAuthentication) HeaderKey() string {
-	return common.UserAuthenticationHeaderName
+	return common.HttpHeaderUserAuthorization
 }
 
 func (b *userBasicAuthentication) HeaderValue() string {
@@ -30,7 +30,7 @@ type bearerTokenAuthentication struct {
 }
 
 func (b *bearerTokenAuthentication) HeaderKey() string {
-	return common.UserAuthenticationHeaderName
+	return common.HttpHeaderUserAuthorization
 }
 
 func (b *bearerTokenAuthentication) HeaderValue() string {
@@ -43,7 +43,7 @@ type appAuthentication struct {
 }
 
 func (a *appAuthentication) HeaderKey() string {
-	return common.AppAuthenticationHeaderName
+	return common.HttpHeaderAppAuthorization
 }
 
 func (a *appAuthentication) HeaderValue() string {
