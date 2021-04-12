@@ -28,7 +28,7 @@ func NewSourceSQLManager(db *sql.DB, dialect string, tablePrefix string) (*sourc
 		return nil, err
 	}
 
-	resolved, err := builder.SetTableName(tablePrefix + "_resolved_sources").JSONMap()
+	resolved, err := builder.SetTableName(tablePrefix + "_sources_resolved").JSONMap()
 	if err != nil {
 		return nil, err
 	}
