@@ -35,7 +35,7 @@ type celParams struct {
 	app  *auth.ClientApp
 }
 
-func (p *PolicyHandler) evaluate(ctx context.Context, state *celParams, rule string) (bool, error) {
+func (p *PolicyHandler) evaluate(_ context.Context, state *celParams, rule string) (bool, error) {
 	if rule == "" || rule == "false" || rule == "(false)" {
 		return false, nil
 	}
