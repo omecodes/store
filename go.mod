@@ -14,12 +14,12 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.1.0
 	github.com/iancoleman/strcase v0.1.3
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
-	github.com/omecodes/bome v0.0.0-20210307202356-9570bc59b78c
+	github.com/omecodes/bome v0.0.0-20210412223407-b447f239c0e5
 	github.com/omecodes/common v0.0.0-20201205124409-0a391e4b4c08
 	github.com/omecodes/discover v0.0.0-20210213111105-c5af043d728b
-	github.com/omecodes/errors v0.0.0-20210406211234-cd096e067ef4
+	github.com/omecodes/errors v0.0.0-20210412222728-5ab37f24e3c2
 	github.com/omecodes/libome v0.0.0-20210328231408-367b9167265b
-	github.com/omecodes/service v0.0.0-20210406211445-9ff76bc5708e
+	github.com/omecodes/service v0.0.0-20210412223112-ee0b3f6a605c
 	github.com/omecodes/services-ca v0.0.0-20210406211743-0d8e2ed4622f
 	github.com/pkg/xattr v0.4.3
 	github.com/smartystreets/goconvey v1.6.4
