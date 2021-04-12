@@ -50,11 +50,11 @@ func HTTPHandlePutObject(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	collection := vars[common.ApiRouteVarCollectionName]
 
-	contentType := r.Header.Get(common.HttpHeaderContentType)
+	/*contentType := r.Header.Get(common.HttpHeaderContentType)
 	if contentType != common.ContentTypeJSON {
 		w.WriteHeader(http.StatusBadRequest)
 		return
-	}
+	}*/
 
 	var putRequest *PutObjectRequest
 	err := json.NewDecoder(r.Body).Decode(&putRequest)
