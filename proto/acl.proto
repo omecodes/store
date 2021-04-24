@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+option go_package = "github.com/omecodes/store/proto/gen/go;pb";
+
+enum UserSetType {
+  This = 0;
+  Computed = 1;
+  FromTuple = 2;
+}
+
+message UserSetDefinition {
+  UserSetType type = 1;
+  string value = 2;
+}
+
+message RelationDefinition {
+  string name = 1;
+  repeated UserSetDefinition user_set_rewrite = 2;
+}
+
+message NamespaceConfig {
+  int64 sid = 1;
+  string namespace = 2;
+  map<string, RelationDefinition>  relations = 3;
+}
+
+message UsersInRelationWithObjectRelatedObject {
+  string object_relation = 1;
+  string user_relation = 2;
+}
+
+message Relation {
+  int64 sid = 1;
+  string name = 2;
+  string subject = 3;
+  string target = 4;
+  int64 commit_time = 5;
+}
+
+message RelationSubjectInfo {
+  string name = 1;
+  string target = 2;
+  int64 commit_time = 3;
+}
+
+service ACL {
+  rpc SaveNamespaceConfig(SaveNamespaceConfigRequest) returns (SaveNamespaceConfigResponse);
+  rpc GetNamespaceConfig(GetNamespaceConfigRequest) returns (GetNamespaceConfigResponse);
+  rpc DeleteNamespaceConfig(DeleteNamespaceConfigRequest) returns (DeleteNamespaceConfigResponse);
+  rpc IsValidRelation(IsValidRelationRequest) returns (IsValidRelationResponse);
+  rpc SaveRelation(SaveRelationRequest) returns (SaveRelationResponse);
+  rpc DeleteRelation(DeleteRelationRequest) returns (DeleteRelationResponse);
+}
+
+message SaveNamespaceConfigRequest {
+  NamespaceConfig config = 1;
+}
+message SaveNamespaceConfigResponse {}
+
+message GetNamespaceConfigRequest {
+  string name = 1;
+}
+message GetNamespaceConfigResponse {}
+
+message DeleteNamespaceConfigRequest {
+  string name = 1;
+}
+message DeleteNamespaceConfigResponse {}
+
+message IsValidRelationRequest{
+  Relation relation = 1;
+}
+message IsValidRelationResponse{
+  bool valid = 1;
+}
+
+message SaveRelationRequest {
+  Relation relation = 1;
+}
+message SaveRelationResponse {}
+
+message DeleteRelationRequest {
+  Relation relation = 2;
+}
+message DeleteRelationResponse {}

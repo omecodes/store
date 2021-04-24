@@ -33,7 +33,7 @@ func NewSourceSQLManager(db *sql.DB, dialect string, tablePrefix string) (*sourc
 		return nil, err
 	}
 
-	userRefs, err := builder.SetTableName(tablePrefix + "_sources_user_refs").DoubleMap()
+	userRefs, err := builder.SetTableName(tablePrefix + "_sources_user_refs").JSONDoubleMap()
 	if err != nil {
 		return nil, err
 	}
@@ -46,9 +46,9 @@ func NewSourceSQLManager(db *sql.DB, dialect string, tablePrefix string) (*sourc
 }
 
 type sourceSQLManager struct {
-	sources  *bome.JSONMap
-	resolved *bome.JSONMap
-	userRefs *bome.DoubleMap
+	sources          *bome.JSONMap
+	resolved         *bome.JSONMap
+	userRefs         *bome.JSONDoubleMap
 }
 
 func (s *sourceSQLManager) generateID() (string, error) {
@@ -79,7 +79,7 @@ func (s *sourceSQLManager) Save(ctx context.Context, source *Source) (string, er
 	var (
 		sources         *bome.JSONMap
 		resolved        *bome.JSONMap
-		userRefs        *bome.DoubleMap
+		userRefs        *bome.JSONDoubleMap
 		encodedResolved string
 	)
 
@@ -140,24 +140,34 @@ func (s *sourceSQLManager) Save(ctx context.Context, source *Source) (string, er
 		creator := source.CreatedBy
 
 		perms := append([]*auth.Permission{}, source.PermissionOverrides.Read...)
-		perms = append([]*auth.Permission{}, source.PermissionOverrides.Write...)
-		perms = append([]*auth.Permission{}, source.PermissionOverrides.Chmod...)
+		perms = append(perms, source.PermissionOverrides.Write...)
+		perms = append(perms, source.PermissionOverrides.Chmod...)
+		var users []string
 
-		for _, perm := range perms {
-			for _, user := range perm.TargetUsers {
-				err = userRefs.Upsert(&bome.DoubleMapEntry{
-					FirstKey:  user,
-					SecondKey: source.Id,
-					Value:     creator,
-				})
-				if err != nil {
-					if rbe := bome.Rollback(ctx); rbe != nil {
-						logs.Error("could not rollback transaction", logs.Err(err))
-					}
-					return "", err
-				}
-			}
+		for _, p := range perms {
+			users = append(users, p.TargetUsers...)
 		}
+
+		encoded, err = json.Marshal(users)
+		if err != nil {
+			if rbe := bome.Rollback(ctx); rbe != nil {
+				logs.Error("could not rollback transaction", logs.Err(err))
+			}
+			return "", err
+		}
+
+		err = userRefs.Upsert(&bome.DoubleMapEntry{
+			FirstKey:  creator,
+			SecondKey: source.Id,
+			Value:     string(encoded),
+		})
+		if err != nil {
+			if rbe := bome.Rollback(ctx); rbe != nil {
+				logs.Error("could not rollback transaction", logs.Err(err))
+			}
+			return "", err
+		}
+
 	}
 
 	return source.Id, bome.Commit(ctx)
@@ -189,7 +199,7 @@ func (s *sourceSQLManager) Delete(ctx context.Context, id string) error {
 	var (
 		sources  *bome.JSONMap
 		resolved *bome.JSONMap
-		userRefs *bome.DoubleMap
+		userRefs *bome.JSONDoubleMap
 		err      error
 	)
 

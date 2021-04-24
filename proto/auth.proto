@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+option go_package = "github.com/omecodes/store/proto/gen/go;pb";
+
+enum ClientType {
+  web = 0;
+  mobile_ios = 1;
+  mobile_android = 2;
+}
+
+enum AllowedTo {
+  read = 0;
+  write = 1;
+  delete = 2;
+  chmod = 3;
+}
+
+message Permission {
+  string name = 1;
+  string label = 2;
+  string description = 3;
+  string rule = 4;
+  repeated string target_users = 5;
+}
+
+message CollectionsManagement {
+  bool create = 1;
+  bool view = 2;
+  bool delete = 3;
+}
+
+message SourcesManagement {
+  bool create = 1;
+  bool view = 2;
+  bool delete = 3;
+  bool restricted = 4;
+}
+
+message UsersManagement {
+  bool create = 1;
+  bool view = 2;
+  bool delete = 3;
+}
+
+message ClientApp {
+  string key = 1;
+  string secret = 2;
+  ClientType type = 3;
+  CollectionsManagement collections = 4;
+  SourcesManagement sources = 5;
+  UsersManagement users = 6;
+  map<string, string> info = 7;
+}
+
+message User {
+  string from = 1;
+  string name = 2;
+  string group = 3;
+}
+
+message UserCredentials {
+  string username = 1;
+  string password = 2;
+}
