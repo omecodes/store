@@ -15,9 +15,9 @@ type NamespaceConfigStore interface {
 	DeleteNamespace(namespaceId string) error
 }
 
-func NewNamespaceSQLStore(db *sql.DB, tablePrefix string) (NamespaceConfigStore, error) {
+func NewNamespaceSQLStore(db *sql.DB, dialect string, tablePrefix string) (NamespaceConfigStore, error) {
 	builder := bome.Build()
-	jm, err := builder.SetDialect(bome.MySQL).SetTableName(tablePrefix + "_namespace_configs").SetConn(db).JSONMap()
+	jm, err := builder.SetDialect(dialect).SetDialect(dialect).SetTableName(tablePrefix + "_namespace_configs").SetConn(db).JSONMap()
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func (n *namespaceSQLStore) GetNamespace(namespaceId string) (*pb.NamespaceConfi
 	}
 
 	var config *pb.NamespaceConfig
-	err = json.Unmarshal([]byte(encoded), config)
+	err = json.Unmarshal([]byte(encoded), &config)
 	return config, err
 }
 
@@ -47,7 +47,7 @@ func (n *namespaceSQLStore) GetRelationDefinition(namespaceID string, relationNa
 	}
 
 	var relationDefinition *pb.RelationDefinition
-	err = json.Unmarshal([]byte(encoded), relationDefinition)
+	err = json.Unmarshal([]byte(encoded), &relationDefinition)
 	return relationDefinition, err
 }
 

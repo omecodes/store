@@ -2,30 +2,39 @@ package acl
 
 import "context"
 
-type ctxRelationStore struct{}
+type ctxTupleStore struct{}
 type ctxManager struct{}
 type ctxNamespaceConfigStore struct{}
+type ctxCommitTime struct{}
 
-func relationStore(ctx context.Context) RelationStore {
-	o := ctx.Value(ctxRelationStore{})
+func getTupleStore(ctx context.Context) TupleStore {
+	o := ctx.Value(ctxTupleStore{})
 	if o == nil {
-		return  nil
+		return nil
 	}
-	return o.(RelationStore)
+	return o.(TupleStore)
 }
 
-func manager(ctx context.Context) Manager {
+func getManager(ctx context.Context) Manager {
 	o := ctx.Value(ctxManager{})
 	if o == nil {
-		return  nil
+		return nil
 	}
 	return o.(Manager)
 }
 
-func namespaceConfigStore(ctx context.Context) NamespaceConfigStore {
+func getNamespaceConfigStore(ctx context.Context) NamespaceConfigStore {
 	o := ctx.Value(ctxNamespaceConfigStore{})
 	if o == nil {
-		return  nil
+		return nil
 	}
 	return o.(NamespaceConfigStore)
+}
+
+func getCommitTime(ctx context.Context) int64 {
+	o := ctx.Value(ctxCommitTime{})
+	if o == nil {
+		return 0
+	}
+	return o.(int64)
 }
