@@ -13,263 +13,263 @@ import (
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion7
 
-// ACLClient is the client API for ACL service.
+// ServiceClient is the client API for Service service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type ACLClient interface {
+type ServiceClient interface {
 	SaveNamespaceConfig(ctx context.Context, in *SaveNamespaceConfigRequest, opts ...grpc.CallOption) (*SaveNamespaceConfigResponse, error)
 	GetNamespaceConfig(ctx context.Context, in *GetNamespaceConfigRequest, opts ...grpc.CallOption) (*GetNamespaceConfigResponse, error)
 	DeleteNamespaceConfig(ctx context.Context, in *DeleteNamespaceConfigRequest, opts ...grpc.CallOption) (*DeleteNamespaceConfigResponse, error)
-	IsValidRelation(ctx context.Context, in *IsValidRelationRequest, opts ...grpc.CallOption) (*IsValidRelationResponse, error)
-	SaveRelation(ctx context.Context, in *SaveRelationRequest, opts ...grpc.CallOption) (*SaveRelationResponse, error)
-	DeleteRelation(ctx context.Context, in *DeleteRelationRequest, opts ...grpc.CallOption) (*DeleteRelationResponse, error)
+	CheckRequest(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error)
+	SaveRelation(ctx context.Context, in *SaveACLRequest, opts ...grpc.CallOption) (*SaveACLResponse, error)
+	DeleteRelation(ctx context.Context, in *DeleteACLRequest, opts ...grpc.CallOption) (*DeleteACLResponse, error)
 }
 
-type aCLClient struct {
+type serviceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewACLClient(cc grpc.ClientConnInterface) ACLClient {
-	return &aCLClient{cc}
+func NewServiceClient(cc grpc.ClientConnInterface) ServiceClient {
+	return &serviceClient{cc}
 }
 
-func (c *aCLClient) SaveNamespaceConfig(ctx context.Context, in *SaveNamespaceConfigRequest, opts ...grpc.CallOption) (*SaveNamespaceConfigResponse, error) {
+func (c *serviceClient) SaveNamespaceConfig(ctx context.Context, in *SaveNamespaceConfigRequest, opts ...grpc.CallOption) (*SaveNamespaceConfigResponse, error) {
 	out := new(SaveNamespaceConfigResponse)
-	err := c.cc.Invoke(ctx, "/ACL/SaveNamespaceConfig", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/Service/SaveNamespaceConfig", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *aCLClient) GetNamespaceConfig(ctx context.Context, in *GetNamespaceConfigRequest, opts ...grpc.CallOption) (*GetNamespaceConfigResponse, error) {
+func (c *serviceClient) GetNamespaceConfig(ctx context.Context, in *GetNamespaceConfigRequest, opts ...grpc.CallOption) (*GetNamespaceConfigResponse, error) {
 	out := new(GetNamespaceConfigResponse)
-	err := c.cc.Invoke(ctx, "/ACL/GetNamespaceConfig", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/Service/GetNamespaceConfig", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *aCLClient) DeleteNamespaceConfig(ctx context.Context, in *DeleteNamespaceConfigRequest, opts ...grpc.CallOption) (*DeleteNamespaceConfigResponse, error) {
+func (c *serviceClient) DeleteNamespaceConfig(ctx context.Context, in *DeleteNamespaceConfigRequest, opts ...grpc.CallOption) (*DeleteNamespaceConfigResponse, error) {
 	out := new(DeleteNamespaceConfigResponse)
-	err := c.cc.Invoke(ctx, "/ACL/DeleteNamespaceConfig", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/Service/DeleteNamespaceConfig", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *aCLClient) IsValidRelation(ctx context.Context, in *IsValidRelationRequest, opts ...grpc.CallOption) (*IsValidRelationResponse, error) {
-	out := new(IsValidRelationResponse)
-	err := c.cc.Invoke(ctx, "/ACL/IsValidRelation", in, out, opts...)
+func (c *serviceClient) CheckRequest(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error) {
+	out := new(CheckResponse)
+	err := c.cc.Invoke(ctx, "/Service/CheckRequest", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *aCLClient) SaveRelation(ctx context.Context, in *SaveRelationRequest, opts ...grpc.CallOption) (*SaveRelationResponse, error) {
-	out := new(SaveRelationResponse)
-	err := c.cc.Invoke(ctx, "/ACL/SaveRelation", in, out, opts...)
+func (c *serviceClient) SaveRelation(ctx context.Context, in *SaveACLRequest, opts ...grpc.CallOption) (*SaveACLResponse, error) {
+	out := new(SaveACLResponse)
+	err := c.cc.Invoke(ctx, "/Service/SaveRelation", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *aCLClient) DeleteRelation(ctx context.Context, in *DeleteRelationRequest, opts ...grpc.CallOption) (*DeleteRelationResponse, error) {
-	out := new(DeleteRelationResponse)
-	err := c.cc.Invoke(ctx, "/ACL/DeleteRelation", in, out, opts...)
+func (c *serviceClient) DeleteRelation(ctx context.Context, in *DeleteACLRequest, opts ...grpc.CallOption) (*DeleteACLResponse, error) {
+	out := new(DeleteACLResponse)
+	err := c.cc.Invoke(ctx, "/Service/DeleteRelation", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// ACLServer is the server API for ACL service.
-// All implementations must embed UnimplementedACLServer
+// ServiceServer is the server API for Service service.
+// All implementations must embed UnimplementedServiceServer
 // for forward compatibility
-type ACLServer interface {
+type ServiceServer interface {
 	SaveNamespaceConfig(context.Context, *SaveNamespaceConfigRequest) (*SaveNamespaceConfigResponse, error)
 	GetNamespaceConfig(context.Context, *GetNamespaceConfigRequest) (*GetNamespaceConfigResponse, error)
 	DeleteNamespaceConfig(context.Context, *DeleteNamespaceConfigRequest) (*DeleteNamespaceConfigResponse, error)
-	IsValidRelation(context.Context, *IsValidRelationRequest) (*IsValidRelationResponse, error)
-	SaveRelation(context.Context, *SaveRelationRequest) (*SaveRelationResponse, error)
-	DeleteRelation(context.Context, *DeleteRelationRequest) (*DeleteRelationResponse, error)
-	mustEmbedUnimplementedACLServer()
+	CheckRequest(context.Context, *CheckRequest) (*CheckResponse, error)
+	SaveRelation(context.Context, *SaveACLRequest) (*SaveACLResponse, error)
+	DeleteRelation(context.Context, *DeleteACLRequest) (*DeleteACLResponse, error)
+	mustEmbedUnimplementedServiceServer()
 }
 
-// UnimplementedACLServer must be embedded to have forward compatible implementations.
-type UnimplementedACLServer struct {
+// UnimplementedServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedServiceServer struct {
 }
 
-func (UnimplementedACLServer) SaveNamespaceConfig(context.Context, *SaveNamespaceConfigRequest) (*SaveNamespaceConfigResponse, error) {
+func (UnimplementedServiceServer) SaveNamespaceConfig(context.Context, *SaveNamespaceConfigRequest) (*SaveNamespaceConfigResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SaveNamespaceConfig not implemented")
 }
-func (UnimplementedACLServer) GetNamespaceConfig(context.Context, *GetNamespaceConfigRequest) (*GetNamespaceConfigResponse, error) {
+func (UnimplementedServiceServer) GetNamespaceConfig(context.Context, *GetNamespaceConfigRequest) (*GetNamespaceConfigResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNamespaceConfig not implemented")
 }
-func (UnimplementedACLServer) DeleteNamespaceConfig(context.Context, *DeleteNamespaceConfigRequest) (*DeleteNamespaceConfigResponse, error) {
+func (UnimplementedServiceServer) DeleteNamespaceConfig(context.Context, *DeleteNamespaceConfigRequest) (*DeleteNamespaceConfigResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteNamespaceConfig not implemented")
 }
-func (UnimplementedACLServer) IsValidRelation(context.Context, *IsValidRelationRequest) (*IsValidRelationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method IsValidRelation not implemented")
+func (UnimplementedServiceServer) CheckRequest(context.Context, *CheckRequest) (*CheckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckRequest not implemented")
 }
-func (UnimplementedACLServer) SaveRelation(context.Context, *SaveRelationRequest) (*SaveRelationResponse, error) {
+func (UnimplementedServiceServer) SaveRelation(context.Context, *SaveACLRequest) (*SaveACLResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SaveRelation not implemented")
 }
-func (UnimplementedACLServer) DeleteRelation(context.Context, *DeleteRelationRequest) (*DeleteRelationResponse, error) {
+func (UnimplementedServiceServer) DeleteRelation(context.Context, *DeleteACLRequest) (*DeleteACLResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteRelation not implemented")
 }
-func (UnimplementedACLServer) mustEmbedUnimplementedACLServer() {}
+func (UnimplementedServiceServer) mustEmbedUnimplementedServiceServer() {}
 
-// UnsafeACLServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to ACLServer will
+// UnsafeServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ServiceServer will
 // result in compilation errors.
-type UnsafeACLServer interface {
-	mustEmbedUnimplementedACLServer()
+type UnsafeServiceServer interface {
+	mustEmbedUnimplementedServiceServer()
 }
 
-func RegisterACLServer(s *grpc.Server, srv ACLServer) {
-	s.RegisterService(&_ACL_serviceDesc, srv)
+func RegisterServiceServer(s *grpc.Server, srv ServiceServer) {
+	s.RegisterService(&_Service_serviceDesc, srv)
 }
 
-func _ACL_SaveNamespaceConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Service_SaveNamespaceConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SaveNamespaceConfigRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ACLServer).SaveNamespaceConfig(ctx, in)
+		return srv.(ServiceServer).SaveNamespaceConfig(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ACL/SaveNamespaceConfig",
+		FullMethod: "/Service/SaveNamespaceConfig",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ACLServer).SaveNamespaceConfig(ctx, req.(*SaveNamespaceConfigRequest))
+		return srv.(ServiceServer).SaveNamespaceConfig(ctx, req.(*SaveNamespaceConfigRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ACL_GetNamespaceConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Service_GetNamespaceConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetNamespaceConfigRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ACLServer).GetNamespaceConfig(ctx, in)
+		return srv.(ServiceServer).GetNamespaceConfig(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ACL/GetNamespaceConfig",
+		FullMethod: "/Service/GetNamespaceConfig",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ACLServer).GetNamespaceConfig(ctx, req.(*GetNamespaceConfigRequest))
+		return srv.(ServiceServer).GetNamespaceConfig(ctx, req.(*GetNamespaceConfigRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ACL_DeleteNamespaceConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Service_DeleteNamespaceConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteNamespaceConfigRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ACLServer).DeleteNamespaceConfig(ctx, in)
+		return srv.(ServiceServer).DeleteNamespaceConfig(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ACL/DeleteNamespaceConfig",
+		FullMethod: "/Service/DeleteNamespaceConfig",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ACLServer).DeleteNamespaceConfig(ctx, req.(*DeleteNamespaceConfigRequest))
+		return srv.(ServiceServer).DeleteNamespaceConfig(ctx, req.(*DeleteNamespaceConfigRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ACL_IsValidRelation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(IsValidRelationRequest)
+func _Service_CheckRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ACLServer).IsValidRelation(ctx, in)
+		return srv.(ServiceServer).CheckRequest(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ACL/IsValidRelation",
+		FullMethod: "/Service/CheckRequest",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ACLServer).IsValidRelation(ctx, req.(*IsValidRelationRequest))
+		return srv.(ServiceServer).CheckRequest(ctx, req.(*CheckRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ACL_SaveRelation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SaveRelationRequest)
+func _Service_SaveRelation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveACLRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ACLServer).SaveRelation(ctx, in)
+		return srv.(ServiceServer).SaveRelation(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ACL/SaveRelation",
+		FullMethod: "/Service/SaveRelation",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ACLServer).SaveRelation(ctx, req.(*SaveRelationRequest))
+		return srv.(ServiceServer).SaveRelation(ctx, req.(*SaveACLRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ACL_DeleteRelation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteRelationRequest)
+func _Service_DeleteRelation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteACLRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ACLServer).DeleteRelation(ctx, in)
+		return srv.(ServiceServer).DeleteRelation(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ACL/DeleteRelation",
+		FullMethod: "/Service/DeleteRelation",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ACLServer).DeleteRelation(ctx, req.(*DeleteRelationRequest))
+		return srv.(ServiceServer).DeleteRelation(ctx, req.(*DeleteACLRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _ACL_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "ACL",
-	HandlerType: (*ACLServer)(nil),
+var _Service_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "Service",
+	HandlerType: (*ServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "SaveNamespaceConfig",
-			Handler:    _ACL_SaveNamespaceConfig_Handler,
+			Handler:    _Service_SaveNamespaceConfig_Handler,
 		},
 		{
 			MethodName: "GetNamespaceConfig",
-			Handler:    _ACL_GetNamespaceConfig_Handler,
+			Handler:    _Service_GetNamespaceConfig_Handler,
 		},
 		{
 			MethodName: "DeleteNamespaceConfig",
-			Handler:    _ACL_DeleteNamespaceConfig_Handler,
+			Handler:    _Service_DeleteNamespaceConfig_Handler,
 		},
 		{
-			MethodName: "IsValidRelation",
-			Handler:    _ACL_IsValidRelation_Handler,
+			MethodName: "CheckRequest",
+			Handler:    _Service_CheckRequest_Handler,
 		},
 		{
 			MethodName: "SaveRelation",
-			Handler:    _ACL_SaveRelation_Handler,
+			Handler:    _Service_SaveRelation_Handler,
 		},
 		{
 			MethodName: "DeleteRelation",
-			Handler:    _ACL_DeleteRelation_Handler,
+			Handler:    _Service_DeleteRelation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

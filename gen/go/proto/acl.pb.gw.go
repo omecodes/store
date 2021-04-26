@@ -31,7 +31,7 @@ var _ = runtime.String
 var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
-func request_ACL_SaveNamespaceConfig_0(ctx context.Context, marshaler runtime.Marshaler, client ACLClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Service_SaveNamespaceConfig_0(ctx context.Context, marshaler runtime.Marshaler, client ServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq SaveNamespaceConfigRequest
 	var metadata runtime.ServerMetadata
 
@@ -48,7 +48,7 @@ func request_ACL_SaveNamespaceConfig_0(ctx context.Context, marshaler runtime.Ma
 
 }
 
-func local_request_ACL_SaveNamespaceConfig_0(ctx context.Context, marshaler runtime.Marshaler, server ACLServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_Service_SaveNamespaceConfig_0(ctx context.Context, marshaler runtime.Marshaler, server ServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq SaveNamespaceConfigRequest
 	var metadata runtime.ServerMetadata
 
@@ -65,7 +65,7 @@ func local_request_ACL_SaveNamespaceConfig_0(ctx context.Context, marshaler runt
 
 }
 
-func request_ACL_GetNamespaceConfig_0(ctx context.Context, marshaler runtime.Marshaler, client ACLClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Service_GetNamespaceConfig_0(ctx context.Context, marshaler runtime.Marshaler, client ServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetNamespaceConfigRequest
 	var metadata runtime.ServerMetadata
 
@@ -82,7 +82,7 @@ func request_ACL_GetNamespaceConfig_0(ctx context.Context, marshaler runtime.Mar
 
 }
 
-func local_request_ACL_GetNamespaceConfig_0(ctx context.Context, marshaler runtime.Marshaler, server ACLServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_Service_GetNamespaceConfig_0(ctx context.Context, marshaler runtime.Marshaler, server ServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetNamespaceConfigRequest
 	var metadata runtime.ServerMetadata
 
@@ -99,7 +99,7 @@ func local_request_ACL_GetNamespaceConfig_0(ctx context.Context, marshaler runti
 
 }
 
-func request_ACL_DeleteNamespaceConfig_0(ctx context.Context, marshaler runtime.Marshaler, client ACLClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Service_DeleteNamespaceConfig_0(ctx context.Context, marshaler runtime.Marshaler, client ServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteNamespaceConfigRequest
 	var metadata runtime.ServerMetadata
 
@@ -116,7 +116,7 @@ func request_ACL_DeleteNamespaceConfig_0(ctx context.Context, marshaler runtime.
 
 }
 
-func local_request_ACL_DeleteNamespaceConfig_0(ctx context.Context, marshaler runtime.Marshaler, server ACLServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_Service_DeleteNamespaceConfig_0(ctx context.Context, marshaler runtime.Marshaler, server ServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteNamespaceConfigRequest
 	var metadata runtime.ServerMetadata
 
@@ -133,8 +133,8 @@ func local_request_ACL_DeleteNamespaceConfig_0(ctx context.Context, marshaler ru
 
 }
 
-func request_ACL_IsValidRelation_0(ctx context.Context, marshaler runtime.Marshaler, client ACLClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq IsValidRelationRequest
+func request_Service_CheckRequest_0(ctx context.Context, marshaler runtime.Marshaler, client ServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CheckRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -145,13 +145,13 @@ func request_ACL_IsValidRelation_0(ctx context.Context, marshaler runtime.Marsha
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.IsValidRelation(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.CheckRequest(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_ACL_IsValidRelation_0(ctx context.Context, marshaler runtime.Marshaler, server ACLServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq IsValidRelationRequest
+func local_request_Service_CheckRequest_0(ctx context.Context, marshaler runtime.Marshaler, server ServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CheckRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -162,13 +162,13 @@ func local_request_ACL_IsValidRelation_0(ctx context.Context, marshaler runtime.
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.IsValidRelation(ctx, &protoReq)
+	msg, err := server.CheckRequest(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
-func request_ACL_SaveRelation_0(ctx context.Context, marshaler runtime.Marshaler, client ACLClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq SaveRelationRequest
+func request_Service_SaveRelation_0(ctx context.Context, marshaler runtime.Marshaler, client ServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq SaveACLRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -184,8 +184,8 @@ func request_ACL_SaveRelation_0(ctx context.Context, marshaler runtime.Marshaler
 
 }
 
-func local_request_ACL_SaveRelation_0(ctx context.Context, marshaler runtime.Marshaler, server ACLServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq SaveRelationRequest
+func local_request_Service_SaveRelation_0(ctx context.Context, marshaler runtime.Marshaler, server ServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq SaveACLRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -201,8 +201,8 @@ func local_request_ACL_SaveRelation_0(ctx context.Context, marshaler runtime.Mar
 
 }
 
-func request_ACL_DeleteRelation_0(ctx context.Context, marshaler runtime.Marshaler, client ACLClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq DeleteRelationRequest
+func request_Service_DeleteRelation_0(ctx context.Context, marshaler runtime.Marshaler, client ServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq DeleteACLRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -218,8 +218,8 @@ func request_ACL_DeleteRelation_0(ctx context.Context, marshaler runtime.Marshal
 
 }
 
-func local_request_ACL_DeleteRelation_0(ctx context.Context, marshaler runtime.Marshaler, server ACLServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq DeleteRelationRequest
+func local_request_Service_DeleteRelation_0(ctx context.Context, marshaler runtime.Marshaler, server ServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq DeleteACLRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -235,24 +235,24 @@ func local_request_ACL_DeleteRelation_0(ctx context.Context, marshaler runtime.M
 
 }
 
-// RegisterACLHandlerServer registers the http handlers for service ACL to "mux".
-// UnaryRPC     :call ACLServer directly.
+// RegisterServiceHandlerServer registers the http handlers for service Service to "mux".
+// UnaryRPC     :call ServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterACLHandlerFromEndpoint instead.
-func RegisterACLHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ACLServer) error {
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterServiceHandlerFromEndpoint instead.
+func RegisterServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ServiceServer) error {
 
-	mux.Handle("POST", pattern_ACL_SaveNamespaceConfig_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Service_SaveNamespaceConfig_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.ACL/SaveNamespaceConfig")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Service/SaveNamespaceConfig")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_ACL_SaveNamespaceConfig_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Service_SaveNamespaceConfig_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -260,22 +260,22 @@ func RegisterACLHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 			return
 		}
 
-		forward_ACL_SaveNamespaceConfig_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Service_SaveNamespaceConfig_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_ACL_GetNamespaceConfig_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Service_GetNamespaceConfig_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.ACL/GetNamespaceConfig")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Service/GetNamespaceConfig")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_ACL_GetNamespaceConfig_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Service_GetNamespaceConfig_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -283,22 +283,22 @@ func RegisterACLHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 			return
 		}
 
-		forward_ACL_GetNamespaceConfig_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Service_GetNamespaceConfig_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_ACL_DeleteNamespaceConfig_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Service_DeleteNamespaceConfig_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.ACL/DeleteNamespaceConfig")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Service/DeleteNamespaceConfig")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_ACL_DeleteNamespaceConfig_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Service_DeleteNamespaceConfig_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -306,22 +306,22 @@ func RegisterACLHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 			return
 		}
 
-		forward_ACL_DeleteNamespaceConfig_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Service_DeleteNamespaceConfig_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_ACL_IsValidRelation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Service_CheckRequest_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.ACL/IsValidRelation")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Service/CheckRequest")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_ACL_IsValidRelation_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Service_CheckRequest_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -329,22 +329,22 @@ func RegisterACLHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 			return
 		}
 
-		forward_ACL_IsValidRelation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Service_CheckRequest_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_ACL_SaveRelation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Service_SaveRelation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.ACL/SaveRelation")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Service/SaveRelation")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_ACL_SaveRelation_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Service_SaveRelation_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -352,22 +352,22 @@ func RegisterACLHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 			return
 		}
 
-		forward_ACL_SaveRelation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Service_SaveRelation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_ACL_DeleteRelation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Service_DeleteRelation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.ACL/DeleteRelation")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Service/DeleteRelation")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_ACL_DeleteRelation_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Service_DeleteRelation_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -375,16 +375,16 @@ func RegisterACLHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 			return
 		}
 
-		forward_ACL_DeleteRelation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Service_DeleteRelation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
 	return nil
 }
 
-// RegisterACLHandlerFromEndpoint is same as RegisterACLHandler but
+// RegisterServiceHandlerFromEndpoint is same as RegisterServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterACLHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
 		return err
@@ -404,139 +404,139 @@ func RegisterACLHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, 
 		}()
 	}()
 
-	return RegisterACLHandler(ctx, mux, conn)
+	return RegisterServiceHandler(ctx, mux, conn)
 }
 
-// RegisterACLHandler registers the http handlers for service ACL to "mux".
+// RegisterServiceHandler registers the http handlers for service Service to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterACLHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterACLHandlerClient(ctx, mux, NewACLClient(conn))
+func RegisterServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterServiceHandlerClient(ctx, mux, NewServiceClient(conn))
 }
 
-// RegisterACLHandlerClient registers the http handlers for service ACL
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "ACLClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "ACLClient"
+// RegisterServiceHandlerClient registers the http handlers for service Service
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "ServiceClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "ServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "ACLClient" to call the correct interceptors.
-func RegisterACLHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ACLClient) error {
+// "ServiceClient" to call the correct interceptors.
+func RegisterServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ServiceClient) error {
 
-	mux.Handle("POST", pattern_ACL_SaveNamespaceConfig_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Service_SaveNamespaceConfig_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.ACL/SaveNamespaceConfig")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Service/SaveNamespaceConfig")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_ACL_SaveNamespaceConfig_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Service_SaveNamespaceConfig_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_ACL_SaveNamespaceConfig_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Service_SaveNamespaceConfig_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_ACL_GetNamespaceConfig_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Service_GetNamespaceConfig_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.ACL/GetNamespaceConfig")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Service/GetNamespaceConfig")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_ACL_GetNamespaceConfig_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Service_GetNamespaceConfig_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_ACL_GetNamespaceConfig_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Service_GetNamespaceConfig_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_ACL_DeleteNamespaceConfig_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Service_DeleteNamespaceConfig_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.ACL/DeleteNamespaceConfig")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Service/DeleteNamespaceConfig")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_ACL_DeleteNamespaceConfig_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Service_DeleteNamespaceConfig_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_ACL_DeleteNamespaceConfig_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Service_DeleteNamespaceConfig_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_ACL_IsValidRelation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Service_CheckRequest_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.ACL/IsValidRelation")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Service/CheckRequest")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_ACL_IsValidRelation_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Service_CheckRequest_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_ACL_IsValidRelation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Service_CheckRequest_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_ACL_SaveRelation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Service_SaveRelation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.ACL/SaveRelation")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Service/SaveRelation")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_ACL_SaveRelation_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Service_SaveRelation_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_ACL_SaveRelation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Service_SaveRelation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_ACL_DeleteRelation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Service_DeleteRelation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.ACL/DeleteRelation")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Service/DeleteRelation")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_ACL_DeleteRelation_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Service_DeleteRelation_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_ACL_DeleteRelation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Service_DeleteRelation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -544,29 +544,29 @@ func RegisterACLHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 }
 
 var (
-	pattern_ACL_SaveNamespaceConfig_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"ACL", "SaveNamespaceConfig"}, ""))
+	pattern_Service_SaveNamespaceConfig_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Service", "SaveNamespaceConfig"}, ""))
 
-	pattern_ACL_GetNamespaceConfig_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"ACL", "GetNamespaceConfig"}, ""))
+	pattern_Service_GetNamespaceConfig_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Service", "GetNamespaceConfig"}, ""))
 
-	pattern_ACL_DeleteNamespaceConfig_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"ACL", "DeleteNamespaceConfig"}, ""))
+	pattern_Service_DeleteNamespaceConfig_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Service", "DeleteNamespaceConfig"}, ""))
 
-	pattern_ACL_IsValidRelation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"ACL", "IsValidRelation"}, ""))
+	pattern_Service_CheckRequest_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Service", "CheckRequest"}, ""))
 
-	pattern_ACL_SaveRelation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"ACL", "SaveRelation"}, ""))
+	pattern_Service_SaveRelation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Service", "SaveRelation"}, ""))
 
-	pattern_ACL_DeleteRelation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"ACL", "DeleteRelation"}, ""))
+	pattern_Service_DeleteRelation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Service", "DeleteRelation"}, ""))
 )
 
 var (
-	forward_ACL_SaveNamespaceConfig_0 = runtime.ForwardResponseMessage
+	forward_Service_SaveNamespaceConfig_0 = runtime.ForwardResponseMessage
 
-	forward_ACL_GetNamespaceConfig_0 = runtime.ForwardResponseMessage
+	forward_Service_GetNamespaceConfig_0 = runtime.ForwardResponseMessage
 
-	forward_ACL_DeleteNamespaceConfig_0 = runtime.ForwardResponseMessage
+	forward_Service_DeleteNamespaceConfig_0 = runtime.ForwardResponseMessage
 
-	forward_ACL_IsValidRelation_0 = runtime.ForwardResponseMessage
+	forward_Service_CheckRequest_0 = runtime.ForwardResponseMessage
 
-	forward_ACL_SaveRelation_0 = runtime.ForwardResponseMessage
+	forward_Service_SaveRelation_0 = runtime.ForwardResponseMessage
 
-	forward_ACL_DeleteRelation_0 = runtime.ForwardResponseMessage
+	forward_Service_DeleteRelation_0 = runtime.ForwardResponseMessage
 )

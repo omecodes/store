@@ -2,20 +2,39 @@ syntax = "proto3";
 
 option go_package = "github.com/omecodes/store/proto/gen/go;pb";
 
-enum UserSetType {
+message DBEntry {
+  int64 sid = 1;
+  string object = 2;
+  string relation = 3;
+  string subject = 4;
+  int64 commit_time = 5;
+}
+
+message DBSubjectSetInfo {
+  string object = 1;
+  string relation = 2;
+  int64 min_age = 3;
+}
+
+enum SubjectSetType {
   This = 0;
   Computed = 1;
   FromTuple = 2;
 }
 
-message UserSetDefinition {
-  UserSetType type = 1;
+message SubjectSet {
+  string object = 1;
+  string relation = 2;
+}
+
+message SubjectSetDefinition {
+  SubjectSetType type = 1;
   string value = 2;
 }
 
 message RelationDefinition {
   string name = 1;
-  repeated UserSetDefinition user_set_rewrite = 2;
+  repeated SubjectSetDefinition subject_set_rewrite = 2;
 }
 
 message NamespaceConfig {
@@ -24,17 +43,15 @@ message NamespaceConfig {
   map<string, RelationDefinition>  relations = 3;
 }
 
-message UsersInRelationWithObjectRelatedObject {
+message SubjectsInRelationWithObjectRelatedObject {
   string object_relation = 1;
-  string user_relation = 2;
+  string subject_relation = 2;
 }
 
-message Relation {
-  int64 sid = 1;
-  string name = 2;
+message ACL {
+  string object = 1;
+  string relation = 2;
   string subject = 3;
-  string target = 4;
-  int64 commit_time = 5;
 }
 
 message RelationSubjectInfo {
@@ -43,13 +60,13 @@ message RelationSubjectInfo {
   int64 commit_time = 3;
 }
 
-service ACL {
+service Service {
   rpc SaveNamespaceConfig(SaveNamespaceConfigRequest) returns (SaveNamespaceConfigResponse);
   rpc GetNamespaceConfig(GetNamespaceConfigRequest) returns (GetNamespaceConfigResponse);
   rpc DeleteNamespaceConfig(DeleteNamespaceConfigRequest) returns (DeleteNamespaceConfigResponse);
-  rpc IsValidRelation(IsValidRelationRequest) returns (IsValidRelationResponse);
-  rpc SaveRelation(SaveRelationRequest) returns (SaveRelationResponse);
-  rpc DeleteRelation(DeleteRelationRequest) returns (DeleteRelationResponse);
+  rpc CheckRequest(CheckRequest) returns (CheckResponse);
+  rpc SaveRelation(SaveACLRequest) returns (SaveACLResponse);
+  rpc DeleteRelation(DeleteACLRequest) returns (DeleteACLResponse);
 }
 
 message SaveNamespaceConfigRequest {
@@ -67,19 +84,19 @@ message DeleteNamespaceConfigRequest {
 }
 message DeleteNamespaceConfigResponse {}
 
-message IsValidRelationRequest{
-  Relation relation = 1;
+message CheckRequest{
+  SubjectSet subject_set = 1;
 }
-message IsValidRelationResponse{
+message CheckResponse{
   bool valid = 1;
 }
 
-message SaveRelationRequest {
-  Relation relation = 1;
+message SaveACLRequest {
+  ACL acl = 1;
 }
-message SaveRelationResponse {}
+message SaveACLResponse {}
 
-message DeleteRelationRequest {
-  Relation relation = 2;
+message DeleteACLRequest {
+  ACL acl = 2;
 }
-message DeleteRelationResponse {}
+message DeleteACLResponse {}
