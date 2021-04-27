@@ -17,7 +17,7 @@ func TestRelationSQLStore_Save(t *testing.T) {
 		commitTime := utime.Now()
 
 		for _, a := range dataACL {
-			err = tupleStore.Save(ctx, &pb.DBEntry{
+			err := tupleStore.Save(ctx, &pb.DBEntry{
 				Sid:        0,
 				Object:     a.Object,
 				Relation:   a.Relation,
@@ -29,17 +29,15 @@ func TestRelationSQLStore_Save(t *testing.T) {
 	})
 }
 
-
 func TestRelationSQLStore_Check(t *testing.T) {
 	Convey("Check if relations exists", t, func() {
 		initRelationDB()
 
 		ctx := context.Background()
-		var exists bool
-		exists, err = tupleStore.Check(ctx, &pb.DBEntry{
-			Object:     "doc:d1",
-			Relation:   "editor",
-			Subject:    "user1",
+		exists, err := tupleStore.Check(ctx, &pb.DBEntry{
+			Object:   "doc:d1",
+			Relation: "editor",
+			Subject:  "ome",
 		})
 		So(err, ShouldBeNil)
 		So(exists, ShouldBeTrue)
@@ -51,8 +49,7 @@ func TestRelationSQLStore_GetSubjectSet(t *testing.T) {
 		initRelationDB()
 		ctx := context.Background()
 
-		var set []string
-		set, err = tupleStore.GetSubjectSet(ctx, &pb.DBSubjectSetInfo{
+		set, err := tupleStore.GetSubjectSet(ctx, &pb.DBSubjectSetInfo{
 			Object:   "doc:d11",
 			Relation: "parent",
 			MinAge:   0,
@@ -68,7 +65,7 @@ func TestRelationSQLStore_Delete(t *testing.T) {
 
 		ctx := context.Background()
 		for _, a := range dataACL {
-			err = tupleStore.Delete(ctx, &pb.DBEntry{
+			err := tupleStore.Delete(ctx, &pb.DBEntry{
 				Object:     a.Object,
 				Relation:   a.Relation,
 				Subject:    a.Subject,
@@ -78,7 +75,6 @@ func TestRelationSQLStore_Delete(t *testing.T) {
 		}
 	})
 }
-
 
 func TestCloseRelationDB(t *testing.T) {
 	Convey("Closing database", t, func() {

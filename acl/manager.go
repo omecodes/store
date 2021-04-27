@@ -18,7 +18,7 @@ import (
 type Manager interface {
 	SaveACL(ctx context.Context, relation *pb.ACL) error
 	DeleteACL(ctx context.Context, relation *pb.ACL) error
-	CheckACL(ctx context.Context, username string, userSet *pb.SubjectSet, after int64) (bool, error)
+	CheckACL(ctx context.Context, username string, subjectSet *pb.SubjectSet) (bool, error)
 
 	SaveNamespaceConfig(ctx context.Context, config *pb.NamespaceConfig) error
 	GetNamespaceConfig(ctx context.Context, name string) (*pb.NamespaceConfig, error)
@@ -55,8 +55,14 @@ func (d *defaultManager) DeleteACL(ctx context.Context, a *pb.ACL) error {
 	})
 }
 
-func (d *defaultManager) CheckACL(ctx context.Context, username string, subjectSet *pb.SubjectSet, minAge int64) (bool, error) {
-	store := getTupleStore(ctx)
+func (d *defaultManager) CheckACL(ctx context.Context, username string, subjectSet *pb.SubjectSet) (bool, error) {
+	checker := &Checker{
+		Subject:    username,
+		SubjectSet: subjectSet,
+	}
+
+	return checker.Check(ctx)
+	/*store := getTupleStore(ctx)
 	if store == nil {
 		return false, errors.Internal("check acl: missing relation store in context")
 	}
@@ -79,7 +85,6 @@ func (d *defaultManager) CheckACL(ctx context.Context, username string, subjectS
 
 	rel, exists := namespace.Relations[subjectSet.Relation]
 	if !exists {
-
 		return false, errors.NotFound("check acl: relation does not exists", errors.Details{
 			Key:   "relation",
 			Value: subjectSet.Relation,
@@ -93,6 +98,7 @@ func (d *defaultManager) CheckACL(ctx context.Context, username string, subjectS
 
 		switch rewrite.Type {
 		case pb.SubjectSetType_This:
+			fmt.Printf("\ncheck if '%s' has direct '%s' relationship with '%s'\n", username, subjectSet.Relation, subjectSet.Object)
 			// This relation is not referencing another relation, so we check for existing entry directly in database
 			exists, err = store.Check(ctx, &pb.DBEntry{
 				Object:     subjectSet.Object,
@@ -111,6 +117,7 @@ func (d *defaultManager) CheckACL(ctx context.Context, username string, subjectS
 			}
 
 		case pb.SubjectSetType_Computed:
+			fmt.Printf("check if '%s' has '%s' relationship with '%s'\n", username, rewrite.Value, subjectSet.Object)
 			// This relation is referring to another relation, we then check if user has that relation with the input object
 			exists, err = d.CheckACL(ctx, username, &pb.SubjectSet{
 				Object:   subjectSet.Object,
@@ -135,7 +142,9 @@ func (d *defaultManager) CheckACL(ctx context.Context, username string, subjectS
 				return false, err
 			}
 
-			subjects, err = d.ResolveUserSet(ctx, &pb.DBSubjectSetInfo{
+			fmt.Printf("check if '%s' has relation '%s' relationship with subject set in tuples '%s-%s'\n", username, definition.SubjectRelation, definition.ObjectRelation, subjectSet.Object)
+
+			subjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
 				Relation: definition.ObjectRelation,
 				Object:   subjectSet.Object,
 				MinAge:   minAge,
@@ -144,12 +153,14 @@ func (d *defaultManager) CheckACL(ctx context.Context, username string, subjectS
 				return false, err
 			}
 
+			fmt.Printf("subjects that are have '%s' relationship with %s are %v\n", definition.ObjectRelation, subjectSet.Object, subjects)
+
 			for _, subject := range subjects {
 				var allSubjects []string
 
 				if strings.Contains(subject, "#") {
 					parts := strings.Split(subject, "#")
-					allSubjects, err = d.ResolveUserSet(ctx, &pb.DBSubjectSetInfo{
+					allSubjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
 						Object:   parts[0],
 						Relation: parts[1],
 						MinAge:   minAge,
@@ -160,6 +171,7 @@ func (d *defaultManager) CheckACL(ctx context.Context, username string, subjectS
 				} else {
 					allSubjects = append(allSubjects, subject)
 				}
+				fmt.Printf("resolving subject set matching %s\n", subject)
 
 				for _, s := range allSubjects {
 					exists, err = d.CheckACL(ctx, username, &pb.SubjectSet{
@@ -181,10 +193,10 @@ func (d *defaultManager) CheckACL(ctx context.Context, username string, subjectS
 			continue
 		}
 	}
-	return false, nil
+	return false, nil */
 }
 
-func (d *defaultManager) ResolveUserSet(ctx context.Context, info *pb.DBSubjectSetInfo) ([]string, error) {
+func (d *defaultManager) ResolveSubjectSet(ctx context.Context, info *pb.DBSubjectSetInfo) ([]string, error) {
 	nsConfigStore := getNamespaceConfigStore(ctx)
 	if nsConfigStore == nil {
 		return nil, errors.Internal("missing namespace config in context")
@@ -211,7 +223,6 @@ func (d *defaultManager) ResolveUserSet(ctx context.Context, info *pb.DBSubjectS
 		return nil, errors.NotFound("relation does not exists")
 	}
 
-
 	var subjectsSet []string
 	for _, rewrite := range rel.SubjectSetRewrite {
 		var subjects []string
@@ -228,7 +239,7 @@ func (d *defaultManager) ResolveUserSet(ctx context.Context, info *pb.DBSubjectS
 			}
 
 		case pb.SubjectSetType_Computed:
-			subjects, err = d.ResolveUserSet(ctx, &pb.DBSubjectSetInfo{
+			subjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
 				Relation: rewrite.Value,
 				Object:   info.Object,
 				MinAge:   info.MinAge,
@@ -245,7 +256,7 @@ func (d *defaultManager) ResolveUserSet(ctx context.Context, info *pb.DBSubjectS
 			}
 
 			var tupleSetSubjects []string
-			tupleSetSubjects, err = d.ResolveUserSet(ctx, &pb.DBSubjectSetInfo{
+			tupleSetSubjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
 				Relation: definition.ObjectRelation,
 				Object:   info.Object,
 				MinAge:   info.MinAge,
@@ -258,7 +269,7 @@ func (d *defaultManager) ResolveUserSet(ctx context.Context, info *pb.DBSubjectS
 				var allSubjects []string
 				if strings.Contains(subject, "#") {
 					parts := strings.Split(subject, "#")
-					allSubjects, err = d.ResolveUserSet(ctx, &pb.DBSubjectSetInfo{
+					allSubjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
 						Object:   parts[0],
 						Relation: parts[1],
 						MinAge:   info.MinAge,
@@ -270,9 +281,9 @@ func (d *defaultManager) ResolveUserSet(ctx context.Context, info *pb.DBSubjectS
 					allSubjects = append(allSubjects, subject)
 				}
 
-				var	resolvedUsers []string
+				var resolvedUsers []string
 				for _, s := range allSubjects {
-					resolvedUsers, err = d.ResolveUserSet(ctx, &pb.DBSubjectSetInfo{
+					resolvedUsers, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
 						Object:   s,
 						Relation: definition.SubjectRelation,
 					})

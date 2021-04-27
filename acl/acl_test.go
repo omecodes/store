@@ -17,8 +17,6 @@ var (
 	namespaceDbConn *sql.DB
 	tupleDBConn     *sql.DB
 
-	err    error
-
 	/*
 		Doc namespace that describe relations for documents.
 		parent: specifies parent of a document
@@ -77,6 +75,44 @@ var (
 		},
 	}
 
+	groupNamespace = &pb.NamespaceConfig{
+		Sid:       2,
+		Namespace: "group",
+		Relations: map[string]*pb.RelationDefinition{
+			"parent": {
+				Name: "parent",
+				SubjectSetRewrite: []*pb.SubjectSetDefinition{
+					{
+						Type: pb.SubjectSetType_This,
+					},
+				},
+			},
+			"owner": {
+				Name: "owner",
+				SubjectSetRewrite: []*pb.SubjectSetDefinition{
+					{
+						Type: pb.SubjectSetType_This,
+					},
+				},
+			},
+			"member": {
+				Name: "member",
+				SubjectSetRewrite: []*pb.SubjectSetDefinition{
+					{
+						Type: pb.SubjectSetType_This,
+					},
+					{
+						Type:  pb.SubjectSetType_Computed,
+						Value: "owner",
+					},
+					{
+						Type:  pb.SubjectSetType_FromTuple,
+						Value: `{"object_relation":  "parent", "subject_relation":  "member"}`,
+					},
+				},
+			},
+		},
+	}
 
 	/*
 		Situation: representing a doc tree /documents/
@@ -95,80 +131,98 @@ var (
 		user3 is editor of d3
 
 		Relations
-	 */
+	*/
 
-	dataACL = []*pb.ACL {
+	dataACL = []*pb.ACL{
 		// Files parent relations
 		{
-			Subject:   "doc:d0",
+			Subject:  "doc:d0",
 			Relation: "parent",
-			Object:  "doc:d1",
+			Object:   "doc:d1",
 		},
 		{
-			Subject:   "doc:d0",
+			Subject:  "doc:d0",
 			Relation: "parent",
-			Object:  "doc:d11",
+			Object:   "doc:d11",
 		},
 		{
-			Subject:   "doc:d0",
+			Subject:  "doc:d0",
 			Relation: "parent",
-			Object:  "doc:d12",
+			Object:   "doc:d12",
 		},
 		{
-			Subject:   "doc:d0",
+			Subject:  "doc:d0",
 			Relation: "parent",
-			Object:  "doc:d2",
+			Object:   "doc:d2",
 		},
 		{
-			Subject:   "doc:d0",
+			Subject:  "doc:d0",
 			Relation: "parent",
-			Object:  "doc:d21",
+			Object:   "doc:d21",
 		},
 		{
-			Subject:   "doc:d0",
+			Subject:  "doc:d0",
 			Relation: "parent",
-			Object:  "doc:d3",
+			Object:   "doc:d3",
 		},
 		{
-			Subject:   "doc:d0",
+			Subject:  "doc:d0",
 			Relation: "parent",
-			Object:  "doc:d31",
+			Object:   "doc:d31",
 		},
 		{
-			Subject:   "doc:d1",
+			Subject:  "doc:d1",
 			Relation: "parent",
-			Object:  "doc:d11",
+			Object:   "doc:d11",
 		},
 		{
-			Subject:   "doc:d1",
+			Subject:  "doc:d1",
 			Relation: "parent",
-			Object:  "doc:d12",
+			Object:   "doc:d12",
 		},
 		{
-			Subject:   "doc:d2",
+			Subject:  "doc:d2",
 			Relation: "parent",
-			Object:  "doc:d21",
+			Object:   "doc:d21",
 		},
 		{
-			Subject:   "doc:d3",
+			Subject:  "doc:d3",
 			Relation: "parent",
-			Object:  "doc:d31",
+			Object:   "doc:d31",
 		},
+
 		// Users relation with files
 		{
-			Subject:   "admin",
+			Subject:  "admin",
 			Relation: "owner",
-			Object:  "doc:d0",
+			Object:   "doc:d0",
 		},
 		{
-			Subject:   "user1",
+			Subject:  "ome",
 			Relation: "editor",
-			Object:  "doc:d1",
+			Object:   "doc:d1",
+		},
+
+		// Groups relations
+		{
+			Subject:  "group:external.masters",
+			Relation: "parent",
+			Object:   "group:external",
 		},
 		{
-			Subject:   "user2",
-			Relation: "editor",
-			Object:  "doc:d2",
+			Subject:  "zeto",
+			Relation: "member",
+			Object:   "group:external",
+		},
+		{
+			Subject:  "yaba",
+			Relation: "member",
+			Object:   "group:external.masters",
+		},
+		{
+			Subject:  "group:external#member",
+			Relation: "viewer",
+			Object:   "doc:d1",
 		},
 	}
 )
@@ -183,6 +237,7 @@ func initNamespaceDB() {
 		dbFilename := "namespace.db"
 		_ = os.Remove(dbFilename)
 
+		var err error
 		namespaceDbConn, err = sql.Open("sqlite3", dbFilename)
 		So(err, ShouldBeNil)
 
@@ -196,6 +251,7 @@ func initRelationDB() {
 		dbFilename := "tuples.db"
 		_ = os.Remove(dbFilename)
 
+		var err error
 		tupleDBConn, err = sql.Open("sqlite3", dbFilename)
 		So(err, ShouldBeNil)
 

@@ -1,6 +1,7 @@
 package acl
 
 import (
+	"fmt"
 	pb "github.com/omecodes/store/gen/go/proto"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
@@ -9,8 +10,12 @@ import (
 func TestDefaultManager_SaveNamespaceConfig(t *testing.T) {
 	Convey("Save Namespace", t, func() {
 		initDBs()
+
 		man := &defaultManager{}
-		err = man.SaveNamespaceConfig(fullManagerContext(), docNamespace)
+		err := man.SaveNamespaceConfig(fullManagerContext(), docNamespace)
+		So(err, ShouldBeNil)
+
+		err = man.SaveNamespaceConfig(fullManagerContext(), groupNamespace)
 		So(err, ShouldBeNil)
 	})
 }
@@ -21,10 +26,10 @@ func TestDefaultManager_SaveACL(t *testing.T) {
 
 		man := &defaultManager{}
 		for _, a := range dataACL {
-			err = man.SaveACL(fullManagerContext(), &pb.ACL{
-				Object:     a.Object,
-				Relation:   a.Relation,
-				Subject:    a.Subject,
+			err := man.SaveACL(fullManagerContext(), &pb.ACL{
+				Object:   a.Object,
+				Relation: a.Relation,
+				Subject:  a.Subject,
 			})
 			So(err, ShouldBeNil)
 		}
@@ -39,9 +44,45 @@ func TestDefaultManager_CheckACL(t *testing.T) {
 		checked, err := man.CheckACL(fullManagerContext(), "admin", &pb.SubjectSet{
 			Object:   "doc:d12",
 			Relation: "viewer",
-		}, 0)
+		})
 		So(err, ShouldBeNil)
 		So(checked, ShouldBeTrue)
+	})
+}
+
+func TestDefaultManager_CheckACL1(t *testing.T) {
+	Convey("Validate that /documents/description.pdf is readable by admin", t, func() {
+		initDBs()
+
+		man := &defaultManager{}
+		checked, err := man.CheckACL(fullManagerContext(), "yaba", &pb.SubjectSet{
+			Object:   "group:external",
+			Relation: "member",
+		})
+		So(err, ShouldBeNil)
+		So(checked, ShouldBeTrue)
+	})
+}
+
+func TestDefaultManager_CheckACL2(t *testing.T) {
+	Convey("Validate that /documents/description.pdf is readable by admin", t, func() {
+		initDBs()
+
+		fmt.Println()
+
+		man := &defaultManager{}
+		checked, err := man.CheckACL(fullManagerContext(), "yaba", &pb.SubjectSet{
+			Object:   "doc:d12",
+			Relation: "viewer",
+		})
+		So(err, ShouldBeNil)
+		So(checked, ShouldBeTrue)
+	})
+}
+
+func TestDefaultManager_ResolveUserSet(t *testing.T) {
+	Convey("", t, func() {
+		initDBs()
 	})
 }
 

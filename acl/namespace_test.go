@@ -16,7 +16,7 @@ func TestNewNamespaceSQLStore(t *testing.T) {
 func TestNamespaceSQLStore_SaveNamespace(t *testing.T) {
 	Convey("Save doc namespace", t, func() {
 		initNamespaceDB()
-		err = namespaceStore.SaveNamespace(docNamespace)
+		err := namespaceStore.SaveNamespace(docNamespace)
 		So(err, ShouldBeNil)
 	})
 }
@@ -25,8 +25,7 @@ func TestNamespaceSQLStore_GetNamespace(t *testing.T) {
 	Convey("Get namespace", t, func() {
 		initNamespaceDB()
 
-		var ns *pb.NamespaceConfig
-		ns, err = namespaceStore.GetNamespace(docNamespace.Namespace)
+		ns, err := namespaceStore.GetNamespace(docNamespace.Namespace)
 		So(err, ShouldBeNil)
 		So(ns.Namespace, ShouldEqual, docNamespace.Namespace)
 	})
@@ -37,7 +36,7 @@ func TestNamespaceSQLStore_GetRelationDefinition(t *testing.T) {
 		initNamespaceDB()
 
 		var def *pb.RelationDefinition
-		def, err = namespaceStore.GetRelationDefinition(docNamespace.Namespace, "viewer")
+		def, err := namespaceStore.GetRelationDefinition(docNamespace.Namespace, "viewer")
 		So(err, ShouldBeNil)
 		So(def, ShouldNotBeNil)
 		So(def.Name, ShouldEqual, "viewer")
@@ -48,11 +47,10 @@ func TestNamespaceSQLStore_DeleteNamespace(t *testing.T) {
 	Convey("Delete namespace", t, func() {
 		initNamespaceDB()
 
-		var ns *pb.NamespaceConfig
-		err = namespaceStore.DeleteNamespace(docNamespace.Namespace)
+		err := namespaceStore.DeleteNamespace(docNamespace.Namespace)
 		So(err, ShouldBeNil)
 
-		ns, err = namespaceStore.GetNamespace(docNamespace.Namespace)
+		ns, err := namespaceStore.GetNamespace(docNamespace.Namespace)
 		So(errors.IsNotFound(err), ShouldBeTrue)
 		So(ns, ShouldBeNil)
 	})
@@ -64,4 +62,3 @@ func TestCloseNamespaceDB(t *testing.T) {
 		initNamespaceDB()
 	})
 }
-
