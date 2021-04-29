@@ -2,20 +2,19 @@ syntax = "proto3";
 
 option go_package = "github.com/omecodes/store/proto/gen/go;pb";
 
-import "proto/auth.proto";
-
-enum SourceType {
+enum AccessType {
   Default = 0;
   Reference = 1;
 }
 
 message File {
-  string name = 1;
-  bool  is_dir = 2;
-  int64 size = 3;
-  int64 create_time = 4;
-  int64 edit_time = 5;
-  map<string, string> attributes = 6;
+  string uuid = 1;
+  string name = 2;
+  bool  is_dir = 3;
+  int64 size = 4;
+  int64 create_time = 5;
+  int64 edit_time = 6;
+  map<string, string> attributes = 7;
 }
 
 message EncryptionInfo {
@@ -23,64 +22,70 @@ message EncryptionInfo {
   int64 max_block_size = 2;
 }
 
-message Permissions {
-  string filename = 1;
-  repeated Permission read = 2;
-  repeated Permission write = 3;
-  repeated Permission chmod = 4;
+message ActionAuthorization {
+  bool restricted = 1;
+  string relation = 2;
 }
 
-message Source {
+message AccessRelation {
+  ActionAuthorization view = 1;
+  ActionAuthorization edit = 2;
+  ActionAuthorization own = 3;
+}
+
+message Access {
   string id = 1;
   string label = 2;
   string description = 3;
   string created_by = 4;
-  SourceType type = 5;
+  AccessType type = 5;
   string uri = 6;
   EncryptionInfo encryption = 7;
-  Permissions permission_overrides = 8;
-  int64 expire_time = 9;
-  string encoded_info = 10;
+  AccessRelation operation_relation_override = 8;
+  bool restricted = 9;
+  bool Folder = 10;
+  int64 expire_time = 11;
+  string encoded_info = 12;
 }
 
 
-// Sources service
-service Sources {
-  rpc CreateSource(CreateSourceRequest) returns (CreateSourceResponse);
-  rpc GetSource(GetSourceRequest) returns (GetSourceResponse);
-  rpc GetSources(GetSourcesRequest) returns (stream Source);
-  rpc ResolveSource(ResolveSourceRequest) returns (ResolveSourceResponse);
-  rpc DeleteSource(stream DeleteSourceRequest) returns (DeleteSourceResponse);
+// Access service
+service AccessManager {
+  rpc CreateAccess(CreateAccessRequest) returns (CreateAccessResponse);
+  rpc GetAccess(GetAccessRequest) returns (GetAccessResponse);
+  rpc GetAccessList(GetAccessListRequest) returns (stream Access);
+  rpc ResolveAccess(ResolveAccessRequest) returns (ResolveAccessResponse);
+  rpc DeleteAccess(stream DeleteAccessRequest) returns (DeleteAccessResponse);
 }
 
 
-message CreateSourceRequest {
-  Source source = 1;
+message CreateAccessRequest {
+  Access access = 1;
 }
-message CreateSourceResponse {}
+message CreateAccessResponse {}
 
-message GetSourceRequest {
+message GetAccessRequest {
   string id = 1;
 }
-message GetSourceResponse {
-  Source source = 1;
+message GetAccessResponse {
+  Access access = 1;
 }
 
-message GetSourcesRequest {
+message GetAccessListRequest {
   string user = 1;
 }
 
-message ResolveSourceRequest {
-  Source source = 1;
+message ResolveAccessRequest {
+  Access access = 1;
 }
-message ResolveSourceResponse {
-  Source resolved_source = 2;
+message ResolveAccessResponse {
+  Access resolved_access = 2;
 }
 
-message DeleteSourceRequest {
-  string source_id = 1;
+message DeleteAccessRequest {
+  string access_id = 1;
 }
-message DeleteSourceResponse {}
+message DeleteAccessResponse {}
 
 
 
@@ -98,13 +103,13 @@ service Files {
 }
 
 message CreateDirRequest {
-  string source_id = 1;
+  string access_id = 1;
   string path = 2;
 }
 message CreateDirResponse {}
 
 message ListDirRequest {
-  string source_id = 1;
+  string access_id = 1;
   string path = 2;
   uint32 offset = 3;
   uint32 count = 4;
@@ -116,7 +121,7 @@ message ListDirResponse {
 }
 
 message GetFileRequest {
-  string source_id = 1;
+  string access_id = 1;
   string path = 2;
   bool  with_attributes = 3;
 }
@@ -125,20 +130,20 @@ message GetFileResponse {
 }
 
 message DeleteFileRequest {
-  string source_id = 1;
+  string access_id = 1;
   string path = 2;
 }
 message DeleteFileResponse {}
 
 message SetFileAttributesRequest {
-  string source_id = 1;
+  string access_id = 1;
   string path = 2;
   map<string, string> attributes = 3;
 }
 message SetFileAttributesResponse {}
 
 message GetFileAttributesRequest {
-  string source_id = 1;
+  string access_id = 1;
   string path = 2;
   repeated string names = 3;
 }
@@ -147,7 +152,7 @@ message GetFileAttributesResponse {
 }
 
 message RenameFileRequest {
-  string source_id = 1;
+  string access_id = 1;
   string path = 2;
   string new_name = 3;
 }
@@ -155,7 +160,7 @@ message RenameFileResponse {
 }
 
 message MoveFileRequest {
-  string source_id = 1;
+  string access_id = 1;
   string path = 2;
   string target_dir = 3;
 }
@@ -164,7 +169,7 @@ message MoveFileResponse {
 }
 
 message CopyFileRequest {
-  string source_id = 1;
+  string access_id = 1;
   string path = 2;
   string target_dir = 3;
 }

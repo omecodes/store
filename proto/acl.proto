@@ -64,7 +64,7 @@ service Service {
   rpc SaveNamespaceConfig(SaveNamespaceConfigRequest) returns (SaveNamespaceConfigResponse);
   rpc GetNamespaceConfig(GetNamespaceConfigRequest) returns (GetNamespaceConfigResponse);
   rpc DeleteNamespaceConfig(DeleteNamespaceConfigRequest) returns (DeleteNamespaceConfigResponse);
-  rpc CheckRequest(CheckRequest) returns (CheckResponse);
+  rpc Check(CheckRequest) returns (CheckResponse);
   rpc SaveRelation(SaveACLRequest) returns (SaveACLResponse);
   rpc DeleteRelation(DeleteACLRequest) returns (DeleteACLResponse);
 }

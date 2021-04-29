@@ -3,7 +3,6 @@ syntax = "proto3";
 option go_package = "github.com/omecodes/store/proto/gen/go;pb";
 
 import "proto/se.proto";
-import "proto/auth.proto";
 
 message Collection {
   string id = 1;
@@ -22,10 +21,11 @@ message PathAccessRules {
 message AccessRules {
   string label = 1;
   string description = 2;
-  repeated Permission read = 3;
-  repeated Permission write = 4;
-  repeated Permission delete = 5;
+  string read_relation = 3;
+  string edit_relation = 4;
+  string delete_relation = 5;
 }
+
 message Header {
   string id = 1;
   string created_by = 2;
