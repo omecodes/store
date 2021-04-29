@@ -13,49 +13,49 @@ import (
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion7
 
-// SourcesClient is the client API for Sources service.
+// AccessManagerClient is the client API for AccessManager service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type SourcesClient interface {
-	CreateSource(ctx context.Context, in *CreateSourceRequest, opts ...grpc.CallOption) (*CreateSourceResponse, error)
-	GetSource(ctx context.Context, in *GetSourceRequest, opts ...grpc.CallOption) (*GetSourceResponse, error)
-	GetSources(ctx context.Context, in *GetSourcesRequest, opts ...grpc.CallOption) (Sources_GetSourcesClient, error)
-	ResolveSource(ctx context.Context, in *ResolveSourceRequest, opts ...grpc.CallOption) (*ResolveSourceResponse, error)
-	DeleteSource(ctx context.Context, opts ...grpc.CallOption) (Sources_DeleteSourceClient, error)
+type AccessManagerClient interface {
+	CreateAccess(ctx context.Context, in *CreateAccessRequest, opts ...grpc.CallOption) (*CreateAccessResponse, error)
+	GetAccess(ctx context.Context, in *GetAccessRequest, opts ...grpc.CallOption) (*GetAccessResponse, error)
+	GetAccessList(ctx context.Context, in *GetAccessListRequest, opts ...grpc.CallOption) (AccessManager_GetAccessListClient, error)
+	ResolveAccess(ctx context.Context, in *ResolveAccessRequest, opts ...grpc.CallOption) (*ResolveAccessResponse, error)
+	DeleteAccess(ctx context.Context, opts ...grpc.CallOption) (AccessManager_DeleteAccessClient, error)
 }
 
-type sourcesClient struct {
+type accessManagerClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewSourcesClient(cc grpc.ClientConnInterface) SourcesClient {
-	return &sourcesClient{cc}
+func NewAccessManagerClient(cc grpc.ClientConnInterface) AccessManagerClient {
+	return &accessManagerClient{cc}
 }
 
-func (c *sourcesClient) CreateSource(ctx context.Context, in *CreateSourceRequest, opts ...grpc.CallOption) (*CreateSourceResponse, error) {
-	out := new(CreateSourceResponse)
-	err := c.cc.Invoke(ctx, "/Sources/CreateSource", in, out, opts...)
+func (c *accessManagerClient) CreateAccess(ctx context.Context, in *CreateAccessRequest, opts ...grpc.CallOption) (*CreateAccessResponse, error) {
+	out := new(CreateAccessResponse)
+	err := c.cc.Invoke(ctx, "/AccessManager/CreateAccess", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *sourcesClient) GetSource(ctx context.Context, in *GetSourceRequest, opts ...grpc.CallOption) (*GetSourceResponse, error) {
-	out := new(GetSourceResponse)
-	err := c.cc.Invoke(ctx, "/Sources/GetSource", in, out, opts...)
+func (c *accessManagerClient) GetAccess(ctx context.Context, in *GetAccessRequest, opts ...grpc.CallOption) (*GetAccessResponse, error) {
+	out := new(GetAccessResponse)
+	err := c.cc.Invoke(ctx, "/AccessManager/GetAccess", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *sourcesClient) GetSources(ctx context.Context, in *GetSourcesRequest, opts ...grpc.CallOption) (Sources_GetSourcesClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Sources_serviceDesc.Streams[0], "/Sources/GetSources", opts...)
+func (c *accessManagerClient) GetAccessList(ctx context.Context, in *GetAccessListRequest, opts ...grpc.CallOption) (AccessManager_GetAccessListClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_AccessManager_serviceDesc.Streams[0], "/AccessManager/GetAccessList", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &sourcesGetSourcesClient{stream}
+	x := &accessManagerGetAccessListClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -65,237 +65,237 @@ func (c *sourcesClient) GetSources(ctx context.Context, in *GetSourcesRequest, o
 	return x, nil
 }
 
-type Sources_GetSourcesClient interface {
-	Recv() (*Source, error)
+type AccessManager_GetAccessListClient interface {
+	Recv() (*Access, error)
 	grpc.ClientStream
 }
 
-type sourcesGetSourcesClient struct {
+type accessManagerGetAccessListClient struct {
 	grpc.ClientStream
 }
 
-func (x *sourcesGetSourcesClient) Recv() (*Source, error) {
-	m := new(Source)
+func (x *accessManagerGetAccessListClient) Recv() (*Access, error) {
+	m := new(Access)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *sourcesClient) ResolveSource(ctx context.Context, in *ResolveSourceRequest, opts ...grpc.CallOption) (*ResolveSourceResponse, error) {
-	out := new(ResolveSourceResponse)
-	err := c.cc.Invoke(ctx, "/Sources/ResolveSource", in, out, opts...)
+func (c *accessManagerClient) ResolveAccess(ctx context.Context, in *ResolveAccessRequest, opts ...grpc.CallOption) (*ResolveAccessResponse, error) {
+	out := new(ResolveAccessResponse)
+	err := c.cc.Invoke(ctx, "/AccessManager/ResolveAccess", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *sourcesClient) DeleteSource(ctx context.Context, opts ...grpc.CallOption) (Sources_DeleteSourceClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Sources_serviceDesc.Streams[1], "/Sources/DeleteSource", opts...)
+func (c *accessManagerClient) DeleteAccess(ctx context.Context, opts ...grpc.CallOption) (AccessManager_DeleteAccessClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_AccessManager_serviceDesc.Streams[1], "/AccessManager/DeleteAccess", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &sourcesDeleteSourceClient{stream}
+	x := &accessManagerDeleteAccessClient{stream}
 	return x, nil
 }
 
-type Sources_DeleteSourceClient interface {
-	Send(*DeleteSourceRequest) error
-	CloseAndRecv() (*DeleteSourceResponse, error)
+type AccessManager_DeleteAccessClient interface {
+	Send(*DeleteAccessRequest) error
+	CloseAndRecv() (*DeleteAccessResponse, error)
 	grpc.ClientStream
 }
 
-type sourcesDeleteSourceClient struct {
+type accessManagerDeleteAccessClient struct {
 	grpc.ClientStream
 }
 
-func (x *sourcesDeleteSourceClient) Send(m *DeleteSourceRequest) error {
+func (x *accessManagerDeleteAccessClient) Send(m *DeleteAccessRequest) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *sourcesDeleteSourceClient) CloseAndRecv() (*DeleteSourceResponse, error) {
+func (x *accessManagerDeleteAccessClient) CloseAndRecv() (*DeleteAccessResponse, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(DeleteSourceResponse)
+	m := new(DeleteAccessResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-// SourcesServer is the server API for Sources service.
-// All implementations must embed UnimplementedSourcesServer
+// AccessManagerServer is the server API for AccessManager service.
+// All implementations must embed UnimplementedAccessManagerServer
 // for forward compatibility
-type SourcesServer interface {
-	CreateSource(context.Context, *CreateSourceRequest) (*CreateSourceResponse, error)
-	GetSource(context.Context, *GetSourceRequest) (*GetSourceResponse, error)
-	GetSources(*GetSourcesRequest, Sources_GetSourcesServer) error
-	ResolveSource(context.Context, *ResolveSourceRequest) (*ResolveSourceResponse, error)
-	DeleteSource(Sources_DeleteSourceServer) error
-	mustEmbedUnimplementedSourcesServer()
+type AccessManagerServer interface {
+	CreateAccess(context.Context, *CreateAccessRequest) (*CreateAccessResponse, error)
+	GetAccess(context.Context, *GetAccessRequest) (*GetAccessResponse, error)
+	GetAccessList(*GetAccessListRequest, AccessManager_GetAccessListServer) error
+	ResolveAccess(context.Context, *ResolveAccessRequest) (*ResolveAccessResponse, error)
+	DeleteAccess(AccessManager_DeleteAccessServer) error
+	mustEmbedUnimplementedAccessManagerServer()
 }
 
-// UnimplementedSourcesServer must be embedded to have forward compatible implementations.
-type UnimplementedSourcesServer struct {
+// UnimplementedAccessManagerServer must be embedded to have forward compatible implementations.
+type UnimplementedAccessManagerServer struct {
 }
 
-func (UnimplementedSourcesServer) CreateSource(context.Context, *CreateSourceRequest) (*CreateSourceResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateSource not implemented")
+func (UnimplementedAccessManagerServer) CreateAccess(context.Context, *CreateAccessRequest) (*CreateAccessResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateAccess not implemented")
 }
-func (UnimplementedSourcesServer) GetSource(context.Context, *GetSourceRequest) (*GetSourceResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetSource not implemented")
+func (UnimplementedAccessManagerServer) GetAccess(context.Context, *GetAccessRequest) (*GetAccessResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAccess not implemented")
 }
-func (UnimplementedSourcesServer) GetSources(*GetSourcesRequest, Sources_GetSourcesServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetSources not implemented")
+func (UnimplementedAccessManagerServer) GetAccessList(*GetAccessListRequest, AccessManager_GetAccessListServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetAccessList not implemented")
 }
-func (UnimplementedSourcesServer) ResolveSource(context.Context, *ResolveSourceRequest) (*ResolveSourceResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ResolveSource not implemented")
+func (UnimplementedAccessManagerServer) ResolveAccess(context.Context, *ResolveAccessRequest) (*ResolveAccessResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResolveAccess not implemented")
 }
-func (UnimplementedSourcesServer) DeleteSource(Sources_DeleteSourceServer) error {
-	return status.Errorf(codes.Unimplemented, "method DeleteSource not implemented")
+func (UnimplementedAccessManagerServer) DeleteAccess(AccessManager_DeleteAccessServer) error {
+	return status.Errorf(codes.Unimplemented, "method DeleteAccess not implemented")
 }
-func (UnimplementedSourcesServer) mustEmbedUnimplementedSourcesServer() {}
+func (UnimplementedAccessManagerServer) mustEmbedUnimplementedAccessManagerServer() {}
 
-// UnsafeSourcesServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to SourcesServer will
+// UnsafeAccessManagerServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AccessManagerServer will
 // result in compilation errors.
-type UnsafeSourcesServer interface {
-	mustEmbedUnimplementedSourcesServer()
+type UnsafeAccessManagerServer interface {
+	mustEmbedUnimplementedAccessManagerServer()
 }
 
-func RegisterSourcesServer(s *grpc.Server, srv SourcesServer) {
-	s.RegisterService(&_Sources_serviceDesc, srv)
+func RegisterAccessManagerServer(s *grpc.Server, srv AccessManagerServer) {
+	s.RegisterService(&_AccessManager_serviceDesc, srv)
 }
 
-func _Sources_CreateSource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateSourceRequest)
+func _AccessManager_CreateAccess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAccessRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SourcesServer).CreateSource(ctx, in)
+		return srv.(AccessManagerServer).CreateAccess(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Sources/CreateSource",
+		FullMethod: "/AccessManager/CreateAccess",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SourcesServer).CreateSource(ctx, req.(*CreateSourceRequest))
+		return srv.(AccessManagerServer).CreateAccess(ctx, req.(*CreateAccessRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Sources_GetSource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetSourceRequest)
+func _AccessManager_GetAccess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAccessRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SourcesServer).GetSource(ctx, in)
+		return srv.(AccessManagerServer).GetAccess(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Sources/GetSource",
+		FullMethod: "/AccessManager/GetAccess",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SourcesServer).GetSource(ctx, req.(*GetSourceRequest))
+		return srv.(AccessManagerServer).GetAccess(ctx, req.(*GetAccessRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Sources_GetSources_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(GetSourcesRequest)
+func _AccessManager_GetAccessList_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetAccessListRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(SourcesServer).GetSources(m, &sourcesGetSourcesServer{stream})
+	return srv.(AccessManagerServer).GetAccessList(m, &accessManagerGetAccessListServer{stream})
 }
 
-type Sources_GetSourcesServer interface {
-	Send(*Source) error
+type AccessManager_GetAccessListServer interface {
+	Send(*Access) error
 	grpc.ServerStream
 }
 
-type sourcesGetSourcesServer struct {
+type accessManagerGetAccessListServer struct {
 	grpc.ServerStream
 }
 
-func (x *sourcesGetSourcesServer) Send(m *Source) error {
+func (x *accessManagerGetAccessListServer) Send(m *Access) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _Sources_ResolveSource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ResolveSourceRequest)
+func _AccessManager_ResolveAccess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResolveAccessRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SourcesServer).ResolveSource(ctx, in)
+		return srv.(AccessManagerServer).ResolveAccess(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Sources/ResolveSource",
+		FullMethod: "/AccessManager/ResolveAccess",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SourcesServer).ResolveSource(ctx, req.(*ResolveSourceRequest))
+		return srv.(AccessManagerServer).ResolveAccess(ctx, req.(*ResolveAccessRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Sources_DeleteSource_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(SourcesServer).DeleteSource(&sourcesDeleteSourceServer{stream})
+func _AccessManager_DeleteAccess_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(AccessManagerServer).DeleteAccess(&accessManagerDeleteAccessServer{stream})
 }
 
-type Sources_DeleteSourceServer interface {
-	SendAndClose(*DeleteSourceResponse) error
-	Recv() (*DeleteSourceRequest, error)
+type AccessManager_DeleteAccessServer interface {
+	SendAndClose(*DeleteAccessResponse) error
+	Recv() (*DeleteAccessRequest, error)
 	grpc.ServerStream
 }
 
-type sourcesDeleteSourceServer struct {
+type accessManagerDeleteAccessServer struct {
 	grpc.ServerStream
 }
 
-func (x *sourcesDeleteSourceServer) SendAndClose(m *DeleteSourceResponse) error {
+func (x *accessManagerDeleteAccessServer) SendAndClose(m *DeleteAccessResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *sourcesDeleteSourceServer) Recv() (*DeleteSourceRequest, error) {
-	m := new(DeleteSourceRequest)
+func (x *accessManagerDeleteAccessServer) Recv() (*DeleteAccessRequest, error) {
+	m := new(DeleteAccessRequest)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-var _Sources_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "Sources",
-	HandlerType: (*SourcesServer)(nil),
+var _AccessManager_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "AccessManager",
+	HandlerType: (*AccessManagerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreateSource",
-			Handler:    _Sources_CreateSource_Handler,
+			MethodName: "CreateAccess",
+			Handler:    _AccessManager_CreateAccess_Handler,
 		},
 		{
-			MethodName: "GetSource",
-			Handler:    _Sources_GetSource_Handler,
+			MethodName: "GetAccess",
+			Handler:    _AccessManager_GetAccess_Handler,
 		},
 		{
-			MethodName: "ResolveSource",
-			Handler:    _Sources_ResolveSource_Handler,
+			MethodName: "ResolveAccess",
+			Handler:    _AccessManager_ResolveAccess_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "GetSources",
-			Handler:       _Sources_GetSources_Handler,
+			StreamName:    "GetAccessList",
+			Handler:       _AccessManager_GetAccessList_Handler,
 			ServerStreams: true,
 		},
 		{
-			StreamName:    "DeleteSource",
-			Handler:       _Sources_DeleteSource_Handler,
+			StreamName:    "DeleteAccess",
+			Handler:       _AccessManager_DeleteAccess_Handler,
 			ClientStreams: true,
 		},
 	},

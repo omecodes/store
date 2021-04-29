@@ -31,8 +31,8 @@ var _ = runtime.String
 var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
-func request_Sources_CreateSource_0(ctx context.Context, marshaler runtime.Marshaler, client SourcesClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CreateSourceRequest
+func request_AccessManager_CreateAccess_0(ctx context.Context, marshaler runtime.Marshaler, client AccessManagerClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CreateAccessRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -43,13 +43,13 @@ func request_Sources_CreateSource_0(ctx context.Context, marshaler runtime.Marsh
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.CreateSource(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.CreateAccess(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_Sources_CreateSource_0(ctx context.Context, marshaler runtime.Marshaler, server SourcesServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CreateSourceRequest
+func local_request_AccessManager_CreateAccess_0(ctx context.Context, marshaler runtime.Marshaler, server AccessManagerServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CreateAccessRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -60,13 +60,13 @@ func local_request_Sources_CreateSource_0(ctx context.Context, marshaler runtime
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.CreateSource(ctx, &protoReq)
+	msg, err := server.CreateAccess(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
-func request_Sources_GetSource_0(ctx context.Context, marshaler runtime.Marshaler, client SourcesClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetSourceRequest
+func request_AccessManager_GetAccess_0(ctx context.Context, marshaler runtime.Marshaler, client AccessManagerClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetAccessRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -77,13 +77,13 @@ func request_Sources_GetSource_0(ctx context.Context, marshaler runtime.Marshale
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.GetSource(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.GetAccess(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_Sources_GetSource_0(ctx context.Context, marshaler runtime.Marshaler, server SourcesServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetSourceRequest
+func local_request_AccessManager_GetAccess_0(ctx context.Context, marshaler runtime.Marshaler, server AccessManagerServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetAccessRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -94,13 +94,13 @@ func local_request_Sources_GetSource_0(ctx context.Context, marshaler runtime.Ma
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.GetSource(ctx, &protoReq)
+	msg, err := server.GetAccess(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
-func request_Sources_GetSources_0(ctx context.Context, marshaler runtime.Marshaler, client SourcesClient, req *http.Request, pathParams map[string]string) (Sources_GetSourcesClient, runtime.ServerMetadata, error) {
-	var protoReq GetSourcesRequest
+func request_AccessManager_GetAccessList_0(ctx context.Context, marshaler runtime.Marshaler, client AccessManagerClient, req *http.Request, pathParams map[string]string) (AccessManager_GetAccessListClient, runtime.ServerMetadata, error) {
+	var protoReq GetAccessListRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -111,7 +111,7 @@ func request_Sources_GetSources_0(ctx context.Context, marshaler runtime.Marshal
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	stream, err := client.GetSources(ctx, &protoReq)
+	stream, err := client.GetAccessList(ctx, &protoReq)
 	if err != nil {
 		return nil, metadata, err
 	}
@@ -124,8 +124,8 @@ func request_Sources_GetSources_0(ctx context.Context, marshaler runtime.Marshal
 
 }
 
-func request_Sources_ResolveSource_0(ctx context.Context, marshaler runtime.Marshaler, client SourcesClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ResolveSourceRequest
+func request_AccessManager_ResolveAccess_0(ctx context.Context, marshaler runtime.Marshaler, client AccessManagerClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ResolveAccessRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -136,13 +136,13 @@ func request_Sources_ResolveSource_0(ctx context.Context, marshaler runtime.Mars
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.ResolveSource(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.ResolveAccess(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_Sources_ResolveSource_0(ctx context.Context, marshaler runtime.Marshaler, server SourcesServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ResolveSourceRequest
+func local_request_AccessManager_ResolveAccess_0(ctx context.Context, marshaler runtime.Marshaler, server AccessManagerServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ResolveAccessRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -153,21 +153,21 @@ func local_request_Sources_ResolveSource_0(ctx context.Context, marshaler runtim
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.ResolveSource(ctx, &protoReq)
+	msg, err := server.ResolveAccess(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
-func request_Sources_DeleteSource_0(ctx context.Context, marshaler runtime.Marshaler, client SourcesClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_AccessManager_DeleteAccess_0(ctx context.Context, marshaler runtime.Marshaler, client AccessManagerClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var metadata runtime.ServerMetadata
-	stream, err := client.DeleteSource(ctx)
+	stream, err := client.DeleteAccess(ctx)
 	if err != nil {
 		grpclog.Infof("Failed to start streaming: %v", err)
 		return nil, metadata, err
 	}
 	dec := marshaler.NewDecoder(req.Body)
 	for {
-		var protoReq DeleteSourceRequest
+		var protoReq DeleteAccessRequest
 		err = dec.Decode(&protoReq)
 		if err == io.EOF {
 			break
@@ -508,24 +508,24 @@ func local_request_Files_CopyFile_0(ctx context.Context, marshaler runtime.Marsh
 
 }
 
-// RegisterSourcesHandlerServer registers the http handlers for service Sources to "mux".
-// UnaryRPC     :call SourcesServer directly.
+// RegisterAccessManagerHandlerServer registers the http handlers for service AccessManager to "mux".
+// UnaryRPC     :call AccessManagerServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterSourcesHandlerFromEndpoint instead.
-func RegisterSourcesHandlerServer(ctx context.Context, mux *runtime.ServeMux, server SourcesServer) error {
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterAccessManagerHandlerFromEndpoint instead.
+func RegisterAccessManagerHandlerServer(ctx context.Context, mux *runtime.ServeMux, server AccessManagerServer) error {
 
-	mux.Handle("POST", pattern_Sources_CreateSource_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_AccessManager_CreateAccess_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Sources/CreateSource")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.AccessManager/CreateAccess")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Sources_CreateSource_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_AccessManager_CreateAccess_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -533,22 +533,22 @@ func RegisterSourcesHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 			return
 		}
 
-		forward_Sources_CreateSource_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_AccessManager_CreateAccess_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_Sources_GetSource_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_AccessManager_GetAccess_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Sources/GetSource")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.AccessManager/GetAccess")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Sources_GetSource_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_AccessManager_GetAccess_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -556,29 +556,29 @@ func RegisterSourcesHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 			return
 		}
 
-		forward_Sources_GetSource_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_AccessManager_GetAccess_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_Sources_GetSources_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_AccessManager_GetAccessList_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
 		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 		return
 	})
 
-	mux.Handle("POST", pattern_Sources_ResolveSource_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_AccessManager_ResolveAccess_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.Sources/ResolveSource")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.AccessManager/ResolveAccess")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Sources_ResolveSource_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_AccessManager_ResolveAccess_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -586,11 +586,11 @@ func RegisterSourcesHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 			return
 		}
 
-		forward_Sources_ResolveSource_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_AccessManager_ResolveAccess_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_Sources_DeleteSource_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_AccessManager_DeleteAccess_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
 		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -816,9 +816,9 @@ func RegisterFilesHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 	return nil
 }
 
-// RegisterSourcesHandlerFromEndpoint is same as RegisterSourcesHandler but
+// RegisterAccessManagerHandlerFromEndpoint is same as RegisterAccessManagerHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterSourcesHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterAccessManagerHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
 		return err
@@ -838,119 +838,119 @@ func RegisterSourcesHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeM
 		}()
 	}()
 
-	return RegisterSourcesHandler(ctx, mux, conn)
+	return RegisterAccessManagerHandler(ctx, mux, conn)
 }
 
-// RegisterSourcesHandler registers the http handlers for service Sources to "mux".
+// RegisterAccessManagerHandler registers the http handlers for service AccessManager to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterSourcesHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterSourcesHandlerClient(ctx, mux, NewSourcesClient(conn))
+func RegisterAccessManagerHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterAccessManagerHandlerClient(ctx, mux, NewAccessManagerClient(conn))
 }
 
-// RegisterSourcesHandlerClient registers the http handlers for service Sources
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "SourcesClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "SourcesClient"
+// RegisterAccessManagerHandlerClient registers the http handlers for service AccessManager
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "AccessManagerClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "AccessManagerClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "SourcesClient" to call the correct interceptors.
-func RegisterSourcesHandlerClient(ctx context.Context, mux *runtime.ServeMux, client SourcesClient) error {
+// "AccessManagerClient" to call the correct interceptors.
+func RegisterAccessManagerHandlerClient(ctx context.Context, mux *runtime.ServeMux, client AccessManagerClient) error {
 
-	mux.Handle("POST", pattern_Sources_CreateSource_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_AccessManager_CreateAccess_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Sources/CreateSource")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.AccessManager/CreateAccess")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Sources_CreateSource_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_AccessManager_CreateAccess_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Sources_CreateSource_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_AccessManager_CreateAccess_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_Sources_GetSource_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_AccessManager_GetAccess_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Sources/GetSource")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.AccessManager/GetAccess")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Sources_GetSource_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_AccessManager_GetAccess_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Sources_GetSource_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_AccessManager_GetAccess_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_Sources_GetSources_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_AccessManager_GetAccessList_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Sources/GetSources")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.AccessManager/GetAccessList")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Sources_GetSources_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_AccessManager_GetAccessList_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Sources_GetSources_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
+		forward_AccessManager_GetAccessList_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_Sources_ResolveSource_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_AccessManager_ResolveAccess_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Sources/ResolveSource")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.AccessManager/ResolveAccess")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Sources_ResolveSource_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_AccessManager_ResolveAccess_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Sources_ResolveSource_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_AccessManager_ResolveAccess_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_Sources_DeleteSource_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_AccessManager_DeleteAccess_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.Sources/DeleteSource")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.AccessManager/DeleteAccess")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Sources_DeleteSource_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_AccessManager_DeleteAccess_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Sources_DeleteSource_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_AccessManager_DeleteAccess_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -958,27 +958,27 @@ func RegisterSourcesHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 }
 
 var (
-	pattern_Sources_CreateSource_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Sources", "CreateSource"}, ""))
+	pattern_AccessManager_CreateAccess_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"AccessManager", "CreateAccess"}, ""))
 
-	pattern_Sources_GetSource_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Sources", "GetSource"}, ""))
+	pattern_AccessManager_GetAccess_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"AccessManager", "GetAccess"}, ""))
 
-	pattern_Sources_GetSources_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Sources", "GetSources"}, ""))
+	pattern_AccessManager_GetAccessList_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"AccessManager", "GetAccessList"}, ""))
 
-	pattern_Sources_ResolveSource_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Sources", "ResolveSource"}, ""))
+	pattern_AccessManager_ResolveAccess_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"AccessManager", "ResolveAccess"}, ""))
 
-	pattern_Sources_DeleteSource_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"Sources", "DeleteSource"}, ""))
+	pattern_AccessManager_DeleteAccess_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"AccessManager", "DeleteAccess"}, ""))
 )
 
 var (
-	forward_Sources_CreateSource_0 = runtime.ForwardResponseMessage
+	forward_AccessManager_CreateAccess_0 = runtime.ForwardResponseMessage
 
-	forward_Sources_GetSource_0 = runtime.ForwardResponseMessage
+	forward_AccessManager_GetAccess_0 = runtime.ForwardResponseMessage
 
-	forward_Sources_GetSources_0 = runtime.ForwardResponseStream
+	forward_AccessManager_GetAccessList_0 = runtime.ForwardResponseStream
 
-	forward_Sources_ResolveSource_0 = runtime.ForwardResponseMessage
+	forward_AccessManager_ResolveAccess_0 = runtime.ForwardResponseMessage
 
-	forward_Sources_DeleteSource_0 = runtime.ForwardResponseMessage
+	forward_AccessManager_DeleteAccess_0 = runtime.ForwardResponseMessage
 )
 
 // RegisterFilesHandlerFromEndpoint is same as RegisterFilesHandler but

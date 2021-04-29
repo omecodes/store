@@ -20,7 +20,7 @@ type ServiceClient interface {
 	SaveNamespaceConfig(ctx context.Context, in *SaveNamespaceConfigRequest, opts ...grpc.CallOption) (*SaveNamespaceConfigResponse, error)
 	GetNamespaceConfig(ctx context.Context, in *GetNamespaceConfigRequest, opts ...grpc.CallOption) (*GetNamespaceConfigResponse, error)
 	DeleteNamespaceConfig(ctx context.Context, in *DeleteNamespaceConfigRequest, opts ...grpc.CallOption) (*DeleteNamespaceConfigResponse, error)
-	CheckRequest(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error)
+	Check(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error)
 	SaveRelation(ctx context.Context, in *SaveACLRequest, opts ...grpc.CallOption) (*SaveACLResponse, error)
 	DeleteRelation(ctx context.Context, in *DeleteACLRequest, opts ...grpc.CallOption) (*DeleteACLResponse, error)
 }
@@ -60,9 +60,9 @@ func (c *serviceClient) DeleteNamespaceConfig(ctx context.Context, in *DeleteNam
 	return out, nil
 }
 
-func (c *serviceClient) CheckRequest(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error) {
+func (c *serviceClient) Check(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error) {
 	out := new(CheckResponse)
-	err := c.cc.Invoke(ctx, "/Service/CheckRequest", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/Service/Check", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ type ServiceServer interface {
 	SaveNamespaceConfig(context.Context, *SaveNamespaceConfigRequest) (*SaveNamespaceConfigResponse, error)
 	GetNamespaceConfig(context.Context, *GetNamespaceConfigRequest) (*GetNamespaceConfigResponse, error)
 	DeleteNamespaceConfig(context.Context, *DeleteNamespaceConfigRequest) (*DeleteNamespaceConfigResponse, error)
-	CheckRequest(context.Context, *CheckRequest) (*CheckResponse, error)
+	Check(context.Context, *CheckRequest) (*CheckResponse, error)
 	SaveRelation(context.Context, *SaveACLRequest) (*SaveACLResponse, error)
 	DeleteRelation(context.Context, *DeleteACLRequest) (*DeleteACLResponse, error)
 	mustEmbedUnimplementedServiceServer()
@@ -113,8 +113,8 @@ func (UnimplementedServiceServer) GetNamespaceConfig(context.Context, *GetNamesp
 func (UnimplementedServiceServer) DeleteNamespaceConfig(context.Context, *DeleteNamespaceConfigRequest) (*DeleteNamespaceConfigResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteNamespaceConfig not implemented")
 }
-func (UnimplementedServiceServer) CheckRequest(context.Context, *CheckRequest) (*CheckResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CheckRequest not implemented")
+func (UnimplementedServiceServer) Check(context.Context, *CheckRequest) (*CheckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Check not implemented")
 }
 func (UnimplementedServiceServer) SaveRelation(context.Context, *SaveACLRequest) (*SaveACLResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SaveRelation not implemented")
@@ -189,20 +189,20 @@ func _Service_DeleteNamespaceConfig_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Service_CheckRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Service_Check_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CheckRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ServiceServer).CheckRequest(ctx, in)
+		return srv.(ServiceServer).Check(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Service/CheckRequest",
+		FullMethod: "/Service/Check",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServiceServer).CheckRequest(ctx, req.(*CheckRequest))
+		return srv.(ServiceServer).Check(ctx, req.(*CheckRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -260,8 +260,8 @@ var _Service_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Service_DeleteNamespaceConfig_Handler,
 		},
 		{
-			MethodName: "CheckRequest",
-			Handler:    _Service_CheckRequest_Handler,
+			MethodName: "Check",
+			Handler:    _Service_Check_Handler,
 		},
 		{
 			MethodName: "SaveRelation",
