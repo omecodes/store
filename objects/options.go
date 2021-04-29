@@ -1,5 +1,7 @@
 package objects
 
+import pb "github.com/omecodes/store/gen/go/proto"
+
 // Options
 type CollectionOptions struct {
 	Name       string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -21,5 +23,5 @@ type GetOptions struct {
 type PatchOptions struct{}
 
 type MoveOptions struct {
-	NewSecurity *PathAccessRules
+	NewSecurity *pb.PathAccessRules
 }

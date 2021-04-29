@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/omecodes/errors"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 	"strings"
 
@@ -144,14 +145,14 @@ func (s *sqlStore) DeleteObjectMappings(id string) error {
 	return err
 }
 
-func (s *sqlStore) Search(query *SearchQuery) (Cursor, error) {
+func (s *sqlStore) Search(query *pb.SearchQuery) (Cursor, error) {
 	return s.performSearch(query)
 }
 
-func (s *sqlStore) performSearch(query *SearchQuery) (Cursor, error) {
+func (s *sqlStore) performSearch(query *pb.SearchQuery) (Cursor, error) {
 	switch q := query.Query.(type) {
 
-	case *SearchQuery_Text:
+	case *pb.SearchQuery_Text:
 		expr, scorers := evaluateWordSearchingQuery(q.Text)
 		sqlQuery := "select * from " + wordsTableName + " where " + expr
 		c, err := s.db.Query(sqlQuery, bome.MapEntryScanner)
@@ -187,12 +188,12 @@ func (s *sqlStore) performSearch(query *SearchQuery) (Cursor, error) {
 
 		return &idListCursor{ids: records.sorted(), pos: 0}, err
 
-	case *SearchQuery_Number:
+	case *pb.SearchQuery_Number:
 		sqlQuery := "select id from " + numbersTableName + " where " + evaluateNumberSearchingQuery(q.Number)
 		c, err := s.db.Query(sqlQuery, bome.StringScanner)
 		return &aggregatedStrIdsCursor{cursor: c}, err
 
-	case *SearchQuery_Fields:
+	case *pb.SearchQuery_Fields:
 		sqlQuery := "select id from " + propsTableName + " where " + evaluatePropertiesSearchingQuery(q.Fields)
 		c, err := s.db.Query(sqlQuery, bome.StringScanner)
 		return &dbStringCursorWrapper{cursor: c}, err
@@ -201,13 +202,13 @@ func (s *sqlStore) performSearch(query *SearchQuery) (Cursor, error) {
 	return nil, errors.Unsupported("sql dialect not supported", errors.Details{Key: "type", Value: "query"}, errors.Details{Key: "name", Value: query.Query})
 }
 
-func evaluateWordSearchingQuery(query *StrQuery) (string, []tokenMatchScorer) {
+func evaluateWordSearchingQuery(query *pb.StrQuery) (string, []tokenMatchScorer) {
 	var matchScorers []tokenMatchScorer
 	textAnalyzer := getQueryTextAnalyzer()
 
 	switch v := query.Bool.(type) {
 
-	case *StrQuery_Or:
+	case *pb.StrQuery_Or:
 		var evaluatedExpression []string
 		for _, ox := range v.Or.Queries {
 			expr, scorers := evaluateWordSearchingQuery(ox)
@@ -216,22 +217,22 @@ func evaluateWordSearchingQuery(query *StrQuery) (string, []tokenMatchScorer) {
 		}
 		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " OR ")), matchScorers
 
-	case *StrQuery_Contains:
+	case *pb.StrQuery_Contains:
 		value := textAnalyzer(v.Contains.Value)
 		matchScorers = append(matchScorers, containsScorer(value))
 		return "(token like '%" + value + "%')", matchScorers
 
-	case *StrQuery_StartsWith:
+	case *pb.StrQuery_StartsWith:
 		value := textAnalyzer(v.StartsWith.Value)
 		matchScorers = append(matchScorers, startsWithScorer(value))
 		return "(token like '" + value + "%')", matchScorers
 
-	case *StrQuery_EndsWith:
+	case *pb.StrQuery_EndsWith:
 		value := textAnalyzer(v.EndsWith.Value)
 		matchScorers = append(matchScorers, endsWithScorer(value))
 		return "(token='%" + textAnalyzer(v.EndsWith.Value) + "')", matchScorers
 
-	case *StrQuery_Eq:
+	case *pb.StrQuery_Eq:
 		value := textAnalyzer(v.Eq.Value)
 		matchScorers = append(matchScorers, equalsScorer(value))
 		return "(token='" + textAnalyzer(v.Eq.Value) + "')", matchScorers
@@ -239,86 +240,86 @@ func evaluateWordSearchingQuery(query *StrQuery) (string, []tokenMatchScorer) {
 	return "", nil
 }
 
-func evaluateNumberSearchingQuery(query *NumQuery) string {
+func evaluateNumberSearchingQuery(query *pb.NumQuery) string {
 	switch v := query.Bool.(type) {
 
-	case *NumQuery_And:
+	case *pb.NumQuery_And:
 		var evaluatedExpression []string
 		for _, ox := range v.And.Queries {
 			evaluatedExpression = append(evaluatedExpression, evaluateNumberSearchingQuery(ox))
 		}
 		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " AND "))
 
-	case *NumQuery_Or:
+	case *pb.NumQuery_Or:
 		var evaluatedExpression []string
 		for _, ox := range v.Or.Queries {
 			evaluatedExpression = append(evaluatedExpression, evaluateNumberSearchingQuery(ox))
 		}
 		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " OR "))
 
-	case *NumQuery_Eq:
+	case *pb.NumQuery_Eq:
 		return fmt.Sprintf("(num=%d)", v.Eq.Value)
 
-	case *NumQuery_Gt:
+	case *pb.NumQuery_Gt:
 		return fmt.Sprintf("(num>%d)", v.Gt.Value)
 
-	case *NumQuery_Gte:
+	case *pb.NumQuery_Gte:
 		return fmt.Sprintf("(num>=%d)", v.Gte.Value)
 
-	case *NumQuery_Lt:
+	case *pb.NumQuery_Lt:
 		return fmt.Sprintf("(num<%d)", v.Lt.Value)
 
-	case *NumQuery_Lte:
+	case *pb.NumQuery_Lte:
 		return fmt.Sprintf("(num<=%d)", v.Lte.Value)
 	}
 
 	return ""
 }
 
-func evaluatePropertiesSearchingQuery(query *FieldQuery) string {
+func evaluatePropertiesSearchingQuery(query *pb.FieldQuery) string {
 	textAnalyzer := propsMappingTextAnalyzer()
 
 	switch v := query.Bool.(type) {
 
-	case *FieldQuery_And:
+	case *pb.FieldQuery_And:
 		var evaluatedExpression []string
 		for _, ox := range v.And.Queries {
 			evaluatedExpression = append(evaluatedExpression, evaluatePropertiesSearchingQuery(ox))
 		}
 		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " AND "))
 
-	case *FieldQuery_Or:
+	case *pb.FieldQuery_Or:
 		var evaluatedExpression []string
 		for _, ox := range v.Or.Queries {
 			evaluatedExpression = append(evaluatedExpression, evaluatePropertiesSearchingQuery(ox))
 		}
 		return fmt.Sprintf("(%s)", strings.Join(evaluatedExpression, " OR "))
 
-	case *FieldQuery_Contains:
+	case *pb.FieldQuery_Contains:
 		return fmt.Sprintf("(value->>'$.%s' like '%%%s%%')", v.Contains.Field, escape(textAnalyzer(v.Contains.Value)))
 
-	case *FieldQuery_StartsWith:
+	case *pb.FieldQuery_StartsWith:
 		return fmt.Sprintf("(value->>'$.%s' like '%s%%')", v.StartsWith.Field, escape(textAnalyzer(v.StartsWith.Value)))
 
-	case *FieldQuery_EndsWith:
+	case *pb.FieldQuery_EndsWith:
 		return fmt.Sprintf("(value->>'$.%s' like '%s%%')", v.EndsWith.Field, escape(textAnalyzer(v.EndsWith.Value)))
 
-	case *FieldQuery_StrEqual:
+	case *pb.FieldQuery_StrEqual:
 		return fmt.Sprintf("(value->>'$.%s'='%s')", v.StrEqual.Field, escape(textAnalyzer(v.StrEqual.Value)))
 
-	case *FieldQuery_Lt:
+	case *pb.FieldQuery_Lt:
 		return fmt.Sprintf("(value->>'$.%s'<%d)", v.Lt.Field, v.Lt.Value)
 
-	case *FieldQuery_Lte:
+	case *pb.FieldQuery_Lte:
 		return fmt.Sprintf("(value->>'$.%s'<=%d)", v.Lte.Field, v.Lte.Value)
 
-	case *FieldQuery_Gt:
+	case *pb.FieldQuery_Gt:
 		return fmt.Sprintf("(value->>'$.%s'>%d)", v.Gt.Field, v.Gt.Value)
 
-	case *FieldQuery_Gte:
+	case *pb.FieldQuery_Gte:
 		return fmt.Sprintf("(value->>'$.%s'>=%d)", v.Gte.Field, v.Gte.Value)
 
-	case *FieldQuery_NumbEq:
+	case *pb.FieldQuery_NumbEq:
 		return fmt.Sprintf("(value->>'$.%s'=%d)", v.NumbEq.Field, v.NumbEq.Value)
 	}
 

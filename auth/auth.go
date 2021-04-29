@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"github.com/omecodes/libome/logs"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"strings"
 
 	"google.golang.org/grpc/metadata"
@@ -13,7 +14,7 @@ import (
 )
 
 type InitClientAppSessionRequest struct {
-	ClientApp *ClientApp `json:"client,omitempty"`
+	ClientApp *pb.ClientApp `json:"client,omitempty"`
 }
 
 func BasicContextUpdater(ctx context.Context) (context.Context, error) {
@@ -90,7 +91,7 @@ func updateContextWithBasic(ctx context.Context, authorization string) (context.
 			return ctx, errors.Forbidden("admin authentication failed")
 		}
 
-		return context.WithValue(ctx, ctxUser{}, &User{
+		return context.WithValue(ctx, ctxUser{}, &pb.User{
 			Name: "admin",
 		}), nil
 
@@ -112,7 +113,7 @@ func updateContextWithBasic(ctx context.Context, authorization string) (context.
 		}
 
 		if clientApp.Secret == pass {
-			return context.WithValue(ctx, ctxUser{}, &User{
+			return context.WithValue(ctx, ctxUser{}, &pb.User{
 				Name: "admin",
 			}), nil
 		}
@@ -183,12 +184,12 @@ func updateContextWithOauth2(ctx context.Context, authorization string) (context
 	ctx = context.WithValue(ctx, ctxJWt{}, jwt)
 	o := ctx.Value(ctxUser{})
 	if o != nil {
-		user := o.(*User)
+		user := o.(*pb.User)
 		user.Name = jwt.Claims.Sub
 		return ctx, nil
 
 	} else {
-		return context.WithValue(ctx, ctxUser{}, &User{
+		return context.WithValue(ctx, ctxUser{}, &pb.User{
 			Name: jwt.Claims.Sub,
 		}), nil
 	}

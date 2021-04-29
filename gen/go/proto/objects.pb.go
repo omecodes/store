@@ -1645,513 +1645,6 @@ func (x *SearchObjectsRequest) GetQuery() *SearchQuery {
 	return nil
 }
 
-type PutRulesRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Collection string           `protobuf:"bytes,1,opt,name=collection,proto3" json:"collection,omitempty"`
-	ObjectId   string           `protobuf:"bytes,2,opt,name=object_id,json=objectId,proto3" json:"object_id,omitempty"`
-	Rules      *PathAccessRules `protobuf:"bytes,3,opt,name=rules,proto3" json:"rules,omitempty"`
-}
-
-func (x *PutRulesRequest) Reset() {
-	*x = PutRulesRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_objects_proto_msgTypes[30]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *PutRulesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PutRulesRequest) ProtoMessage() {}
-
-func (x *PutRulesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_objects_proto_msgTypes[30]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PutRulesRequest.ProtoReflect.Descriptor instead.
-func (*PutRulesRequest) Descriptor() ([]byte, []int) {
-	return file_proto_objects_proto_rawDescGZIP(), []int{30}
-}
-
-func (x *PutRulesRequest) GetCollection() string {
-	if x != nil {
-		return x.Collection
-	}
-	return ""
-}
-
-func (x *PutRulesRequest) GetObjectId() string {
-	if x != nil {
-		return x.ObjectId
-	}
-	return ""
-}
-
-func (x *PutRulesRequest) GetRules() *PathAccessRules {
-	if x != nil {
-		return x.Rules
-	}
-	return nil
-}
-
-type PutRulesResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *PutRulesResponse) Reset() {
-	*x = PutRulesResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_objects_proto_msgTypes[31]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *PutRulesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PutRulesResponse) ProtoMessage() {}
-
-func (x *PutRulesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_objects_proto_msgTypes[31]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PutRulesResponse.ProtoReflect.Descriptor instead.
-func (*PutRulesResponse) Descriptor() ([]byte, []int) {
-	return file_proto_objects_proto_rawDescGZIP(), []int{31}
-}
-
-type GetRulesRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Collection string `protobuf:"bytes,1,opt,name=collection,proto3" json:"collection,omitempty"`
-	ObjectId   string `protobuf:"bytes,2,opt,name=object_id,json=objectId,proto3" json:"object_id,omitempty"`
-}
-
-func (x *GetRulesRequest) Reset() {
-	*x = GetRulesRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_objects_proto_msgTypes[32]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetRulesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetRulesRequest) ProtoMessage() {}
-
-func (x *GetRulesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_objects_proto_msgTypes[32]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetRulesRequest.ProtoReflect.Descriptor instead.
-func (*GetRulesRequest) Descriptor() ([]byte, []int) {
-	return file_proto_objects_proto_rawDescGZIP(), []int{32}
-}
-
-func (x *GetRulesRequest) GetCollection() string {
-	if x != nil {
-		return x.Collection
-	}
-	return ""
-}
-
-func (x *GetRulesRequest) GetObjectId() string {
-	if x != nil {
-		return x.ObjectId
-	}
-	return ""
-}
-
-type GetRulesResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Rules *PathAccessRules `protobuf:"bytes,1,opt,name=rules,proto3" json:"rules,omitempty"`
-}
-
-func (x *GetRulesResponse) Reset() {
-	*x = GetRulesResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_objects_proto_msgTypes[33]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetRulesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetRulesResponse) ProtoMessage() {}
-
-func (x *GetRulesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_objects_proto_msgTypes[33]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetRulesResponse.ProtoReflect.Descriptor instead.
-func (*GetRulesResponse) Descriptor() ([]byte, []int) {
-	return file_proto_objects_proto_rawDescGZIP(), []int{33}
-}
-
-func (x *GetRulesResponse) GetRules() *PathAccessRules {
-	if x != nil {
-		return x.Rules
-	}
-	return nil
-}
-
-type GetRulesForPathRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Collection string   `protobuf:"bytes,1,opt,name=collection,proto3" json:"collection,omitempty"`
-	ObjectId   string   `protobuf:"bytes,2,opt,name=object_id,json=objectId,proto3" json:"object_id,omitempty"`
-	Paths      []string `protobuf:"bytes,3,rep,name=paths,proto3" json:"paths,omitempty"`
-}
-
-func (x *GetRulesForPathRequest) Reset() {
-	*x = GetRulesForPathRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_objects_proto_msgTypes[34]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetRulesForPathRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetRulesForPathRequest) ProtoMessage() {}
-
-func (x *GetRulesForPathRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_objects_proto_msgTypes[34]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetRulesForPathRequest.ProtoReflect.Descriptor instead.
-func (*GetRulesForPathRequest) Descriptor() ([]byte, []int) {
-	return file_proto_objects_proto_rawDescGZIP(), []int{34}
-}
-
-func (x *GetRulesForPathRequest) GetCollection() string {
-	if x != nil {
-		return x.Collection
-	}
-	return ""
-}
-
-func (x *GetRulesForPathRequest) GetObjectId() string {
-	if x != nil {
-		return x.ObjectId
-	}
-	return ""
-}
-
-func (x *GetRulesForPathRequest) GetPaths() []string {
-	if x != nil {
-		return x.Paths
-	}
-	return nil
-}
-
-type GetRulesForPathResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Rules *PathAccessRules `protobuf:"bytes,1,opt,name=rules,proto3" json:"rules,omitempty"`
-}
-
-func (x *GetRulesForPathResponse) Reset() {
-	*x = GetRulesForPathResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_objects_proto_msgTypes[35]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetRulesForPathResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetRulesForPathResponse) ProtoMessage() {}
-
-func (x *GetRulesForPathResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_objects_proto_msgTypes[35]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetRulesForPathResponse.ProtoReflect.Descriptor instead.
-func (*GetRulesForPathResponse) Descriptor() ([]byte, []int) {
-	return file_proto_objects_proto_rawDescGZIP(), []int{35}
-}
-
-func (x *GetRulesForPathResponse) GetRules() *PathAccessRules {
-	if x != nil {
-		return x.Rules
-	}
-	return nil
-}
-
-type DeleteRulesRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Collection string `protobuf:"bytes,1,opt,name=collection,proto3" json:"collection,omitempty"`
-	ObjectId   string `protobuf:"bytes,2,opt,name=object_id,json=objectId,proto3" json:"object_id,omitempty"`
-}
-
-func (x *DeleteRulesRequest) Reset() {
-	*x = DeleteRulesRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_objects_proto_msgTypes[36]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *DeleteRulesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteRulesRequest) ProtoMessage() {}
-
-func (x *DeleteRulesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_objects_proto_msgTypes[36]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteRulesRequest.ProtoReflect.Descriptor instead.
-func (*DeleteRulesRequest) Descriptor() ([]byte, []int) {
-	return file_proto_objects_proto_rawDescGZIP(), []int{36}
-}
-
-func (x *DeleteRulesRequest) GetCollection() string {
-	if x != nil {
-		return x.Collection
-	}
-	return ""
-}
-
-func (x *DeleteRulesRequest) GetObjectId() string {
-	if x != nil {
-		return x.ObjectId
-	}
-	return ""
-}
-
-type DeleteRulesResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *DeleteRulesResponse) Reset() {
-	*x = DeleteRulesResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_objects_proto_msgTypes[37]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *DeleteRulesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteRulesResponse) ProtoMessage() {}
-
-func (x *DeleteRulesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_objects_proto_msgTypes[37]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteRulesResponse.ProtoReflect.Descriptor instead.
-func (*DeleteRulesResponse) Descriptor() ([]byte, []int) {
-	return file_proto_objects_proto_rawDescGZIP(), []int{37}
-}
-
-type DeleteRulesForPathRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Collection string   `protobuf:"bytes,1,opt,name=collection,proto3" json:"collection,omitempty"`
-	ObjectId   string   `protobuf:"bytes,2,opt,name=object_id,json=objectId,proto3" json:"object_id,omitempty"`
-	Paths      []string `protobuf:"bytes,3,rep,name=paths,proto3" json:"paths,omitempty"`
-}
-
-func (x *DeleteRulesForPathRequest) Reset() {
-	*x = DeleteRulesForPathRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_objects_proto_msgTypes[38]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *DeleteRulesForPathRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteRulesForPathRequest) ProtoMessage() {}
-
-func (x *DeleteRulesForPathRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_objects_proto_msgTypes[38]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteRulesForPathRequest.ProtoReflect.Descriptor instead.
-func (*DeleteRulesForPathRequest) Descriptor() ([]byte, []int) {
-	return file_proto_objects_proto_rawDescGZIP(), []int{38}
-}
-
-func (x *DeleteRulesForPathRequest) GetCollection() string {
-	if x != nil {
-		return x.Collection
-	}
-	return ""
-}
-
-func (x *DeleteRulesForPathRequest) GetObjectId() string {
-	if x != nil {
-		return x.ObjectId
-	}
-	return ""
-}
-
-func (x *DeleteRulesForPathRequest) GetPaths() []string {
-	if x != nil {
-		return x.Paths
-	}
-	return nil
-}
-
-type DeleteRulesForPathResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *DeleteRulesForPathResponse) Reset() {
-	*x = DeleteRulesForPathResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_objects_proto_msgTypes[39]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *DeleteRulesForPathResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteRulesForPathResponse) ProtoMessage() {}
-
-func (x *DeleteRulesForPathResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_objects_proto_msgTypes[39]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteRulesForPathResponse.ProtoReflect.Descriptor instead.
-func (*DeleteRulesForPathResponse) Descriptor() ([]byte, []int) {
-	return file_proto_objects_proto_rawDescGZIP(), []int{39}
-}
-
 var File_proto_objects_proto protoreflect.FileDescriptor
 
 var file_proto_objects_proto_rawDesc = []byte{
@@ -2323,51 +1816,7 @@ var file_proto_objects_proto_rawDesc = []byte{
 	0x09, 0x52, 0x0a, 0x63, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x22, 0x0a,
 	0x05, 0x71, 0x75, 0x65, 0x72, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x53,
 	0x65, 0x61, 0x72, 0x63, 0x68, 0x51, 0x75, 0x65, 0x72, 0x79, 0x52, 0x05, 0x71, 0x75, 0x65, 0x72,
-	0x79, 0x22, 0x76, 0x0a, 0x0f, 0x50, 0x75, 0x74, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x12, 0x1e, 0x0a, 0x0a, 0x63, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69,
-	0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x63, 0x6f, 0x6c, 0x6c, 0x65, 0x63,
-	0x74, 0x69, 0x6f, 0x6e, 0x12, 0x1b, 0x0a, 0x09, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69,
-	0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x49,
-	0x64, 0x12, 0x26, 0x0a, 0x05, 0x72, 0x75, 0x6c, 0x65, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x10, 0x2e, 0x50, 0x61, 0x74, 0x68, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x52, 0x75, 0x6c,
-	0x65, 0x73, 0x52, 0x05, 0x72, 0x75, 0x6c, 0x65, 0x73, 0x22, 0x12, 0x0a, 0x10, 0x50, 0x75, 0x74,
-	0x52, 0x75, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x4e, 0x0a,
-	0x0f, 0x47, 0x65, 0x74, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x12, 0x1e, 0x0a, 0x0a, 0x63, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x63, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e,
-	0x12, 0x1b, 0x0a, 0x09, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x08, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x49, 0x64, 0x22, 0x3a, 0x0a,
-	0x10, 0x47, 0x65, 0x74, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x26, 0x0a, 0x05, 0x72, 0x75, 0x6c, 0x65, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x10, 0x2e, 0x50, 0x61, 0x74, 0x68, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x52, 0x75, 0x6c,
-	0x65, 0x73, 0x52, 0x05, 0x72, 0x75, 0x6c, 0x65, 0x73, 0x22, 0x6b, 0x0a, 0x16, 0x47, 0x65, 0x74,
-	0x52, 0x75, 0x6c, 0x65, 0x73, 0x46, 0x6f, 0x72, 0x50, 0x61, 0x74, 0x68, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x12, 0x1e, 0x0a, 0x0a, 0x63, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f,
-	0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x63, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74,
-	0x69, 0x6f, 0x6e, 0x12, 0x1b, 0x0a, 0x09, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x49, 0x64,
-	0x12, 0x14, 0x0a, 0x05, 0x70, 0x61, 0x74, 0x68, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x09, 0x52,
-	0x05, 0x70, 0x61, 0x74, 0x68, 0x73, 0x22, 0x41, 0x0a, 0x17, 0x47, 0x65, 0x74, 0x52, 0x75, 0x6c,
-	0x65, 0x73, 0x46, 0x6f, 0x72, 0x50, 0x61, 0x74, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x26, 0x0a, 0x05, 0x72, 0x75, 0x6c, 0x65, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x10, 0x2e, 0x50, 0x61, 0x74, 0x68, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x52, 0x75, 0x6c,
-	0x65, 0x73, 0x52, 0x05, 0x72, 0x75, 0x6c, 0x65, 0x73, 0x22, 0x51, 0x0a, 0x12, 0x44, 0x65, 0x6c,
-	0x65, 0x74, 0x65, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
-	0x1e, 0x0a, 0x0a, 0x63, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x0a, 0x63, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12,
-	0x1b, 0x0a, 0x09, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x08, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x49, 0x64, 0x22, 0x15, 0x0a, 0x13,
-	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x22, 0x6e, 0x0a, 0x19, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x75, 0x6c,
-	0x65, 0x73, 0x46, 0x6f, 0x72, 0x50, 0x61, 0x74, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x12, 0x1e, 0x0a, 0x0a, 0x63, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x63, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e,
-	0x12, 0x1b, 0x0a, 0x09, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x08, 0x6f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x49, 0x64, 0x12, 0x14, 0x0a,
-	0x05, 0x70, 0x61, 0x74, 0x68, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x09, 0x52, 0x05, 0x70, 0x61,
-	0x74, 0x68, 0x73, 0x22, 0x1c, 0x0a, 0x1a, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x75, 0x6c,
-	0x65, 0x73, 0x46, 0x6f, 0x72, 0x50, 0x61, 0x74, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x32, 0xd0, 0x05, 0x0a, 0x07, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x73, 0x12, 0x47, 0x0a,
+	0x79, 0x32, 0xd0, 0x05, 0x0a, 0x07, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x73, 0x12, 0x47, 0x0a,
 	0x10, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x43, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f,
 	0x6e, 0x12, 0x18, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x43, 0x6f, 0x6c, 0x6c, 0x65, 0x63,
 	0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x19, 0x2e, 0x43, 0x72,
@@ -2412,30 +1861,10 @@ var file_proto_objects_proto_rawDesc = []byte{
 	0x01, 0x12, 0x31, 0x0a, 0x0d, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x4f, 0x62, 0x6a, 0x65, 0x63,
 	0x74, 0x73, 0x12, 0x15, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x4f, 0x62, 0x6a, 0x65, 0x63,
 	0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x07, 0x2e, 0x4f, 0x62, 0x6a, 0x65,
-	0x63, 0x74, 0x30, 0x01, 0x32, 0xc2, 0x02, 0x0a, 0x0f, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x52,
-	0x75, 0x6c, 0x65, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x12, 0x2f, 0x0a, 0x08, 0x50, 0x75, 0x74, 0x52,
-	0x75, 0x6c, 0x65, 0x73, 0x12, 0x10, 0x2e, 0x50, 0x75, 0x74, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x11, 0x2e, 0x50, 0x75, 0x74, 0x52, 0x75, 0x6c, 0x65,
-	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2f, 0x0a, 0x08, 0x47, 0x65, 0x74,
-	0x52, 0x75, 0x6c, 0x65, 0x73, 0x12, 0x10, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x75, 0x6c, 0x65, 0x73,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x11, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x75, 0x6c,
-	0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x44, 0x0a, 0x0f, 0x47, 0x65,
-	0x74, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x46, 0x6f, 0x72, 0x50, 0x61, 0x74, 0x68, 0x12, 0x17, 0x2e,
-	0x47, 0x65, 0x74, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x46, 0x6f, 0x72, 0x50, 0x61, 0x74, 0x68, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x18, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x75, 0x6c, 0x65,
-	0x73, 0x46, 0x6f, 0x72, 0x50, 0x61, 0x74, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x12, 0x38, 0x0a, 0x0b, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x12,
-	0x13, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x1a, 0x14, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x75, 0x6c,
-	0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4d, 0x0a, 0x12, 0x44, 0x65,
-	0x6c, 0x65, 0x74, 0x65, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x46, 0x6f, 0x72, 0x50, 0x61, 0x74, 0x68,
-	0x12, 0x1a, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x46, 0x6f,
-	0x72, 0x50, 0x61, 0x74, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1b, 0x2e, 0x44,
-	0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x75, 0x6c, 0x65, 0x73, 0x46, 0x6f, 0x72, 0x50, 0x61, 0x74,
-	0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x2b, 0x5a, 0x29, 0x67, 0x69, 0x74,
-	0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x6f, 0x6d, 0x65, 0x63, 0x6f, 0x64, 0x65, 0x73,
-	0x2f, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x65, 0x6e,
-	0x2f, 0x67, 0x6f, 0x3b, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x63, 0x74, 0x30, 0x01, 0x42, 0x2b, 0x5a, 0x29, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
+	0x6f, 0x6d, 0x2f, 0x6f, 0x6d, 0x65, 0x63, 0x6f, 0x64, 0x65, 0x73, 0x2f, 0x73, 0x74, 0x6f, 0x72,
+	0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x65, 0x6e, 0x2f, 0x67, 0x6f, 0x3b, 0x70,
+	0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2450,117 +1879,94 @@ func file_proto_objects_proto_rawDescGZIP() []byte {
 	return file_proto_objects_proto_rawDescData
 }
 
-var file_proto_objects_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
+var file_proto_objects_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_proto_objects_proto_goTypes = []interface{}{
-	(*Collection)(nil),                 // 0: Collection
-	(*PathAccessRules)(nil),            // 1: PathAccessRules
-	(*AccessRules)(nil),                // 2: AccessRules
-	(*Header)(nil),                     // 3: Header
-	(*Object)(nil),                     // 4: Object
-	(*Patch)(nil),                      // 5: Patch
-	(*ObjectList)(nil),                 // 6: ObjectList
-	(*CreateCollectionRequest)(nil),    // 7: CreateCollectionRequest
-	(*CreateCollectionResponse)(nil),   // 8: CreateCollectionResponse
-	(*GetCollectionRequest)(nil),       // 9: GetCollectionRequest
-	(*GetCollectionResponse)(nil),      // 10: GetCollectionResponse
-	(*ListCollectionsRequest)(nil),     // 11: ListCollectionsRequest
-	(*ListCollectionsResponse)(nil),    // 12: ListCollectionsResponse
-	(*DeleteCollectionRequest)(nil),    // 13: DeleteCollectionRequest
-	(*DeleteCollectionResponse)(nil),   // 14: DeleteCollectionResponse
-	(*PutObjectRequest)(nil),           // 15: PutObjectRequest
-	(*PutObjectResponse)(nil),          // 16: PutObjectResponse
-	(*PatchObjectRequest)(nil),         // 17: PatchObjectRequest
-	(*PatchObjectResponse)(nil),        // 18: PatchObjectResponse
-	(*MoveObjectRequest)(nil),          // 19: MoveObjectRequest
-	(*MoveObjectResponse)(nil),         // 20: MoveObjectResponse
-	(*GetObjectRequest)(nil),           // 21: GetObjectRequest
-	(*GetObjectResponse)(nil),          // 22: GetObjectResponse
-	(*DeleteObjectRequest)(nil),        // 23: DeleteObjectRequest
-	(*DeleteObjectResponse)(nil),       // 24: DeleteObjectResponse
-	(*ObjectInfoRequest)(nil),          // 25: ObjectInfoRequest
-	(*ObjectInfoResponse)(nil),         // 26: ObjectInfoResponse
-	(*ListObjectsRequest)(nil),         // 27: ListObjectsRequest
-	(*ListObjectsResponse)(nil),        // 28: ListObjectsResponse
-	(*SearchObjectsRequest)(nil),       // 29: SearchObjectsRequest
-	(*PutRulesRequest)(nil),            // 30: PutRulesRequest
-	(*PutRulesResponse)(nil),           // 31: PutRulesResponse
-	(*GetRulesRequest)(nil),            // 32: GetRulesRequest
-	(*GetRulesResponse)(nil),           // 33: GetRulesResponse
-	(*GetRulesForPathRequest)(nil),     // 34: GetRulesForPathRequest
-	(*GetRulesForPathResponse)(nil),    // 35: GetRulesForPathResponse
-	(*DeleteRulesRequest)(nil),         // 36: DeleteRulesRequest
-	(*DeleteRulesResponse)(nil),        // 37: DeleteRulesResponse
-	(*DeleteRulesForPathRequest)(nil),  // 38: DeleteRulesForPathRequest
-	(*DeleteRulesForPathResponse)(nil), // 39: DeleteRulesForPathResponse
-	nil,                                // 40: PathAccessRules.AccessRulesEntry
-	(*NumberIndex)(nil),                // 41: NumberIndex
-	(*TextIndex)(nil),                  // 42: TextIndex
-	(*PropertiesIndex)(nil),            // 43: PropertiesIndex
-	(*SearchQuery)(nil),                // 44: SearchQuery
+	(*Collection)(nil),               // 0: Collection
+	(*PathAccessRules)(nil),          // 1: PathAccessRules
+	(*AccessRules)(nil),              // 2: AccessRules
+	(*Header)(nil),                   // 3: Header
+	(*Object)(nil),                   // 4: Object
+	(*Patch)(nil),                    // 5: Patch
+	(*ObjectList)(nil),               // 6: ObjectList
+	(*CreateCollectionRequest)(nil),  // 7: CreateCollectionRequest
+	(*CreateCollectionResponse)(nil), // 8: CreateCollectionResponse
+	(*GetCollectionRequest)(nil),     // 9: GetCollectionRequest
+	(*GetCollectionResponse)(nil),    // 10: GetCollectionResponse
+	(*ListCollectionsRequest)(nil),   // 11: ListCollectionsRequest
+	(*ListCollectionsResponse)(nil),  // 12: ListCollectionsResponse
+	(*DeleteCollectionRequest)(nil),  // 13: DeleteCollectionRequest
+	(*DeleteCollectionResponse)(nil), // 14: DeleteCollectionResponse
+	(*PutObjectRequest)(nil),         // 15: PutObjectRequest
+	(*PutObjectResponse)(nil),        // 16: PutObjectResponse
+	(*PatchObjectRequest)(nil),       // 17: PatchObjectRequest
+	(*PatchObjectResponse)(nil),      // 18: PatchObjectResponse
+	(*MoveObjectRequest)(nil),        // 19: MoveObjectRequest
+	(*MoveObjectResponse)(nil),       // 20: MoveObjectResponse
+	(*GetObjectRequest)(nil),         // 21: GetObjectRequest
+	(*GetObjectResponse)(nil),        // 22: GetObjectResponse
+	(*DeleteObjectRequest)(nil),      // 23: DeleteObjectRequest
+	(*DeleteObjectResponse)(nil),     // 24: DeleteObjectResponse
+	(*ObjectInfoRequest)(nil),        // 25: ObjectInfoRequest
+	(*ObjectInfoResponse)(nil),       // 26: ObjectInfoResponse
+	(*ListObjectsRequest)(nil),       // 27: ListObjectsRequest
+	(*ListObjectsResponse)(nil),      // 28: ListObjectsResponse
+	(*SearchObjectsRequest)(nil),     // 29: SearchObjectsRequest
+	nil,                              // 30: PathAccessRules.AccessRulesEntry
+	(*NumberIndex)(nil),              // 31: NumberIndex
+	(*TextIndex)(nil),                // 32: TextIndex
+	(*PropertiesIndex)(nil),          // 33: PropertiesIndex
+	(*SearchQuery)(nil),              // 34: SearchQuery
 }
 var file_proto_objects_proto_depIdxs = []int32{
-	41, // 0: Collection.number_index:type_name -> NumberIndex
-	42, // 1: Collection.text_indexes:type_name -> TextIndex
-	43, // 2: Collection.fields_index:type_name -> PropertiesIndex
+	31, // 0: Collection.number_index:type_name -> NumberIndex
+	32, // 1: Collection.text_indexes:type_name -> TextIndex
+	33, // 2: Collection.fields_index:type_name -> PropertiesIndex
 	1,  // 3: Collection.default_access_security_rules:type_name -> PathAccessRules
-	40, // 4: PathAccessRules.access_rules:type_name -> PathAccessRules.AccessRulesEntry
+	30, // 4: PathAccessRules.access_rules:type_name -> PathAccessRules.AccessRulesEntry
 	3,  // 5: Object.header:type_name -> Header
 	4,  // 6: ObjectList.objects:type_name -> Object
 	0,  // 7: CreateCollectionRequest.collection:type_name -> Collection
 	0,  // 8: GetCollectionResponse.collection:type_name -> Collection
 	0,  // 9: ListCollectionsResponse.collections:type_name -> Collection
 	4,  // 10: PutObjectRequest.object:type_name -> Object
-	42, // 11: PutObjectRequest.indexes:type_name -> TextIndex
+	32, // 11: PutObjectRequest.indexes:type_name -> TextIndex
 	1,  // 12: PutObjectRequest.access_security_rules:type_name -> PathAccessRules
 	5,  // 13: PatchObjectRequest.patch:type_name -> Patch
 	1,  // 14: MoveObjectRequest.access_security_rules:type_name -> PathAccessRules
 	4,  // 15: GetObjectResponse.object:type_name -> Object
 	3,  // 16: ObjectInfoResponse.header:type_name -> Header
 	6,  // 17: ListObjectsResponse.result:type_name -> ObjectList
-	44, // 18: SearchObjectsRequest.query:type_name -> SearchQuery
-	1,  // 19: PutRulesRequest.rules:type_name -> PathAccessRules
-	1,  // 20: GetRulesResponse.rules:type_name -> PathAccessRules
-	1,  // 21: GetRulesForPathResponse.rules:type_name -> PathAccessRules
-	2,  // 22: PathAccessRules.AccessRulesEntry.value:type_name -> AccessRules
-	7,  // 23: Objects.CreateCollection:input_type -> CreateCollectionRequest
-	9,  // 24: Objects.GetCollection:input_type -> GetCollectionRequest
-	11, // 25: Objects.ListCollections:input_type -> ListCollectionsRequest
-	13, // 26: Objects.DeleteCollection:input_type -> DeleteCollectionRequest
-	15, // 27: Objects.PutObject:input_type -> PutObjectRequest
-	17, // 28: Objects.PatchObject:input_type -> PatchObjectRequest
-	19, // 29: Objects.MoveObject:input_type -> MoveObjectRequest
-	21, // 30: Objects.GetObject:input_type -> GetObjectRequest
-	23, // 31: Objects.DeleteObject:input_type -> DeleteObjectRequest
-	25, // 32: Objects.ObjectInfo:input_type -> ObjectInfoRequest
-	27, // 33: Objects.ListObjects:input_type -> ListObjectsRequest
-	29, // 34: Objects.SearchObjects:input_type -> SearchObjectsRequest
-	30, // 35: AccessRuleStore.PutRules:input_type -> PutRulesRequest
-	32, // 36: AccessRuleStore.GetRules:input_type -> GetRulesRequest
-	34, // 37: AccessRuleStore.GetRulesForPath:input_type -> GetRulesForPathRequest
-	36, // 38: AccessRuleStore.DeleteRules:input_type -> DeleteRulesRequest
-	38, // 39: AccessRuleStore.DeleteRulesForPath:input_type -> DeleteRulesForPathRequest
-	8,  // 40: Objects.CreateCollection:output_type -> CreateCollectionResponse
-	10, // 41: Objects.GetCollection:output_type -> GetCollectionResponse
-	12, // 42: Objects.ListCollections:output_type -> ListCollectionsResponse
-	14, // 43: Objects.DeleteCollection:output_type -> DeleteCollectionResponse
-	16, // 44: Objects.PutObject:output_type -> PutObjectResponse
-	18, // 45: Objects.PatchObject:output_type -> PatchObjectResponse
-	20, // 46: Objects.MoveObject:output_type -> MoveObjectResponse
-	22, // 47: Objects.GetObject:output_type -> GetObjectResponse
-	24, // 48: Objects.DeleteObject:output_type -> DeleteObjectResponse
-	26, // 49: Objects.ObjectInfo:output_type -> ObjectInfoResponse
-	4,  // 50: Objects.ListObjects:output_type -> Object
-	4,  // 51: Objects.SearchObjects:output_type -> Object
-	31, // 52: AccessRuleStore.PutRules:output_type -> PutRulesResponse
-	33, // 53: AccessRuleStore.GetRules:output_type -> GetRulesResponse
-	35, // 54: AccessRuleStore.GetRulesForPath:output_type -> GetRulesForPathResponse
-	37, // 55: AccessRuleStore.DeleteRules:output_type -> DeleteRulesResponse
-	39, // 56: AccessRuleStore.DeleteRulesForPath:output_type -> DeleteRulesForPathResponse
-	40, // [40:57] is the sub-list for method output_type
-	23, // [23:40] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	34, // 18: SearchObjectsRequest.query:type_name -> SearchQuery
+	2,  // 19: PathAccessRules.AccessRulesEntry.value:type_name -> AccessRules
+	7,  // 20: Objects.CreateCollection:input_type -> CreateCollectionRequest
+	9,  // 21: Objects.GetCollection:input_type -> GetCollectionRequest
+	11, // 22: Objects.ListCollections:input_type -> ListCollectionsRequest
+	13, // 23: Objects.DeleteCollection:input_type -> DeleteCollectionRequest
+	15, // 24: Objects.PutObject:input_type -> PutObjectRequest
+	17, // 25: Objects.PatchObject:input_type -> PatchObjectRequest
+	19, // 26: Objects.MoveObject:input_type -> MoveObjectRequest
+	21, // 27: Objects.GetObject:input_type -> GetObjectRequest
+	23, // 28: Objects.DeleteObject:input_type -> DeleteObjectRequest
+	25, // 29: Objects.ObjectInfo:input_type -> ObjectInfoRequest
+	27, // 30: Objects.ListObjects:input_type -> ListObjectsRequest
+	29, // 31: Objects.SearchObjects:input_type -> SearchObjectsRequest
+	8,  // 32: Objects.CreateCollection:output_type -> CreateCollectionResponse
+	10, // 33: Objects.GetCollection:output_type -> GetCollectionResponse
+	12, // 34: Objects.ListCollections:output_type -> ListCollectionsResponse
+	14, // 35: Objects.DeleteCollection:output_type -> DeleteCollectionResponse
+	16, // 36: Objects.PutObject:output_type -> PutObjectResponse
+	18, // 37: Objects.PatchObject:output_type -> PatchObjectResponse
+	20, // 38: Objects.MoveObject:output_type -> MoveObjectResponse
+	22, // 39: Objects.GetObject:output_type -> GetObjectResponse
+	24, // 40: Objects.DeleteObject:output_type -> DeleteObjectResponse
+	26, // 41: Objects.ObjectInfo:output_type -> ObjectInfoResponse
+	4,  // 42: Objects.ListObjects:output_type -> Object
+	4,  // 43: Objects.SearchObjects:output_type -> Object
+	32, // [32:44] is the sub-list for method output_type
+	20, // [20:32] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_proto_objects_proto_init() }
@@ -2930,126 +2336,6 @@ func file_proto_objects_proto_init() {
 				return nil
 			}
 		}
-		file_proto_objects_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PutRulesRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_proto_objects_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PutRulesResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_proto_objects_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetRulesRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_proto_objects_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetRulesResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_proto_objects_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetRulesForPathRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_proto_objects_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetRulesForPathResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_proto_objects_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteRulesRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_proto_objects_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteRulesResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_proto_objects_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteRulesForPathRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_proto_objects_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteRulesForPathResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -3057,9 +2343,9 @@ func file_proto_objects_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_objects_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   41,
+			NumMessages:   31,
 			NumExtensions: 0,
-			NumServices:   2,
+			NumServices:   1,
 		},
 		GoTypes:           file_proto_objects_proto_goTypes,
 		DependencyIndexes: file_proto_objects_proto_depIdxs,

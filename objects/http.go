@@ -8,7 +8,7 @@ import (
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/common"
-	se "github.com/omecodes/store/search-engine"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 	"net/http"
 	"strings"
@@ -56,7 +56,7 @@ func HTTPHandlePutObject(w http.ResponseWriter, r *http.Request) {
 		return
 	}*/
 
-	var putRequest *PutObjectRequest
+	var putRequest *pb.PutObjectRequest
 	err := json.NewDecoder(r.Body).Decode(&putRequest)
 	if err != nil {
 		logs.Error("failed to decode request body", logs.Err(err))
@@ -65,7 +65,7 @@ func HTTPHandlePutObject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if putRequest.Object.Header == nil {
-		putRequest.Object.Header = &Header{}
+		putRequest.Object.Header = &pb.Header{}
 	}
 	putRequest.Object.Header.Size = int64(len(putRequest.Object.Data))
 
@@ -88,7 +88,7 @@ func HTTPHandlePatchObject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var patch Patch
+	var patch pb.Patch
 	err := jsonpb.Unmarshal(r.Body, &patch)
 	if err != nil {
 		logs.Error("failed to decode request body", logs.Err(err))
@@ -116,7 +116,7 @@ func HTTPHandleMoveObject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var request MoveObjectRequest
+	var request pb.MoveObjectRequest
 	err := jsonpb.Unmarshal(r.Body, &request)
 	if err != nil {
 		logs.Error("failed to decode request body", logs.Err(err))
@@ -261,7 +261,7 @@ func HTTPHandleListObjects(w http.ResponseWriter, r *http.Request) {
 func HTTPHandleSearchObjects(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var query se.SearchQuery
+	var query pb.SearchQuery
 	err := jsonpb.Unmarshal(r.Body, &query)
 	if err != nil {
 		logs.Error("could not parse search query")
@@ -337,7 +337,7 @@ func HTTPHandleSearchObjects(w http.ResponseWriter, r *http.Request) {
 func HTTPHandleCreateCollection(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var collection *Collection
+	var collection *pb.Collection
 	err := json.NewDecoder(r.Body).Decode(&collection)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)

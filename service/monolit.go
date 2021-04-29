@@ -68,9 +68,9 @@ type Server struct {
 	accountsManager         accounts.Manager
 	authenticationProviders auth.ProviderManager
 	credentialsManager      auth.CredentialsManager
-	accessStore             objects.ACLManager
-	sourceManager           files.AccessManager
-	cookieStore             *sessions.CookieStore
+	//accessStore             objects.ACLManager
+	sourceManager files.AccessManager
+	cookieStore   *sessions.CookieStore
 
 	listener net.Listener
 	Errors   chan error
@@ -130,10 +130,10 @@ func (s *Server) init() error {
 		}
 	}
 
-	s.accessStore, err = objects.NewACLSQLManager(s.db, bome.MySQL, "store_acl")
+	/*s.accessStore, err = objects.NewACLSQLManager(s.db, bome.MySQL, "store_acl")
 	if err != nil {
 		return err
-	}
+	} */
 
 	s.settings, err = settings.NewSQLManager(s.db, bome.MySQL, "store_settings")
 	if err != nil {
@@ -380,7 +380,7 @@ func (s *Server) httpRouter() http.Handler {
 func (s *Server) objectsHandler() http.Handler {
 	return objects.MuxRouter(
 		objects.Middleware(
-			objects.MiddlewareWithACLManager(s.accessStore),
+			//objects.MiddlewareWithACLManager(s.accessStore),
 			objects.MiddlewareWithDB(s.objects),
 		),
 		settings.MiddlewareWithManager(s.settings),

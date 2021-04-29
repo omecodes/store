@@ -6,6 +6,7 @@ import (
 	ome "github.com/omecodes/libome"
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/service"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"sync"
 )
 
@@ -14,7 +15,7 @@ type LoadBalancer struct {
 	counter int
 }
 
-func (b *LoadBalancer) GetClient(ctx context.Context, serviceType uint32) (ObjectsClient, error) {
+func (b *LoadBalancer) GetClient(ctx context.Context, serviceType uint32) (pb.ObjectsClient, error) {
 	b.Lock()
 	defer b.Unlock()
 
@@ -49,5 +50,5 @@ func (b *LoadBalancer) GetClient(ctx context.Context, serviceType uint32) (Objec
 		return nil, err
 	}
 
-	return NewObjectsClient(conn), nil
+	return pb.NewObjectsClient(conn), nil
 }

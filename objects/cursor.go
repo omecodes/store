@@ -1,16 +1,17 @@
 package objects
 
 import (
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 )
 
 type idsListCursor struct {
 	ids           []string
-	getObjectFunc func(string) (*Object, error)
+	getObjectFunc func(string) (*pb.Object, error)
 	pos           int
 }
 
-func (i *idsListCursor) Browse() (*Object, error) {
+func (i *idsListCursor) Browse() (*pb.Object, error) {
 	if i.pos == len(i.ids) {
 		return nil, io.EOF
 	}
@@ -26,12 +27,12 @@ func (i *idsListCursor) Close() error {
 }
 
 type Browser interface {
-	Browse() (*Object, error)
+	Browse() (*pb.Object, error)
 }
 
-type BrowseFunc func() (*Object, error)
+type BrowseFunc func() (*pb.Object, error)
 
-func (f BrowseFunc) Browse() (*Object, error) {
+func (f BrowseFunc) Browse() (*pb.Object, error) {
 	return f()
 }
 
@@ -57,7 +58,7 @@ type Cursor struct {
 	closer  Closer
 }
 
-func (c *Cursor) Browse() (*Object, error) {
+func (c *Cursor) Browse() (*pb.Object, error) {
 	return c.browser.Browse()
 }
 

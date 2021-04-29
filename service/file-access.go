@@ -9,9 +9,7 @@ import (
 	"github.com/omecodes/store/common"
 	"github.com/omecodes/store/files"
 	pb "github.com/omecodes/store/gen/go/proto"
-	"github.com/omecodes/store/objects"
 	"google.golang.org/grpc"
-	"strings"
 )
 
 type FileAccessesConfig struct {
@@ -37,10 +35,10 @@ func NewSources(config FileAccessesConfig) *FileAccesses {
 }
 
 type FileAccesses struct {
-	config  *FileAccessesConfig
-	box     *service.Box
-	manager objects.ACLManager
-	db      *sql.DB
+	config *FileAccessesConfig
+	box    *service.Box
+	//manager objects.ACLManager
+	db *sql.DB
 }
 
 func (s *FileAccesses) init() error {
@@ -59,12 +57,12 @@ func (s *FileAccesses) init() error {
 	s.db = common.GetDB(bome.MySQL, s.config.Database)
 
 	var err error
-	s.manager, err = objects.NewACLSQLManager(s.db, bome.MySQL, strings.ToLower(s.config.Name)+"_objects_access_rules")
+	//s.manager, err = objects.NewACLSQLManager(s.db, bome.MySQL, strings.ToLower(s.config.Name)+"_objects_access_rules")
 	return err
 }
 
 func (s *FileAccesses) updateGrpcContext(ctx context.Context) (context.Context, error) {
-	ctx = objects.ContextWithACLManager(ctx, s.manager)
+	//ctx = objects.ContextWithACLManager(ctx, s.manager)
 	return ctx, nil
 }
 

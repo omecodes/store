@@ -7,9 +7,7 @@ import (
 	ome "github.com/omecodes/libome"
 	"github.com/omecodes/service"
 	"github.com/omecodes/store/common"
-	"github.com/omecodes/store/objects"
 	"google.golang.org/grpc"
-	"strings"
 )
 
 type ACLConfig struct {
@@ -37,10 +35,10 @@ func NewACL(config ACLConfig) *ACL {
 }
 
 type ACL struct {
-	config  *ACLConfig
-	box     *service.Box
-	manager objects.ACLManager
-	db      *sql.DB
+	config *ACLConfig
+	box    *service.Box
+	//manager objects.ACLManager
+	db *sql.DB
 }
 
 func (a *ACL) init() error {
@@ -59,12 +57,12 @@ func (a *ACL) init() error {
 	a.db = common.GetDB(bome.MySQL, a.config.Database)
 
 	var err error
-	a.manager, err = objects.NewACLSQLManager(a.db, bome.MySQL, strings.ToLower(a.config.Name)+"_objects_access_rules")
+	//a.manager, err = objects.NewACLSQLManager(a.db, bome.MySQL, strings.ToLower(a.config.Name)+"_objects_access_rules")
 	return err
 }
 
 func (a *ACL) updateGrpcContext(ctx context.Context) (context.Context, error) {
-	ctx = objects.ContextWithACLManager(ctx, a.manager)
+	//ctx = objects.ContextWithACLManager(ctx, a.manager)
 	return ctx, nil
 }
 
@@ -76,7 +74,7 @@ func (a *ACL) Start() error {
 
 	params := &service.NodeParams{
 		RegisterHandlerFunc: func(server *grpc.Server) {
-			objects.RegisterACLServer(server, objects.NewACLManagerServiceServerHandler())
+			//pb.RegisterACLServer(server, objects.NewACLManagerServiceServerHandler())
 		},
 		ServiceType: common.ServiceTypeACLStore,
 		ServiceID:   a.config.Name,

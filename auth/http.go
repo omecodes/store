@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/omecodes/store/common"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"net/http"
 	"net/url"
 	"strings"
@@ -229,7 +230,7 @@ func SaveClientApp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var access *ClientApp
+	var access *pb.ClientApp
 	err := json.NewDecoder(r.Body).Decode(&access)
 	if err != nil {
 		logs.Error("failed to decode request body", logs.Err(err))
@@ -260,7 +261,7 @@ func GetClientApp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var access *ClientApp
+	var access *pb.ClientApp
 	err := json.NewDecoder(r.Body).Decode(&access)
 	if err != nil {
 		logs.Error("failed to decode request body", logs.Err(err))
@@ -339,7 +340,7 @@ func DeleteClientApp(w http.ResponseWriter, r *http.Request) {
 }
 
 func SaveUser(w http.ResponseWriter, r *http.Request) {
-	var user *UserCredentials
+	var user *pb.UserCredentials
 
 	ctx := r.Context()
 	requester := Get(ctx)
@@ -411,7 +412,7 @@ func CreateUserWebSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if clientApp.Type != ClientType_web {
+	if clientApp.Type != pb.ClientType_web {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}

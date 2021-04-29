@@ -6,6 +6,7 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/common"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"github.com/omecodes/store/session"
 	"net/http"
 	"strings"
@@ -101,7 +102,7 @@ func userContext(r *http.Request) (context.Context, error) {
 
 		if username := userSession.String(session.KeyUsername); username != "" {
 			logs.Info("detected user authentication", logs.Details("user", username))
-			return context.WithValue(r.Context(), ctxUser{}, &User{
+			return context.WithValue(r.Context(), ctxUser{}, &pb.User{
 				Name: username,
 			}), nil
 		}
@@ -135,9 +136,9 @@ func clientAppContext(r *http.Request) (context.Context, error) {
 		if accessType := webSession.String(session.KeyAccessType); accessType != "" {
 			logs.Info("detected client app session")
 
-			clientApp := &ClientApp{
+			clientApp := &pb.ClientApp{
 				Key:  webSession.String(session.KeyAccessKey),
-				Type: ClientType(ClientType_value[webSession.String(session.KeyAccessType)]),
+				Type: pb.ClientType(pb.ClientType_value[webSession.String(session.KeyAccessType)]),
 			}
 
 			infoInterface := webSession.String(session.KeyAccessInfo)
@@ -159,7 +160,7 @@ func ServiceMiddleware(next http.Handler) http.Handler {
 		updatedContext := r.Context()
 		encoded := r.Header.Get(UserHeader)
 		if encoded != "" {
-			user := &User{}
+			user := &pb.User{}
 			err := jsonpb.UnmarshalString(encoded, user)
 			if err != nil {
 				logs.Error("could not decode user from custom header", logs.Err(err))
@@ -171,7 +172,7 @@ func ServiceMiddleware(next http.Handler) http.Handler {
 
 		encoded = r.Header.Get(UserHeader)
 		if encoded != "" {
-			app := &ClientApp{}
+			app := &pb.ClientApp{}
 			err := jsonpb.UnmarshalString(encoded, app)
 			if err != nil {
 				logs.Error("could not decode client app from custom header", logs.Err(err))

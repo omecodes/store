@@ -213,7 +213,7 @@ func (h *PolicyHandler) assertAllowedToChmodSource(ctx context.Context, source *
 
 func (h *PolicyHandler) CreateSource(ctx context.Context, source *pb.Access) error {
 	clientApp := auth.App(ctx)
-	if clientApp == nil || !clientApp.Sources.Create {
+	if clientApp == nil {
 		return errors.Forbidden("application is not allowed to create accessDB")
 	}
 
@@ -226,7 +226,7 @@ func (h *PolicyHandler) CreateSource(ctx context.Context, source *pb.Access) err
 
 func (h *PolicyHandler) GetAccessList(ctx context.Context) ([]*pb.Access, error) {
 	clientApp := auth.App(ctx)
-	if clientApp == nil || !clientApp.Sources.Delete {
+	if clientApp == nil {
 		return nil, errors.Forbidden("application is not allowed to list accessDB")
 	}
 
@@ -248,7 +248,7 @@ func (h *PolicyHandler) GetAccessList(ctx context.Context) ([]*pb.Access, error)
 
 func (h *PolicyHandler) GetAccess(ctx context.Context, sourceID string) (*pb.Access, error) {
 	clientApp := auth.App(ctx)
-	if clientApp == nil || !clientApp.Sources.Delete {
+	if clientApp == nil {
 		return nil, errors.Forbidden("application is not allowed to list accessDB")
 	}
 
@@ -266,7 +266,7 @@ func (h *PolicyHandler) DeleteAccess(ctx context.Context, sourceID string) error
 	}
 
 	clientApp := auth.App(ctx)
-	if clientApp == nil || !clientApp.Sources.Delete {
+	if clientApp == nil {
 		return errors.Forbidden("application is not allowed to delete accessDB")
 	}
 

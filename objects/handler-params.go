@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
-	se "github.com/omecodes/store/search-engine"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"github.com/omecodes/store/settings"
 	"io"
 	"strconv"
@@ -14,14 +14,14 @@ type ParamsHandler struct {
 	BaseHandler
 }
 
-func (p *ParamsHandler) CreateCollection(ctx context.Context, collection *Collection) error {
+func (p *ParamsHandler) CreateCollection(ctx context.Context, collection *pb.Collection) error {
 	if collection == nil || collection.DefaultAccessSecurityRules == nil || collection.Id == "" {
 		return errors.BadRequest("requires a collection with an ID and default security rules")
 	}
 	return p.BaseHandler.CreateCollection(ctx, collection)
 }
 
-func (p *ParamsHandler) GetCollection(ctx context.Context, id string) (*Collection, error) {
+func (p *ParamsHandler) GetCollection(ctx context.Context, id string) (*pb.Collection, error) {
 	if id == "" {
 		return nil, errors.BadRequest("requires a collection ID")
 	}
@@ -35,7 +35,7 @@ func (p *ParamsHandler) DeleteCollection(ctx context.Context, id string) error {
 	return p.BaseHandler.DeleteCollection(ctx, id)
 }
 
-func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object *Object, accessSecurityRules *PathAccessRules, indexes []*se.TextIndex, opts PutOptions) (string, error) {
+func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.TextIndex, opts PutOptions) (string, error) {
 	if collection == "" || object == nil || len(object.Data) == 0 {
 		logs.Error("missing collection or object")
 		return "", errors.BadRequest("requires a collection ID and object with header and data")
@@ -59,7 +59,7 @@ func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object
 	}
 
 	if object.Header == nil {
-		object.Header = new(Header)
+		object.Header = new(pb.Header)
 	}
 
 	object.Header.Size = int64(len(object.Data))
@@ -72,7 +72,7 @@ func (p *ParamsHandler) PutObject(ctx context.Context, collection string, object
 	return p.next.PutObject(ctx, collection, object, accessSecurityRules, indexes, opts)
 }
 
-func (p *ParamsHandler) PatchObject(ctx context.Context, collection string, patch *Patch, opts PatchOptions) error {
+func (p *ParamsHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts PatchOptions) error {
 	if collection == "" || patch == nil || patch.ObjectId == "" || len(patch.Data) == 0 || patch.At == "" {
 		return errors.BadRequest("requires a collection ID a patch, with object ID content data and the path")
 	}
@@ -102,21 +102,21 @@ func (p *ParamsHandler) PatchObject(ctx context.Context, collection string, patc
 	return p.next.PatchObject(ctx, collection, patch, opts)
 }
 
-func (p *ParamsHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *PathAccessRules, opts MoveOptions) error {
+func (p *ParamsHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *pb.PathAccessRules, opts MoveOptions) error {
 	if collection == "" || objectID == "" || targetCollection == "" {
 		return errors.BadRequest("requires a collection ID an object ID and the target collection ID")
 	}
 	return p.next.MoveObject(ctx, collection, objectID, targetCollection, accessSecurityRules, opts)
 }
 
-func (p *ParamsHandler) GetObject(ctx context.Context, collection string, id string, opts GetOptions) (*Object, error) {
+func (p *ParamsHandler) GetObject(ctx context.Context, collection string, id string, opts GetOptions) (*pb.Object, error) {
 	if collection == "" || id == "" {
 		return nil, errors.BadRequest("requires a collection ID and an object ID")
 	}
 	return p.BaseHandler.GetObject(ctx, collection, id, opts)
 }
 
-func (p *ParamsHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*Header, error) {
+func (p *ParamsHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*pb.Header, error) {
 	if collection == "" || id == "" {
 		return nil, errors.BadRequest("requires a collection ID and an object ID")
 	}
@@ -159,7 +159,7 @@ func (p *ParamsHandler) ListObjects(ctx context.Context, collection string, opts
 
 	browser := cursor.GetBrowser()
 	count := 0
-	limitedBrowser := BrowseFunc(func() (*Object, error) {
+	limitedBrowser := BrowseFunc(func() (*pb.Object, error) {
 		if count == maxLength {
 			return nil, io.EOF
 		}
@@ -174,7 +174,7 @@ func (p *ParamsHandler) ListObjects(ctx context.Context, collection string, opts
 	return cursor, nil
 }
 
-func (p *ParamsHandler) SearchObjects(ctx context.Context, collection string, query *se.SearchQuery) (*Cursor, error) {
+func (p *ParamsHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery) (*Cursor, error) {
 	if collection == "" || query == nil {
 		return nil, errors.BadRequest("requires a collection id and a query object")
 	}

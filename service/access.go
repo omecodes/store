@@ -66,9 +66,6 @@ func (a *Access) updateIncomingRequestContext(ctx context.Context) context.Conte
 	ctx = files.ContextWithClientProvider(ctx, &files.DefaultClientProvider{})
 
 	ctx = objects.ContextWithRouterProvider(ctx, objects.RouterProvideFunc(a.provideObjectsRouter))
-	ctx = objects.ContextWithACLManager(ctx, objects.NewACLManagerServiceClient())
-	ctx = objects.WithACLGrpcClientProvider(ctx, objects.NewDefaultACLGRPCClientProvider(common.ServiceTypeACLStore))
-	ctx = objects.WithObjectsGrpcClientProvider(ctx, &objects.DefaultClientProvider{})
 
 	return ctx
 }
@@ -124,7 +121,7 @@ func (a *Access) startHTTPTransferServer() error {
 func (a *Access) startGRPCServer() error {
 	params := &service.NodeParams{
 		RegisterHandlerFunc: func(server *grpc.Server) {
-			objects.RegisterObjectsServer(server, objects.NewGRPCHandler())
+			pb.RegisterObjectsServer(server, objects.NewGRPCHandler())
 			pb.RegisterFilesServer(server, files.NewFilesServerHandler())
 		},
 		ServiceType: common.ServiceTypeSecurityAccess,
