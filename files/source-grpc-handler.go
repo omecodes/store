@@ -6,24 +6,24 @@ import (
 	"io"
 )
 
-func NewSourceServerHandler() pb.AccessManagerServer {
-	return &sourcesServerHandler{}
+func NewAccessServerHandler() pb.AccessManagerServer {
+	return &accessServerHandler{}
 }
 
-type sourcesServerHandler struct {
+type accessServerHandler struct {
 	pb.UnimplementedAccessManagerServer
 }
 
-func (s *sourcesServerHandler) CreateAccess(ctx context.Context, request *pb.CreateAccessRequest) (*pb.CreateAccessResponse, error) {
+func (s *accessServerHandler) CreateAccess(ctx context.Context, request *pb.CreateAccessRequest) (*pb.CreateAccessResponse, error) {
 	return &pb.CreateAccessResponse{}, CreateSource(ctx, request.Access)
 }
 
-func (s *sourcesServerHandler) GetSource(ctx context.Context, request *pb.GetAccessRequest) (*pb.GetAccessResponse, error) {
+func (s *accessServerHandler) GetSource(ctx context.Context, request *pb.GetAccessRequest) (*pb.GetAccessResponse, error) {
 	Access, err := GetSource(ctx, request.Id)
 	return &pb.GetAccessResponse{Access: Access}, err
 }
 
-func (s *sourcesServerHandler) GetSources(request *pb.GetAccessListRequest, server pb.AccessManager_GetAccessListServer) error {
+func (s *accessServerHandler) GetSources(request *pb.GetAccessListRequest, server pb.AccessManager_GetAccessListServer) error {
 	sources, err := ListSources(server.Context())
 	if err != nil {
 		return err
@@ -38,12 +38,12 @@ func (s *sourcesServerHandler) GetSources(request *pb.GetAccessListRequest, serv
 	return nil
 }
 
-func (s *sourcesServerHandler) ResolveSource(ctx context.Context, request *pb.ResolveAccessRequest) (*pb.ResolveAccessResponse, error) {
+func (s *accessServerHandler) ResolveSource(ctx context.Context, request *pb.ResolveAccessRequest) (*pb.ResolveAccessResponse, error) {
 	access, err := ResolveSource(ctx, request.Access)
 	return &pb.ResolveAccessResponse{ResolvedAccess: access}, err
 }
 
-func (s *sourcesServerHandler) DeleteSource(server pb.AccessManager_DeleteAccessServer) error {
+func (s *accessServerHandler) DeleteSource(server pb.AccessManager_DeleteAccessServer) error {
 	done := false
 
 	for !done {

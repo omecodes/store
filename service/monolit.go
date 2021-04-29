@@ -18,6 +18,7 @@ import (
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/common"
 	"github.com/omecodes/store/files"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/session"
 	"github.com/omecodes/store/settings"
@@ -68,7 +69,7 @@ type Server struct {
 	authenticationProviders auth.ProviderManager
 	credentialsManager      auth.CredentialsManager
 	accessStore             objects.ACLManager
-	sourceManager           files.SourceManager
+	sourceManager           files.AccessManager
 	cookieStore             *sessions.CookieStore
 
 	listener net.Listener
@@ -200,7 +201,7 @@ func (s *Server) init() error {
 
 	// Files initialization
 	if s.config.FSRootDir != "" {
-		s.sourceManager, err = files.NewSourceSQLManager(s.db, bome.MySQL, "store")
+		s.sourceManager, err = files.NewAccessSQLManager(s.db, bome.MySQL, "store")
 		if err != nil {
 			return err
 		}
@@ -212,11 +213,11 @@ func (s *Server) init() error {
 		}
 
 		if source == nil {
-			source = &files.Source{
+			source = &pb.Access{
 				Id:          "main",
 				Label:       "Default file source",
 				Description: "",
-				Type:        files.SourceType_Default,
+				Type:        pb.AccessType_Default,
 				Uri:         fmt.Sprintf("files://%s", files.NormalizePath(s.config.FSRootDir)),
 				ExpireTime:  -1,
 			}

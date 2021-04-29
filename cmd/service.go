@@ -223,7 +223,7 @@ var sourcesServiceCMD = &cobra.Command{
 	Use:   "sources",
 	Short: "Runs sources service",
 	Run: func(cmd *cobra.Command, args []string) {
-		config := service.SourcesConfig{
+		config := service.FileAccessesConfig{
 			Name:            name,
 			Domain:          domains[0],
 			IP:              ip,

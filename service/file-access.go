@@ -8,12 +8,13 @@ import (
 	"github.com/omecodes/service"
 	"github.com/omecodes/store/common"
 	"github.com/omecodes/store/files"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"github.com/omecodes/store/objects"
 	"google.golang.org/grpc"
 	"strings"
 )
 
-type SourcesConfig struct {
+type FileAccessesConfig struct {
 	Name string
 
 	Domain string
@@ -31,18 +32,18 @@ type SourcesConfig struct {
 	WorkingDir string
 }
 
-func NewSources(config SourcesConfig) *Sources {
-	return &Sources{config: &config}
+func NewSources(config FileAccessesConfig) *FileAccesses {
+	return &FileAccesses{config: &config}
 }
 
-type Sources struct {
-	config  *SourcesConfig
+type FileAccesses struct {
+	config  *FileAccessesConfig
 	box     *service.Box
 	manager objects.ACLManager
 	db      *sql.DB
 }
 
-func (s *Sources) init() error {
+func (s *FileAccesses) init() error {
 	s.box = service.CreateBox(
 		service.Dir(s.config.WorkingDir),
 		service.Ip(s.config.IP),
@@ -62,12 +63,12 @@ func (s *Sources) init() error {
 	return err
 }
 
-func (s *Sources) updateGrpcContext(ctx context.Context) (context.Context, error) {
+func (s *FileAccesses) updateGrpcContext(ctx context.Context) (context.Context, error) {
 	ctx = objects.ContextWithACLManager(ctx, s.manager)
 	return ctx, nil
 }
 
-func (s *Sources) Start() error {
+func (s *FileAccesses) Start() error {
 	err := s.init()
 	if err != nil {
 		return err
@@ -75,7 +76,7 @@ func (s *Sources) Start() error {
 
 	params := &service.NodeParams{
 		RegisterHandlerFunc: func(server *grpc.Server) {
-			files.RegisterSourcesServer(server, files.NewSourceServerHandler())
+			pb.RegisterAccessManagerServer(server, files.NewAccessServerHandler())
 		},
 		ServiceType: common.ServiceTypeFileSources,
 		ServiceID:   s.config.Name,
@@ -91,6 +92,6 @@ func (s *Sources) Start() error {
 	return s.box.StartNode(params, opts...)
 }
 
-func (s *Sources) Stop() error {
+func (s *FileAccesses) Stop() error {
 	return s.db.Close()
 }

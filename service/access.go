@@ -8,6 +8,7 @@ import (
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/common"
 	"github.com/omecodes/store/files"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"github.com/omecodes/store/objects"
 	"google.golang.org/grpc"
 	"net/http"
@@ -59,7 +60,7 @@ func (a *Access) updateIncomingRequestContext(ctx context.Context) context.Conte
 	ctx = service.ContextWithBox(ctx, a.box)
 
 	ctx = files.ContextWithRouterProvider(ctx, files.RouterProvideFunc(a.provideFilesRouter))
-	ctx = files.ContextWithSourceManager(ctx, files.NewSourcesManagerServiceClient(common.ServiceTypeFileSources))
+	ctx = files.ContextWithAccessManager(ctx, files.NewSourcesManagerServiceClient(common.ServiceTypeFileSources))
 	ctx = files.ContextWithSourcesServiceClientProvider(ctx, &files.DefaultSourcesServiceClientProvider{})
 	ctx = files.ContextWithTransfersServiceClientProvider(ctx, &files.DefaultTransfersServiceClientProvider{})
 	ctx = files.ContextWithClientProvider(ctx, &files.DefaultClientProvider{})
@@ -124,7 +125,7 @@ func (a *Access) startGRPCServer() error {
 	params := &service.NodeParams{
 		RegisterHandlerFunc: func(server *grpc.Server) {
 			objects.RegisterObjectsServer(server, objects.NewGRPCHandler())
-			files.RegisterFilesServer(server, files.NewFilesServerHandler())
+			pb.RegisterFilesServer(server, files.NewFilesServerHandler())
 		},
 		ServiceType: common.ServiceTypeSecurityAccess,
 		ServiceID:   a.config.Name,

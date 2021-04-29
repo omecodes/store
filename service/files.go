@@ -8,6 +8,7 @@ import (
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/common"
 	"github.com/omecodes/store/files"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"google.golang.org/grpc"
 	"net/http"
 	"path"
@@ -51,7 +52,7 @@ func (f *Files) init() error {
 
 func (f *Files) updateIncomingRequestContext(ctx context.Context) context.Context {
 	ctx = service.ContextWithBox(ctx, f.box)
-	ctx = files.ContextWithSourceManager(ctx, files.NewSourcesManagerServiceClient(common.ServiceTypeFileSources))
+	ctx = files.ContextWithAccessManager(ctx, files.NewSourcesManagerServiceClient(common.ServiceTypeFileSources))
 	ctx = files.ContextWithSourcesServiceClientProvider(ctx, &files.DefaultSourcesServiceClientProvider{})
 	ctx = files.ContextWithRouterProvider(ctx, files.RouterProvideFunc(
 		func(ctx context.Context) files.Router {
@@ -100,7 +101,7 @@ func (f *Files) startHTTPTransferServer() error {
 func (f *Files) startGRPCServer() error {
 	params := &service.NodeParams{
 		RegisterHandlerFunc: func(server *grpc.Server) {
-			files.RegisterFilesServer(server, files.NewFilesServerHandler())
+			pb.RegisterFilesServer(server, files.NewFilesServerHandler())
 		},
 		ServiceType: common.ServiceTypeFilesStorage,
 		ServiceID:   f.config.Name,
