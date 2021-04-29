@@ -15,7 +15,7 @@ func getTupleStore(ctx context.Context) TupleStore {
 	return o.(TupleStore)
 }
 
-func getManager(ctx context.Context) Manager {
+func GetManager(ctx context.Context) Manager {
 	o := ctx.Value(ctxManager{})
 	if o == nil {
 		return nil
@@ -37,4 +37,8 @@ func getCommitTime(ctx context.Context) int64 {
 		return 0
 	}
 	return o.(int64)
+}
+
+func ContextWithManager(parent context.Context, man Manager) context.Context {
+	return context.WithValue(parent, ctxManager{}, man)
 }
