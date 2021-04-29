@@ -3,38 +3,39 @@ package files
 import (
 	"context"
 	"github.com/omecodes/store/auth"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 )
 
-func NewFilesServerHandler() FilesServer {
+func NewFilesServerHandler() pb.FilesServer {
 	return &gRPCHandler{}
 }
 
 type gRPCHandler struct {
-	UnimplementedFilesServer
-	UnimplementedSourcesServer
+	pb.UnimplementedFilesServer
+	pb.UnimplementedAccessManagerServer
 }
 
-func (s *gRPCHandler) CreateSource(ctx context.Context, request *CreateSourceRequest) (*CreateSourceResponse, error) {
+func (s *gRPCHandler) CreateAccess(ctx context.Context, request *pb.CreateAccessRequest) (*pb.CreateAccessResponse, error) {
 	var err error
 	ctx, err = auth.ParseMetaInNewContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return &CreateSourceResponse{}, CreateSource(ctx, request.Source)
+	return &pb.CreateAccessResponse{}, CreateSource(ctx, request.Access)
 }
 
-func (s *gRPCHandler) GetSource(ctx context.Context, request *GetSourceRequest) (*GetSourceResponse, error) {
+func (s *gRPCHandler) GetAccess(ctx context.Context, request *pb.GetAccessRequest) (*pb.GetAccessResponse, error) {
 	var err error
 	ctx, err = auth.ParseMetaInNewContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	source, err := GetSource(ctx, request.Id)
-	return &GetSourceResponse{Source: source}, err
+	access, err := GetSource(ctx, request.Id)
+	return &pb.GetAccessResponse{Access: access}, err
 }
 
-func (s *gRPCHandler) GetSources(request *GetSourcesRequest, server Sources_GetSourcesServer) error {
+func (s *gRPCHandler) GetAccessList(request *pb.GetAccessListRequest, server pb.AccessManager_GetAccessListServer) error {
 	var err error
 	ctx, err := auth.ParseMetaInNewContext(server.Context())
 	if err != nil {
@@ -54,17 +55,17 @@ func (s *gRPCHandler) GetSources(request *GetSourcesRequest, server Sources_GetS
 	return nil
 }
 
-func (s *gRPCHandler) ResolveSource(ctx context.Context, request *ResolveSourceRequest) (*ResolveSourceResponse, error) {
+func (s *gRPCHandler) ResolveSource(ctx context.Context, request *pb.ResolveAccessRequest) (*pb.ResolveAccessResponse, error) {
 	var err error
 	ctx, err = auth.ParseMetaInNewContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	source, err := ResolveSource(ctx, request.Source)
-	return &ResolveSourceResponse{ResolvedSource: source}, err
+	source, err := ResolveSource(ctx, request.Access)
+	return &pb.ResolveAccessResponse{ResolvedAccess: source}, err
 }
 
-func (s *gRPCHandler) DeleteSource(server Sources_DeleteSourceServer) error {
+func (s *gRPCHandler) DeleteSource(server pb.AccessManager_DeleteAccessServer) error {
 	ctx, err := auth.ParseMetaInNewContext(server.Context())
 	if err != nil {
 		return err
@@ -78,111 +79,111 @@ func (s *gRPCHandler) DeleteSource(server Sources_DeleteSourceServer) error {
 			return err
 		}
 
-		err = DeleteSource(ctx, req.SourceId)
+		err = DeleteSource(ctx, req.AccessId)
 		if err != nil {
 			return err
 		}
 	}
 }
 
-func (s *gRPCHandler) CreateDir(ctx context.Context, request *CreateDirRequest) (*CreateDirResponse, error) {
+func (s *gRPCHandler) CreateDir(ctx context.Context, request *pb.CreateDirRequest) (*pb.CreateDirResponse, error) {
 	var err error
 	ctx, err = auth.ParseMetaInNewContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return &CreateDirResponse{}, CreateDir(ctx, request.SourceId, request.Path)
+	return &pb.CreateDirResponse{}, CreateDir(ctx, request.AccessId, request.Path)
 }
 
-func (s *gRPCHandler) ListDir(ctx context.Context, request *ListDirRequest) (*ListDirResponse, error) {
+func (s *gRPCHandler) ListDir(ctx context.Context, request *pb.ListDirRequest) (*pb.ListDirResponse, error) {
 	var err error
 	ctx, err = auth.ParseMetaInNewContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	dirContent, err := ListDir(ctx, request.SourceId, request.Path, ListDirOptions{
+	dirContent, err := ListDir(ctx, request.AccessId, request.Path, ListDirOptions{
 		Offset: int(request.Offset),
 		Count:  int(request.Count),
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &ListDirResponse{
+	return &pb.ListDirResponse{
 		Files:  dirContent.Files,
 		Offset: uint32(dirContent.Offset),
 		Total:  uint32(dirContent.Total),
 	}, nil
 }
 
-func (s *gRPCHandler) GetFile(ctx context.Context, request *GetFileRequest) (*GetFileResponse, error) {
+func (s *gRPCHandler) GetFile(ctx context.Context, request *pb.GetFileRequest) (*pb.GetFileResponse, error) {
 	var err error
 	ctx, err = auth.ParseMetaInNewContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	file, err := GetFile(ctx, request.SourceId, request.Path, GetFileOptions{WithAttrs: request.WithAttributes})
-	return &GetFileResponse{File: file}, err
+	file, err := GetFile(ctx, request.AccessId, request.Path, GetFileOptions{WithAttrs: request.WithAttributes})
+	return &pb.GetFileResponse{File: file}, err
 }
 
-func (s *gRPCHandler) DeleteFile(ctx context.Context, request *DeleteFileRequest) (*DeleteFileResponse, error) {
+func (s *gRPCHandler) DeleteFile(ctx context.Context, request *pb.DeleteFileRequest) (*pb.DeleteFileResponse, error) {
 	var err error
 	ctx, err = auth.ParseMetaInNewContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return &DeleteFileResponse{}, DeleteFile(ctx, request.SourceId, request.Path, DeleteFileOptions{})
+	return &pb.DeleteFileResponse{}, DeleteFile(ctx, request.AccessId, request.Path, DeleteFileOptions{})
 }
 
-func (s *gRPCHandler) SetFileAttributes(ctx context.Context, request *SetFileAttributesRequest) (*SetFileAttributesResponse, error) {
+func (s *gRPCHandler) SetFileAttributes(ctx context.Context, request *pb.SetFileAttributesRequest) (*pb.SetFileAttributesResponse, error) {
 	var err error
 	ctx, err = auth.ParseMetaInNewContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return &SetFileAttributesResponse{}, SetFileAttributes(ctx, request.SourceId, request.Path, request.Attributes)
+	return &pb.SetFileAttributesResponse{}, SetFileAttributes(ctx, request.AccessId, request.Path, request.Attributes)
 }
 
-func (s *gRPCHandler) GetFileAttributes(ctx context.Context, request *GetFileAttributesRequest) (*GetFileAttributesResponse, error) {
+func (s *gRPCHandler) GetFileAttributes(ctx context.Context, request *pb.GetFileAttributesRequest) (*pb.GetFileAttributesResponse, error) {
 	var err error
 	ctx, err = auth.ParseMetaInNewContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	attrs, err := GetFileAttributes(ctx, request.SourceId, request.Path, request.Names...)
-	return &GetFileAttributesResponse{Attributes: attrs}, err
+	attrs, err := GetFileAttributes(ctx, request.AccessId, request.Path, request.Names...)
+	return &pb.GetFileAttributesResponse{Attributes: attrs}, err
 }
 
-func (s *gRPCHandler) RenameFile(ctx context.Context, request *RenameFileRequest) (*RenameFileResponse, error) {
+func (s *gRPCHandler) RenameFile(ctx context.Context, request *pb.RenameFileRequest) (*pb.RenameFileResponse, error) {
 	var err error
 	ctx, err = auth.ParseMetaInNewContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return &RenameFileResponse{}, RenameFile(ctx, request.SourceId, request.Path, request.NewName)
+	return &pb.RenameFileResponse{}, RenameFile(ctx, request.AccessId, request.Path, request.NewName)
 }
 
-func (s *gRPCHandler) MoveFile(ctx context.Context, request *MoveFileRequest) (*MoveFileResponse, error) {
+func (s *gRPCHandler) MoveFile(ctx context.Context, request *pb.MoveFileRequest) (*pb.MoveFileResponse, error) {
 	var err error
 	ctx, err = auth.ParseMetaInNewContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return &MoveFileResponse{}, MoveFile(ctx, request.SourceId, request.Path, request.TargetDir)
+	return &pb.MoveFileResponse{}, MoveFile(ctx, request.AccessId, request.Path, request.TargetDir)
 }
 
-func (s *gRPCHandler) CopyFile(ctx context.Context, request *CopyFileRequest) (*CopyFileResponse, error) {
+func (s *gRPCHandler) CopyFile(ctx context.Context, request *pb.CopyFileRequest) (*pb.CopyFileResponse, error) {
 	var err error
 	ctx, err = auth.ParseMetaInNewContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return &CopyFileResponse{}, CopyFile(ctx, request.SourceId, request.Path, request.TargetDir)
+	return &pb.CopyFileResponse{}, CopyFile(ctx, request.AccessId, request.Path, request.TargetDir)
 }

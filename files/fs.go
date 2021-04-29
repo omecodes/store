@@ -2,6 +2,7 @@ package files
 
 import (
 	"context"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 	"net/url"
 	"os"
@@ -19,7 +20,7 @@ type FS interface {
 	Ls(ctx context.Context, dirname string, offset int, count int) (*DirContent, error)
 	Write(ctx context.Context, filename string, content io.Reader, append bool) error
 	Read(ctx context.Context, filename string, offset int64, count int64) (io.ReadCloser, int64, error)
-	Info(ctx context.Context, filename string, withAttrs bool) (*File, error)
+	Info(ctx context.Context, filename string, withAttrs bool) (*pb.File, error)
 	SetAttributes(ctx context.Context, filename string, attrs Attributes) error
 	GetAttributes(ctx context.Context, filename string, names ...string) (Attributes, error)
 	Rename(ctx context.Context, filename string, newName string) error
@@ -31,11 +32,11 @@ type FS interface {
 type ctxFsProvider struct{}
 
 type FSProvider interface {
-	GetFS(source *Source) (FS, error)
+	GetFS(source *pb.Access) (FS, error)
 }
 
 func getFS(ctx context.Context, sourceID string) (FS, error) {
-	sourcesManager := getSourceManager(ctx)
+	sourcesManager := getAccessManager(ctx)
 	if sourcesManager == nil {
 		return nil, errors.Internal("no source manager in context")
 	}
@@ -53,7 +54,7 @@ func getFS(ctx context.Context, sourceID string) (FS, error) {
 		return provider.GetFS(source)
 	}
 
-	if source.Type != SourceType_Default {
+	if source.Type != pb.AccessType_Default {
 		return nil, errors.Unsupported("file source type is not supported", errors.Details{Key: "source-type", Value: source.Type.String()})
 	}
 
@@ -149,7 +150,7 @@ func (d *diskFS) Ls(_ context.Context, dirname string, offset int, count int) (*
 				continue
 			}
 
-			f := &File{
+			f := &pb.File{
 				Name:     name,
 				IsDir:    stats.IsDir(),
 				Size:     stats.Size(),
@@ -246,7 +247,7 @@ func (d *diskFS) Read(_ context.Context, filename string, offset int64, length i
 	return f, stats.Size(), nil
 }
 
-func (d *diskFS) Info(_ context.Context, filename string, withAttrs bool) (*File, error) {
+func (d *diskFS) Info(_ context.Context, filename string, withAttrs bool) (*pb.File, error) {
 	fullFilename := filepath.Join(d.root, filename)
 
 	stats, err := os.Stat(UnNormalizePath(fullFilename))
@@ -269,7 +270,7 @@ func (d *diskFS) Info(_ context.Context, filename string, withAttrs bool) (*File
 		return nil, errors.Internal("could not get file info", errors.Details{Key: "file", Value: filename})
 	}
 
-	file := &File{
+	file := &pb.File{
 		Name:     path.Base(filename),
 		IsDir:    stats.IsDir(),
 		Size:     stats.Size(),

@@ -3,6 +3,7 @@ package files
 import (
 	"context"
 	"github.com/omecodes/errors"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 )
 
@@ -10,25 +11,25 @@ type ParamsHandler struct {
 	BaseHandler
 }
 
-func (h *ParamsHandler) CreateSource(ctx context.Context, source *Source) error {
+func (h *ParamsHandler) CreateSource(ctx context.Context, source *pb.Access) error {
 	if source == nil || source.Uri == "" {
 		return errors.BadRequest("invalid source value")
 	}
 	return h.next.CreateSource(ctx, source)
 }
 
-func (h *ParamsHandler) GetSource(ctx context.Context, sourceID string) (*Source, error) {
+func (h *ParamsHandler) GetAccess(ctx context.Context, sourceID string) (*pb.Access, error) {
 	if sourceID == "" {
 		return nil, errors.BadRequest("source id is required")
 	}
-	return h.next.GetSource(ctx, sourceID)
+	return h.next.GetAccess(ctx, sourceID)
 }
 
-func (h *ParamsHandler) DeleteSource(ctx context.Context, sourceID string) error {
+func (h *ParamsHandler) DeleteAccess(ctx context.Context, sourceID string) error {
 	if sourceID == "" {
 		return errors.BadRequest("source id is required")
 	}
-	return h.next.DeleteSource(ctx, sourceID)
+	return h.next.DeleteAccess(ctx, sourceID)
 }
 
 func (h *ParamsHandler) CreateDir(ctx context.Context, sourceID string, filename string) error {
@@ -99,7 +100,7 @@ func (h *ParamsHandler) ReadFileContent(ctx context.Context, sourceID string, fi
 	return h.next.ReadFileContent(ctx, sourceID, filename, opts)
 }
 
-func (h *ParamsHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*File, error) {
+func (h *ParamsHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*pb.File, error) {
 	if sourceID == "" {
 		return nil, errors.BadRequest("missing parameters", errors.Details{
 			Key:   "source",

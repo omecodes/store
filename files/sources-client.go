@@ -2,47 +2,48 @@ package files
 
 import (
 	"context"
+	pb "github.com/omecodes/store/gen/go/proto"
 )
 
-func NewSourcesManagerServiceClient(serviceType uint32) SourceManager {
-	return &sourcesManagerServiceClient{
+func NewSourcesManagerServiceClient(serviceType uint32) AccessManager {
+	return &accessManagerServiceClient{
 		serviceType: serviceType,
 	}
 }
 
-type sourcesManagerServiceClient struct {
+type accessManagerServiceClient struct {
 	serviceType uint32
 }
 
-func (s *sourcesManagerServiceClient) Save(ctx context.Context, source *Source) (string, error) {
+func (s *accessManagerServiceClient) Save(ctx context.Context, source *pb.Access) (string, error) {
 	client, err := NewSourcesServiceClient(ctx, s.serviceType)
 	if err != nil {
 		return "", err
 	}
-	_, err = client.CreateSource(ctx, &CreateSourceRequest{Source: source})
+	_, err = client.CreateAccess(ctx, &pb.CreateAccessRequest{Access: source})
 	return "", err
 }
 
-func (s *sourcesManagerServiceClient) Get(ctx context.Context, id string) (*Source, error) {
+func (s *accessManagerServiceClient) Get(ctx context.Context, id string) (*pb.Access, error) {
 	client, err := NewSourcesServiceClient(ctx, s.serviceType)
 	if err != nil {
 		return nil, err
 	}
 
-	rsp, err := client.GetSource(ctx, &GetSourceRequest{Id: id})
+	rsp, err := client.GetAccess(ctx, &pb.GetAccessRequest{Id: id})
 	if err != nil {
 		return nil, err
 	}
-	return rsp.Source, nil
+	return rsp.Access, nil
 }
 
-func (s *sourcesManagerServiceClient) Delete(ctx context.Context, id string) error {
+func (s *accessManagerServiceClient) Delete(ctx context.Context, id string) error {
 	client, err := NewSourcesServiceClient(ctx, s.serviceType)
 	if err != nil {
 		return err
 	}
 
-	stream, err := client.DeleteSource(ctx)
+	stream, err := client.DeleteAccess(ctx)
 	if err != nil {
 		return err
 	}
@@ -50,22 +51,22 @@ func (s *sourcesManagerServiceClient) Delete(ctx context.Context, id string) err
 	defer func() {
 		_ = stream.CloseSend()
 	}()
-	return stream.Send(&DeleteSourceRequest{SourceId: id})
+	return stream.Send(&pb.DeleteAccessRequest{AccessId: id})
 }
 
-func (s *sourcesManagerServiceClient) UserSources(ctx context.Context, username string) ([]*Source, error) {
+func (s *accessManagerServiceClient) UserSources(ctx context.Context, username string) ([]*pb.Access, error) {
 	client, err := NewSourcesServiceClient(ctx, s.serviceType)
 	if err != nil {
 		return nil, err
 	}
 
-	stream, err := client.GetSources(ctx, &GetSourcesRequest{User: username})
+	stream, err := client.GetAccessList(ctx, &pb.GetAccessListRequest{User: username})
 	if err != nil {
 		return nil, err
 	}
 
-	var sources []*Source
-	var source *Source
+	var sources []*pb.Access
+	var source *pb.Access
 
 	for {
 		source, err = stream.Recv()

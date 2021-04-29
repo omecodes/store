@@ -8,6 +8,7 @@ import (
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/common"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 	"net/http"
 	"strings"
@@ -34,7 +35,7 @@ func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	r.Name("CreateSource").Path(common.ApiCreateFileSource).Methods(http.MethodPut).HandlerFunc(HTTPHandleCreateSource)
 	r.Name("ListSources").Path(common.ApiListFileSources).Methods(http.MethodGet).HandlerFunc(HTTPHandleListSources)
 	r.Name("GetSource").Path(common.ApiGetFileSource).Methods(http.MethodGet).HandlerFunc(HTTPHandleGetSource)
-	r.Name("DeleteSource").Path(common.ApiDeleteFileSource).Methods(http.MethodDelete).HandlerFunc(HTTPHandleDeleteSource)
+	r.Name("DeleteAccess").Path(common.ApiDeleteFileSource).Methods(http.MethodDelete).HandlerFunc(HTTPHandleDeleteSource)
 
 	var handler http.Handler
 	handler = r
@@ -248,8 +249,8 @@ func HTTPHandleDownloadFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func HTTPHandleCreateSource(w http.ResponseWriter, r *http.Request) {
-	var source *Source
-	err := json.NewDecoder(r.Body).Decode(&source)
+	var access *pb.Access
+	err := json.NewDecoder(r.Body).Decode(&access)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -257,7 +258,7 @@ func HTTPHandleCreateSource(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	err = CreateSource(ctx, source)
+	err = CreateSource(ctx, access)
 	if err != nil {
 		logs.Error("could not create source", logs.Err(err))
 		w.WriteHeader(errors.HttpStatus(err))
@@ -304,7 +305,7 @@ func HTTPHandleDeleteSource(w http.ResponseWriter, r *http.Request) {
 }
 
 type middlewareRouteOptions struct {
-	sourceManager  SourceManager
+	sourceManager  AccessManager
 	fsProvider     FSProvider
 	routerProvider RouterProvider
 }
@@ -325,7 +326,7 @@ func Middleware(opts ...MiddlewareOption) mux.MiddlewareFunc {
 			}
 
 			if options.sourceManager != nil {
-				ctx = context.WithValue(ctx, ctxSourceManager{}, options.sourceManager)
+				ctx = context.WithValue(ctx, ctxAccessManager{}, options.sourceManager)
 			}
 
 			if options.routerProvider != nil {
@@ -338,7 +339,7 @@ func Middleware(opts ...MiddlewareOption) mux.MiddlewareFunc {
 
 }
 
-func MiddlewareWithSourceManager(manager SourceManager) MiddlewareOption {
+func MiddlewareWithSourceManager(manager AccessManager) MiddlewareOption {
 	return func(options *middlewareRouteOptions) {
 		options.sourceManager = manager
 	}

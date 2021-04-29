@@ -12,7 +12,7 @@ type EncryptionHandler struct {
 }
 
 func (h *EncryptionHandler) WriteFileContent(ctx context.Context, sourceID string, filename string, content io.Reader, size int64, opts WriteOptions) error {
-	source, err := h.next.GetSource(ctx, sourceID)
+	source, err := h.next.GetAccess(ctx, sourceID)
 	if err != nil {
 		return err
 	}
@@ -26,7 +26,7 @@ func (h *EncryptionHandler) WriteFileContent(ctx context.Context, sourceID strin
 }
 
 func (h *EncryptionHandler) ReadFileContent(ctx context.Context, sourceID string, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
-	source, err := h.next.GetSource(ctx, sourceID)
+	source, err := h.next.GetAccess(ctx, sourceID)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -45,7 +45,7 @@ func (h *EncryptionHandler) ReadFileContent(ctx context.Context, sourceID string
 }
 
 func (h *EncryptionHandler) WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo) (int64, error) {
-	source, err := h.next.GetSource(ctx, sessionID)
+	source, err := h.next.GetAccess(ctx, sessionID)
 	if err != nil {
 		return 0, err
 	}

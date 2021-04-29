@@ -2,6 +2,7 @@ package files
 
 import (
 	"context"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 )
 
@@ -9,20 +10,20 @@ type BaseHandler struct {
 	next Handler
 }
 
-func (h *BaseHandler) CreateSource(ctx context.Context, source *Source) error {
+func (h *BaseHandler) CreateSource(ctx context.Context, source *pb.Access) error {
 	return h.next.CreateSource(ctx, source)
 }
 
-func (h *BaseHandler) ListSources(ctx context.Context) ([]*Source, error) {
-	return h.next.ListSources(ctx)
+func (h *BaseHandler) GetAccessList(ctx context.Context) ([]*pb.Access, error) {
+	return h.next.GetAccessList(ctx)
 }
 
-func (h *BaseHandler) GetSource(ctx context.Context, sourceID string) (*Source, error) {
-	return h.next.GetSource(ctx, sourceID)
+func (h *BaseHandler) GetAccess(ctx context.Context, sourceID string) (*pb.Access, error) {
+	return h.next.GetAccess(ctx, sourceID)
 }
 
-func (h *BaseHandler) DeleteSource(ctx context.Context, sourceID string) error {
-	return h.next.DeleteSource(ctx, sourceID)
+func (h *BaseHandler) DeleteAccess(ctx context.Context, sourceID string) error {
+	return h.next.DeleteAccess(ctx, sourceID)
 }
 
 func (h *BaseHandler) CreateDir(ctx context.Context, sourceID string, filename string) error {
@@ -41,7 +42,7 @@ func (h *BaseHandler) ReadFileContent(ctx context.Context, sourceID string, file
 	return h.next.ReadFileContent(ctx, sourceID, filename, opts)
 }
 
-func (h *BaseHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*File, error) {
+func (h *BaseHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*pb.File, error) {
 	return h.next.GetFileInfo(ctx, sourceID, filename, opts)
 }
 

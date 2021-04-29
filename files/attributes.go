@@ -2,6 +2,7 @@ package files
 
 import (
 	"encoding/json"
+	pb "github.com/omecodes/store/gen/go/proto"
 )
 
 type Attributes map[string]string
@@ -36,10 +37,10 @@ func HoldAttributes(attrs Attributes) *AttributesHolder {
 
 type AttributesHolder struct {
 	Attributes  Attributes
-	permissions *Permissions
+	permissions *pb.AccessRelation
 }
 
-func (h *AttributesHolder) SetPermissions(perms *Permissions) error {
+func (h *AttributesHolder) SetPermissions(perms *pb.AccessRelation) error {
 	return nil
 }
 
@@ -47,11 +48,11 @@ func (h *AttributesHolder) SetEncodedPermissions(encoded string) error {
 	return nil
 }
 
-func (h *AttributesHolder) AddReadPermissions(permission *Permissions) {
+func (h *AttributesHolder) AddReadPermissions(permission *pb.AccessRelation) {
 
 }
 
-func (h *AttributesHolder) GetPermissions() (*Permissions, bool, error) {
+func (h *AttributesHolder) GetPermissions() (*pb.AccessRelation, bool, error) {
 	if h.permissions == nil {
 		encoded := h.Attributes[AttrPermissions]
 		if encoded == "" {

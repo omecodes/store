@@ -1,6 +1,7 @@
 package files
 
 import (
+	pb "github.com/omecodes/store/gen/go/proto"
 	"strings"
 )
 
@@ -15,9 +16,9 @@ type TreePatchInfo struct {
 }
 
 type DirContent struct {
-	Files  []*File `json:"files,omitempty"`
-	Total  int     `json:"total"`
-	Offset int     `json:"offset"`
+	Files  []*pb.File `json:"files,omitempty"`
+	Total  int        `json:"total"`
+	Offset int        `json:"offset"`
 }
 
 type ListDirOptions struct {
@@ -26,9 +27,8 @@ type ListDirOptions struct {
 }
 
 type WriteOptions struct {
-	Append      bool         `json:"append,omitempty"`
-	Hash        string       `json:"hash,omitempty"`
-	Permissions *Permissions `json:"permissions,omitempty"`
+	Append bool   `json:"append,omitempty"`
+	Hash   string `json:"hash,omitempty"`
 }
 
 type ContentRange struct {

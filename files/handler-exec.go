@@ -2,18 +2,18 @@ package files
 
 import (
 	"context"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 
 	"github.com/omecodes/errors"
-	"github.com/omecodes/store/auth"
 )
 
 type ExecHandler struct {
 	BaseHandler
 }
 
-func (h *ExecHandler) CreateSource(ctx context.Context, source *Source) error {
-	sourceManager := getSourceManager(ctx)
+func (h *ExecHandler) CreateSource(ctx context.Context, source *pb.Access) error {
+	sourceManager := getAccessManager(ctx)
 	if sourceManager == nil {
 		return errors.Internal("context missing source manager")
 	}
@@ -21,26 +21,16 @@ func (h *ExecHandler) CreateSource(ctx context.Context, source *Source) error {
 	return err
 }
 
-func (h *ExecHandler) ListSources(ctx context.Context) ([]*Source, error) {
-	sourceManager := getSourceManager(ctx)
-	if sourceManager == nil {
-		return nil, errors.Internal("context missing source manager")
-	}
-
-	a := auth.Get(ctx)
-	return sourceManager.UserSources(ctx, a.Name)
-}
-
-func (h *ExecHandler) GetSource(ctx context.Context, sourceID string) (*Source, error) {
-	sourceManager := getSourceManager(ctx)
+func (h *ExecHandler) GetAccess(ctx context.Context, sourceID string) (*pb.Access, error) {
+	sourceManager := getAccessManager(ctx)
 	if sourceManager == nil {
 		return nil, errors.Internal("context missing source manager")
 	}
 	return sourceManager.Get(ctx, sourceID)
 }
 
-func (h *ExecHandler) DeleteSource(ctx context.Context, sourceID string) error {
-	sourceManager := getSourceManager(ctx)
+func (h *ExecHandler) DeleteAccess(ctx context.Context, sourceID string) error {
+	sourceManager := getAccessManager(ctx)
 	if sourceManager == nil {
 		return errors.Internal("context missing source manager")
 	}
@@ -79,7 +69,7 @@ func (h *ExecHandler) ReadFileContent(ctx context.Context, sourceID string, file
 	return fs.Read(ctx, filename, opts.Range.Offset, opts.Range.Length)
 }
 
-func (h *ExecHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*File, error) {
+func (h *ExecHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*pb.File, error) {
 	fs, err := getFS(ctx, sourceID)
 	if err != nil {
 		return nil, err

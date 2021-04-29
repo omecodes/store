@@ -4,21 +4,22 @@ import (
 	"context"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 	"net/url"
 	"strings"
 )
 
 type Handler interface {
-	CreateSource(ctx context.Context, source *Source) error
-	ListSources(ctx context.Context) ([]*Source, error)
-	GetSource(ctx context.Context, sourceID string) (*Source, error)
-	DeleteSource(ctx context.Context, sourceID string) error
+	CreateSource(ctx context.Context, source *pb.Access) error
+	GetAccessList(ctx context.Context) ([]*pb.Access, error)
+	GetAccess(ctx context.Context, sourceID string) (*pb.Access, error)
+	DeleteAccess(ctx context.Context, sourceID string) error
 	CreateDir(ctx context.Context, sourceID string, dirname string) error
 	ListDir(ctx context.Context, sourceID string, dirname string, opts ListDirOptions) (*DirContent, error)
 	WriteFileContent(ctx context.Context, sourceID string, filename string, content io.Reader, size int64, opts WriteOptions) error
 	ReadFileContent(ctx context.Context, sourceID string, filename string, opts ReadOptions) (io.ReadCloser, int64, error)
-	GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*File, error)
+	GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*pb.File, error)
 	DeleteFile(ctx context.Context, sourceID string, filename string, opts DeleteFileOptions) error
 	SetFileAttributes(ctx context.Context, sourceID string, filename string, attrs Attributes) error
 	GetFileAttributes(ctx context.Context, sourceID string, filename string, name ...string) (Attributes, error)
@@ -30,19 +31,19 @@ type Handler interface {
 	CloseMultipartSession(ctx context.Context, sessionId string) error
 }
 
-func CreateSource(ctx context.Context, source *Source) error {
+func CreateSource(ctx context.Context, source *pb.Access) error {
 	return GetRouteHandler(ctx).CreateSource(ctx, source)
 }
 
-func ListSources(ctx context.Context) ([]*Source, error) {
-	return GetRouteHandler(ctx).ListSources(ctx)
+func ListSources(ctx context.Context) ([]*pb.Access, error) {
+	return GetRouteHandler(ctx).GetAccessList(ctx)
 }
 
-func GetSource(ctx context.Context, sourceID string) (*Source, error) {
-	return GetRouteHandler(ctx).GetSource(ctx, sourceID)
+func GetSource(ctx context.Context, sourceID string) (*pb.Access, error) {
+	return GetRouteHandler(ctx).GetAccess(ctx, sourceID)
 }
 
-func ResolveSource(ctx context.Context, source *Source) (*Source, error) {
+func ResolveSource(ctx context.Context, source *pb.Access) (*pb.Access, error) {
 	source, err := GetSource(ctx, source.Id)
 	if err != nil {
 		return nil, err
@@ -50,7 +51,7 @@ func ResolveSource(ctx context.Context, source *Source) (*Source, error) {
 
 	resolvedSource := source
 	sourceChain := []string{source.Id}
-	for resolvedSource.Type == SourceType_Reference {
+	for resolvedSource.Type == pb.AccessType_Default {
 		u, err := url.Parse(source.Uri)
 		if err != nil {
 			return nil, errors.Internal("could not resolve source uri", errors.Details{Key: "source uri", Value: err})
@@ -78,7 +79,7 @@ func ResolveSource(ctx context.Context, source *Source) (*Source, error) {
 }
 
 func DeleteSource(ctx context.Context, sourceID string) error {
-	return GetRouteHandler(ctx).DeleteSource(ctx, sourceID)
+	return GetRouteHandler(ctx).DeleteAccess(ctx, sourceID)
 }
 
 func CreateDir(ctx context.Context, sourceID string, dirname string) error {
@@ -97,7 +98,7 @@ func ReadFileContent(ctx context.Context, sourceID string, filename string, opts
 	return GetRouteHandler(ctx).ReadFileContent(ctx, sourceID, filename, opts)
 }
 
-func GetFile(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*File, error) {
+func GetFile(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*pb.File, error) {
 	return GetRouteHandler(ctx).GetFileInfo(ctx, sourceID, filename, opts)
 }
 

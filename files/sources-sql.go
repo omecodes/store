@@ -6,19 +6,16 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"encoding/json"
-	"fmt"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/omecodes/errors"
-	"github.com/omecodes/store/auth"
-	"net/url"
-	"strings"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"time"
 
 	"github.com/omecodes/bome"
 	"github.com/omecodes/libome/logs"
 )
 
-func NewSourceSQLManager(db *sql.DB, dialect string, tablePrefix string) (*sourceSQLManager, error) {
+func NewAccessSQLManager(db *sql.DB, dialect string, tablePrefix string) (*accessSQLManager, error) {
 	builder := bome.Build().
 		SetConn(db).
 		SetDialect(dialect)
@@ -33,25 +30,18 @@ func NewSourceSQLManager(db *sql.DB, dialect string, tablePrefix string) (*sourc
 		return nil, err
 	}
 
-	userRefs, err := builder.SetTableName(tablePrefix + "_sources_user_refs").JSONDoubleMap()
-	if err != nil {
-		return nil, err
-	}
-
-	return &sourceSQLManager{
-		sources:  sources,
+	return &accessSQLManager{
+		accessDB: sources,
 		resolved: resolved,
-		userRefs: userRefs,
 	}, err
 }
 
-type sourceSQLManager struct {
-	sources          *bome.JSONMap
-	resolved         *bome.JSONMap
-	userRefs         *bome.JSONDoubleMap
+type accessSQLManager struct {
+	accessDB *bome.JSONMap
+	resolved *bome.JSONMap
 }
 
-func (s *sourceSQLManager) generateID() (string, error) {
+func (s *accessSQLManager) generateID() (string, error) {
 	idBytes := make([]byte, 6)
 	_, err := rand.Read(idBytes[:2])
 	if err != nil {
@@ -62,7 +52,7 @@ func (s *sourceSQLManager) generateID() (string, error) {
 	return string(idBytes), nil
 }
 
-func (s *sourceSQLManager) Save(ctx context.Context, source *Source) (string, error) {
+func (s *accessSQLManager) Save(ctx context.Context, source *pb.Access) (string, error) {
 	var err error
 	if source.Id == "" {
 		source.Id, err = s.generateID()
@@ -79,11 +69,10 @@ func (s *sourceSQLManager) Save(ctx context.Context, source *Source) (string, er
 	var (
 		sources         *bome.JSONMap
 		resolved        *bome.JSONMap
-		userRefs        *bome.JSONDoubleMap
 		encodedResolved string
 	)
 
-	if source.Type == SourceType_Reference {
+	if source.Type == pb.AccessType_Default {
 		resolvedSource, err := s.resolveSource(ctx, source)
 		if err != nil {
 			return "", err
@@ -95,7 +84,7 @@ func (s *sourceSQLManager) Save(ctx context.Context, source *Source) (string, er
 		}
 	}
 
-	ctx, sources, err = s.sources.Transaction(ctx)
+	ctx, sources, err = s.accessDB.Transaction(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -128,52 +117,10 @@ func (s *sourceSQLManager) Save(ctx context.Context, source *Source) (string, er
 		}
 	}
 
-	ctx, userRefs, err = s.userRefs.Transaction(ctx)
-	if err != nil {
-		if rbe := bome.Rollback(ctx); rbe != nil {
-			logs.Error("could not rollback transaction", logs.Err(err))
-		}
-		return "", err
-	}
-
-	if source.PermissionOverrides != nil {
-		creator := source.CreatedBy
-
-		perms := append([]*auth.Permission{}, source.PermissionOverrides.Read...)
-		perms = append(perms, source.PermissionOverrides.Write...)
-		perms = append(perms, source.PermissionOverrides.Chmod...)
-		var users []string
-
-		for _, p := range perms {
-			users = append(users, p.TargetUsers...)
-		}
-
-		encoded, err = json.Marshal(users)
-		if err != nil {
-			if rbe := bome.Rollback(ctx); rbe != nil {
-				logs.Error("could not rollback transaction", logs.Err(err))
-			}
-			return "", err
-		}
-
-		err = userRefs.Upsert(&bome.DoubleMapEntry{
-			FirstKey:  creator,
-			SecondKey: source.Id,
-			Value:     string(encoded),
-		})
-		if err != nil {
-			if rbe := bome.Rollback(ctx); rbe != nil {
-				logs.Error("could not rollback transaction", logs.Err(err))
-			}
-			return "", err
-		}
-
-	}
-
 	return source.Id, bome.Commit(ctx)
 }
 
-func (s *sourceSQLManager) Get(_ context.Context, id string) (*Source, error) {
+func (s *accessSQLManager) Get(_ context.Context, id string) (*pb.Access, error) {
 	hasResolvedVersion, err := s.resolved.Contains(id)
 	if err != nil {
 		return nil, err
@@ -184,26 +131,25 @@ func (s *sourceSQLManager) Get(_ context.Context, id string) (*Source, error) {
 	if hasResolvedVersion {
 		strEncoded, err = s.resolved.Get(id)
 	} else {
-		strEncoded, err = s.sources.Get(id)
+		strEncoded, err = s.accessDB.Get(id)
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	source := &Source{}
+	source := &pb.Access{}
 	err = jsonpb.UnmarshalString(strEncoded, source)
 	return source, err
 }
 
-func (s *sourceSQLManager) Delete(ctx context.Context, id string) error {
+func (s *accessSQLManager) Delete(ctx context.Context, id string) error {
 	var (
 		sources  *bome.JSONMap
 		resolved *bome.JSONMap
-		userRefs *bome.JSONDoubleMap
 		err      error
 	)
 
-	ctx, sources, err = s.sources.Transaction(ctx)
+	ctx, sources, err = s.accessDB.Transaction(ctx)
 	if err != nil {
 		return err
 	}
@@ -229,66 +175,16 @@ func (s *sourceSQLManager) Delete(ctx context.Context, id string) error {
 		return err
 	}
 
-	ctx, userRefs, err = s.userRefs.Transaction(ctx)
-	if err != nil {
-		if rbe := bome.Rollback(ctx); rbe != nil {
-			logs.Error("could not rollback transaction", logs.Err(err))
-		}
-		return err
-	}
-
-	err = userRefs.DeleteAllMatchingSecondKey(id)
-	if err != nil {
-		if rbe := bome.Rollback(ctx); rbe != nil {
-			logs.Error("could not rollback transaction", logs.Err(err))
-		}
-		return err
-	}
-
 	return bome.Commit(ctx)
 }
 
-func (s *sourceSQLManager) UserSources(ctx context.Context, username string) ([]*Source, error) {
-	query := fmt.Sprintf("select sources.value from %s as sources, %s as refs where sources.name=refs.second_key and refs.first_key=?",
-		s.sources.Table(),
-		s.userRefs.Table(),
-	)
-
-	cursor, err := s.sources.Query(query, bome.StringScanner, username)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		if clerr := cursor.Close(); clerr != nil {
-			logs.Error("close cursor", logs.Err(clerr))
-		}
-	}()
-
-	var sources []*Source
-	for cursor.HasNext() {
-		o, err := cursor.Next()
-		if err != nil {
-			return nil, err
-		}
-
-		source := &Source{}
-		err = jsonpb.UnmarshalString(o.(string), source)
-		if err != nil {
-			return nil, err
-		}
-		sources = append(sources, source)
-	}
-	return sources, nil
-}
-
-func (s *sourceSQLManager) resolveSource(ctx context.Context, source *Source) (*Source, error) {
-	resolvedSource := source
+func (s *accessSQLManager) resolveSource(ctx context.Context, access *pb.Access) (*pb.Access, error) {
+	/*resolvedSource := source
 	sourceChain := []string{source.Id}
 
 	permissionOverrides := source.PermissionOverrides
 
-	for resolvedSource.Type == SourceType_Reference {
+	for resolvedSource.Type == pb.SourceType_Reference {
 		u, err := url.Parse(source.Uri)
 		if err != nil {
 			return nil, errors.Internal("could not resolve source uri", errors.Details{Key: "source uri", Value: err})
@@ -318,5 +214,6 @@ func (s *sourceSQLManager) resolveSource(ctx context.Context, source *Source) (*
 		logs.Info("resolved source", logs.Details("uri", resolvedSource.Uri))
 	}
 
-	return resolvedSource, nil
+	return resolvedSource, nil */
+	return access, nil
 }

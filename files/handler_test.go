@@ -15,7 +15,7 @@ import (
 
 var (
 	workingDir    string
-	sourceManager SourceManager
+	sourceManager AccessManager
 	mainSource    *Source
 )
 
@@ -23,7 +23,7 @@ func initDB() {
 	if sourceManager == nil {
 		db, err := sql.Open(bome.SQLite3, ":memory:")
 		So(err, ShouldBeNil)
-		sourceManager, err = NewSourceSQLManager(db, bome.SQLite3, "store")
+		sourceManager, err = NewAccessSQLManager(db, bome.SQLite3, "store")
 		So(err, ShouldBeNil)
 	}
 }
@@ -53,7 +53,7 @@ func clearDir() {
 
 func getContext() context.Context {
 	ctx := context.Background()
-	return ContextWithSourceManager(ctx, sourceManager)
+	return ContextWithAccessManager(ctx, sourceManager)
 }
 
 func getContextWithoutSourceManager() context.Context {
@@ -382,7 +382,7 @@ func TestHandler_ListSource1(t *testing.T) {
 }
 
 func TestHandler_ListSource2(t *testing.T) {
-	Convey("SOURCES LIST: can list sources which one of the READ rule is satisfied by the context user", t, func() {
+	Convey("SOURCES LIST: can list accessDB which one of the READ rule is satisfied by the context user", t, func() {
 		initDB()
 		initDir()
 
@@ -533,7 +533,7 @@ func TestHandler_WriteFileContent5(t *testing.T) {
 }
 
 func TestHandler_ListSource3(t *testing.T) {
-	Convey("SOURCES LIST: can list sources which one of the READ rule is satisfied by the context user", t, func() {
+	Convey("SOURCES LIST: can list accessDB which one of the READ rule is satisfied by the context user", t, func() {
 		initDB()
 		initDir()
 

@@ -32,7 +32,7 @@ type TransferClient interface {
 }
 
 type ReadRequest struct {
-	SourceID string
+	AccessID string
 	Path     string
 	Offset   int64
 	Length   int64
@@ -43,7 +43,7 @@ type ReadResponse struct {
 }
 
 type WriteRequest struct {
-	SourceID string
+	AccessID string
 	Path     string
 	Data     io.Reader
 	Length   int64
@@ -54,7 +54,7 @@ type WriteResponse struct {
 }
 
 type OpenMultipartSessionRequest struct {
-	SourceId string
+	AccessID string
 	Path     string
 }
 type OpenMultipartSessionResponse struct {
@@ -156,7 +156,7 @@ type defaultTransfersServiceClient struct {
 }
 
 func (d *defaultTransfersServiceClient) ReadFile(ctx context.Context, request *ReadRequest) (*ReadResponse, error) {
-	downloadURL := fmt.Sprintf("https://%s/%s", d.address, path.Join(d.apiPathPrefix, "/data", request.SourceID, request.Path))
+	downloadURL := fmt.Sprintf("https://%s/%s", d.address, path.Join(d.apiPathPrefix, "/data", request.AccessID, request.Path))
 	rsp, err := d.client.Get(downloadURL)
 	if err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ func (d *defaultTransfersServiceClient) ReadFile(ctx context.Context, request *R
 }
 
 func (d *defaultTransfersServiceClient) WriteFile(ctx context.Context, request *WriteRequest) (*WriteResponse, error) {
-	uploadURL := fmt.Sprintf("https://%s/%s", d.address, path.Join(d.apiPathPrefix, "/data", request.SourceID, request.Path))
+	uploadURL := fmt.Sprintf("https://%s/%s", d.address, path.Join(d.apiPathPrefix, "/data", request.AccessID, request.Path))
 
 	req, err := http.NewRequest(http.MethodPut, uploadURL, request.Data)
 	if err != nil {

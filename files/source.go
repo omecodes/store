@@ -2,6 +2,7 @@ package files
 
 import (
 	"context"
+	pb "github.com/omecodes/store/gen/go/proto"
 )
 
 const activeUserVar = "{user}"
@@ -14,23 +15,22 @@ const (
 	SchemeAWS    = "aws"
 )
 
-type ctxSourceManager struct{}
+type ctxAccessManager struct{}
 
-type SourceManager interface {
-	Save(ctx context.Context, source *Source) (string, error)
-	Get(ctx context.Context, id string) (*Source, error)
-	Delete(ctx context.Context, id string) error
-	UserSources(ctx context.Context, username string) ([]*Source, error)
+type AccessManager interface {
+	Save(ctx context.Context, access *pb.Access) (string, error)
+	Get(ctx context.Context, accessID string) (*pb.Access, error)
+	Delete(ctx context.Context, accessID string) error
 }
 
-func ContextWithSourceManager(parent context.Context, manager SourceManager) context.Context {
-	return context.WithValue(parent, ctxSourceManager{}, manager)
+func ContextWithAccessManager(parent context.Context, manager AccessManager) context.Context {
+	return context.WithValue(parent, ctxAccessManager{}, manager)
 }
 
-func getSourceManager(ctx context.Context) SourceManager {
-	o := ctx.Value(ctxSourceManager{})
+func getAccessManager(ctx context.Context) AccessManager {
+	o := ctx.Value(ctxAccessManager{})
 	if o == nil {
 		return nil
 	}
-	return o.(SourceManager)
+	return o.(AccessManager)
 }

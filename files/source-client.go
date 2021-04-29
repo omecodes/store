@@ -4,11 +4,12 @@ import (
 	"context"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/service"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"sync"
 )
 
 type SourcesServiceClientProvider interface {
-	GetClient(ctx context.Context, serviceType uint32) (SourcesClient, error)
+	GetClient(ctx context.Context, serviceType uint32) (pb.AccessManagerClient, error)
 }
 
 type DefaultSourcesServiceClientProvider struct {
@@ -28,16 +29,16 @@ func (p *DefaultSourcesServiceClientProvider) getBalanceIndex() int {
 	return p.balanceIndex
 }
 
-func (p *DefaultSourcesServiceClientProvider) GetClient(ctx context.Context, serviceType uint32) (SourcesClient, error) {
+func (p *DefaultSourcesServiceClientProvider) GetClient(ctx context.Context, serviceType uint32) (pb.AccessManagerClient, error) {
 	conn, err := service.Connect(ctx, serviceType)
 	if err != nil {
 		return nil, err
 	}
-	return NewSourcesClient(conn), nil
+	return pb.NewAccessManagerClient(conn), nil
 }
 
 // NewSourcesServiceClient is a source service client constructor
-func NewSourcesServiceClient(ctx context.Context, serviceType uint32) (SourcesClient, error) {
+func NewSourcesServiceClient(ctx context.Context, serviceType uint32) (pb.AccessManagerClient, error) {
 	provider := GetSourcesServiceClientProvider(ctx)
 	if provider == nil {
 		return nil, errors.ServiceUnavailable("no service available", errors.Details{Key: "type", Value: "service"}, errors.Details{Key: "service-type", Value: serviceType})

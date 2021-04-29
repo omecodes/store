@@ -2,19 +2,12 @@ package files
 
 import (
 	"context"
-	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
-	"github.com/omecodes/store/objects"
-	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
-	"io"
-	"net/url"
-	"path"
-	"strings"
-
 	"github.com/omecodes/errors"
-	"github.com/omecodes/libome/logs"
+	"github.com/omecodes/store/acl"
 	"github.com/omecodes/store/auth"
-	"github.com/omecodes/store/common/cenv"
+	pb "github.com/omecodes/store/gen/go/proto"
+	"io"
+	"path"
 )
 
 type PolicyHandler struct {
@@ -29,185 +22,126 @@ func (h *PolicyHandler) isAdmin(ctx context.Context) bool {
 	return user.Name == "admin"
 }
 
-func (h *PolicyHandler) assertPermissionIsGranted(ctx context.Context, rules ...string) error {
-	var formattedRules []string
-	for _, exp := range rules {
-		if exp == "true" {
-			return nil
-		}
-		formattedRules = append(formattedRules, "("+exp+")")
-	}
-	fullExpression := strings.Join(formattedRules, " || ")
-
-	prg, err := cenv.GetProgram(fullExpression,
-		cel.Declarations(
-			decls.NewVar("user", decls.NewObjectType("User")),
-			decls.NewVar("app", decls.NewObjectType("ClientApp")),
-			decls.NewVar("data", decls.NewObjectType("Header")),
-			decls.NewFunction("now",
-				decls.NewOverload(
-					"now_uint",
-					[]*expr.Type{}, decls.Uint,
-				),
-			),
-		),
-		cel.Types(&auth.User{}, &auth.ClientApp{}, &objects.Header{}),
-	)
-	if err != nil {
-		return errors.Internal("context missing access rule evaluator")
-	}
-
-	vars := map[string]interface{}{}
-
-	user := auth.Get(ctx)
-	if user != nil {
-		vars["user"] = user
-	}
-
-	out, details, err := prg.Eval(vars)
-	if err != nil {
-		logs.Error("file permission evaluation", logs.Details("details", details))
-		return err
-	}
-
-	if out.Value().(bool) {
-		return nil
-	}
-
-	return errors.Forbidden("permission denied")
-}
-
-func (h *PolicyHandler) assertIsAllowedToRead(ctx context.Context, sourceID string, filename string) error {
+func (h *PolicyHandler) checkACL(ctx context.Context, action *pb.ActionAuthorization, fileID string) error {
 	user := auth.Get(ctx)
 	if user != nil && user.Name == "admin" {
 		return nil
 	}
-
-	source, err := h.next.GetSource(ctx, sourceID)
-	if source == nil {
-		return err
+	am := acl.GetManager(ctx)
+	if am == nil {
+		return errors.Internal("missing ACL manager in context")
 	}
 
-	if source.PermissionOverrides != nil && len(source.PermissionOverrides.Read) > 0 {
-		var rules []string
-		for _, wr := range source.PermissionOverrides.Read {
-			rules = append(rules, wr.Rule)
-		}
-		return h.assertPermissionIsGranted(ctx, rules...)
-	}
-
-	attrs, err := h.next.GetFileAttributes(ctx, sourceID, filename, AttrPermissions)
-	if err != nil {
-		return err
-	}
-
-	attrsHolder := HoldAttributes(attrs)
-	perms, found, err := attrsHolder.GetPermissions()
-	if err != nil {
-		return err
-	}
-
-	if !found {
-		return errors.Forbidden("access to this resources is forbidden")
-	}
-
-	var rules []string
-	for _, perm := range perms.Read {
-		rules = append(rules, perm.Rule)
-	}
-
-	return h.assertPermissionIsGranted(ctx, rules...)
-}
-
-func (h *PolicyHandler) assertIsAllowedToWrite(ctx context.Context, sourceID string, filename string) error {
-	user := auth.Get(ctx)
-	if user != nil && user.Name == "admin" {
+	if !action.Restricted {
 		return nil
 	}
 
-	source, err := h.next.GetSource(ctx, sourceID)
-	if err != nil {
-		logs.Error("source not found", logs.Err(err))
-		return err
-	}
-
-	if source.PermissionOverrides != nil && len(source.PermissionOverrides.Write) > 0 {
-		var rules []string
-		for _, wr := range source.PermissionOverrides.Write {
-			rules = append(rules, wr.Rule)
-		}
-		return h.assertPermissionIsGranted(ctx, rules...)
-	}
-
-	attrs, err := h.next.GetFileAttributes(ctx, sourceID, filename, AttrPermissions)
-	if err != nil {
-		return err
-	}
-
-	attrsHolder := HoldAttributes(attrs)
-	perms, found, err := attrsHolder.GetPermissions()
-	if err != nil {
-		return err
-	}
-
-	if !found {
-		return errors.Forbidden("access to this resources is forbidden")
-	}
-
-	var rules []string
-	for _, perm := range perms.Write {
-		rules = append(rules, perm.Rule)
-	}
-
-	return h.assertPermissionIsGranted(ctx, rules...)
-}
-
-func (h *PolicyHandler) assertIsAllowedToChmod(ctx context.Context, sourceID string, filename string) error {
-	user := auth.Get(ctx)
-	if user != nil && user.Name == "admin" {
-		return nil
-	}
-
-	source, err := h.next.GetSource(ctx, sourceID)
-	if source == nil {
-		return err
-	}
-
-	if source.PermissionOverrides != nil && len(source.PermissionOverrides.Chmod) > 0 {
-		var rules []string
-		for _, wr := range source.PermissionOverrides.Chmod {
-			rules = append(rules, wr.Rule)
-		}
-		return h.assertPermissionIsGranted(ctx, rules...)
-	}
-
-	attrs, err := h.next.GetFileAttributes(ctx, sourceID, filename, AttrPermissions)
-	if err != nil {
-		return err
-	}
-
-	attrsHolder := HoldAttributes(attrs)
-	perms, found, err := attrsHolder.GetPermissions()
-	if err != nil {
-		return err
-	}
-
-	if !found {
-		return errors.Forbidden("access to this resources is forbidden")
-	}
-
-	var rules []string
-	for _, perm := range perms.Chmod {
-		rules = append(rules, perm.Rule)
-	}
-
-	return h.assertPermissionIsGranted(ctx, rules...)
-}
-
-func (h *PolicyHandler) assertAllowedToChmodSource(ctx context.Context, source *Source) error {
-	user := auth.Get(ctx)
 	if user == nil {
-		return errors.Forbidden("")
+		return errors.Forbidden("resource allowed only to authenticated users")
+	}
+
+	allowed, err := am.CheckACL(ctx, user.Name, &pb.SubjectSet{
+		Object:   fileID,
+		Relation: action.Relation,
+	})
+	if err != nil {
+		return err
+	}
+
+	if !allowed {
+		return errors.Unauthorized("")
+	}
+	return nil
+}
+
+func (h *PolicyHandler) assertIsAllowedToRead(ctx context.Context, accessID string, fileID string) error {
+	access, err := h.next.GetAccess(ctx, accessID)
+	if access == nil {
+		return err
+	}
+
+	if access.OperationRelationOverride != nil {
+		return h.checkACL(ctx, access.OperationRelationOverride.Own, accessID)
+	}
+
+	attrs, err := h.next.GetFileAttributes(ctx, accessID, fileID, AttrPermissions)
+	if err != nil {
+		return err
+	}
+
+	attrsHolder := HoldAttributes(attrs)
+	authorization, found, err := attrsHolder.GetPermissions()
+	if err != nil {
+		return err
+	}
+
+	if !found {
+		return errors.Forbidden("access to this resources is forbidden")
+	}
+
+	return h.checkACL(ctx, authorization.Own, fileID)
+}
+
+func (h *PolicyHandler) assertIsAllowedToWrite(ctx context.Context, accessID string, fileID string) error {
+	access, err := h.next.GetAccess(ctx, accessID)
+	if access == nil {
+		return err
+	}
+
+	if access.OperationRelationOverride != nil {
+		return h.checkACL(ctx, access.OperationRelationOverride.Edit, accessID)
+	}
+
+	attrs, err := h.next.GetFileAttributes(ctx, accessID, fileID, AttrPermissions)
+	if err != nil {
+		return err
+	}
+
+	attrsHolder := HoldAttributes(attrs)
+	authorization, found, err := attrsHolder.GetPermissions()
+	if err != nil {
+		return err
+	}
+
+	if !found {
+		return errors.Forbidden("access to this resources is forbidden")
+	}
+
+	return h.checkACL(ctx, authorization.Edit, fileID)
+}
+
+func (h *PolicyHandler) assertIsAllowedToChmod(ctx context.Context, accessID string, fileID string) error {
+	access, err := h.next.GetAccess(ctx, accessID)
+	if access == nil {
+		return err
+	}
+
+	if access.OperationRelationOverride != nil {
+		return h.checkACL(ctx, access.OperationRelationOverride.Own, accessID)
+	}
+
+	attrs, err := h.next.GetFileAttributes(ctx, accessID, fileID, AttrPermissions)
+	if err != nil {
+		return err
+	}
+
+	attrsHolder := HoldAttributes(attrs)
+	authorization, found, err := attrsHolder.GetPermissions()
+	if err != nil {
+		return err
+	}
+
+	if !found {
+		return errors.Forbidden("access to this resources is forbidden")
+	}
+
+	return h.checkACL(ctx, authorization.Own, fileID)
+}
+
+func (h *PolicyHandler) assertAllowedToChmodSource(ctx context.Context, source *pb.Access) error {
+	/*user := auth.Get(ctx)
+	if user == nil {
+		return errors.Forbidden("only authenticated users are allowed to perform this action")
 	}
 
 	if user.Name == "admin" {
@@ -218,7 +152,7 @@ func (h *PolicyHandler) assertAllowedToChmodSource(ctx context.Context, source *
 	sourceType := source.Type
 	var refSourceID string
 
-	for sourceType == SourceType_Reference {
+	for sourceType == pb.AccessType_Default {
 		u, err := url.Parse(source.Uri)
 		if err != nil {
 			return errors.Internal("could not resolve source uri", errors.Details{Key: "uri", Value: err})
@@ -229,7 +163,7 @@ func (h *PolicyHandler) assertAllowedToChmodSource(ctx context.Context, source *
 		}
 
 		refSourceID = u.Host
-		refSource, err := h.next.GetSource(ctx, refSourceID)
+		refSource, err := h.next.GetAccess(ctx, refSourceID)
 		if err != nil {
 			return err
 		}
@@ -273,13 +207,14 @@ func (h *PolicyHandler) assertAllowedToChmodSource(ctx context.Context, source *
 		rules = append(rules, perm.Rule)
 	}
 
-	return h.assertPermissionIsGranted(ctx, rules...)
+	return h.assertPermissionIsGranted(ctx, rules...) */
+	return nil
 }
 
-func (h *PolicyHandler) CreateSource(ctx context.Context, source *Source) error {
+func (h *PolicyHandler) CreateSource(ctx context.Context, source *pb.Access) error {
 	clientApp := auth.App(ctx)
 	if clientApp == nil || !clientApp.Sources.Create {
-		return errors.Forbidden("application is not allowed to create sources")
+		return errors.Forbidden("application is not allowed to create accessDB")
 	}
 
 	err := h.assertAllowedToChmodSource(ctx, source)
@@ -289,18 +224,18 @@ func (h *PolicyHandler) CreateSource(ctx context.Context, source *Source) error 
 	return h.next.CreateSource(ctx, source)
 }
 
-func (h *PolicyHandler) ListSources(ctx context.Context) ([]*Source, error) {
+func (h *PolicyHandler) GetAccessList(ctx context.Context) ([]*pb.Access, error) {
 	clientApp := auth.App(ctx)
 	if clientApp == nil || !clientApp.Sources.Delete {
-		return nil, errors.Forbidden("application is not allowed to list sources")
+		return nil, errors.Forbidden("application is not allowed to list accessDB")
 	}
 
-	sources, err := h.next.ListSources(ctx)
+	sources, err := h.next.GetAccessList(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var allowedSources []*Source
+	var allowedSources []*pb.Access
 	for _, source := range sources {
 		err = h.assertIsAllowedToRead(ctx, source.Id, "/")
 		if err != nil {
@@ -311,20 +246,20 @@ func (h *PolicyHandler) ListSources(ctx context.Context) ([]*Source, error) {
 	return allowedSources, nil
 }
 
-func (h *PolicyHandler) GetSource(ctx context.Context, sourceID string) (*Source, error) {
+func (h *PolicyHandler) GetAccess(ctx context.Context, sourceID string) (*pb.Access, error) {
 	clientApp := auth.App(ctx)
 	if clientApp == nil || !clientApp.Sources.Delete {
-		return nil, errors.Forbidden("application is not allowed to list sources")
+		return nil, errors.Forbidden("application is not allowed to list accessDB")
 	}
 
 	err := h.assertIsAllowedToRead(ctx, sourceID, "/")
 	if err != nil {
 		return nil, err
 	}
-	return h.next.GetSource(ctx, sourceID)
+	return h.next.GetAccess(ctx, sourceID)
 }
 
-func (h *PolicyHandler) DeleteSource(ctx context.Context, sourceID string) error {
+func (h *PolicyHandler) DeleteAccess(ctx context.Context, sourceID string) error {
 	user := auth.Get(ctx)
 	if user == nil {
 		return errors.Forbidden("context missing user")
@@ -332,10 +267,10 @@ func (h *PolicyHandler) DeleteSource(ctx context.Context, sourceID string) error
 
 	clientApp := auth.App(ctx)
 	if clientApp == nil || !clientApp.Sources.Delete {
-		return errors.Forbidden("application is not allowed to delete sources")
+		return errors.Forbidden("application is not allowed to delete accessDB")
 	}
 
-	source, err := h.next.GetSource(ctx, sourceID)
+	source, err := h.next.GetAccess(ctx, sourceID)
 	if err != nil {
 		return err
 	}
@@ -345,7 +280,7 @@ func (h *PolicyHandler) DeleteSource(ctx context.Context, sourceID string) error
 			return errors.Forbidden("context missing user")
 		}
 	}
-	return h.next.DeleteSource(ctx, sourceID)
+	return h.next.DeleteAccess(ctx, sourceID)
 }
 
 func (h *PolicyHandler) CreateDir(ctx context.Context, sourceID string, filename string) error {
@@ -381,7 +316,7 @@ func (h *PolicyHandler) ReadFileContent(ctx context.Context, sourceID string, fi
 	return h.next.ReadFileContent(ctx, sourceID, filename, opts)
 }
 
-func (h *PolicyHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*File, error) {
+func (h *PolicyHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*pb.File, error) {
 	err := h.assertIsAllowedToWrite(ctx, sourceID, path.Dir(filename))
 	if err != nil {
 		return nil, err

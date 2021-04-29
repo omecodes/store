@@ -2,34 +2,35 @@ package files
 
 import (
 	"context"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 )
 
-func NewSourceServerHandler() SourcesServer {
+func NewSourceServerHandler() pb.AccessManagerServer {
 	return &sourcesServerHandler{}
 }
 
 type sourcesServerHandler struct {
-	UnimplementedSourcesServer
+	pb.UnimplementedAccessManagerServer
 }
 
-func (s *sourcesServerHandler) CreateSource(ctx context.Context, request *CreateSourceRequest) (*CreateSourceResponse, error) {
-	return &CreateSourceResponse{}, CreateSource(ctx, request.Source)
+func (s *sourcesServerHandler) CreateAccess(ctx context.Context, request *pb.CreateAccessRequest) (*pb.CreateAccessResponse, error) {
+	return &pb.CreateAccessResponse{}, CreateSource(ctx, request.Access)
 }
 
-func (s *sourcesServerHandler) GetSource(ctx context.Context, request *GetSourceRequest) (*GetSourceResponse, error) {
-	source, err := GetSource(ctx, request.Id)
-	return &GetSourceResponse{Source: source}, err
+func (s *sourcesServerHandler) GetSource(ctx context.Context, request *pb.GetAccessRequest) (*pb.GetAccessResponse, error) {
+	Access, err := GetSource(ctx, request.Id)
+	return &pb.GetAccessResponse{Access: Access}, err
 }
 
-func (s *sourcesServerHandler) GetSources(request *GetSourcesRequest, server Sources_GetSourcesServer) error {
+func (s *sourcesServerHandler) GetSources(request *pb.GetAccessListRequest, server pb.AccessManager_GetAccessListServer) error {
 	sources, err := ListSources(server.Context())
 	if err != nil {
 		return err
 	}
 
-	for _, source := range sources {
-		err = server.Send(source)
+	for _, Access := range sources {
+		err = server.Send(Access)
 		if err != nil {
 			return err
 		}
@@ -37,12 +38,12 @@ func (s *sourcesServerHandler) GetSources(request *GetSourcesRequest, server Sou
 	return nil
 }
 
-func (s *sourcesServerHandler) ResolveSource(ctx context.Context, request *ResolveSourceRequest) (*ResolveSourceResponse, error) {
-	source, err := ResolveSource(ctx, request.Source)
-	return &ResolveSourceResponse{ResolvedSource: source}, err
+func (s *sourcesServerHandler) ResolveSource(ctx context.Context, request *pb.ResolveAccessRequest) (*pb.ResolveAccessResponse, error) {
+	access, err := ResolveSource(ctx, request.Access)
+	return &pb.ResolveAccessResponse{ResolvedAccess: access}, err
 }
 
-func (s *sourcesServerHandler) DeleteSource(server Sources_DeleteSourceServer) error {
+func (s *sourcesServerHandler) DeleteSource(server pb.AccessManager_DeleteAccessServer) error {
 	done := false
 
 	for !done {
@@ -54,7 +55,7 @@ func (s *sourcesServerHandler) DeleteSource(server Sources_DeleteSourceServer) e
 		}
 
 		if req != nil {
-			err = DeleteSource(server.Context(), req.SourceId)
+			err = DeleteSource(server.Context(), req.AccessId)
 			if err != nil {
 				return err
 			}

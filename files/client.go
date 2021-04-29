@@ -2,6 +2,7 @@ package files
 
 import (
 	"context"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"sync"
 
 	"github.com/omecodes/errors"
@@ -10,7 +11,7 @@ import (
 )
 
 type ClientProvider interface {
-	GetClient(ctx context.Context, serviceType uint32) (FilesClient, error)
+	GetClient(ctx context.Context, serviceType uint32) (pb.FilesClient, error)
 }
 
 type DefaultClientProvider struct {
@@ -30,7 +31,7 @@ func (p *DefaultClientProvider) getBalanceIndex() int {
 	return p.balanceIndex
 }
 
-func (p *DefaultClientProvider) GetClient(ctx context.Context, serviceType uint32) (FilesClient, error) {
+func (p *DefaultClientProvider) GetClient(ctx context.Context, serviceType uint32) (pb.FilesClient, error) {
 	infoList, err := service.GetRegistry(ctx).GetOfType(serviceType)
 	if err != nil {
 		return nil, err
@@ -50,7 +51,7 @@ func (p *DefaultClientProvider) GetClient(ctx context.Context, serviceType uint3
 		if err != nil {
 			return nil, err
 		}
-		return NewFilesClient(conn), nil
+		return pb.NewFilesClient(conn), nil
 	}
 
 	for i := balanceIndex + 1; i%len(infoList) != lastBalanceIndex; i++ {
@@ -60,14 +61,14 @@ func (p *DefaultClientProvider) GetClient(ctx context.Context, serviceType uint3
 			logs.Error("could not connect to service", logs.Details("service-id", info.Id))
 			continue
 		}
-		return NewFilesClient(conn), nil
+		return pb.NewFilesClient(conn), nil
 	}
 	return nil, errors.ServiceUnavailable("could not find service ", errors.Details{Key: "type", Value: serviceType})
 
 }
 
 // NewClient is a FilesClient constructor
-func NewClient(ctx context.Context, serviceType uint32) (FilesClient, error) {
+func NewClient(ctx context.Context, serviceType uint32) (pb.FilesClient, error) {
 	provider := GetClientProvider(ctx)
 	if provider == nil {
 		return nil, errors.ServiceUnavailable("no service available", errors.Details{Key: "type", Value: "service"}, errors.Details{Key: "service-type", Value: serviceType})
