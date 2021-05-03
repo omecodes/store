@@ -26,8 +26,8 @@ type Manager interface {
 	GetNamespaceConfig(ctx context.Context, name string) (*pb.NamespaceConfig, error)
 	DeleteNamespaceConfig(ctx context.Context, name string) error
 
-	GetSubjectNames(ctx context.Context, set *pb.SubjectSet) ([]string, error)
-	GetObjectNames(ctx context.Context, set *pb.ObjectSet) ([]string, error)
+	GetSubjectsNames(ctx context.Context, set *pb.SubjectSet) ([]string, error)
+	GetObjectsNames(ctx context.Context, set *pb.ObjectSet) ([]string, error)
 }
 
 type defaultManager struct{}
@@ -198,10 +198,10 @@ func (d *defaultManager) DeleteNamespaceConfig(ctx context.Context, name string)
 	return store.DeleteNamespace(name)
 }
 
-func (d *defaultManager) GetSubjectNames(ctx context.Context, set *pb.SubjectSet) ([]string, error) {
-	return nil, errors.UnImplemented("acl.defaultManager: GetSubjectNames not implemented")
+func (d *defaultManager) GetSubjectsNames(ctx context.Context, set *pb.SubjectSet) ([]string, error) {
+	return nil, errors.UnImplemented("acl.defaultManager: GetSubjectsNames not implemented")
 }
 
-func (d *defaultManager) GetObjectNames(ctx context.Context, set *pb.ObjectSet) ([]string, error) {
-	return nil, errors.UnImplemented("acl.defaultManager: GetObjectNames not implemented")
+func (d *defaultManager) GetObjectsNames(ctx context.Context, set *pb.ObjectSet) ([]string, error) {
+	return nil, errors.UnImplemented("acl.defaultManager: GetObjectsNames not implemented")
 }
