@@ -33,10 +33,10 @@ func (b *BaseHandler) CheckACL(ctx context.Context, subjectName string, set *pb.
 	return b.next.CheckACL(ctx, subjectName, set, opts)
 }
 
-func (b *BaseHandler) GetSubjectSet(ctx context.Context, set *pb.SubjectSet, opts GetSubjectSetOptions) ([]string, error) {
-	return b.next.GetSubjectSet(ctx, set, opts)
+func (b *BaseHandler) GetSubjectNames(ctx context.Context, set *pb.SubjectSet, opts GetSubjectSetOptions) ([]string, error) {
+	return b.next.GetSubjectNames(ctx, set, opts)
 }
 
-func (b *BaseHandler) GetObjectSet(ctx context.Context, set *pb.ObjectSet, opts GetObjectSetOptions) ([]string, error) {
-	return b.next.GetObjectSet(ctx, set, opts)
+func (b *BaseHandler) GetObjectNames(ctx context.Context, set *pb.ObjectSet, opts GetObjectSetOptions) ([]string, error) {
+	return b.next.GetObjectNames(ctx, set, opts)
 }

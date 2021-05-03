@@ -14,6 +14,6 @@ type Handler interface {
 	DeleteACL(ctx context.Context, a *pb.ACL, opts DeleteACLOptions) error
 	CheckACL(ctx context.Context, subjectName string, set *pb.SubjectSet, opts CheckACLOptions) (bool, error)
 
-	GetSubjectSet(ctx context.Context, set *pb.SubjectSet, opts GetSubjectSetOptions) ([]string, error)
-	GetObjectSet(ctx context.Context, set *pb.ObjectSet, opts GetObjectSetOptions) ([]string, error)
+	GetSubjectNames(ctx context.Context, set *pb.SubjectSet, opts GetSubjectSetOptions) ([]string, error)
+	GetObjectNames(ctx context.Context, set *pb.ObjectSet, opts GetObjectSetOptions) ([]string, error)
 }

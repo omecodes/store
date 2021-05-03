@@ -87,7 +87,7 @@ func (p *ParamsHandler) CheckACL(ctx context.Context, subject string, set *pb.Su
 	return p.BaseHandler.CheckACL(ctx, subject, set, opts)
 }
 
-func (p *ParamsHandler) GetSubjectSet(ctx context.Context, set *pb.SubjectSet, opts GetSubjectSetOptions) ([]string, error) {
+func (p *ParamsHandler) GetSubjectNames(ctx context.Context, set *pb.SubjectSet, opts GetSubjectSetOptions) ([]string, error) {
 	if set == nil {
 		return nil, errors.BadRequest("acl.GetSubjectSet: a subject set is required")
 	}
@@ -96,10 +96,10 @@ func (p *ParamsHandler) GetSubjectSet(ctx context.Context, set *pb.SubjectSet, o
 		return nil, errors.BadRequest("acl.GetSubjectSet: the subject set has one or more empty fields")
 	}
 
-	return p.BaseHandler.GetSubjectSet(ctx, set, opts)
+	return p.BaseHandler.GetSubjectNames(ctx, set, opts)
 }
 
-func (p *ParamsHandler) GetObjectSet(ctx context.Context, set *pb.ObjectSet, opts GetObjectSetOptions) ([]string, error) {
+func (p *ParamsHandler) GetObjectNames(ctx context.Context, set *pb.ObjectSet, opts GetObjectSetOptions) ([]string, error) {
 	if set == nil {
 		return nil, errors.BadRequest("acl.GetObjectSet: an object set is required")
 	}
@@ -108,5 +108,5 @@ func (p *ParamsHandler) GetObjectSet(ctx context.Context, set *pb.ObjectSet, opt
 		return nil, errors.BadRequest("acl.GetObjectSet: the object set has one or more empty field")
 	}
 
-	return p.BaseHandler.GetObjectSet(ctx, set, opts)
+	return p.BaseHandler.GetObjectNames(ctx, set, opts)
 }
