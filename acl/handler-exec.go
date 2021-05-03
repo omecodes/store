@@ -16,7 +16,7 @@ func (e *ExecHandler) SaveNamespaceConfig(ctx context.Context, cfg *pb.Namespace
 	return man.SaveNamespaceConfig(ctx, cfg)
 }
 
-func (e *ExecHandler) GetNamespaceConfig(ctx context.Context, namespaceID string, _ SaveNamespaceOptions) (*pb.NamespaceConfig, error) {
+func (e *ExecHandler) GetNamespaceConfig(ctx context.Context, namespaceID string, opts GetNamespaceOptions) (*pb.NamespaceConfig, error) {
 	man := GetManager(ctx)
 	if man == nil {
 		return nil, errors.Internal("acl.GetNamespaceConfig: could not load acl manager from context")
@@ -56,7 +56,7 @@ func (e *ExecHandler) CheckACL(ctx context.Context, subjectName string, set *pb.
 	return man.CheckACL(ctx, subjectName, set)
 }
 
-func (e *ExecHandler) GetSubjectNames(ctx context.Context, set *pb.SubjectSet, opts GetSubjectSetOptions) ([]string, error) {
+func (e *ExecHandler) GetSubjectNames(ctx context.Context, set *pb.SubjectSet, opts GetSubjectsNamesOptions) ([]string, error) {
 	man := GetManager(ctx)
 	if man == nil {
 		return nil, errors.Internal("acl.GetSubjectsNames: could not load acl manager from context")

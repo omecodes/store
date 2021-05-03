@@ -13,7 +13,7 @@ func (b *BaseHandler) SaveNamespaceConfig(ctx context.Context, cfg *pb.Namespace
 	return b.next.SaveNamespaceConfig(ctx, cfg, opts)
 }
 
-func (b *BaseHandler) GetNamespaceConfig(ctx context.Context, namespaceID string, opts SaveNamespaceOptions) (*pb.NamespaceConfig, error) {
+func (b *BaseHandler) GetNamespaceConfig(ctx context.Context, namespaceID string, opts GetNamespaceOptions) (*pb.NamespaceConfig, error) {
 	return b.next.GetNamespaceConfig(ctx, namespaceID, opts)
 }
 
@@ -33,7 +33,7 @@ func (b *BaseHandler) CheckACL(ctx context.Context, subjectName string, set *pb.
 	return b.next.CheckACL(ctx, subjectName, set, opts)
 }
 
-func (b *BaseHandler) GetSubjectNames(ctx context.Context, set *pb.SubjectSet, opts GetSubjectSetOptions) ([]string, error) {
+func (b *BaseHandler) GetSubjectNames(ctx context.Context, set *pb.SubjectSet, opts GetSubjectsNamesOptions) ([]string, error) {
 	return b.next.GetSubjectNames(ctx, set, opts)
 }
 

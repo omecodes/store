@@ -32,7 +32,7 @@ func (p *ParamsHandler) SaveNamespaceConfig(ctx context.Context, cfg *pb.Namespa
 	return p.BaseHandler.SaveNamespaceConfig(ctx, cfg, opts)
 }
 
-func (p *ParamsHandler) GetNamespaceConfig(ctx context.Context, namespaceID string, opts SaveNamespaceOptions) (*pb.NamespaceConfig, error) {
+func (p *ParamsHandler) GetNamespaceConfig(ctx context.Context, namespaceID string, opts GetNamespaceOptions) (*pb.NamespaceConfig, error) {
 	if namespaceID == "" {
 		return nil, errors.BadRequest("acl.GetNamespaceConfig: a namespace id is required")
 	}
@@ -87,7 +87,7 @@ func (p *ParamsHandler) CheckACL(ctx context.Context, subject string, set *pb.Su
 	return p.BaseHandler.CheckACL(ctx, subject, set, opts)
 }
 
-func (p *ParamsHandler) GetSubjectNames(ctx context.Context, set *pb.SubjectSet, opts GetSubjectSetOptions) ([]string, error) {
+func (p *ParamsHandler) GetSubjectNames(ctx context.Context, set *pb.SubjectSet, opts GetSubjectsNamesOptions) ([]string, error) {
 	if set == nil {
 		return nil, errors.BadRequest("acl.GetSubjectSet: a subject set is required")
 	}
