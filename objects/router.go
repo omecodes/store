@@ -3,7 +3,7 @@ package objects
 import "context"
 
 type Router interface {
-	// GetRoute returns a sequence of handler
+	// GetHandler returns a sequence of handler
 	GetHandler(opts ...RouteOption) Handler
 }
 
