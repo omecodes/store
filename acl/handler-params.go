@@ -99,7 +99,7 @@ func (p *ParamsHandler) GetSubjectNames(ctx context.Context, set *pb.SubjectSet,
 	return p.BaseHandler.GetSubjectNames(ctx, set, opts)
 }
 
-func (p *ParamsHandler) GetObjectNames(ctx context.Context, set *pb.ObjectSet, opts GetObjectSetOptions) ([]string, error) {
+func (p *ParamsHandler) GetObjectNames(ctx context.Context, set *pb.ObjectSet, opts GetObjectsSetOptions) ([]string, error) {
 	if set == nil {
 		return nil, errors.BadRequest("acl.GetObjectSet: an object set is required")
 	}

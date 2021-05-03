@@ -64,7 +64,7 @@ func (e *ExecHandler) GetSubjectNames(ctx context.Context, set *pb.SubjectSet, o
 	return man.GetSubjectsNames(ctx, set)
 }
 
-func (e *ExecHandler) GetObjectNames(ctx context.Context, set *pb.ObjectSet, opts GetObjectSetOptions) ([]string, error) {
+func (e *ExecHandler) GetObjectNames(ctx context.Context, set *pb.ObjectSet, opts GetObjectsSetOptions) ([]string, error) {
 	man := GetManager(ctx)
 	if man == nil {
 		return nil, errors.Internal("acl.GetObjectsNames: could not load acl manager from context")

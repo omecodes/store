@@ -15,5 +15,5 @@ type Handler interface {
 	CheckACL(ctx context.Context, subjectName string, set *pb.SubjectSet, opts CheckACLOptions) (bool, error)
 
 	GetSubjectNames(ctx context.Context, set *pb.SubjectSet, opts GetSubjectsNamesOptions) ([]string, error)
-	GetObjectNames(ctx context.Context, set *pb.ObjectSet, opts GetObjectSetOptions) ([]string, error)
+	GetObjectNames(ctx context.Context, set *pb.ObjectSet, opts GetObjectsSetOptions) ([]string, error)
 }

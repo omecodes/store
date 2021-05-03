@@ -7,5 +7,5 @@ type CheckACLOptions struct{}
 type SaveNamespaceOptions struct{}
 type GetNamespaceOptions struct{}
 type DeleteNamespaceOptions struct{}
-type GetSubjectSetOptions struct{}
-type GetObjectSetOptions struct{}
+type GetSubjectsNamesOptions struct{}
+type GetObjectsSetOptions struct{}

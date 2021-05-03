@@ -37,6 +37,6 @@ func (b *BaseHandler) GetSubjectNames(ctx context.Context, set *pb.SubjectSet, o
 	return b.next.GetSubjectNames(ctx, set, opts)
 }
 
-func (b *BaseHandler) GetObjectNames(ctx context.Context, set *pb.ObjectSet, opts GetObjectSetOptions) ([]string, error) {
+func (b *BaseHandler) GetObjectNames(ctx context.Context, set *pb.ObjectSet, opts GetObjectsSetOptions) ([]string, error) {
 	return b.next.GetObjectNames(ctx, set, opts)
 }
