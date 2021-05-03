@@ -25,6 +25,9 @@ type Manager interface {
 	SaveNamespaceConfig(ctx context.Context, config *pb.NamespaceConfig) error
 	GetNamespaceConfig(ctx context.Context, name string) (*pb.NamespaceConfig, error)
 	DeleteNamespaceConfig(ctx context.Context, name string) error
+
+	GetSubjectNames(ctx context.Context, set *pb.SubjectSet) ([]string, error)
+	GetObjectNames(ctx context.Context, set *pb.ObjectSet) ([]string, error)
 }
 
 type defaultManager struct{}
@@ -193,4 +196,12 @@ func (d *defaultManager) DeleteNamespaceConfig(ctx context.Context, name string)
 		return errors.Internal("could not find namespace configs tupleStore in context")
 	}
 	return store.DeleteNamespace(name)
+}
+
+func (d *defaultManager) GetSubjectNames(ctx context.Context, set *pb.SubjectSet) ([]string, error) {
+	return nil, errors.UnImplemented("acl.defaultManager: GetSubjectNames not implemented")
+}
+
+func (d *defaultManager) GetObjectNames(ctx context.Context, set *pb.ObjectSet) ([]string, error) {
+	return nil, errors.UnImplemented("acl.defaultManager: GetObjectNames not implemented")
 }
