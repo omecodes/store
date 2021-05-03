@@ -30,7 +30,7 @@ func (b *BaseHandler) DeleteACL(ctx context.Context, a *pb.ACL, opts DeleteACLOp
 }
 
 func (b *BaseHandler) CheckACL(ctx context.Context, subjectName string, set *pb.SubjectSet, opts CheckACLOptions) (bool, error) {
-	return false, b.next.CheckACL(ctx, subjectName, nil, opts)
+	return b.next.CheckACL(ctx, subjectName, set, opts)
 }
 
 func (b *BaseHandler) GetSubjectSet(ctx context.Context, set *pb.SubjectSet, opts GetSubjectSetOptions) ([]string, error) {
