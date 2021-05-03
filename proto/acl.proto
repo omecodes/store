@@ -27,6 +27,11 @@ message SubjectSet {
   string relation = 2;
 }
 
+message ObjectSet {
+  string subject = 1;
+  string relation = 2;
+}
+
 message SubjectSetDefinition {
   SubjectSetType type = 1;
   string value = 2;
