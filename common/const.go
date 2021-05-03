@@ -38,6 +38,7 @@ const (
 	ApiAuthRoutePrefix     = "/api/auth"
 	ApiAccountsRoutePrefix = "/api/accounts"
 	ApiSettingsRoutePrefix = "/api/settings"
+	ApiACLRoutePrefix      = "/api/acl"
 
 	ApiQueryParamOffset = "offset"
 	ApiParamAt          = "at"
@@ -48,9 +49,6 @@ const (
 	ApiQueryParamPath   = "path"
 	ApiParamHeader      = "header"
 	ApiParamContinueURL = "continue"
-
-	ApiSetSettingsRoute = "/objects/settings"
-	ApiGetSettingsRoute = "/objects/settings"
 
 	ApiRouteVarId         = "{id}"
 	ApiRouteVarKey        = "{key}"
@@ -66,6 +64,9 @@ const (
 
 	// API Routes
 	//
+
+	ApiSetSettingsRoute = "/settings"
+	ApiGetSettingsRoute = "/settings"
 
 	ApiLoginRoute = "/login"
 
@@ -85,6 +86,18 @@ const (
 	ApiCreateAppSessionRoute = "/auth/sessions/client-app"
 	ApiCreateUserRoute       = "/auth/users"
 	ApiSearchUsersRoute      = "/auth/users"
+
+	ApiCreateACLNamespaceConfigRoute         = "/acl/namespaces"
+	ApiGetACLNamespaceConfigRoute            = "/acl/namespaces/{id}"
+	ApiDeleteACLNamespaceConfigRoute         = "/acl/namespaces/{id}"
+	ApiSaveACLRelationTupleRoute             = "/acl/relations"
+	ApiDeleteACLRelationTupleRoute           = "/acl/relations/{id}"
+	ApiCheckACLRelationTupleRoute            = "/acl/relations"
+	ApiGetACLRelationTupleSubjectsNamesRoute = "/acl/relations/subjects"
+	ApiGetACLRelationTupleObjectsNamesRoute  = "/acl/relations/objects"
+
+	ApiACLNamespaceRoutePrefix = "/acl/namespaces"
+	ApiACLRelationRoutePrefix  = "/acl/relations"
 
 	ApiCreateCollectionRoute = "/objects/collections"
 	ApiListCollectionRoute   = "/objects/collections"
