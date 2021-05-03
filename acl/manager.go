@@ -9,6 +9,8 @@ import (
 )
 
 /*
+	ACL relation tuple grammar
+
   ⟨tuple⟩ ::= ⟨object⟩‘#’⟨relation⟩‘@’⟨user⟩
  ⟨object⟩ ::= ⟨namespace⟩‘:’⟨object id⟩
    ⟨user⟩ ::= ⟨user id⟩ | ⟨userset⟩
@@ -60,140 +62,7 @@ func (d *defaultManager) CheckACL(ctx context.Context, username string, subjectS
 		Subject:    username,
 		SubjectSet: subjectSet,
 	}
-
 	return checker.Check(ctx)
-	/*store := getTupleStore(ctx)
-	if store == nil {
-		return false, errors.Internal("check acl: missing relation store in context")
-	}
-
-	nsConfigStore := getNamespaceConfigStore(ctx)
-	if nsConfigStore == nil {
-		return false, errors.Internal("check acl: missing namespace store in context")
-	}
-
-	objectParts := strings.Split(subjectSet.Object, ":")
-	namespaceId := strings.Trim(objectParts[0], " ")
-
-	namespace, err := nsConfigStore.GetNamespace(namespaceId)
-	if err != nil {
-		return false, errors.Internal("check acl: failed to load namespace config", errors.Details{
-			Key:   "namespace-id",
-			Value: namespaceId,
-		})
-	}
-
-	rel, exists := namespace.Relations[subjectSet.Relation]
-	if !exists {
-		return false, errors.NotFound("check acl: relation does not exists", errors.Details{
-			Key:   "relation",
-			Value: subjectSet.Relation,
-		}, errors.Details{
-			Key:   "namespace",
-			Value: namespace,
-		})
-	}
-
-	for _, rewrite := range rel.SubjectSetRewrite {
-
-		switch rewrite.Type {
-		case pb.SubjectSetType_This:
-			fmt.Printf("\ncheck if '%s' has direct '%s' relationship with '%s'\n", username, subjectSet.Relation, subjectSet.Object)
-			// This relation is not referencing another relation, so we check for existing entry directly in database
-			exists, err = store.Check(ctx, &pb.DBEntry{
-				Object:     subjectSet.Object,
-				Relation:   subjectSet.Relation,
-				Subject:    username,
-				CommitTime: minAge,
-			})
-			if err != nil {
-				if errors.IsNotFound(err) {
-					continue
-				}
-				return false, err
-			}
-			if exists {
-				return true, nil
-			}
-
-		case pb.SubjectSetType_Computed:
-			fmt.Printf("check if '%s' has '%s' relationship with '%s'\n", username, rewrite.Value, subjectSet.Object)
-			// This relation is referring to another relation, we then check if user has that relation with the input object
-			exists, err = d.CheckACL(ctx, username, &pb.SubjectSet{
-				Object:   subjectSet.Object,
-				Relation: rewrite.Value,
-			}, minAge)
-			if err != nil {
-				if errors.IsNotFound(err) {
-					continue
-				}
-				return false, err
-			}
-			if exists {
-				return true, nil
-			}
-
-		case pb.SubjectSetType_FromTuple:
-			// This relation is referring to a relation objects that are in relation with current object
-			var subjects []string
-			var definition *pb.SubjectsInRelationWithObjectRelatedObject
-			err = json.Unmarshal([]byte(rewrite.Value), &definition)
-			if err != nil {
-				return false, err
-			}
-
-			fmt.Printf("check if '%s' has relation '%s' relationship with subject set in tuples '%s-%s'\n", username, definition.SubjectRelation, definition.ObjectRelation, subjectSet.Object)
-
-			subjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
-				Relation: definition.ObjectRelation,
-				Object:   subjectSet.Object,
-				MinAge:   minAge,
-			})
-			if err != nil {
-				return false, err
-			}
-
-			fmt.Printf("subjects that are have '%s' relationship with %s are %v\n", definition.ObjectRelation, subjectSet.Object, subjects)
-
-			for _, subject := range subjects {
-				var allSubjects []string
-
-				if strings.Contains(subject, "#") {
-					parts := strings.Split(subject, "#")
-					allSubjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
-						Object:   parts[0],
-						Relation: parts[1],
-						MinAge:   minAge,
-					})
-					if err != nil {
-						return false, err
-					}
-				} else {
-					allSubjects = append(allSubjects, subject)
-				}
-				fmt.Printf("resolving subject set matching %s\n", subject)
-
-				for _, s := range allSubjects {
-					exists, err = d.CheckACL(ctx, username, &pb.SubjectSet{
-						Object:   s,
-						Relation: definition.SubjectRelation,
-					}, minAge)
-					if err != nil {
-						if errors.IsNotFound(err) {
-							continue
-						}
-						return false, err
-					}
-					if exists {
-						return true, nil
-					}
-				}
-			}
-		default:
-			continue
-		}
-	}
-	return false, nil */
 }
 
 func (d *defaultManager) ResolveSubjectSet(ctx context.Context, info *pb.DBSubjectSetInfo) ([]string, error) {
