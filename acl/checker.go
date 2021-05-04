@@ -28,10 +28,10 @@ func (s *Checker) Check(ctx context.Context) (bool, error) {
 		return false, errors.Internal("check acl: missing namespace store in context")
 	}
 
-	subjects, err := store.GetSubjectSet(ctx, &pb.DBSubjectSetInfo{
-		Object:   s.SubjectSet.Object,
-		Relation: s.SubjectSet.Relation,
-		MinAge:   getCommitTime(ctx),
+	subjects, err := store.GetSubjects(ctx, &pb.DBSubjectSetInfo{
+		Object:      s.SubjectSet.Object,
+		Relation:    s.SubjectSet.Relation,
+		StateMinAge: stateMinAge(ctx),
 	})
 	if err != nil {
 		return false, err
@@ -92,10 +92,10 @@ func (s *Checker) Check(ctx context.Context) (bool, error) {
 			}
 
 			var tupleSetSubjects []string
-			tupleSetSubjects, err = store.GetSubjectSet(ctx, &pb.DBSubjectSetInfo{
-				Relation: definition.ObjectRelation,
-				Object:   s.SubjectSet.Object,
-				MinAge:   getCommitTime(ctx),
+			tupleSetSubjects, err = store.GetSubjects(ctx, &pb.DBSubjectSetInfo{
+				Relation:    definition.ObjectRelation,
+				Object:      s.SubjectSet.Object,
+				StateMinAge: stateMinAge(ctx),
 			})
 			if err != nil {
 				return false, err

@@ -22,8 +22,8 @@ create table if not exists $prefix$_tuples (
 `
 	queryInsertTuple   = `insert into $prefix$_tuples values (?, ?, ?, ?, ?);`
 	queryTupleExists   = `select 1 from $prefix$_tuples where object=? and relation=? and subject=? and commit_time>=?;`
-	querySelectTuple   = `select * from $prefix$_tuples where subject=? and relation=? and object=? and commit_time=(select max(commit_time) from $prefix$_relations where subject=? and relation=? and object=?);`
 	queryTupleSubjects = `select subject from $prefix$_tuples where relation=? and object=? and commit_time>=?;`
+	queryTupleObjects  = `select object from $prefix$_tuples where relation=? and subject=? and commit_time>=?;`
 	queryDeleteTuples  = `delete from $prefix$_tuples where subject=? and relation=? and object=? and commit_time>=?;`
 	tupleScanner       = "relation_scanner_key"
 )
@@ -31,7 +31,8 @@ create table if not exists $prefix$_tuples (
 type TupleStore interface {
 	Save(ctx context.Context, a *pb.DBEntry) error
 	Check(ctx context.Context, entry *pb.DBEntry) (bool, error)
-	GetSubjectSet(ctx context.Context, info *pb.DBSubjectSetInfo) ([]string, error)
+	GetSubjects(ctx context.Context, info *pb.DBSubjectSetInfo) ([]string, error)
+	GetObjects(ctx context.Context, info *pb.DBObjectSetInfo) ([]string, error)
 	Delete(ctx context.Context, entry *pb.DBEntry) error
 }
 
@@ -55,7 +56,7 @@ func NewTupleSQLStore(db *sql.DB, dialect string, tablePrefix string) (TupleStor
 	bm.AddTableDefinition(relationTableSchema)
 	bm.RegisterScanner(tupleScanner, bome.NewScannerFunc(func(row bome.Row) (interface{}, error) {
 		entry := new(pb.DBEntry)
-		err = row.Scan(&entry.Sid, &entry.Object, &entry.Relation, &entry.Subject, &entry.CommitTime)
+		err = row.Scan(&entry.Sid, &entry.Object, &entry.Relation, &entry.Subject, &entry.StateMinAge)
 		return entry, err
 	}))
 	store := &relationSQLStore{
@@ -70,19 +71,46 @@ type relationSQLStore struct {
 }
 
 func (r *relationSQLStore) Save(_ context.Context, entry *pb.DBEntry) error {
-	return r.db.Exec(queryInsertTuple, entry.Sid, entry.Object, entry.Relation, entry.Subject, entry.CommitTime).Error
+	return r.db.Exec(queryInsertTuple, entry.Sid, entry.Object, entry.Relation, entry.Subject, entry.StateMinAge).Error
 }
 
 func (r *relationSQLStore) Check(_ context.Context, entry *pb.DBEntry) (bool, error) {
-	o, err := r.db.QueryFirst(queryTupleExists, bome.IntScanner, entry.Object, entry.Relation, entry.Subject, entry.CommitTime)
+	o, err := r.db.QueryFirst(queryTupleExists, bome.IntScanner, entry.Object, entry.Relation, entry.Subject, entry.StateMinAge)
 	if err != nil && !errors.IsNotFound(err) {
 		return false, err
 	}
 	return o != nil && o.(int64) == 1, nil
 }
 
-func (r *relationSQLStore) GetSubjectSet(_ context.Context, info *pb.DBSubjectSetInfo) ([]string, error) {
-	c, err := r.db.Query(queryTupleSubjects, bome.StringScanner, info.Relation, info.Object, info.MinAge)
+func (r *relationSQLStore) GetSubjects(_ context.Context, info *pb.DBSubjectSetInfo) ([]string, error) {
+	c, err := r.db.Query(queryTupleSubjects, bome.StringScanner, info.Relation, info.Object, info.StateMinAge)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if cErr := c.Close(); cErr != nil {
+			logs.Error("get subjects cursor closing", logs.Details("info", info), logs.Err(err))
+		}
+	}()
+
+	var (
+		o        interface{}
+		subjects []string
+	)
+
+	for c.HasNext() {
+		o, err = c.Next()
+		if err != nil {
+			break
+		}
+		subjects = append(subjects, o.(string))
+	}
+	return subjects, err
+}
+
+func (r *relationSQLStore) GetObjects(_ context.Context, info *pb.DBObjectSetInfo) ([]string, error) {
+	c, err := r.db.Query(queryTupleObjects, bome.StringScanner, info.Relation, info.Subject, info.StateMinAge)
 	if err != nil {
 		return nil, err
 	}
@@ -109,5 +137,5 @@ func (r *relationSQLStore) GetSubjectSet(_ context.Context, info *pb.DBSubjectSe
 }
 
 func (r *relationSQLStore) Delete(_ context.Context, entry *pb.DBEntry) error {
-	return r.db.Exec(queryDeleteTuples, entry.Subject, entry.Relation, entry.Object, entry.CommitTime).Error
+	return r.db.Exec(queryDeleteTuples, entry.Subject, entry.Relation, entry.Object, entry.StateMinAge).Error
 }

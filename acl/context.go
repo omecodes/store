@@ -8,7 +8,7 @@ import (
 type ctxTupleStore struct{}
 type ctxManager struct{}
 type ctxNamespaceConfigStore struct{}
-type ctxCommitTime struct{}
+type ctxStateMinAge struct{}
 type ctxRouterProvider struct{}
 
 func getTupleStore(ctx context.Context) TupleStore {
@@ -35,8 +35,8 @@ func getNamespaceConfigStore(ctx context.Context) NamespaceConfigStore {
 	return o.(NamespaceConfigStore)
 }
 
-func getCommitTime(ctx context.Context) int64 {
-	o := ctx.Value(ctxCommitTime{})
+func stateMinAge(ctx context.Context) int64 {
+	o := ctx.Value(ctxStateMinAge{})
 	if o == nil {
 		return 0
 	}

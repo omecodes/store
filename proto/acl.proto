@@ -7,13 +7,19 @@ message DBEntry {
   string object = 2;
   string relation = 3;
   string subject = 4;
-  int64 commit_time = 5;
+  int64 state_min_age = 5;
 }
 
 message DBSubjectSetInfo {
   string object = 1;
   string relation = 2;
-  int64 min_age = 3;
+  int64 state_min_age = 3;
+}
+
+message DBObjectSetInfo {
+  string subject = 1;
+  string relation = 2;
+  int64 state_min_age = 3;
 }
 
 enum SubjectSetType {

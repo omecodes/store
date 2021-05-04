@@ -35,21 +35,21 @@ type defaultManager struct{}
 func (d *defaultManager) SaveACL(ctx context.Context, a *pb.ACL) error {
 	store := getTupleStore(ctx)
 	if store == nil {
-		return errors.Internal("could not find relation tupleStore in context")
+		return errors.Internal("could not find relation tuple store in context")
 	}
 
 	return store.Save(ctx, &pb.DBEntry{
 		Object:     a.Object,
 		Relation:   a.Relation,
 		Subject:    a.Subject,
-		CommitTime: getCommitTime(ctx),
+		CommitTime: stateMinAge(ctx),
 	})
 }
 
 func (d *defaultManager) DeleteACL(ctx context.Context, a *pb.ACL) error {
 	store := getTupleStore(ctx)
 	if store == nil {
-		return errors.Internal("could not find relation tupleStore in context")
+		return errors.Internal("could not find relation tuple store in context")
 	}
 	return store.Delete(ctx, &pb.DBEntry{
 		Sid:        0,
@@ -76,7 +76,7 @@ func (d *defaultManager) ResolveSubjectSet(ctx context.Context, info *pb.DBSubje
 
 	store := getTupleStore(ctx)
 	if store == nil {
-		return nil, errors.Internal("resolve user-set: missing relation tupleStore in context")
+		return nil, errors.Internal("resolve user-set: missing relation tuple store in context")
 	}
 
 	objectParts := strings.Split(info.Object, ":")
@@ -185,7 +185,7 @@ func (d *defaultManager) SaveNamespaceConfig(ctx context.Context, config *pb.Nam
 func (d *defaultManager) GetNamespaceConfig(ctx context.Context, name string) (*pb.NamespaceConfig, error) {
 	store := getNamespaceConfigStore(ctx)
 	if store == nil {
-		return nil, errors.Internal("could not find namespace configs tupleStore in context")
+		return nil, errors.Internal("could not find namespace configs tuple store in context")
 	}
 	return store.GetNamespace(name)
 }
@@ -193,13 +193,115 @@ func (d *defaultManager) GetNamespaceConfig(ctx context.Context, name string) (*
 func (d *defaultManager) DeleteNamespaceConfig(ctx context.Context, name string) error {
 	store := getNamespaceConfigStore(ctx)
 	if store == nil {
-		return errors.Internal("could not find namespace configs tupleStore in context")
+		return errors.Internal("could not find namespace configs tuple store in context")
 	}
 	return store.DeleteNamespace(name)
 }
 
 func (d *defaultManager) GetSubjectsNames(ctx context.Context, set *pb.SubjectSet) ([]string, error) {
-	return nil, errors.UnImplemented("acl.defaultManager: GetSubjectsNames not implemented")
+	nsConfigStore := getNamespaceConfigStore(ctx)
+	if nsConfigStore == nil {
+		return nil, errors.Internal("acl.defaultManager: missing namespace config in context")
+	}
+
+	store := getTupleStore(ctx)
+	if store == nil {
+		return nil, errors.Internal("resolve user-set: missing relation tuple store in context")
+	}
+
+	objectParts := strings.Split(set.Object, ":")
+	namespaceId := strings.Trim(objectParts[0], " ")
+
+	namespace, err := nsConfigStore.GetNamespace(namespaceId)
+	if err != nil {
+		return nil, errors.Internal("resolve user-set: failed to load namespace config", errors.Details{
+			Key:   "namespace-id",
+			Value: namespaceId,
+		})
+	}
+
+	rel, exists := namespace.Relations[set.Relation]
+	if !exists {
+		return nil, errors.NotFound("relation does not exists")
+	}
+
+	var subjectsSet []string
+	for _, rewrite := range rel.SubjectSetRewrite {
+		var subjects []string
+
+		switch rewrite.Type {
+		case pb.SubjectSetType_This:
+			subjects, err = store.GetSubjectSet(ctx, &pb.DBSubjectSetInfo{
+				Relation: set.Relation,
+				Object:   set.Object,
+				MinAge:   stateMinAge(ctx),
+			})
+			if err != nil {
+				return nil, err
+			}
+
+		case pb.SubjectSetType_Computed:
+			subjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
+				Relation: rewrite.Value,
+				Object:   set.Object,
+				MinAge:   stateMinAge(ctx),
+			})
+			if err != nil {
+				return nil, err
+			}
+
+		case pb.SubjectSetType_FromTuple:
+			var definition *pb.SubjectsInRelationWithObjectRelatedObject
+			err = json.Unmarshal([]byte(rewrite.Value), &definition)
+			if err != nil {
+				return nil, err
+			}
+
+			var tupleSetSubjects []string
+			tupleSetSubjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
+				Relation: definition.ObjectRelation,
+				Object:   set.Object,
+				MinAge:   stateMinAge(ctx),
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			for _, subject := range tupleSetSubjects {
+				var allSubjects []string
+				if strings.Contains(subject, "#") {
+					parts := strings.Split(subject, "#")
+					allSubjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
+						Object:   parts[0],
+						Relation: parts[1],
+						MinAge:   stateMinAge(ctx),
+					})
+					if err != nil {
+						return nil, err
+					}
+				} else {
+					allSubjects = append(allSubjects, subject)
+				}
+
+				var resolvedUsers []string
+				for _, s := range allSubjects {
+					resolvedUsers, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
+						Object:   s,
+						Relation: definition.SubjectRelation,
+					})
+					if err != nil {
+						return nil, err
+					}
+					subjects = append(subjects, resolvedUsers...)
+				}
+			}
+
+		default:
+			continue
+		}
+		subjectsSet = append(subjectsSet, subjects...)
+	}
+	return subjectsSet, nil
 }
 
 func (d *defaultManager) GetObjectsNames(ctx context.Context, set *pb.ObjectSet) ([]string, error) {
