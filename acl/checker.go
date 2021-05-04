@@ -31,7 +31,7 @@ func (s *Checker) Check(ctx context.Context) (bool, error) {
 	subjects, err := store.GetSubjects(ctx, &pb.DBSubjectSetInfo{
 		Object:      s.SubjectSet.Object,
 		Relation:    s.SubjectSet.Relation,
-		StateMinAge: stateMinAge(ctx),
+		StateMinAge: getStateMinAge(ctx),
 	})
 	if err != nil {
 		return false, err
@@ -95,7 +95,7 @@ func (s *Checker) Check(ctx context.Context) (bool, error) {
 			tupleSetSubjects, err = store.GetSubjects(ctx, &pb.DBSubjectSetInfo{
 				Relation:    definition.ObjectRelation,
 				Object:      s.SubjectSet.Object,
-				StateMinAge: stateMinAge(ctx),
+				StateMinAge: getStateMinAge(ctx),
 			})
 			if err != nil {
 				return false, err

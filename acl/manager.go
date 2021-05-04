@@ -39,10 +39,10 @@ func (d *defaultManager) SaveACL(ctx context.Context, a *pb.ACL) error {
 	}
 
 	return store.Save(ctx, &pb.DBEntry{
-		Object:     a.Object,
-		Relation:   a.Relation,
-		Subject:    a.Subject,
-		CommitTime: stateMinAge(ctx),
+		Object:      a.Object,
+		Relation:    a.Relation,
+		Subject:     a.Subject,
+		StateMinAge: getStateMinAge(ctx),
 	})
 }
 
@@ -52,11 +52,10 @@ func (d *defaultManager) DeleteACL(ctx context.Context, a *pb.ACL) error {
 		return errors.Internal("could not find relation tuple store in context")
 	}
 	return store.Delete(ctx, &pb.DBEntry{
-		Sid:        0,
-		Object:     a.Object,
-		Relation:   a.Relation,
-		Subject:    a.Subject,
-		CommitTime: 0,
+		Sid:      0,
+		Object:   a.Object,
+		Relation: a.Relation,
+		Subject:  a.Subject,
 	})
 }
 
@@ -101,10 +100,10 @@ func (d *defaultManager) ResolveSubjectSet(ctx context.Context, info *pb.DBSubje
 
 		switch rewrite.Type {
 		case pb.SubjectSetType_This:
-			subjects, err = store.GetSubjectSet(ctx, &pb.DBSubjectSetInfo{
-				Relation: info.Relation,
-				Object:   info.Object,
-				MinAge:   info.MinAge,
+			subjects, err = store.GetSubjects(ctx, &pb.DBSubjectSetInfo{
+				Relation:    info.Relation,
+				Object:      info.Object,
+				StateMinAge: info.StateMinAge,
 			})
 			if err != nil {
 				return nil, err
@@ -112,9 +111,9 @@ func (d *defaultManager) ResolveSubjectSet(ctx context.Context, info *pb.DBSubje
 
 		case pb.SubjectSetType_Computed:
 			subjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
-				Relation: rewrite.Value,
-				Object:   info.Object,
-				MinAge:   info.MinAge,
+				Relation:    rewrite.Value,
+				Object:      info.Object,
+				StateMinAge: info.StateMinAge,
 			})
 			if err != nil {
 				return nil, err
@@ -129,9 +128,9 @@ func (d *defaultManager) ResolveSubjectSet(ctx context.Context, info *pb.DBSubje
 
 			var tupleSetSubjects []string
 			tupleSetSubjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
-				Relation: definition.ObjectRelation,
-				Object:   info.Object,
-				MinAge:   info.MinAge,
+				Relation:    definition.ObjectRelation,
+				Object:      info.Object,
+				StateMinAge: info.StateMinAge,
 			})
 			if err != nil {
 				return nil, err
@@ -142,9 +141,9 @@ func (d *defaultManager) ResolveSubjectSet(ctx context.Context, info *pb.DBSubje
 				if strings.Contains(subject, "#") {
 					parts := strings.Split(subject, "#")
 					allSubjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
-						Object:   parts[0],
-						Relation: parts[1],
-						MinAge:   info.MinAge,
+						Object:      parts[0],
+						Relation:    parts[1],
+						StateMinAge: info.StateMinAge,
 					})
 					if err != nil {
 						return nil, err
@@ -231,10 +230,10 @@ func (d *defaultManager) GetSubjectsNames(ctx context.Context, set *pb.SubjectSe
 
 		switch rewrite.Type {
 		case pb.SubjectSetType_This:
-			subjects, err = store.GetSubjectSet(ctx, &pb.DBSubjectSetInfo{
-				Relation: set.Relation,
-				Object:   set.Object,
-				MinAge:   stateMinAge(ctx),
+			subjects, err = store.GetSubjects(ctx, &pb.DBSubjectSetInfo{
+				Relation:    set.Relation,
+				Object:      set.Object,
+				StateMinAge: getStateMinAge(ctx),
 			})
 			if err != nil {
 				return nil, err
@@ -242,9 +241,9 @@ func (d *defaultManager) GetSubjectsNames(ctx context.Context, set *pb.SubjectSe
 
 		case pb.SubjectSetType_Computed:
 			subjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
-				Relation: rewrite.Value,
-				Object:   set.Object,
-				MinAge:   stateMinAge(ctx),
+				Relation:    rewrite.Value,
+				Object:      set.Object,
+				StateMinAge: getStateMinAge(ctx),
 			})
 			if err != nil {
 				return nil, err
@@ -259,9 +258,9 @@ func (d *defaultManager) GetSubjectsNames(ctx context.Context, set *pb.SubjectSe
 
 			var tupleSetSubjects []string
 			tupleSetSubjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
-				Relation: definition.ObjectRelation,
-				Object:   set.Object,
-				MinAge:   stateMinAge(ctx),
+				Relation:    definition.ObjectRelation,
+				Object:      set.Object,
+				StateMinAge: getStateMinAge(ctx),
 			})
 			if err != nil {
 				return nil, err
@@ -272,9 +271,9 @@ func (d *defaultManager) GetSubjectsNames(ctx context.Context, set *pb.SubjectSe
 				if strings.Contains(subject, "#") {
 					parts := strings.Split(subject, "#")
 					allSubjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
-						Object:   parts[0],
-						Relation: parts[1],
-						MinAge:   stateMinAge(ctx),
+						Object:      parts[0],
+						Relation:    parts[1],
+						StateMinAge: getStateMinAge(ctx),
 					})
 					if err != nil {
 						return nil, err
@@ -305,5 +304,13 @@ func (d *defaultManager) GetSubjectsNames(ctx context.Context, set *pb.SubjectSe
 }
 
 func (d *defaultManager) GetObjectsNames(ctx context.Context, set *pb.ObjectSet) ([]string, error) {
-	return nil, errors.UnImplemented("acl.defaultManager: GetObjectsNames not implemented")
+	store := getTupleStore(ctx)
+	if store == nil {
+		return nil, errors.Internal("resolve user-set: missing relation tuple store in context")
+	}
+	return store.GetObjects(ctx, &pb.DBObjectSetInfo{
+		Subject:     set.Subject,
+		Relation:    set.Relation,
+		StateMinAge: getStateMinAge(ctx),
+	})
 }

@@ -35,7 +35,7 @@ func getNamespaceConfigStore(ctx context.Context) NamespaceConfigStore {
 	return o.(NamespaceConfigStore)
 }
 
-func stateMinAge(ctx context.Context) int64 {
+func getStateMinAge(ctx context.Context) int64 {
 	o := ctx.Value(ctxStateMinAge{})
 	if o == nil {
 		return 0
