@@ -67,112 +67,6 @@ func (d *defaultManager) CheckACL(ctx context.Context, username string, subjectS
 	return checker.Check(ctx)
 }
 
-func (d *defaultManager) ResolveSubjectSet(ctx context.Context, info *pb.DBSubjectSetInfo) ([]string, error) {
-	nsConfigStore := getNamespaceConfigStore(ctx)
-	if nsConfigStore == nil {
-		return nil, errors.Internal("missing namespace config in context")
-	}
-
-	store := getTupleStore(ctx)
-	if store == nil {
-		return nil, errors.Internal("resolve user-set: missing relation tuple store in context")
-	}
-
-	objectParts := strings.Split(info.Object, ":")
-	namespaceId := strings.Trim(objectParts[0], " ")
-
-	namespace, err := nsConfigStore.GetNamespace(namespaceId)
-	if err != nil {
-		return nil, errors.Internal("resolve user-set: failed to load namespace config", errors.Details{
-			Key:   "namespace-id",
-			Value: namespaceId,
-		})
-	}
-
-	rel, exists := namespace.Relations[info.Relation]
-	if !exists {
-		return nil, errors.NotFound("relation does not exists")
-	}
-
-	var subjectsSet []string
-	for _, rewrite := range rel.SubjectSetRewrite {
-		var subjects []string
-
-		switch rewrite.Type {
-		case pb.SubjectSetType_This:
-			subjects, err = store.GetSubjects(ctx, &pb.DBSubjectSetInfo{
-				Relation:    info.Relation,
-				Object:      info.Object,
-				StateMinAge: info.StateMinAge,
-			})
-			if err != nil {
-				return nil, err
-			}
-
-		case pb.SubjectSetType_Computed:
-			subjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
-				Relation:    rewrite.Value,
-				Object:      info.Object,
-				StateMinAge: info.StateMinAge,
-			})
-			if err != nil {
-				return nil, err
-			}
-
-		case pb.SubjectSetType_FromTuple:
-			var definition *pb.SubjectsInRelationWithObjectRelatedObject
-			err = json.Unmarshal([]byte(rewrite.Value), &definition)
-			if err != nil {
-				return nil, err
-			}
-
-			var tupleSetSubjects []string
-			tupleSetSubjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
-				Relation:    definition.ObjectRelation,
-				Object:      info.Object,
-				StateMinAge: info.StateMinAge,
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			for _, subject := range tupleSetSubjects {
-				var allSubjects []string
-				if strings.Contains(subject, "#") {
-					parts := strings.Split(subject, "#")
-					allSubjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
-						Object:      parts[0],
-						Relation:    parts[1],
-						StateMinAge: info.StateMinAge,
-					})
-					if err != nil {
-						return nil, err
-					}
-				} else {
-					allSubjects = append(allSubjects, subject)
-				}
-
-				var resolvedUsers []string
-				for _, s := range allSubjects {
-					resolvedUsers, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
-						Object:   s,
-						Relation: definition.SubjectRelation,
-					})
-					if err != nil {
-						return nil, err
-					}
-					subjects = append(subjects, resolvedUsers...)
-				}
-			}
-
-		default:
-			continue
-		}
-		subjectsSet = append(subjectsSet, subjects...)
-	}
-	return subjectsSet, nil
-}
-
 func (d *defaultManager) SaveNamespaceConfig(ctx context.Context, config *pb.NamespaceConfig) error {
 	store := getNamespaceConfigStore(ctx)
 	if store == nil {
@@ -240,10 +134,9 @@ func (d *defaultManager) GetSubjectsNames(ctx context.Context, set *pb.SubjectSe
 			}
 
 		case pb.SubjectSetType_Computed:
-			subjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
-				Relation:    rewrite.Value,
-				Object:      set.Object,
-				StateMinAge: getStateMinAge(ctx),
+			subjects, err = d.GetSubjectsNames(ctx, &pb.SubjectSet{
+				Relation: rewrite.Value,
+				Object:   set.Object,
 			})
 			if err != nil {
 				return nil, err
@@ -257,10 +150,9 @@ func (d *defaultManager) GetSubjectsNames(ctx context.Context, set *pb.SubjectSe
 			}
 
 			var tupleSetSubjects []string
-			tupleSetSubjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
-				Relation:    definition.ObjectRelation,
-				Object:      set.Object,
-				StateMinAge: getStateMinAge(ctx),
+			tupleSetSubjects, err = d.GetSubjectsNames(ctx, &pb.SubjectSet{
+				Relation: definition.ObjectRelation,
+				Object:   set.Object,
 			})
 			if err != nil {
 				return nil, err
@@ -270,10 +162,9 @@ func (d *defaultManager) GetSubjectsNames(ctx context.Context, set *pb.SubjectSe
 				var allSubjects []string
 				if strings.Contains(subject, "#") {
 					parts := strings.Split(subject, "#")
-					allSubjects, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
-						Object:      parts[0],
-						Relation:    parts[1],
-						StateMinAge: getStateMinAge(ctx),
+					allSubjects, err = d.GetSubjectsNames(ctx, &pb.SubjectSet{
+						Object:   parts[0],
+						Relation: parts[1],
 					})
 					if err != nil {
 						return nil, err
@@ -284,7 +175,7 @@ func (d *defaultManager) GetSubjectsNames(ctx context.Context, set *pb.SubjectSe
 
 				var resolvedUsers []string
 				for _, s := range allSubjects {
-					resolvedUsers, err = d.ResolveSubjectSet(ctx, &pb.DBSubjectSetInfo{
+					resolvedUsers, err = d.GetSubjectsNames(ctx, &pb.SubjectSet{
 						Object:   s,
 						Relation: definition.SubjectRelation,
 					})
