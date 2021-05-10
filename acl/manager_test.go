@@ -11,7 +11,7 @@ func TestDefaultManager_SaveNamespaceConfig(t *testing.T) {
 	Convey("Save Namespace", t, func() {
 		initDBs()
 
-		man := &defaultManager{}
+		man := &DefaultManager{}
 		err := man.SaveNamespaceConfig(fullManagerContext(), docNamespace)
 		So(err, ShouldBeNil)
 
@@ -24,7 +24,7 @@ func TestDefaultManager_SaveACL(t *testing.T) {
 	Convey("Save ACL", t, func() {
 		initDBs()
 
-		man := &defaultManager{}
+		man := &DefaultManager{}
 		for _, a := range dataACL {
 			err := man.SaveACL(fullManagerContext(), &pb.ACL{
 				Object:   a.Object,
@@ -40,7 +40,7 @@ func TestDefaultManager_CheckACL(t *testing.T) {
 	Convey("Validate that /documents/description.pdf is readable by admin", t, func() {
 		initDBs()
 
-		man := &defaultManager{}
+		man := &DefaultManager{}
 		checked, err := man.CheckACL(fullManagerContext(), "admin", &pb.SubjectSet{
 			Object:   "doc:d12",
 			Relation: "viewer",
@@ -54,7 +54,7 @@ func TestDefaultManager_CheckACL1(t *testing.T) {
 	Convey("Validate that /documents/description.pdf is readable by admin", t, func() {
 		initDBs()
 
-		man := &defaultManager{}
+		man := &DefaultManager{}
 		checked, err := man.CheckACL(fullManagerContext(), "yaba", &pb.SubjectSet{
 			Object:   "group:external",
 			Relation: "member",
@@ -70,7 +70,7 @@ func TestDefaultManager_CheckACL2(t *testing.T) {
 
 		fmt.Println()
 
-		man := &defaultManager{}
+		man := &DefaultManager{}
 		checked, err := man.CheckACL(fullManagerContext(), "yaba", &pb.SubjectSet{
 			Object:   "doc:d12",
 			Relation: "viewer",
