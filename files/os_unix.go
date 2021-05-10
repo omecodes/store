@@ -30,17 +30,3 @@ func DiskStatus(path string) (disk DiskUsage, err error) {
 	disk.Used = disk.All - disk.Free
 	return
 }
-
-/* func DriveList() []string {
-	var drives []string
-
-	block, err := ghw.Block()
-	if err != nil {
-		fmt.Printf("Error getting block storage info: %v", err)
-	}
-
-	for _, disk := range block.Disks {
-		drives = append(drives, disk.Name)
-	}
-	return drives
-} */

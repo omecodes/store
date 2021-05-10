@@ -17,7 +17,7 @@ type ServiceClientHandler struct {
 	clientType uint32
 }
 
-func (h *ServiceClientHandler) CreateSource(ctx context.Context, source *pb.Access) error {
+func (h *ServiceClientHandler) CreateAccess(ctx context.Context, source *pb.Access) error {
 	client, err := NewSourcesServiceClient(ctx, h.clientType)
 	if err != nil {
 		return err

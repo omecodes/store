@@ -3,11 +3,12 @@ package files
 import (
 	"context"
 	"github.com/omecodes/errors"
+	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/acl"
 	"github.com/omecodes/store/auth"
 	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
-	"path"
+	"net/url"
 )
 
 type PolicyHandler struct {
@@ -27,10 +28,6 @@ func (h *PolicyHandler) checkACL(ctx context.Context, action *pb.ActionAuthoriza
 	if user != nil && user.Name == "admin" {
 		return nil
 	}
-	am := acl.GetManager(ctx)
-	if am == nil {
-		return errors.Internal("missing ACL manager in context")
-	}
 
 	if !action.Restricted {
 		return nil
@@ -40,10 +37,10 @@ func (h *PolicyHandler) checkACL(ctx context.Context, action *pb.ActionAuthoriza
 		return errors.Forbidden("resource allowed only to authenticated users")
 	}
 
-	allowed, err := am.CheckACL(ctx, user.Name, &pb.SubjectSet{
+	allowed, err := acl.CheckACL(ctx, user.Name, &pb.SubjectSet{
 		Object:   fileID,
 		Relation: action.Relation,
-	})
+	}, acl.CheckACLOptions{})
 	if err != nil {
 		return err
 	}
@@ -54,349 +51,334 @@ func (h *PolicyHandler) checkACL(ctx context.Context, action *pb.ActionAuthoriza
 	return nil
 }
 
-func (h *PolicyHandler) assertIsAllowedToRead(ctx context.Context, accessID string, fileID string) error {
-	access, err := h.next.GetAccess(ctx, accessID)
-	if access == nil {
-		return err
-	}
-
-	if access.OperationRelationOverride != nil {
-		return h.checkACL(ctx, access.OperationRelationOverride.Own, accessID)
-	}
-
-	attrs, err := h.next.GetFileAttributes(ctx, accessID, fileID, AttrPermissions)
-	if err != nil {
-		return err
-	}
-
-	attrsHolder := HoldAttributes(attrs)
-	authorization, found, err := attrsHolder.GetPermissions()
-	if err != nil {
-		return err
-	}
-
-	if !found {
-		return errors.Forbidden("access to this resources is forbidden")
-	}
-
-	return h.checkACL(ctx, authorization.Own, fileID)
-}
-
-func (h *PolicyHandler) assertIsAllowedToWrite(ctx context.Context, accessID string, fileID string) error {
-	access, err := h.next.GetAccess(ctx, accessID)
-	if access == nil {
-		return err
-	}
-
-	if access.OperationRelationOverride != nil {
-		return h.checkACL(ctx, access.OperationRelationOverride.Edit, accessID)
-	}
-
-	attrs, err := h.next.GetFileAttributes(ctx, accessID, fileID, AttrPermissions)
-	if err != nil {
-		return err
-	}
-
-	attrsHolder := HoldAttributes(attrs)
-	authorization, found, err := attrsHolder.GetPermissions()
-	if err != nil {
-		return err
-	}
-
-	if !found {
-		return errors.Forbidden("access to this resources is forbidden")
-	}
-
-	return h.checkACL(ctx, authorization.Edit, fileID)
-}
-
-func (h *PolicyHandler) assertIsAllowedToChmod(ctx context.Context, accessID string, fileID string) error {
-	access, err := h.next.GetAccess(ctx, accessID)
-	if access == nil {
-		return err
-	}
-
-	if access.OperationRelationOverride != nil {
-		return h.checkACL(ctx, access.OperationRelationOverride.Own, accessID)
-	}
-
-	attrs, err := h.next.GetFileAttributes(ctx, accessID, fileID, AttrPermissions)
-	if err != nil {
-		return err
-	}
-
-	attrsHolder := HoldAttributes(attrs)
-	authorization, found, err := attrsHolder.GetPermissions()
-	if err != nil {
-		return err
-	}
-
-	if !found {
-		return errors.Forbidden("access to this resources is forbidden")
-	}
-
-	return h.checkACL(ctx, authorization.Own, fileID)
-}
-
-func (h *PolicyHandler) assertAllowedToChmodSource(ctx context.Context, source *pb.Access) error {
-	/*user := auth.Get(ctx)
-	if user == nil {
-		return errors.Forbidden("only authenticated users are allowed to perform this action")
-	}
-
-	if user.Name == "admin" {
-		return nil
-	}
-
-	sourceChain := []string{source.Id}
-	sourceType := source.Type
-	var refSourceID string
-
-	for sourceType == pb.AccessType_Default {
-		u, err := url.Parse(source.Uri)
-		if err != nil {
-			return errors.Internal("could not resolve source uri", errors.Details{Key: "uri", Value: err})
-		}
-
-		if u.Scheme != "ref" {
-			return errors.Internal("unexpected source scheme")
-		}
-
-		refSourceID = u.Host
-		refSource, err := h.next.GetAccess(ctx, refSourceID)
-		if err != nil {
-			return err
-		}
-
-		if refSource.PermissionOverrides != nil && len(refSource.PermissionOverrides.Chmod) > 0 {
-			var rules []string
-			for _, wr := range refSource.PermissionOverrides.Chmod {
-				rules = append(rules, wr.Rule)
-			}
-			return h.assertPermissionIsGranted(ctx, rules...)
-		}
-
-		sourceType = refSource.Type
-
-		for _, src := range sourceChain {
-			if src == refSourceID {
-				return errors.Internal("source cycle references")
-			}
-		}
-		sourceChain = append(sourceChain, refSourceID)
-		sourceType = source.Type
-	}
-
-	attrs, err := h.next.GetFileAttributes(ctx, refSourceID, "/", AttrPermissions)
-	if err != nil {
-		return err
-	}
-
-	attrsHolder := HoldAttributes(attrs)
-	perms, found, err := attrsHolder.GetPermissions()
-	if err != nil {
-		return err
-	}
-
-	if !found {
-		return errors.Forbidden("access to this resources is forbidden")
-	}
-
-	var rules []string
-	for _, perm := range perms.Chmod {
-		rules = append(rules, perm.Rule)
-	}
-
-	return h.assertPermissionIsGranted(ctx, rules...) */
-	return nil
-}
-
-func (h *PolicyHandler) CreateSource(ctx context.Context, source *pb.Access) error {
+func (h *PolicyHandler) CreateAccess(ctx context.Context, access *pb.Access) error {
 	clientApp := auth.App(ctx)
 	if clientApp == nil {
 		return errors.Forbidden("application is not allowed to create accessDB")
 	}
 
-	err := h.assertAllowedToChmodSource(ctx, source)
-	if err != nil {
-		return err
+	if access.Type == pb.AccessType_Reference {
+		u, err := url.Parse(access.Uri)
+		if err != nil {
+			return errors.BadRequest("could not parse access URI", errors.Details{Key: "err", Value: access.Uri})
+		}
+
+		referencedAccess, err := h.BaseHandler.GetAccess(ctx, u.Host)
+		if err != nil {
+			return err
+		}
+
+		err = h.checkACL(ctx, referencedAccess.ActionAclRelation.Share, referencedAccess.Id)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		if !clientApp.AdminApp {
+			return errors.Forbidden("creating this type of access requires client apps with admin flags")
+		}
+
+		user := auth.Get(ctx)
+		if user == nil {
+			return errors.Forbidden("Only authenticated users are allowed to create access")
+		}
+
+		success, err := acl.CheckACL(ctx, user.Name, &pb.SubjectSet{Object: "group:admins", Relation: "member"}, acl.CheckACLOptions{})
+		if err != nil {
+			return err
+		}
+
+		if !success {
+			return errors.Forbidden("only admins are allowed to create this type of access")
+		}
 	}
-	return h.next.CreateSource(ctx, source)
+
+	return h.next.CreateAccess(ctx, access)
 }
 
 func (h *PolicyHandler) GetAccessList(ctx context.Context) ([]*pb.Access, error) {
-	clientApp := auth.App(ctx)
-	if clientApp == nil {
+	if !auth.IsContextFromAuthorizedApp(ctx) {
 		return nil, errors.Forbidden("application is not allowed to list accessDB")
 	}
 
-	sources, err := h.next.GetAccessList(ctx)
-	if err != nil {
-		return nil, err
-	}
+	var (
+		ids []string
+		err error
+	)
 
-	var allowedSources []*pb.Access
-	for _, source := range sources {
-		err = h.assertIsAllowedToRead(ctx, source.Id, "/")
-		if err != nil {
-			continue
-		}
-		allowedSources = append(allowedSources, source)
-	}
-	return allowedSources, nil
-}
-
-func (h *PolicyHandler) GetAccess(ctx context.Context, sourceID string) (*pb.Access, error) {
-	clientApp := auth.App(ctx)
-	if clientApp == nil {
-		return nil, errors.Forbidden("application is not allowed to list accessDB")
-	}
-
-	err := h.assertIsAllowedToRead(ctx, sourceID, "/")
-	if err != nil {
-		return nil, err
-	}
-	return h.next.GetAccess(ctx, sourceID)
-}
-
-func (h *PolicyHandler) DeleteAccess(ctx context.Context, sourceID string) error {
 	user := auth.Get(ctx)
 	if user == nil {
-		return errors.Forbidden("context missing user")
+		ids, err = acl.GetObjectNames(ctx, &pb.ObjectSet{Relation: "viewer", Subject: "public"}, acl.GetObjectsSetOptions{})
+	} else {
+		ids, err = acl.GetObjectNames(ctx, &pb.ObjectSet{Relation: "viewer", Subject: user.Name}, acl.GetObjectsSetOptions{})
+	}
+	if err != nil {
+		return nil, err
 	}
 
+	var accesses []*pb.Access
+
+	for _, id := range ids {
+		access, err := h.BaseHandler.GetAccess(ctx, id)
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				return nil, err
+			}
+			continue
+		}
+		accesses = append(accesses, access)
+	}
+	return accesses, nil
+}
+
+func (h *PolicyHandler) GetAccess(ctx context.Context, accessID string) (*pb.Access, error) {
+	if !auth.IsContextFromAuthorizedApp(ctx) {
+		return nil, errors.Forbidden("application is not allowed to list accessDB")
+	}
+
+	var (
+		checked bool
+		err     error
+	)
+
+	user := auth.Get(ctx)
+	if user == nil {
+		checked, err = acl.CheckACL(ctx, "public", &pb.SubjectSet{Relation: "viewer", Object: "access:" + accessID}, acl.CheckACLOptions{})
+	} else {
+		checked, err = acl.CheckACL(ctx, user.Name, &pb.SubjectSet{Relation: "viewer", Object: "access:" + accessID}, acl.CheckACLOptions{})
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if !checked {
+		return nil, errors.Forbidden("this access is not allowed")
+	}
+
+	return h.next.GetAccess(ctx, accessID)
+}
+
+func (h *PolicyHandler) DeleteAccess(ctx context.Context, accessID string) error {
 	clientApp := auth.App(ctx)
 	if clientApp == nil {
-		return errors.Forbidden("application is not allowed to delete accessDB")
+		return errors.Forbidden("application is not allowed to create accessDB")
 	}
 
-	source, err := h.next.GetAccess(ctx, sourceID)
+	user := auth.Get(ctx)
+	if user == nil {
+		return errors.Forbidden("Only authenticated users are allowed to create access")
+	}
+
+	access, err := h.BaseHandler.GetAccess(ctx, accessID)
 	if err != nil {
 		return err
 	}
 
-	if user.Name != "admin" {
-		if source.CreatedBy != user.Name {
-			return errors.Forbidden("context missing user")
+	if access.Type == pb.AccessType_Reference {
+		checked, err := acl.CheckACL(ctx, user.Name, &pb.SubjectSet{
+			Object:   "access:" + accessID,
+			Relation: "owner",
+		}, acl.CheckACLOptions{})
+		if err != nil {
+			return err
+		}
+
+		if !checked {
+			return errors.Forbidden("not allowed to delete this file access")
+		}
+
+	} else {
+		if !clientApp.AdminApp {
+			return errors.Forbidden("creating this type of access requires client apps with admin flags")
+		}
+
+		checked, err := acl.CheckACL(ctx, user.Name, &pb.SubjectSet{Object: "group:admins", Relation: "member"}, acl.CheckACLOptions{})
+		if err != nil {
+			return err
+		}
+
+		if !checked {
+			return errors.Forbidden("only admins are allowed to create this type of access")
 		}
 	}
-	return h.next.DeleteAccess(ctx, sourceID)
+
+	return h.next.DeleteAccess(ctx, accessID)
 }
 
-func (h *PolicyHandler) CreateDir(ctx context.Context, sourceID string, filename string) error {
-	err := h.assertIsAllowedToWrite(ctx, sourceID, path.Dir(filename))
+func (h *PolicyHandler) CreateDir(ctx context.Context, accessID string, filename string) error {
+	access, err := h.BaseHandler.GetAccess(ctx, accessID)
+	if err != nil {
+		logs.Error("could not get access details", logs.Err(err))
+		return err
+	}
+
+	err = h.checkACL(ctx, access.ActionAclRelation.Edit, accessID)
 	if err != nil {
 		return err
 	}
-	return h.next.CreateDir(ctx, sourceID, filename)
+
+	return h.next.CreateDir(ctx, accessID, filename)
 }
 
-func (h *PolicyHandler) WriteFileContent(ctx context.Context, sourceID string, filename string, content io.Reader, size int64, opts WriteOptions) error {
-	err := h.assertIsAllowedToWrite(ctx, sourceID, path.Dir(filename))
+func (h *PolicyHandler) WriteFileContent(ctx context.Context, accessID string, filename string, content io.Reader, size int64, opts WriteOptions) error {
+	access, err := h.BaseHandler.GetAccess(ctx, accessID)
+	if err != nil {
+		logs.Error("could not get access details", logs.Err(err))
+		return err
+	}
+
+	err = h.checkACL(ctx, access.ActionAclRelation.Edit, accessID)
 	if err != nil {
 		return err
 	}
-	err = h.next.WriteFileContent(ctx, sourceID, filename, content, size, opts)
+
+	err = h.next.WriteFileContent(ctx, accessID, filename, content, size, opts)
 	return err
 }
 
-func (h *PolicyHandler) ListDir(ctx context.Context, sourceID string, dirname string, opts ListDirOptions) (*DirContent, error) {
-	err := h.assertIsAllowedToRead(ctx, sourceID, dirname)
+func (h *PolicyHandler) ListDir(ctx context.Context, accessID string, dirname string, opts ListDirOptions) (*DirContent, error) {
+	access, err := h.BaseHandler.GetAccess(ctx, accessID)
+	if err != nil {
+		logs.Error("could not get access details", logs.Err(err))
+		return nil, err
+	}
+
+	err = h.checkACL(ctx, access.ActionAclRelation.View, accessID)
 	if err != nil {
 		return nil, err
 	}
-	return h.next.ListDir(ctx, sourceID, dirname, opts)
+	return h.next.ListDir(ctx, accessID, dirname, opts)
 }
 
-func (h *PolicyHandler) ReadFileContent(ctx context.Context, sourceID string, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
-	err := h.assertIsAllowedToRead(ctx, sourceID, filename)
+func (h *PolicyHandler) ReadFileContent(ctx context.Context, accessID string, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
+	access, err := h.BaseHandler.GetAccess(ctx, accessID)
+	if err != nil {
+		logs.Error("could not get access details", logs.Err(err))
+		return nil, 0, err
+	}
+
+	err = h.checkACL(ctx, access.ActionAclRelation.View, accessID)
 	if err != nil {
 		return nil, 0, err
 	}
-	return h.next.ReadFileContent(ctx, sourceID, filename, opts)
+	return h.next.ReadFileContent(ctx, accessID, filename, opts)
 }
 
-func (h *PolicyHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*pb.File, error) {
-	err := h.assertIsAllowedToWrite(ctx, sourceID, path.Dir(filename))
+func (h *PolicyHandler) GetFileInfo(ctx context.Context, accessID string, filename string, opts GetFileOptions) (*pb.File, error) {
+	access, err := h.BaseHandler.GetAccess(ctx, accessID)
+	if err != nil {
+		logs.Error("could not get access details", logs.Err(err))
+		return nil, err
+	}
+
+	err = h.checkACL(ctx, access.ActionAclRelation.View, accessID)
 	if err != nil {
 		return nil, err
 	}
-	return h.next.GetFileInfo(ctx, sourceID, filename, opts)
+
+	return h.next.GetFileInfo(ctx, accessID, filename, opts)
 }
 
-func (h *PolicyHandler) DeleteFile(ctx context.Context, sourceID string, filename string, opts DeleteFileOptions) error {
-	err := h.assertIsAllowedToWrite(ctx, sourceID, filename)
+func (h *PolicyHandler) DeleteFile(ctx context.Context, accessID string, filename string, opts DeleteFileOptions) error {
+	access, err := h.BaseHandler.GetAccess(ctx, accessID)
+	if err != nil {
+		logs.Error("could not get access details", logs.Err(err))
+		return err
+	}
+
+	err = h.checkACL(ctx, access.ActionAclRelation.Delete, accessID)
 	if err != nil {
 		return err
 	}
 
-	return h.next.DeleteFile(ctx, sourceID, filename, opts)
+	return h.next.DeleteFile(ctx, accessID, filename, opts)
 }
 
-func (h *PolicyHandler) SetFileAttributes(ctx context.Context, sourceID string, filename string, attrs Attributes) error {
-	err := h.assertIsAllowedToWrite(ctx, sourceID, filename)
+func (h *PolicyHandler) SetFileAttributes(ctx context.Context, accessID string, filename string, attrs Attributes) error {
+	access, err := h.BaseHandler.GetAccess(ctx, accessID)
+	if err != nil {
+		logs.Error("could not get access details", logs.Err(err))
+		return err
+	}
+
+	err = h.checkACL(ctx, access.ActionAclRelation.Edit, accessID)
 	if err != nil {
 		return err
 	}
-	return h.next.SetFileAttributes(ctx, sourceID, filename, attrs)
+	return h.next.SetFileAttributes(ctx, accessID, filename, attrs)
 }
 
-func (h *PolicyHandler) GetFileAttributes(ctx context.Context, sourceID string, filename string, name ...string) (Attributes, error) {
-	err := h.assertIsAllowedToRead(ctx, sourceID, filename)
+func (h *PolicyHandler) GetFileAttributes(ctx context.Context, accessID string, filename string, name ...string) (Attributes, error) {
+	access, err := h.BaseHandler.GetAccess(ctx, accessID)
+	if err != nil {
+		logs.Error("could not get access details", logs.Err(err))
+		return nil, err
+	}
+
+	err = h.checkACL(ctx, access.ActionAclRelation.View, accessID)
 	if err != nil {
 		return nil, err
 	}
-	return h.next.GetFileAttributes(ctx, sourceID, filename, name...)
+	return h.next.GetFileAttributes(ctx, accessID, filename, name...)
 }
 
-func (h *PolicyHandler) RenameFile(ctx context.Context, sourceID string, filename string, newName string) error {
-	err := h.assertIsAllowedToRead(ctx, sourceID, filename)
+func (h *PolicyHandler) RenameFile(ctx context.Context, accessID string, filename string, newName string) error {
+	access, err := h.BaseHandler.GetAccess(ctx, accessID)
+	if err != nil {
+		logs.Error("could not get access details", logs.Err(err))
+		return err
+	}
+
+	err = h.checkACL(ctx, access.ActionAclRelation.View, accessID)
 	if err != nil {
 		return err
 	}
 
-	err = h.assertIsAllowedToWrite(ctx, sourceID, path.Dir(filename))
-	if err != nil {
-		return err
-	}
-
-	return h.next.RenameFile(ctx, sourceID, filename, newName)
+	return h.next.RenameFile(ctx, accessID, filename, newName)
 }
 
-func (h *PolicyHandler) MoveFile(ctx context.Context, sourceID string, filename string, dirname string) error {
-	err := h.assertIsAllowedToWrite(ctx, sourceID, filename)
+func (h *PolicyHandler) MoveFile(ctx context.Context, accessID string, filename string, dirname string) error {
+	access, err := h.BaseHandler.GetAccess(ctx, accessID)
+	if err != nil {
+		logs.Error("could not get access details", logs.Err(err))
+		return err
+	}
+
+	err = h.checkACL(ctx, access.ActionAclRelation.View, accessID)
 	if err != nil {
 		return err
 	}
 
-	err = h.assertIsAllowedToWrite(ctx, sourceID, dirname)
-	if err != nil {
-		return err
-	}
-
-	return h.next.MoveFile(ctx, filename, sourceID, dirname)
+	return h.next.MoveFile(ctx, filename, accessID, dirname)
 }
 
-func (h *PolicyHandler) CopyFile(ctx context.Context, sourceID string, filename string, dirname string) error {
-	err := h.assertIsAllowedToRead(ctx, sourceID, filename)
+func (h *PolicyHandler) CopyFile(ctx context.Context, accessID string, filename string, dirname string) error {
+	access, err := h.BaseHandler.GetAccess(ctx, accessID)
+	if err != nil {
+		logs.Error("could not get access details", logs.Err(err))
+		return err
+	}
+
+	err = h.checkACL(ctx, access.ActionAclRelation.View, accessID)
 	if err != nil {
 		return err
 	}
 
-	err = h.assertIsAllowedToWrite(ctx, sourceID, dirname)
-	if err != nil {
-		return err
-	}
-
-	return h.next.CopyFile(ctx, sourceID, filename, dirname)
+	return h.next.CopyFile(ctx, accessID, filename, dirname)
 }
 
-func (h *PolicyHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info MultipartSessionInfo) (string, error) {
-	err := h.assertIsAllowedToWrite(ctx, sourceID, path.Dir(filename))
+func (h *PolicyHandler) OpenMultipartSession(ctx context.Context, accessID string, filename string, info MultipartSessionInfo) (string, error) {
+	access, err := h.BaseHandler.GetAccess(ctx, accessID)
+	if err != nil {
+		logs.Error("could not get access details", logs.Err(err))
+		return "", err
+	}
+
+	err = h.checkACL(ctx, access.ActionAclRelation.View, accessID)
 	if err != nil {
 		return "", err
 	}
-	return h.next.OpenMultipartSession(ctx, sourceID, filename, info)
+	return h.next.OpenMultipartSession(ctx, accessID, filename, info)
 }
 
 func (h *PolicyHandler) WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo) (int64, error) {

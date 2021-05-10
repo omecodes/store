@@ -12,7 +12,7 @@ type ExecHandler struct {
 	BaseHandler
 }
 
-func (h *ExecHandler) CreateSource(ctx context.Context, source *pb.Access) error {
+func (h *ExecHandler) CreateAccess(ctx context.Context, source *pb.Access) error {
 	sourceManager := getAccessManager(ctx)
 	if sourceManager == nil {
 		return errors.Internal("context missing source manager")

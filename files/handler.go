@@ -11,7 +11,7 @@ import (
 )
 
 type Handler interface {
-	CreateSource(ctx context.Context, source *pb.Access) error
+	CreateAccess(ctx context.Context, source *pb.Access) error
 	GetAccessList(ctx context.Context) ([]*pb.Access, error)
 	GetAccess(ctx context.Context, sourceID string) (*pb.Access, error)
 	DeleteAccess(ctx context.Context, sourceID string) error
@@ -32,7 +32,7 @@ type Handler interface {
 }
 
 func CreateSource(ctx context.Context, source *pb.Access) error {
-	return GetRouteHandler(ctx).CreateSource(ctx, source)
+	return GetRouteHandler(ctx).CreateAccess(ctx, source)
 }
 
 func ListSources(ctx context.Context) ([]*pb.Access, error) {

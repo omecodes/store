@@ -37,10 +37,10 @@ func HoldAttributes(attrs Attributes) *AttributesHolder {
 
 type AttributesHolder struct {
 	Attributes  Attributes
-	permissions *pb.AccessRelation
+	permissions *pb.AccessActionRelation
 }
 
-func (h *AttributesHolder) SetPermissions(perms *pb.AccessRelation) error {
+func (h *AttributesHolder) SetPermissions(perms *pb.AccessActionRelation) error {
 	return nil
 }
 
@@ -48,11 +48,11 @@ func (h *AttributesHolder) SetEncodedPermissions(encoded string) error {
 	return nil
 }
 
-func (h *AttributesHolder) AddReadPermissions(permission *pb.AccessRelation) {
+func (h *AttributesHolder) AddReadPermissions(permission *pb.AccessActionRelation) {
 
 }
 
-func (h *AttributesHolder) GetPermissions() (*pb.AccessRelation, bool, error) {
+func (h *AttributesHolder) GetPermissions() (*pb.AccessActionRelation, bool, error) {
 	if h.permissions == nil {
 		encoded := h.Attributes[AttrPermissions]
 		if encoded == "" {

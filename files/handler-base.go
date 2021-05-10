@@ -10,8 +10,8 @@ type BaseHandler struct {
 	next Handler
 }
 
-func (h *BaseHandler) CreateSource(ctx context.Context, source *pb.Access) error {
-	return h.next.CreateSource(ctx, source)
+func (h *BaseHandler) CreateAccess(ctx context.Context, source *pb.Access) error {
+	return h.next.CreateAccess(ctx, source)
 }
 
 func (h *BaseHandler) GetAccessList(ctx context.Context) ([]*pb.Access, error) {
