@@ -12,7 +12,8 @@ message ClientApp {
   string key = 1;
   string secret = 2;
   ClientType type = 3;
-  map<string, string> info = 4;
+  bool admin_app = 4;
+  map<string, string> info = 5;
 }
 
 message User {

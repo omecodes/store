@@ -7,6 +7,12 @@ enum AccessType {
   Reference = 1;
 }
 
+message DiskUsage {
+  int64 all = 1;
+  int64 used = 2;
+  int64 free = 3;
+}
+
 message File {
   string uuid = 1;
   string name = 2;
@@ -27,10 +33,11 @@ message ActionAuthorization {
   string relation = 2;
 }
 
-message AccessRelation {
+message AccessActionRelation {
   ActionAuthorization view = 1;
   ActionAuthorization edit = 2;
-  ActionAuthorization own = 3;
+  ActionAuthorization share = 3;
+  ActionAuthorization delete = 4;
 }
 
 message Access {
@@ -41,13 +48,17 @@ message Access {
   AccessType type = 5;
   string uri = 6;
   EncryptionInfo encryption = 7;
-  AccessRelation operation_relation_override = 8;
-  bool restricted = 9;
-  bool Folder = 10;
-  int64 expire_time = 11;
-  string encoded_info = 12;
+  AccessActionRelation action_acl_relation = 8;
+  bool Folder = 9;
+  int64 expire_time = 10;
+  string encoded_info = 11;
 }
 
+message AccessInfo {
+  string access_id = 1;
+  int64 free_space = 2;
+  int64 total_space = 3;
+}
 
 // Access service
 service AccessManager {

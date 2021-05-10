@@ -36,6 +36,10 @@ func App(ctx context.Context) *pb.ClientApp {
 	return o.(*pb.ClientApp)
 }
 
+func IsContextFromAuthorizedApp(ctx context.Context) bool {
+	return ctx.Value(ctxApp{}) != nil
+}
+
 func JWT(ctx context.Context) *ome.JWT {
 	o := ctx.Value(ctxJWt{})
 	if o == nil {
