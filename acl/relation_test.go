@@ -18,11 +18,11 @@ func TestRelationSQLStore_Save(t *testing.T) {
 
 		for _, a := range dataACL {
 			err := tupleStore.Save(ctx, &pb.DBEntry{
-				Sid:        0,
-				Object:     a.Object,
-				Relation:   a.Relation,
-				Subject:    a.Subject,
-				CommitTime: commitTime,
+				Sid:         0,
+				Object:      a.Object,
+				Relation:    a.Relation,
+				Subject:     a.Subject,
+				StateMinAge: commitTime,
 			})
 			So(err, ShouldBeNil)
 		}
@@ -49,10 +49,10 @@ func TestRelationSQLStore_GetSubjectSet(t *testing.T) {
 		initRelationDB()
 		ctx := context.Background()
 
-		set, err := tupleStore.GetSubjectSet(ctx, &pb.DBSubjectSetInfo{
-			Object:   "doc:d11",
-			Relation: "parent",
-			MinAge:   0,
+		set, err := tupleStore.GetSubjects(ctx, &pb.DBSubjectSetInfo{
+			Object:      "doc:d11",
+			Relation:    "parent",
+			StateMinAge: 0,
 		})
 		So(err, ShouldBeNil)
 		So(set, ShouldHaveLength, 2)
@@ -66,10 +66,10 @@ func TestRelationSQLStore_Delete(t *testing.T) {
 		ctx := context.Background()
 		for _, a := range dataACL {
 			err := tupleStore.Delete(ctx, &pb.DBEntry{
-				Object:     a.Object,
-				Relation:   a.Relation,
-				Subject:    a.Subject,
-				CommitTime: 0,
+				Object:      a.Object,
+				Relation:    a.Relation,
+				Subject:     a.Subject,
+				StateMinAge: 0,
 			})
 			So(err, ShouldBeNil)
 		}
