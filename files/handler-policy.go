@@ -23,7 +23,7 @@ func (h *PolicyHandler) isAdmin(ctx context.Context) bool {
 	return user.Name == "admin"
 }
 
-func (h *PolicyHandler) checkACL(ctx context.Context, action *pb.ActionAuthorization, fileID string) error {
+func (h *PolicyHandler) checkACL(ctx context.Context, action *pb.ActionAuthorization, objectID string) error {
 	user := auth.Get(ctx)
 	if user != nil && user.Name == "admin" {
 		return nil
@@ -33,12 +33,16 @@ func (h *PolicyHandler) checkACL(ctx context.Context, action *pb.ActionAuthoriza
 		return nil
 	}
 
+	if action.Object != "" {
+		objectID = action.Object
+	}
+
 	if user == nil {
 		return errors.Forbidden("resource allowed only to authenticated users")
 	}
 
 	allowed, err := acl.CheckACL(ctx, user.Name, &pb.SubjectSet{
-		Object:   fileID,
+		Object:   objectID,
 		Relation: action.Relation,
 	}, acl.CheckACLOptions{})
 	if err != nil {
@@ -381,7 +385,7 @@ func (h *PolicyHandler) OpenMultipartSession(ctx context.Context, accessID strin
 	return h.next.OpenMultipartSession(ctx, accessID, filename, info)
 }
 
-func (h *PolicyHandler) WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo) (int64, error) {
+func (h *PolicyHandler) WriteFilePart(_ context.Context, _ string, _ io.Reader, _ int64, _ ContentPartInfo) (int64, error) {
 	panic("implement me")
 }
 

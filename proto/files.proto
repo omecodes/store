@@ -31,6 +31,7 @@ message EncryptionInfo {
 message ActionAuthorization {
   bool restricted = 1;
   string relation = 2;
+  string object = 3;
 }
 
 message AccessActionRelation {
