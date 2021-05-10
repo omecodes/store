@@ -8,15 +8,6 @@ import (
 	"strings"
 )
 
-/*
-	ACL relation tuple grammar
-
-  ⟨tuple⟩ ::= ⟨object⟩‘#’⟨relation⟩‘@’⟨user⟩
- ⟨object⟩ ::= ⟨namespace⟩‘:’⟨object id⟩
-   ⟨user⟩ ::= ⟨user id⟩ | ⟨userset⟩
-⟨userset⟩ ::= ⟨object⟩‘#’⟨relation⟩
-*/
-
 type Manager interface {
 	SaveACL(ctx context.Context, relation *pb.ACL) error
 	DeleteACL(ctx context.Context, relation *pb.ACL) error
@@ -30,9 +21,9 @@ type Manager interface {
 	GetObjectsNames(ctx context.Context, set *pb.ObjectSet) ([]string, error)
 }
 
-type defaultManager struct{}
+type DefaultManager struct{}
 
-func (d *defaultManager) SaveACL(ctx context.Context, a *pb.ACL) error {
+func (d *DefaultManager) SaveACL(ctx context.Context, a *pb.ACL) error {
 	store := getTupleStore(ctx)
 	if store == nil {
 		return errors.Internal("could not find relation tuple store in context")
@@ -46,7 +37,7 @@ func (d *defaultManager) SaveACL(ctx context.Context, a *pb.ACL) error {
 	})
 }
 
-func (d *defaultManager) DeleteACL(ctx context.Context, a *pb.ACL) error {
+func (d *DefaultManager) DeleteACL(ctx context.Context, a *pb.ACL) error {
 	store := getTupleStore(ctx)
 	if store == nil {
 		return errors.Internal("could not find relation tuple store in context")
@@ -59,7 +50,7 @@ func (d *defaultManager) DeleteACL(ctx context.Context, a *pb.ACL) error {
 	})
 }
 
-func (d *defaultManager) CheckACL(ctx context.Context, username string, subjectSet *pb.SubjectSet) (bool, error) {
+func (d *DefaultManager) CheckACL(ctx context.Context, username string, subjectSet *pb.SubjectSet) (bool, error) {
 	checker := &Checker{
 		Subject:    username,
 		SubjectSet: subjectSet,
@@ -67,7 +58,7 @@ func (d *defaultManager) CheckACL(ctx context.Context, username string, subjectS
 	return checker.Check(ctx)
 }
 
-func (d *defaultManager) SaveNamespaceConfig(ctx context.Context, config *pb.NamespaceConfig) error {
+func (d *DefaultManager) SaveNamespaceConfig(ctx context.Context, config *pb.NamespaceConfig) error {
 	store := getNamespaceConfigStore(ctx)
 	if store == nil {
 		return errors.Internal("could not find namespace configs tuples store in context")
@@ -75,7 +66,7 @@ func (d *defaultManager) SaveNamespaceConfig(ctx context.Context, config *pb.Nam
 	return store.SaveNamespace(config)
 }
 
-func (d *defaultManager) GetNamespaceConfig(ctx context.Context, name string) (*pb.NamespaceConfig, error) {
+func (d *DefaultManager) GetNamespaceConfig(ctx context.Context, name string) (*pb.NamespaceConfig, error) {
 	store := getNamespaceConfigStore(ctx)
 	if store == nil {
 		return nil, errors.Internal("could not find namespace configs tuple store in context")
@@ -83,7 +74,7 @@ func (d *defaultManager) GetNamespaceConfig(ctx context.Context, name string) (*
 	return store.GetNamespace(name)
 }
 
-func (d *defaultManager) DeleteNamespaceConfig(ctx context.Context, name string) error {
+func (d *DefaultManager) DeleteNamespaceConfig(ctx context.Context, name string) error {
 	store := getNamespaceConfigStore(ctx)
 	if store == nil {
 		return errors.Internal("could not find namespace configs tuple store in context")
@@ -91,10 +82,10 @@ func (d *defaultManager) DeleteNamespaceConfig(ctx context.Context, name string)
 	return store.DeleteNamespace(name)
 }
 
-func (d *defaultManager) GetSubjectsNames(ctx context.Context, set *pb.SubjectSet) ([]string, error) {
+func (d *DefaultManager) GetSubjectsNames(ctx context.Context, set *pb.SubjectSet) ([]string, error) {
 	nsConfigStore := getNamespaceConfigStore(ctx)
 	if nsConfigStore == nil {
-		return nil, errors.Internal("acl.defaultManager: missing namespace config in context")
+		return nil, errors.Internal("acl.DefaultManager: missing namespace config in context")
 	}
 
 	store := getTupleStore(ctx)
@@ -194,7 +185,7 @@ func (d *defaultManager) GetSubjectsNames(ctx context.Context, set *pb.SubjectSe
 	return subjectsSet, nil
 }
 
-func (d *defaultManager) GetObjectsNames(ctx context.Context, set *pb.ObjectSet) ([]string, error) {
+func (d *DefaultManager) GetObjectsNames(ctx context.Context, set *pb.ObjectSet) ([]string, error) {
 	store := getTupleStore(ctx)
 	if store == nil {
 		return nil, errors.Internal("resolve user-set: missing relation tuple store in context")
