@@ -5,9 +5,10 @@ import (
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/omecodes/bome"
+	"github.com/omecodes/store/acl"
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/common/utime"
-	se "github.com/omecodes/store/search-engine"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"github.com/omecodes/store/settings"
 	. "github.com/smartystreets/goconvey/convey"
 	"io"
@@ -16,126 +17,54 @@ import (
 )
 
 var (
-	db       DB
-	settingsManager settings.Manager
-	acl      ACLManager
+	db DB
+	sm settings.Manager
+	//am acl.Manager
 
-	juveTeam = &Collection{
+	juveTeam = &pb.Collection{
 		Id:          "juventus",
 		Label:       "Team of Juventus",
 		Description: "List of Juventus FC players",
 		NumberIndex: nil,
 		TextIndexes: nil,
 		FieldsIndex: nil,
-		DefaultAccessSecurityRules: &PathAccessRules{
-			AccessRules: map[string]*AccessRules{
+		DefaultAccessSecurityRules: &pb.PathAccessRules{
+			AccessRules: map[string]*pb.AccessRules{
 				"$": {
 					Label:       "Default",
 					Description: "Only owner can edit and delete, everybody can read. Admin can do everything",
-					Read: []*auth.Permission{
-						{
-							Name:        "public",
-							Label:       "Readable",
-							Description: "Readable by everybody",
-							Rule:        "user.name==data.created_by",
-						},
-					},
-					Write: []*auth.Permission{
-						{
-							Name:        "restricted-write",
-							Label:       "Restricted Write",
-							Description: "Only creator can write",
-							Rule:        "user.name==data.created_by",
-						},
-					},
-					Delete: []*auth.Permission{
-						{
-							Name:        "restricted-delete",
-							Label:       "Restricted Delete",
-							Description: "Only creator can delete",
-							Rule:        "user.name==data.created_by",
-						},
-					},
 				},
 			},
 		},
 	}
-	barcaTeam = &Collection{
+	barcaTeam = &pb.Collection{
 		Id:          "barcelona",
 		Label:       "Team of Barcelona",
 		Description: "List of Barcelona FC players",
 		NumberIndex: nil,
 		TextIndexes: nil,
 		FieldsIndex: nil,
-		DefaultAccessSecurityRules: &PathAccessRules{
-			AccessRules: map[string]*AccessRules{
+		DefaultAccessSecurityRules: &pb.PathAccessRules{
+			AccessRules: map[string]*pb.AccessRules{
 				"$": {
 					Label:       "Default",
 					Description: "Only owner can edit and delete, everybody can read. Admin can do everything",
-					Read: []*auth.Permission{
-						{
-							Name:        "public",
-							Label:       "Readable",
-							Description: "Readable by everybody",
-							Rule:        "user.name==data.created_by && app.key!=''",
-						},
-					},
-					Write: []*auth.Permission{
-						{
-							Name:        "restricted-write",
-							Label:       "Restricted Write",
-							Description: "Only creator can write",
-							Rule:        "user.name==data.created_by && app.key!=''",
-						},
-					},
-					Delete: []*auth.Permission{
-						{
-							Name:        "restricted-delete",
-							Label:       "Restricted Delete",
-							Description: "Only creator can delete",
-							Rule:        "user.name==data.created_by && app.key!=''",
-						},
-					},
 				},
 			},
 		},
 	}
-	psgTeam = &Collection{
+	psgTeam = &pb.Collection{
 		Id:          "paris-sg",
 		Label:       "Team of PSG",
 		Description: "List of Paris Saint-Germain players",
 		NumberIndex: nil,
 		TextIndexes: nil,
 		FieldsIndex: nil,
-		DefaultAccessSecurityRules: &PathAccessRules{
-			AccessRules: map[string]*AccessRules{
+		DefaultAccessSecurityRules: &pb.PathAccessRules{
+			AccessRules: map[string]*pb.AccessRules{
 				"$": {
 					Label:       "Default",
 					Description: "Only owner can edit and delete, everybody can read. Admin can do everything",
-					Read: []*auth.Permission{
-						{
-							Name:        "public",
-							Label:       "Readable",
-							Description: "Readable by everybody",
-							Rule:        "user.name==data.created_by && app.key!=''",
-						},
-					},
-					Write: []*auth.Permission{
-						{
-							Name:        "restricted-write",
-							Label:       "Restricted Write",
-							Description: "Only creator can write",
-							Rule:        "user.name==data.created_by && app.key!=''",
-						},
-					},
-					Delete: []*auth.Permission{
-						{
-							Name:        "restricted-delete",
-							Label:       "Restricted Delete",
-							Description: "Only creator can delete",
-							Rule:        "user.name==data.created_by && app.key!=''",
-						},
-					},
 				},
 			},
 		},
@@ -144,28 +73,28 @@ var (
 
 func getContext() context.Context {
 	ctx := context.Background()
-	ctx = ContextWithACLManager(ctx, acl)
+	ctx = acl.ContextWithManager(ctx, &acl.DefaultManager{})
 	ctx = ContextWithStore(ctx, db)
-	ctx = settings.ContextWithManager(ctx, settingsManager)
+	ctx = settings.ContextWithManager(ctx, sm)
 	return ctx
 }
 
 func getContextWithNoSettings() context.Context {
 	ctx := context.Background()
-	ctx = ContextWithACLManager(ctx, acl)
+	ctx = acl.ContextWithManager(ctx, &acl.DefaultManager{})
 	ctx = ContextWithStore(ctx, db)
 	return ctx
 }
 
 func userContext(ctx context.Context, name string) context.Context {
-	return auth.ContextWithUser(ctx, &auth.User{Name: name})
+	return auth.ContextWithUser(ctx, &pb.User{Name: name})
 }
 
 func userContextInRegisteredClient(ctx context.Context, name string) context.Context {
 	// this create a context as if it was created by the authentication interceptor when
 	// receiving a request from a user by the means of a registered app client
-	ctx = auth.ContextWithUser(ctx, &auth.User{Name: name})
-	return auth.ContextWithApp(ctx, &auth.ClientApp{
+	ctx = auth.ContextWithUser(ctx, &pb.User{Name: name})
+	return auth.ContextWithApp(ctx, &pb.ClientApp{
 		Key:    "some-key",
 		Secret: "some-secret",
 	})
@@ -180,21 +109,21 @@ func initDB() {
 		So(err, ShouldBeNil)
 	}
 
-	if settingsManager == nil {
+	if sm == nil {
 		conn, err := sql.Open("sqlite3", ":memory:")
 		So(err, ShouldBeNil)
 
-		settingsManager, err = settings.NewSQLManager(conn, bome.SQLite3, "settings")
+		sm, err = settings.NewSQLManager(conn, bome.SQLite3, "settings")
 		So(err, ShouldBeNil)
 	}
 
-	if acl == nil {
+	/* if am == nil {
 		conn, err := sql.Open("sqlite3", ":memory:")
 		So(err, ShouldBeNil)
 
-		acl, err = NewACLSQLManager(conn, bome.SQLite3, "access_rules")
+		am, err = acl.New(conn, bome.SQLite3, "access_rules")
 		So(err, ShouldBeNil)
-	}
+	} */
 }
 
 func Test_DBInitialization(t *testing.T) {
@@ -210,42 +139,18 @@ func TestHandler_CreateCollection1(t *testing.T) {
 		router := DefaultRouter()
 		handler := router.GetHandler()
 
-		col := &Collection{
+		col := &pb.Collection{
 			Id:          "",
 			Label:       "Objects",
 			Description: "List of random object created for the sake of test",
 			NumberIndex: nil,
 			TextIndexes: nil,
 			FieldsIndex: nil,
-			DefaultAccessSecurityRules: &PathAccessRules{
-				AccessRules: map[string]*AccessRules{
+			DefaultAccessSecurityRules: &pb.PathAccessRules{
+				AccessRules: map[string]*pb.AccessRules{
 					"$": {
 						Label:       "Default",
 						Description: "Only owner can edit and delete, everybody can read. Admin can do everything",
-						Read: []*auth.Permission{
-							{
-								Name:        "public",
-								Label:       "Readable",
-								Description: "Readable by everybody",
-								Rule:        "true",
-							},
-						},
-						Write: []*auth.Permission{
-							{
-								Name:        "restricted-write",
-								Label:       "Restricted Write",
-								Description: "Only creator can write",
-								Rule:        "user.name==data.created_by",
-							},
-						},
-						Delete: []*auth.Permission{
-							{
-								Name:        "restricted-delete",
-								Label:       "Restricted Delete",
-								Description: "Only creator can delete",
-								Rule:        "user.name==data.created_by",
-							},
-						},
 					},
 				},
 			},
@@ -439,8 +344,8 @@ func TestHandler_PutObject1(t *testing.T) {
 		router := DefaultRouter()
 		handler := router.GetHandler()
 		data := `{"name": "user1", "age": 30, "city": "Paris"}`
-		object := &Object{
-			Header: &Header{
+		object := &pb.Object{
+			Header: &pb.Header{
 				Id:        "object1",
 				CreatedBy: "user1",
 				CreatedAt: time.Now().UnixNano(),
@@ -463,12 +368,12 @@ func TestHandler_PutObject2(t *testing.T) {
 		router := DefaultRouter()
 		handler := router.GetHandler()
 		data := `{"name": "user1", "age": 30, "city": "Paris"}`
-		header := &Header{
+		header := &pb.Header{
 			Id:        "object1",
 			CreatedBy: "user1",
 			CreatedAt: time.Now().UnixNano(),
 		}
-		object := &Object{
+		object := &pb.Object{
 			Header: header,
 			Data:   data,
 		}
@@ -500,8 +405,8 @@ func TestHandler_PutObject3(t *testing.T) {
 		router := DefaultRouter()
 		handler := router.GetHandler()
 		data := `{"name": "user1", "age": 30, "city": "Paris"}`
-		object := &Object{
-			Header: &Header{
+		object := &pb.Object{
+			Header: &pb.Header{
 				Id:        "object1",
 				CreatedBy: "user1",
 				CreatedAt: time.Now().UnixNano(),
@@ -511,26 +416,26 @@ func TestHandler_PutObject3(t *testing.T) {
 		}
 
 		// saving current value
-		value, err := settingsManager.Get(settings.DataMaxSizePath)
+		value, err := sm.Get(settings.DataMaxSizePath)
 		So(err, ShouldBeNil)
 
 		user1Context := userContextInRegisteredClient(getContextWithNoSettings(), "user1")
 		object.Header.Id, err = handler.PutObject(user1Context, "objects", object, nil, nil, PutOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settingsManager.Delete(settings.DataMaxSizePath)
+		err = sm.Delete(settings.DataMaxSizePath)
 		So(err, ShouldBeNil)
 		user1Context = userContext(getContext(), "user1")
 		object.Header.Id, err = handler.PutObject(user1Context, "objects", object, nil, nil, PutOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settingsManager.Set(settings.DataMaxSizePath, "no-number")
+		err = sm.Set(settings.DataMaxSizePath, "no-number")
 		So(err, ShouldBeNil)
 
 		object.Header.Id, err = handler.PutObject(user1Context, "objects", object, nil, nil, PutOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settingsManager.Set(settings.DataMaxSizePath, value)
+		err = sm.Set(settings.DataMaxSizePath, value)
 		So(err, ShouldBeNil)
 	})
 }
@@ -542,8 +447,8 @@ func TestHandler_PutObject4(t *testing.T) {
 		router := DefaultRouter()
 		handler := router.GetHandler()
 		data := `{"name": "user1", "age": 30, "city": "Paris"}`
-		object := &Object{
-			Header: &Header{
+		object := &pb.Object{
+			Header: &pb.Header{
 				Id:        "object1",
 				CreatedBy: "user1",
 				CreatedAt: time.Now().UnixNano(),
@@ -553,17 +458,17 @@ func TestHandler_PutObject4(t *testing.T) {
 		}
 
 		// saving current value
-		value, err := settingsManager.Get(settings.DataMaxSizePath)
+		value, err := sm.Get(settings.DataMaxSizePath)
 		So(err, ShouldBeNil)
 
-		err = settingsManager.Set(settings.DataMaxSizePath, "5")
+		err = sm.Set(settings.DataMaxSizePath, "5")
 		So(err, ShouldBeNil)
 
 		user1Context := userContextInRegisteredClient(getContext(), "user1")
 		object.Header.Id, err = handler.PutObject(user1Context, "objects", object, nil, nil, PutOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settingsManager.Set(settings.DataMaxSizePath, value)
+		err = sm.Set(settings.DataMaxSizePath, value)
 		So(err, ShouldBeNil)
 	})
 }
@@ -576,8 +481,8 @@ func TestHandler_PutObject5(t *testing.T) {
 		handler := router.GetHandler()
 
 		data := `{"name": "Cristiano Ronaldo", "age": 35, "city": "Turin"}`
-		object := &Object{
-			Header: &Header{
+		object := &pb.Object{
+			Header: &pb.Header{
 				Id:        "cr7",
 				CreatedAt: time.Now().UnixNano(),
 				Size:      int64(len(data)),
@@ -598,8 +503,8 @@ func TestHandler_PutObject(t *testing.T) {
 		handler := router.GetHandler()
 
 		data := `{"name": "Cristiano Ronaldo", "age": 35, "city": "Turin"}`
-		object := &Object{
-			Header: &Header{
+		object := &pb.Object{
+			Header: &pb.Header{
 				Id:        "cr7",
 				CreatedAt: time.Now().UnixNano(),
 				Size:      int64(len(data)),
@@ -613,8 +518,8 @@ func TestHandler_PutObject(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		data = `{"name": "Lionel Messi", "age": 32, "city": "Barcelona"}`
-		object = &Object{
-			Header: &Header{
+		object = &pb.Object{
+			Header: &pb.Header{
 				Id:        "m10",
 				CreatedAt: time.Now().UnixNano(),
 				Size:      int64(len(data)),
@@ -626,8 +531,8 @@ func TestHandler_PutObject(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		data = `{"name": "Neymar Dos Santos", "age": 29, "city": "Paris"}`
-		object = &Object{
-			Header: &Header{
+		object = &pb.Object{
+			Header: &pb.Header{
 				Id:        "n10",
 				CreatedAt: time.Now().UnixNano(),
 				Size:      int64(len(data)),
@@ -646,7 +551,7 @@ func TestHandler_PatchObject1(t *testing.T) {
 
 		router := DefaultRouter()
 		handler := router.GetHandler()
-		patch := &Patch{
+		patch := &pb.Patch{
 			ObjectId: "some-object-id",
 			At:       "$.city",
 			Data:     "bangkok",
@@ -664,7 +569,7 @@ func TestHandler_PatchObject2(t *testing.T) {
 
 		router := DefaultRouter()
 		handler := router.GetHandler()
-		patch := &Patch{
+		patch := &pb.Patch{
 			ObjectId: "some-object-id",
 			At:       "$.city",
 			Data:     "bangkok",
@@ -701,33 +606,33 @@ func TestHandler_PatchObject3(t *testing.T) {
 
 		router := DefaultRouter()
 		handler := router.GetHandler()
-		patch := &Patch{
+		patch := &pb.Patch{
 			ObjectId: "some-object-id",
 			At:       "$.city",
 			Data:     "bangkok",
 		}
 
 		// saving current value
-		value, err := settingsManager.Get(settings.DataMaxSizePath)
+		value, err := sm.Get(settings.DataMaxSizePath)
 		So(err, ShouldBeNil)
 
 		user1Context := userContextInRegisteredClient(getContextWithNoSettings(), "user1")
 		err = handler.PatchObject(user1Context, "objects", patch, PatchOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settingsManager.Delete(settings.DataMaxSizePath)
+		err = sm.Delete(settings.DataMaxSizePath)
 		So(err, ShouldBeNil)
 		user1Context = userContext(getContext(), "user1")
 		err = handler.PatchObject(user1Context, "objects", patch, PatchOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settingsManager.Set(settings.DataMaxSizePath, "no-number")
+		err = sm.Set(settings.DataMaxSizePath, "no-number")
 		So(err, ShouldBeNil)
 
 		err = handler.PatchObject(user1Context, "objects", patch, PatchOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settingsManager.Set(settings.DataMaxSizePath, value)
+		err = sm.Set(settings.DataMaxSizePath, value)
 		So(err, ShouldBeNil)
 	})
 }
@@ -738,24 +643,24 @@ func TestHandler_PatchObject4(t *testing.T) {
 
 		router := DefaultRouter()
 		handler := router.GetHandler()
-		patch := &Patch{
+		patch := &pb.Patch{
 			ObjectId: "some-object-id",
 			At:       "$.city",
 			Data:     "return to sender! return to sender",
 		}
 
 		// saving current value
-		value, err := settingsManager.Get(settings.DataMaxSizePath)
+		value, err := sm.Get(settings.DataMaxSizePath)
 		So(err, ShouldBeNil)
 
-		err = settingsManager.Set(settings.DataMaxSizePath, "5")
+		err = sm.Set(settings.DataMaxSizePath, "5")
 		So(err, ShouldBeNil)
 
 		user1Context := userContextInRegisteredClient(getContext(), "user1")
 		err = handler.PatchObject(user1Context, "objects", patch, PatchOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settingsManager.Set(settings.DataMaxSizePath, value)
+		err = sm.Set(settings.DataMaxSizePath, value)
 		So(err, ShouldBeNil)
 	})
 }
@@ -766,7 +671,7 @@ func TestHandler_PatchObject(t *testing.T) {
 
 		router := DefaultRouter()
 		handler := router.GetHandler()
-		patch := &Patch{
+		patch := &pb.Patch{
 			ObjectId: "n10",
 			At:       "$.age",
 			Data:     "30",
@@ -921,22 +826,22 @@ func TestHandler_ListObjects3(t *testing.T) {
 		handler := router.GetHandler()
 
 		// saving current value
-		value, err := settingsManager.Get(settings.ObjectListMaxCount)
+		value, err := sm.Get(settings.ObjectListMaxCount)
 		So(err, ShouldBeNil)
 
-		err = settingsManager.Delete(settings.ObjectListMaxCount)
-		So(err, ShouldBeNil)
-
-		_, err = handler.ListObjects(getContext(), "juventus", ListOptions{})
-		So(err, ShouldNotBeNil)
-
-		err = settingsManager.Set(settings.ObjectListMaxCount, "no-number")
+		err = sm.Delete(settings.ObjectListMaxCount)
 		So(err, ShouldBeNil)
 
 		_, err = handler.ListObjects(getContext(), "juventus", ListOptions{})
 		So(err, ShouldNotBeNil)
 
-		err = settingsManager.Set(settings.ObjectListMaxCount, value)
+		err = sm.Set(settings.ObjectListMaxCount, "no-number")
+		So(err, ShouldBeNil)
+
+		_, err = handler.ListObjects(getContext(), "juventus", ListOptions{})
+		So(err, ShouldNotBeNil)
+
+		err = sm.Set(settings.ObjectListMaxCount, value)
 		So(err, ShouldBeNil)
 	})
 }
@@ -999,7 +904,7 @@ func TestHandler_SearchObjects(t *testing.T) {
 		router := DefaultRouter()
 		handler := router.GetHandler()
 
-		_, err := handler.SearchObjects(getContext(), "", &se.SearchQuery{})
+		_, err := handler.SearchObjects(getContext(), "", &pb.SearchQuery{})
 		So(err, ShouldNotBeNil)
 
 		_, err = handler.SearchObjects(getContext(), "some-collection-id", nil)

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"os"
 	"path/filepath"
 	"testing"
@@ -16,7 +17,7 @@ import (
 var (
 	workingDir    string
 	sourceManager AccessManager
-	mainSource    *Source
+	mainSource    *pb.Access
 )
 
 func initDB() {
@@ -62,12 +63,12 @@ func getContextWithoutSourceManager() context.Context {
 
 func getContextWithUser(user string) context.Context {
 	ctx := getContext()
-	ctx = auth.ContextWithUser(ctx, &auth.User{Name: user})
+	ctx = auth.ContextWithUser(ctx, &pb.User{Name: user})
 	return ctx
 }
 
-func contextWithApp(parent context.Context, name string, clientType auth.ClientType) context.Context {
-	return auth.ContextWithApp(parent, &auth.ClientApp{
+func contextWithApp(parent context.Context, name string, clientType pb.ClientType) context.Context {
+	return auth.ContextWithApp(parent, &pb.ClientApp{
 		Key:    name,
 		Secret: "",
 		Type:   clientType,
@@ -79,7 +80,7 @@ func adminContext() context.Context {
 }
 
 func getContextWithUserFromClientAndNoSourceManager(user string) context.Context {
-	return auth.ContextWithUser(getContextWithoutSourceManager(), &auth.User{Name: user})
+	return auth.ContextWithUser(getContextWithoutSourceManager(), &pb.User{Name: user})
 }
 
 func Test_initializeDatabase(t *testing.T) {
@@ -101,7 +102,7 @@ func TestHandler_CreateSource2(t *testing.T) {
 	Convey("SOURCE - CREATE: cannot create source if one the following parameters is not provided: type, uri", t, func() {
 		initDB()
 
-		source := &Source{
+		source := &pb.Access{
 			Id:          "source",
 			Label:       "Source de tests",
 			Description: "Source de tests",
@@ -119,12 +120,12 @@ func TestHandler_CreateSource3(t *testing.T) {
 		initDB()
 		initDir()
 
-		mainSource = &Source{
+		mainSource = &pb.Access{
 			Id:          "main",
 			Label:       "Root source",
 			Description: "Root source",
 			CreatedBy:   "admin",
-			Type:        SourceType_Default,
+			Type:        pb.AccessType_Default,
 			Uri:         "files://" + workingDir,
 			ExpireTime:  -1,
 		}
@@ -138,11 +139,11 @@ func TestHandler_CreateSource4(t *testing.T) {
 		initDB()
 		initDir()
 
-		mainSource = &Source{
+		mainSource = &pb.Access{
 			Id:          "main",
 			Label:       "Root source",
 			Description: "Root source",
-			Type:        SourceType_Default,
+			Type:        pb.AccessType_Default,
 			Uri:         "files://" + workingDir,
 			ExpireTime:  -1,
 		}
@@ -157,43 +158,13 @@ func TestHandler_CreateSource5(t *testing.T) {
 		initDB()
 		initDir()
 
-		mainSource = &Source{
+		mainSource = &pb.Access{
 			Id:          "main",
 			Label:       "Root source",
 			Description: "Root source",
-			Type:        SourceType_Default,
+			Type:        pb.AccessType_Default,
 			Uri:         SchemeFS + "://" + workingDir,
 			ExpireTime:  -1,
-			PermissionOverrides: &Permissions{
-				Filename: "/admin",
-				Read: []*auth.Permission{
-					{
-						Name:        "admin-can-read",
-						Label:       "Admin can read",
-						Description: "Admin has permission to read all file in this source",
-						Rule:        "user.name=='admin'",
-						TargetUsers: []string{"admin"},
-					},
-				},
-				Write: []*auth.Permission{
-					{
-						Name:        "admin-write-perm",
-						Label:       "Admin write permission",
-						Description: "Admin has permission to read all file in this source",
-						Rule:        "user.name=='admin'",
-						TargetUsers: []string{"admin"},
-					},
-				},
-				Chmod: []*auth.Permission{
-					{
-						Name:        "admin-chmod-perm",
-						Label:       "admin chmod permission",
-						Description: "admin has permission to chmod all file in this source",
-						Rule:        "user.name=='admin'",
-						TargetUsers: []string{"admin"},
-					},
-				},
-			},
 		}
 		userContext := getContextWithUser("admin")
 		err := CreateSource(userContext, mainSource)
@@ -206,11 +177,11 @@ func TestHandler_CreateSource6(t *testing.T) {
 		initDB()
 		initDir()
 
-		mainSource = &Source{
+		mainSource = &pb.Access{
 			Id:          "main",
 			Label:       "Root source",
 			Description: "Root source",
-			Type:        SourceType_Default,
+			Type:        pb.AccessType_Default,
 			Uri:         "files://" + workingDir,
 			ExpireTime:  -1,
 		}
@@ -325,44 +296,14 @@ func TestHandler_CreateSource7(t *testing.T) {
 		initDB()
 		initDir()
 
-		user1Source := &Source{
+		user1Source := &pb.Access{
 			Id:          "user1-source",
 			Label:       "User1 Files",
 			Description: "",
 			CreatedBy:   "admin",
-			Type:        SourceType_Reference,
+			Type:        pb.AccessType_Default,
 			Uri:         SchemeSource + "://main/user1",
-			PermissionOverrides: &Permissions{
-				Filename: "/user1",
-				Read: []*auth.Permission{
-					{
-						Name:        "user1-can-read",
-						Label:       "User1 can read",
-						Description: "User1 has permission to read all file in this source",
-						Rule:        "user.name=='user1'",
-						TargetUsers: []string{"user1"},
-					},
-				},
-				Write: []*auth.Permission{
-					{
-						Name:        "user1-write-perm",
-						Label:       "User1 write permission",
-						Description: "User1 has permission to read all file in this source",
-						Rule:        "user.name=='user1'",
-						TargetUsers: []string{"user1"},
-					},
-				},
-				Chmod: []*auth.Permission{
-					{
-						Name:        "user1-chmod-perm",
-						Label:       "User1 chmod permission",
-						Description: "User1 has permission to chmod all file in this source",
-						Rule:        "user.name=='user1'",
-						TargetUsers: []string{"user1"},
-					},
-				},
-			},
-			ExpireTime: -1,
+			ExpireTime:  -1,
 		}
 
 		err := CreateSource(adminContext(), user1Source)
@@ -423,44 +364,14 @@ func TestHandler_CreateSource8(t *testing.T) {
 		initDB()
 		initDir()
 
-		user1Source := &Source{
+		user1Source := &pb.Access{
 			Id:          "user2-source",
 			Label:       "User2 Files",
 			Description: "",
 			CreatedBy:   "user1",
-			Type:        SourceType_Reference,
+			Type:        pb.AccessType_Default,
 			Uri:         SchemeSource + "://user1-source/Documents/photo",
-			PermissionOverrides: &Permissions{
-				Filename: "/Documents/photo",
-				Read: []*auth.Permission{
-					{
-						Name:        "user2-can-read",
-						Label:       "User2 can read",
-						Description: "User2 has permission to read all file in this source",
-						Rule:        "user.name=='user2'",
-						TargetUsers: []string{"user2"},
-					},
-				},
-				Write: []*auth.Permission{
-					{
-						Name:        "user2-write-perm",
-						Label:       "User2 write permission",
-						Description: "User2 has permission to read all file in this source",
-						Rule:        "user.name=='user2'",
-						TargetUsers: []string{"user2"},
-					},
-				},
-				Chmod: []*auth.Permission{
-					{
-						Name:        "user2-chmod-perm",
-						Label:       "User2 chmod permission",
-						Description: "User2 cannot chmod files in this source",
-						Rule:        "false",
-						TargetUsers: []string{"public"},
-					},
-				},
-			},
-			ExpireTime: -1,
+			ExpireTime:  -1,
 		}
 
 		err := CreateSource(adminContext(), user1Source)

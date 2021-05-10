@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/omecodes/libome/crypt"
-	"github.com/omecodes/store/auth"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 	"os"
 
@@ -62,7 +62,7 @@ var saveAccessCMD = &cobra.Command{
 
 		decoder := json.NewDecoder(file)
 		for {
-			var access *auth.ClientApp
+			var access *pb.ClientApp
 			err = decoder.Decode(&access)
 			if err == io.EOF {
 				return

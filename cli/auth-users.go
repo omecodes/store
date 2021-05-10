@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/omecodes/libome/logs"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 	"os"
 
 	"github.com/spf13/cobra"
 
 	"github.com/omecodes/libome/crypt"
-	"github.com/omecodes/store/auth"
 )
 
 func init() {
@@ -50,7 +50,7 @@ var saveCredentials = &cobra.Command{
 		cl := newClient()
 		decoder := json.NewDecoder(file)
 		for {
-			var userCredentials *auth.UserCredentials
+			var userCredentials *pb.UserCredentials
 			err = decoder.Decode(&userCredentials)
 			if err == io.EOF {
 				return

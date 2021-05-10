@@ -3,7 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/omecodes/store/files"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"github.com/spf13/cobra"
 	"io"
 	"os"
@@ -71,13 +71,13 @@ var createFileSourceCMD = &cobra.Command{
 		cl := newClient()
 		decoder := json.NewDecoder(file)
 		for {
-			var source *files.Source
-			err = decoder.Decode(&source)
+			var access *pb.Access
+			err = decoder.Decode(&access)
 			if err == io.EOF {
 				return
 			}
 
-			err = cl.CreateFileSource(source)
+			err = cl.CreateFileAccess(access)
 			if err != nil {
 				fmt.Println(err)
 			}

@@ -10,8 +10,8 @@ import (
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/common"
 	"github.com/omecodes/store/files"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"github.com/omecodes/store/objects"
-	se "github.com/omecodes/store/search-engine"
 	"io"
 	"net/http"
 	"net/url"
@@ -79,7 +79,7 @@ func (c *Client) request(method string, endpoint string, headers http.Header, bo
 	return c.httpClient.Do(req)
 }
 
-func (c *Client) CreateObjectsCollection(collection *objects.Collection) error {
+func (c *Client) CreateObjectsCollection(collection *pb.Collection) error {
 	endpoint := fmt.Sprintf(c.fullAPILocation() + common.ApiCreateCollectionRoute)
 
 	encoded, err := json.Marshal(collection)
@@ -99,7 +99,7 @@ func (c *Client) CreateObjectsCollection(collection *objects.Collection) error {
 	return common.ErrorFromHttpResponse(rsp)
 }
 
-func (c *Client) ListCollections() ([]*objects.Collection, error) {
+func (c *Client) ListCollections() ([]*pb.Collection, error) {
 	endpoint := fmt.Sprintf(c.fullAPILocation() + common.ApiListCollectionRoute)
 
 	rsp, err := c.request(http.MethodGet, endpoint, nil, nil)
@@ -115,12 +115,12 @@ func (c *Client) ListCollections() ([]*objects.Collection, error) {
 		return nil, err
 	}
 
-	var collections []*objects.Collection
+	var collections []*pb.Collection
 	err = json.NewDecoder(rsp.Body).Decode(&collections)
 	return collections, err
 }
 
-func (c *Client) GetCollection(collectionId string) (*objects.Collection, error) {
+func (c *Client) GetCollection(collectionId string) (*pb.Collection, error) {
 	endpoint := c.fullAPILocation() + common.ApiGetCollectionRoute
 	endpoint = strings.Replace(endpoint, common.ApiRouteVarId, collectionId, 1)
 
@@ -137,7 +137,7 @@ func (c *Client) GetCollection(collectionId string) (*objects.Collection, error)
 		return nil, err
 	}
 
-	col := new(objects.Collection)
+	col := new(pb.Collection)
 	return col, jsonpb.Unmarshal(rsp.Body, col)
 }
 
@@ -156,13 +156,13 @@ func (c *Client) DeleteCollection(collectionId string) error {
 	return common.ErrorFromHttpResponse(rsp)
 }
 
-func (c *Client) PutObject(collectionId string, object *objects.Object, accessRules *objects.PathAccessRules, indexes ...*se.TextIndex) error {
+func (c *Client) PutObject(collectionId string, object *pb.Object, accessRules *pb.PathAccessRules, indexes ...*pb.TextIndex) error {
 	endpoint := c.fullAPILocation() + common.ApiPutObjectRoute
 	endpoint = strings.Replace(endpoint, common.ApiRouteVarCollection, collectionId, 1)
 
 	buff := bytes.NewBuffer(nil)
 	encoder := jsonpb.Marshaler{EnumsAsInts: true}
-	err := encoder.Marshal(buff, &objects.PutObjectRequest{
+	err := encoder.Marshal(buff, &pb.PutObjectRequest{
 		Collection:          collectionId,
 		Object:              object,
 		Indexes:             indexes,
@@ -184,7 +184,7 @@ func (c *Client) PutObject(collectionId string, object *objects.Object, accessRu
 	return common.ErrorFromHttpResponse(rsp)
 }
 
-func (c *Client) GetObject(collectionId string, objectId string, opts objects.GetOptions) (*objects.Object, error) {
+func (c *Client) GetObject(collectionId string, objectId string, opts objects.GetOptions) (*pb.Object, error) {
 	endpoint := c.fullAPILocation() + common.ApiGetObjectRoute
 	endpoint = strings.Replace(endpoint, common.ApiRouteVarCollection, collectionId, 1)
 	endpoint = strings.Replace(endpoint, common.ApiRouteVarId, objectId, 1)
@@ -209,13 +209,13 @@ func (c *Client) GetObject(collectionId string, objectId string, opts objects.Ge
 		return nil, err
 	}
 
-	object := new(objects.Object)
+	object := new(pb.Object)
 
 	err = jsonpb.Unmarshal(rsp.Body, object)
 	return object, err
 }
 
-func (c *Client) PatchObject(collectionId string, objectId string, patch *objects.Patch) error {
+func (c *Client) PatchObject(collectionId string, objectId string, patch *pb.Patch) error {
 	endpoint := c.fullAPILocation() + common.ApiPatchObjectRoute
 	endpoint = strings.Replace(endpoint, common.ApiRouteVarCollection, collectionId, 1)
 	endpoint = strings.Replace(endpoint, common.ApiRouteVarId, objectId, 1)
@@ -239,14 +239,14 @@ func (c *Client) PatchObject(collectionId string, objectId string, patch *object
 	return common.ErrorFromHttpResponse(rsp)
 }
 
-func (c *Client) MoveObject(collectionId string, objectId string, tartCollectionId string, accessRules *objects.PathAccessRules) error {
+func (c *Client) MoveObject(collectionId string, objectId string, tartCollectionId string, accessRules *pb.PathAccessRules) error {
 	endpoint := c.fullAPILocation() + common.ApiMoveObjectRoute
 	endpoint = strings.Replace(endpoint, common.ApiRouteVarCollection, collectionId, 1)
 	endpoint = strings.Replace(endpoint, common.ApiRouteVarId, objectId, 1)
 
 	buff := bytes.NewBuffer(nil)
 	encoder := jsonpb.Marshaler{EnumsAsInts: true}
-	err := encoder.Marshal(buff, &objects.MoveObjectRequest{
+	err := encoder.Marshal(buff, &pb.MoveObjectRequest{
 		TargetCollection:    tartCollectionId,
 		AccessSecurityRules: accessRules,
 	})
@@ -266,7 +266,7 @@ func (c *Client) MoveObject(collectionId string, objectId string, tartCollection
 	return common.ErrorFromHttpResponse(rsp)
 }
 
-func (c *Client) ListObjects(collectionId string, opts objects.ListOptions) ([]*objects.Object, error) {
+func (c *Client) ListObjects(collectionId string, opts objects.ListOptions) ([]*pb.Object, error) {
 	endpoint := c.fullAPILocation() + common.ApiListObjectsRoute
 	endpoint = strings.Replace(endpoint, common.ApiRouteVarCollection, collectionId, 1)
 	if opts.Offset > 0 || opts.At != "" {
@@ -289,11 +289,11 @@ func (c *Client) ListObjects(collectionId string, opts objects.ListOptions) ([]*
 		return nil, err
 	}
 
-	var list []*objects.Object
+	var list []*pb.Object
 
 	contentType := rsp.Header.Get(common.HttpHeaderContentType)
 	if strings.HasPrefix(contentType, common.ContentTypeJSONStream) {
-		o := new(objects.Object)
+		o := new(pb.Object)
 		for {
 			err = jsonpb.Unmarshal(rsp.Body, o)
 			if err != nil {
@@ -308,7 +308,7 @@ func (c *Client) ListObjects(collectionId string, opts objects.ListOptions) ([]*
 	return list, json.NewDecoder(rsp.Body).Decode(&list)
 }
 
-func (c *Client) SearchObjects(collectionId string, query *se.SearchQuery) ([]*objects.Object, error) {
+func (c *Client) SearchObjects(collectionId string, query *pb.SearchQuery) ([]*pb.Object, error) {
 	endpoint := c.fullAPILocation() + common.ApiSearchObjectsRoute
 	endpoint = strings.Replace(endpoint, common.ApiRouteVarCollection, collectionId, 1)
 
@@ -332,7 +332,7 @@ func (c *Client) SearchObjects(collectionId string, query *se.SearchQuery) ([]*o
 		return nil, err
 	}
 
-	var list []*objects.Object
+	var list []*pb.Object
 	return list, json.NewDecoder(rsp.Body).Decode(&list)
 }
 
@@ -353,7 +353,7 @@ func (c *Client) DeleteObject(collectionId string, objectId string) error {
 	return common.ErrorFromHttpResponse(rsp)
 }
 
-func (c *Client) CreateFileSource(source *files.Source) error {
+func (c *Client) CreateFileAccess(source *pb.Access) error {
 	endpoint := c.fullAPILocation() + common.ApiCreateFileSource
 
 	encoded, err := json.Marshal(source)
@@ -372,7 +372,7 @@ func (c *Client) CreateFileSource(source *files.Source) error {
 	return common.ErrorFromHttpResponse(rsp)
 }
 
-func (c *Client) ListFileSources() ([]*files.Source, error) {
+func (c *Client) ListFileSources() ([]*pb.Access, error) {
 	endpoint := c.fullAPILocation() + common.ApiListFileSources
 
 	rsp, err := c.request(http.MethodGet, endpoint, nil, nil)
@@ -388,11 +388,11 @@ func (c *Client) ListFileSources() ([]*files.Source, error) {
 		return nil, err
 	}
 
-	var sources []*files.Source
+	var sources []*pb.Access
 	return sources, json.NewDecoder(rsp.Body).Decode(&sources)
 }
 
-func (c *Client) GetFileSource(sourceId string) (*files.Source, error) {
+func (c *Client) GetFileSource(sourceId string) (*pb.Access, error) {
 	endpoint := c.fullAPILocation() + common.ApiGetFileSource
 	endpoint = strings.Replace(endpoint, common.ApiRouteVarId, sourceId, 1)
 
@@ -409,7 +409,7 @@ func (c *Client) GetFileSource(sourceId string) (*files.Source, error) {
 		return nil, err
 	}
 
-	source := new(files.Source)
+	source := new(pb.Access)
 	return source, jsonpb.Unmarshal(rsp.Body, source)
 }
 
@@ -429,7 +429,7 @@ func (c *Client) DeleteFilesSource(sourceId string) error {
 	return common.ErrorFromHttpResponse(rsp)
 }
 
-func (c *Client) CreateFile(sourceId string, file *files.File) error {
+func (c *Client) CreateFile(sourceId string, file *pb.File) error {
 	endpoint := c.fullAPILocation() + path.Join(common.ApiFileTreeRoutePrefix, sourceId, file.Name)
 
 	encoded, err := json.Marshal(file)
@@ -474,7 +474,7 @@ func (c *Client) Ls(sourceId string, dirname string, opts files.ListDirOptions) 
 	return dirContent, json.NewDecoder(rsp.Body).Decode(&dirContent)
 }
 
-func (c *Client) GetFile(sourceId string, filename string) (*files.File, error) {
+func (c *Client) GetFile(sourceId string, filename string) (*pb.File, error) {
 	endpoint := c.fullAPILocation() + path.Join(common.ApiFileTreeRoutePrefix, sourceId, filename)
 
 	rsp, err := c.request(http.MethodGet, endpoint, nil, nil)
@@ -490,7 +490,7 @@ func (c *Client) GetFile(sourceId string, filename string) (*files.File, error) 
 		return nil, err
 	}
 
-	file := new(files.File)
+	file := new(pb.File)
 	return file, jsonpb.Unmarshal(rsp.Body, file)
 }
 
@@ -692,7 +692,7 @@ func (c *Client) DeleteAuthProvider(providerId string) error {
 	return common.ErrorFromHttpResponse(rsp)
 }
 
-func (c *Client) CreateUserCredentials(credentials *auth.UserCredentials) error {
+func (c *Client) CreateUserCredentials(credentials *pb.UserCredentials) error {
 	endpoint := c.fullAPILocation() + common.ApiSaveAuthProviderRoute
 
 	encoded, err := json.Marshal(credentials)
@@ -734,7 +734,7 @@ func (c *Client) SearchUsers(pattern string) ([]string, error) {
 	return list, json.NewDecoder(rsp.Body).Decode(&list)
 }
 
-func (c *Client) SaveClientApplicationInfo(clientApp *auth.ClientApp) error {
+func (c *Client) SaveClientApplicationInfo(clientApp *pb.ClientApp) error {
 	endpoint := c.fullAPILocation() + common.ApiSaveClientAppRoute
 
 	encoded, err := json.Marshal(clientApp)
@@ -752,7 +752,7 @@ func (c *Client) SaveClientApplicationInfo(clientApp *auth.ClientApp) error {
 	return common.ErrorFromHttpResponse(rsp)
 }
 
-func (c *Client) GetClientApplicationInfo(appID string) (*auth.ClientApp, error) {
+func (c *Client) GetClientApplicationInfo(appID string) (*pb.ClientApp, error) {
 	endpoint := c.fullAPILocation() + common.ApiListClientAppsRoute
 	endpoint = strings.Replace(endpoint, common.ApiRouteVarId, appID, 1)
 
@@ -769,11 +769,11 @@ func (c *Client) GetClientApplicationInfo(appID string) (*auth.ClientApp, error)
 		return nil, err
 	}
 
-	var clientApp *auth.ClientApp
+	var clientApp *pb.ClientApp
 	return clientApp, json.NewDecoder(rsp.Body).Decode(&clientApp)
 }
 
-func (c *Client) ListClientApplications() ([]*auth.ClientApp, error) {
+func (c *Client) ListClientApplications() ([]*pb.ClientApp, error) {
 	endpoint := c.fullAPILocation() + common.ApiListClientAppsRoute
 
 	rsp, err := c.request(http.MethodGet, endpoint, nil, nil)
@@ -789,7 +789,7 @@ func (c *Client) ListClientApplications() ([]*auth.ClientApp, error) {
 		return nil, err
 	}
 
-	var list []*auth.ClientApp
+	var list []*pb.ClientApp
 	return list, json.NewDecoder(rsp.Body).Decode(&list)
 }
 

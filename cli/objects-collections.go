@@ -3,7 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/omecodes/store/objects"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"github.com/spf13/cobra"
 	"io"
 	"os"
@@ -63,7 +63,7 @@ var createCollectionsCMD = &cobra.Command{
 		cl := newClient()
 		decoder := json.NewDecoder(file)
 		for {
-			var col *objects.Collection
+			var col *pb.Collection
 			err = decoder.Decode(&col)
 			if err == io.EOF {
 				return
