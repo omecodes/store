@@ -15,7 +15,7 @@ type accessManagerServiceClient struct {
 	serviceType uint32
 }
 
-func (s *accessManagerServiceClient) Save(ctx context.Context, source *pb.Access) (string, error) {
+func (s *accessManagerServiceClient) Save(ctx context.Context, source *pb.FSAccess) (string, error) {
 	client, err := NewSourcesServiceClient(ctx, s.serviceType)
 	if err != nil {
 		return "", err
@@ -24,7 +24,7 @@ func (s *accessManagerServiceClient) Save(ctx context.Context, source *pb.Access
 	return "", err
 }
 
-func (s *accessManagerServiceClient) Get(ctx context.Context, id string) (*pb.Access, error) {
+func (s *accessManagerServiceClient) Get(ctx context.Context, id string) (*pb.FSAccess, error) {
 	client, err := NewSourcesServiceClient(ctx, s.serviceType)
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func (s *accessManagerServiceClient) Delete(ctx context.Context, id string) erro
 	return stream.Send(&pb.DeleteAccessRequest{AccessId: id})
 }
 
-func (s *accessManagerServiceClient) UserSources(ctx context.Context, username string) ([]*pb.Access, error) {
+func (s *accessManagerServiceClient) UserSources(ctx context.Context, username string) ([]*pb.FSAccess, error) {
 	client, err := NewSourcesServiceClient(ctx, s.serviceType)
 	if err != nil {
 		return nil, err
@@ -65,8 +65,8 @@ func (s *accessManagerServiceClient) UserSources(ctx context.Context, username s
 		return nil, err
 	}
 
-	var sources []*pb.Access
-	var source *pb.Access
+	var sources []*pb.FSAccess
+	var source *pb.FSAccess
 
 	for {
 		source, err = stream.Recv()

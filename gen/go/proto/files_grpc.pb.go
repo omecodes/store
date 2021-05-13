@@ -66,7 +66,7 @@ func (c *accessManagerClient) GetAccessList(ctx context.Context, in *GetAccessLi
 }
 
 type AccessManager_GetAccessListClient interface {
-	Recv() (*Access, error)
+	Recv() (*FSAccess, error)
 	grpc.ClientStream
 }
 
@@ -74,8 +74,8 @@ type accessManagerGetAccessListClient struct {
 	grpc.ClientStream
 }
 
-func (x *accessManagerGetAccessListClient) Recv() (*Access, error) {
-	m := new(Access)
+func (x *accessManagerGetAccessListClient) Recv() (*FSAccess, error) {
+	m := new(FSAccess)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -214,7 +214,7 @@ func _AccessManager_GetAccessList_Handler(srv interface{}, stream grpc.ServerStr
 }
 
 type AccessManager_GetAccessListServer interface {
-	Send(*Access) error
+	Send(*FSAccess) error
 	grpc.ServerStream
 }
 
@@ -222,7 +222,7 @@ type accessManagerGetAccessListServer struct {
 	grpc.ServerStream
 }
 
-func (x *accessManagerGetAccessListServer) Send(m *Access) error {
+func (x *accessManagerGetAccessListServer) Send(m *FSAccess) error {
 	return x.ServerStream.SendMsg(m)
 }
 

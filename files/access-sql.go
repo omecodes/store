@@ -52,7 +52,7 @@ func (s *accessSQLManager) generateID() (string, error) {
 	return string(idBytes), nil
 }
 
-func (s *accessSQLManager) Save(ctx context.Context, source *pb.Access) (string, error) {
+func (s *accessSQLManager) Save(ctx context.Context, source *pb.FSAccess) (string, error) {
 	var err error
 	if source.Id == "" {
 		source.Id, err = s.generateID()
@@ -120,7 +120,7 @@ func (s *accessSQLManager) Save(ctx context.Context, source *pb.Access) (string,
 	return source.Id, bome.Commit(ctx)
 }
 
-func (s *accessSQLManager) Get(_ context.Context, id string) (*pb.Access, error) {
+func (s *accessSQLManager) Get(_ context.Context, id string) (*pb.FSAccess, error) {
 	hasResolvedVersion, err := s.resolved.Contains(id)
 	if err != nil {
 		return nil, err
@@ -137,7 +137,7 @@ func (s *accessSQLManager) Get(_ context.Context, id string) (*pb.Access, error)
 		return nil, err
 	}
 
-	source := &pb.Access{}
+	source := &pb.FSAccess{}
 	err = jsonpb.UnmarshalString(strEncoded, source)
 	return source, err
 }
@@ -178,7 +178,7 @@ func (s *accessSQLManager) Delete(ctx context.Context, id string) error {
 	return bome.Commit(ctx)
 }
 
-func (s *accessSQLManager) resolveSource(ctx context.Context, access *pb.Access) (*pb.Access, error) {
+func (s *accessSQLManager) resolveSource(ctx context.Context, access *pb.FSAccess) (*pb.FSAccess, error) {
 	/*resolvedSource := source
 	sourceChain := []string{source.Id}
 

@@ -249,7 +249,7 @@ func HTTPHandleDownloadFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func HTTPHandleCreateSource(w http.ResponseWriter, r *http.Request) {
-	var access *pb.Access
+	var access *pb.FSAccess
 	err := json.NewDecoder(r.Body).Decode(&access)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)

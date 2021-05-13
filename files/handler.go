@@ -11,9 +11,9 @@ import (
 )
 
 type Handler interface {
-	CreateAccess(ctx context.Context, source *pb.Access) error
-	GetAccessList(ctx context.Context) ([]*pb.Access, error)
-	GetAccess(ctx context.Context, sourceID string) (*pb.Access, error)
+	CreateAccess(ctx context.Context, source *pb.FSAccess) error
+	GetAccessList(ctx context.Context) ([]*pb.FSAccess, error)
+	GetAccess(ctx context.Context, sourceID string) (*pb.FSAccess, error)
 	DeleteAccess(ctx context.Context, sourceID string) error
 	CreateDir(ctx context.Context, sourceID string, dirname string) error
 	ListDir(ctx context.Context, sourceID string, dirname string, opts ListDirOptions) (*DirContent, error)
@@ -31,19 +31,19 @@ type Handler interface {
 	CloseMultipartSession(ctx context.Context, sessionId string) error
 }
 
-func CreateSource(ctx context.Context, source *pb.Access) error {
+func CreateSource(ctx context.Context, source *pb.FSAccess) error {
 	return GetRouteHandler(ctx).CreateAccess(ctx, source)
 }
 
-func ListSources(ctx context.Context) ([]*pb.Access, error) {
+func ListSources(ctx context.Context) ([]*pb.FSAccess, error) {
 	return GetRouteHandler(ctx).GetAccessList(ctx)
 }
 
-func GetSource(ctx context.Context, sourceID string) (*pb.Access, error) {
+func GetSource(ctx context.Context, sourceID string) (*pb.FSAccess, error) {
 	return GetRouteHandler(ctx).GetAccess(ctx, sourceID)
 }
 
-func ResolveSource(ctx context.Context, source *pb.Access) (*pb.Access, error) {
+func ResolveSource(ctx context.Context, source *pb.FSAccess) (*pb.FSAccess, error) {
 	source, err := GetSource(ctx, source.Id)
 	if err != nil {
 		return nil, err

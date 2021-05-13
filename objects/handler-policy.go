@@ -116,30 +116,30 @@ func (p *PolicyHandler) DeleteCollection(ctx context.Context, id string) error {
 	return p.BaseHandler.DeleteCollection(ctx, id)
 }
 
-func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.TextIndex, opts PutOptions) (string, error) {
+func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object *pb.Object, authorizedUsers *pb.PathAccessRules, indexes []*pb.TextIndex, opts PutOptions) (string, error) {
 	user := auth.Get(ctx)
 	if user == nil {
 		return "", errors.Forbidden("access forbidden")
 	}
 
 	// if no security rules are provided, collection security rules will be used
-	if accessSecurityRules == nil {
+	if authorizedUsers == nil {
 		collectionInfo, err := p.next.GetCollection(ctx, collection)
 		if err != nil {
 			logs.Error("could not get collection", logs.Err(err))
 			return "", err
 		}
-		accessSecurityRules = collectionInfo.DefaultAccessSecurityRules
+		authorizedUsers = collectionInfo.DefaultActionAuthorizedUsers
 	}
-	docRules := accessSecurityRules.AccessRules["$"]
+	docRules := authorizedUsers.AccessRules["$"]
 	if docRules == nil {
-		docRules = &pb.AccessRules{}
-		accessSecurityRules.AccessRules["$"] = docRules
+		docRules = &pb.ObjectActionsUsers{}
+		authorizedUsers.AccessRules["$"] = docRules
 	}
 
 	object.Header.CreatedBy = user.Name
 
-	return p.BaseHandler.PutObject(ctx, collection, object, accessSecurityRules, indexes, opts)
+	return p.BaseHandler.PutObject(ctx, collection, object, authorizedUsers, indexes, opts)
 }
 
 func (p *PolicyHandler) GetObject(ctx context.Context, collection string, id string, opts GetOptions) (*pb.Object, error) {
@@ -158,7 +158,7 @@ func (p *PolicyHandler) PatchObject(ctx context.Context, collection string, patc
 	return p.BaseHandler.PatchObject(ctx, collection, patch, opts)
 }
 
-func (p *PolicyHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *pb.PathAccessRules, opts MoveOptions) error {
+func (p *PolicyHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, authorizedUsers *pb.PathAccessRules, opts MoveOptions) error {
 	err := p.assetActionAllowedOnObject(ctx, collection, objectID, 0, "")
 	if err != nil {
 		return err
@@ -169,15 +169,15 @@ func (p *PolicyHandler) MoveObject(ctx context.Context, collection string, objec
 		return err
 	}
 
-	if accessSecurityRules == nil {
+	if authorizedUsers == nil {
 		collectionInfo, err := p.next.GetCollection(ctx, targetCollection)
 		if err != nil {
 			return err
 		}
-		accessSecurityRules = collectionInfo.DefaultAccessSecurityRules
+		authorizedUsers = collectionInfo.DefaultActionAuthorizedUsers
 	}
 
-	return p.next.MoveObject(ctx, collection, objectID, targetCollection, accessSecurityRules, opts)
+	return p.next.MoveObject(ctx, collection, objectID, targetCollection, authorizedUsers, opts)
 }
 
 func (p *PolicyHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*pb.Header, error) {

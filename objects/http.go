@@ -69,7 +69,7 @@ func HTTPHandlePutObject(w http.ResponseWriter, r *http.Request) {
 	}
 	putRequest.Object.Header.Size = int64(len(putRequest.Object.Data))
 
-	id, err := PutObject(ctx, collection, putRequest.Object, putRequest.AccessSecurityRules, putRequest.Indexes, PutOptions{})
+	id, err := PutObject(ctx, collection, putRequest.Object, putRequest.ActionAuthorizedUsers, putRequest.Indexes, PutOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return

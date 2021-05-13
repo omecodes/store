@@ -23,18 +23,18 @@ func (h *PolicyHandler) isAdmin(ctx context.Context) bool {
 	return user.Name == "admin"
 }
 
-func (h *PolicyHandler) checkACL(ctx context.Context, action *pb.ActionAuthorization, objectID string) error {
+func (h *PolicyHandler) checkACL(ctx context.Context, authorizedUsers *pb.FileActionAuthorizedUsers, objectID string) error {
 	user := auth.Get(ctx)
 	if user != nil && user.Name == "admin" {
 		return nil
 	}
 
-	if !action.Restricted {
+	if !authorizedUsers.Restricted {
 		return nil
 	}
 
-	if action.Object != "" {
-		objectID = action.Object
+	if authorizedUsers.Object != "" {
+		objectID = authorizedUsers.Object
 	}
 
 	if user == nil {
@@ -43,7 +43,7 @@ func (h *PolicyHandler) checkACL(ctx context.Context, action *pb.ActionAuthoriza
 
 	allowed, err := acl.CheckACL(ctx, user.Name, &pb.SubjectSet{
 		Object:   objectID,
-		Relation: action.Relation,
+		Relation: authorizedUsers.Relation,
 	}, acl.CheckACLOptions{})
 	if err != nil {
 		return err
@@ -55,7 +55,7 @@ func (h *PolicyHandler) checkACL(ctx context.Context, action *pb.ActionAuthoriza
 	return nil
 }
 
-func (h *PolicyHandler) CreateAccess(ctx context.Context, access *pb.Access) error {
+func (h *PolicyHandler) CreateAccess(ctx context.Context, access *pb.FSAccess) error {
 	clientApp := auth.App(ctx)
 	if clientApp == nil {
 		return errors.Forbidden("application is not allowed to create accessDB")
@@ -100,7 +100,7 @@ func (h *PolicyHandler) CreateAccess(ctx context.Context, access *pb.Access) err
 	return h.next.CreateAccess(ctx, access)
 }
 
-func (h *PolicyHandler) GetAccessList(ctx context.Context) ([]*pb.Access, error) {
+func (h *PolicyHandler) GetAccessList(ctx context.Context) ([]*pb.FSAccess, error) {
 	if !auth.IsContextFromAuthorizedApp(ctx) {
 		return nil, errors.Forbidden("application is not allowed to list accessDB")
 	}
@@ -120,7 +120,7 @@ func (h *PolicyHandler) GetAccessList(ctx context.Context) ([]*pb.Access, error)
 		return nil, err
 	}
 
-	var accesses []*pb.Access
+	var accesses []*pb.FSAccess
 
 	for _, id := range ids {
 		access, err := h.BaseHandler.GetAccess(ctx, id)
@@ -135,7 +135,7 @@ func (h *PolicyHandler) GetAccessList(ctx context.Context) ([]*pb.Access, error)
 	return accesses, nil
 }
 
-func (h *PolicyHandler) GetAccess(ctx context.Context, accessID string) (*pb.Access, error) {
+func (h *PolicyHandler) GetAccess(ctx context.Context, accessID string) (*pb.FSAccess, error) {
 	if !auth.IsContextFromAuthorizedApp(ctx) {
 		return nil, errors.Forbidden("application is not allowed to list accessDB")
 	}

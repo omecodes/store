@@ -10,15 +10,15 @@ type BaseHandler struct {
 	next Handler
 }
 
-func (h *BaseHandler) CreateAccess(ctx context.Context, source *pb.Access) error {
+func (h *BaseHandler) CreateAccess(ctx context.Context, source *pb.FSAccess) error {
 	return h.next.CreateAccess(ctx, source)
 }
 
-func (h *BaseHandler) GetAccessList(ctx context.Context) ([]*pb.Access, error) {
+func (h *BaseHandler) GetAccessList(ctx context.Context) ([]*pb.FSAccess, error) {
 	return h.next.GetAccessList(ctx)
 }
 
-func (h *BaseHandler) GetAccess(ctx context.Context, sourceID string) (*pb.Access, error) {
+func (h *BaseHandler) GetAccess(ctx context.Context, sourceID string) (*pb.FSAccess, error) {
 	return h.next.GetAccess(ctx, sourceID)
 }
 

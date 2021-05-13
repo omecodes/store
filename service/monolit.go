@@ -213,7 +213,7 @@ func (s *Server) init() error {
 		}
 
 		if source == nil {
-			source = &pb.Access{
+			source = &pb.FSAccess{
 				Id:          "main",
 				Label:       "Default file source",
 				Description: "",

@@ -47,14 +47,14 @@ func (h *gRPCGatewayHandler) DeleteCollection(ctx context.Context, request *pb.D
 
 func (h *gRPCGatewayHandler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (*pb.PutObjectResponse, error) {
 	var err error
-	if request.AccessSecurityRules == nil {
-		request.AccessSecurityRules = &pb.PathAccessRules{}
+	if request.ActionAuthorizedUsers == nil {
+		request.ActionAuthorizedUsers = &pb.PathAccessRules{}
 	}
-	if request.AccessSecurityRules.AccessRules == nil {
-		request.AccessSecurityRules.AccessRules = map[string]*pb.AccessRules{}
+	if request.ActionAuthorizedUsers.AccessRules == nil {
+		request.ActionAuthorizedUsers.AccessRules = map[string]*pb.ObjectActionsUsers{}
 	}
 
-	id, err := PutObject(ctx, "", request.Object, request.AccessSecurityRules, request.Indexes, PutOptions{})
+	id, err := PutObject(ctx, "", request.Object, request.ActionAuthorizedUsers, request.Indexes, PutOptions{})
 	if err != nil {
 		return nil, err
 	}

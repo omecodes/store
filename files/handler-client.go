@@ -17,7 +17,7 @@ type ServiceClientHandler struct {
 	clientType uint32
 }
 
-func (h *ServiceClientHandler) CreateAccess(ctx context.Context, source *pb.Access) error {
+func (h *ServiceClientHandler) CreateAccess(ctx context.Context, source *pb.FSAccess) error {
 	client, err := NewSourcesServiceClient(ctx, h.clientType)
 	if err != nil {
 		return err
@@ -27,7 +27,7 @@ func (h *ServiceClientHandler) CreateAccess(ctx context.Context, source *pb.Acce
 	return err
 }
 
-func (h *ServiceClientHandler) GetAccessList(ctx context.Context) ([]*pb.Access, error) {
+func (h *ServiceClientHandler) GetAccessList(ctx context.Context) ([]*pb.FSAccess, error) {
 	client, err := NewSourcesServiceClient(ctx, h.clientType)
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func (h *ServiceClientHandler) GetAccessList(ctx context.Context) ([]*pb.Access,
 		_ = stream.CloseSend()
 	}()
 
-	var sources []*pb.Access
+	var sources []*pb.FSAccess
 
 	done := false
 	for !done {
@@ -58,7 +58,7 @@ func (h *ServiceClientHandler) GetAccessList(ctx context.Context) ([]*pb.Access,
 	return sources, nil
 }
 
-func (h *ServiceClientHandler) GetAccess(ctx context.Context, accessID string) (*pb.Access, error) {
+func (h *ServiceClientHandler) GetAccess(ctx context.Context, accessID string) (*pb.FSAccess, error) {
 	client, err := NewSourcesServiceClient(ctx, h.clientType)
 	if err != nil {
 		return nil, err

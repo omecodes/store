@@ -28,20 +28,20 @@ message EncryptionInfo {
   int64 max_block_size = 2;
 }
 
-message ActionAuthorization {
+message FileActionAuthorizedUsers {
   bool restricted = 1;
   string relation = 2;
   string object = 3;
 }
 
 message AccessActionRelation {
-  ActionAuthorization view = 1;
-  ActionAuthorization edit = 2;
-  ActionAuthorization share = 3;
-  ActionAuthorization delete = 4;
+  FileActionAuthorizedUsers view = 1;
+  FileActionAuthorizedUsers edit = 2;
+  FileActionAuthorizedUsers share = 3;
+  FileActionAuthorizedUsers delete = 4;
 }
 
-message Access {
+message FSAccess {
   string id = 1;
   string label = 2;
   string description = 3;
@@ -65,14 +65,14 @@ message AccessInfo {
 service AccessManager {
   rpc CreateAccess(CreateAccessRequest) returns (CreateAccessResponse);
   rpc GetAccess(GetAccessRequest) returns (GetAccessResponse);
-  rpc GetAccessList(GetAccessListRequest) returns (stream Access);
+  rpc GetAccessList(GetAccessListRequest) returns (stream FSAccess);
   rpc ResolveAccess(ResolveAccessRequest) returns (ResolveAccessResponse);
   rpc DeleteAccess(stream DeleteAccessRequest) returns (DeleteAccessResponse);
 }
 
 
 message CreateAccessRequest {
-  Access access = 1;
+  FSAccess access = 1;
 }
 message CreateAccessResponse {}
 
@@ -80,7 +80,7 @@ message GetAccessRequest {
   string id = 1;
 }
 message GetAccessResponse {
-  Access access = 1;
+  FSAccess access = 1;
 }
 
 message GetAccessListRequest {
@@ -88,10 +88,10 @@ message GetAccessListRequest {
 }
 
 message ResolveAccessRequest {
-  Access access = 1;
+  FSAccess access = 1;
 }
 message ResolveAccessResponse {
-  Access resolved_access = 2;
+  FSAccess resolved_access = 2;
 }
 
 message DeleteAccessRequest {

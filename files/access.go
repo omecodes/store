@@ -18,8 +18,8 @@ const (
 type ctxAccessManager struct{}
 
 type AccessManager interface {
-	Save(ctx context.Context, access *pb.Access) (string, error)
-	Get(ctx context.Context, accessID string) (*pb.Access, error)
+	Save(ctx context.Context, access *pb.FSAccess) (string, error)
+	Get(ctx context.Context, accessID string) (*pb.FSAccess, error)
 	Delete(ctx context.Context, accessID string) error
 }
 

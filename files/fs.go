@@ -32,7 +32,7 @@ type FS interface {
 type ctxFsProvider struct{}
 
 type FSProvider interface {
-	GetFS(source *pb.Access) (FS, error)
+	GetFS(source *pb.FSAccess) (FS, error)
 }
 
 func getFS(ctx context.Context, sourceID string) (FS, error) {

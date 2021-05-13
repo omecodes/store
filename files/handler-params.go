@@ -11,14 +11,14 @@ type ParamsHandler struct {
 	BaseHandler
 }
 
-func (h *ParamsHandler) CreateAccess(ctx context.Context, source *pb.Access) error {
+func (h *ParamsHandler) CreateAccess(ctx context.Context, source *pb.FSAccess) error {
 	if source == nil || source.Uri == "" {
 		return errors.BadRequest("invalid source value")
 	}
 	return h.next.CreateAccess(ctx, source)
 }
 
-func (h *ParamsHandler) GetAccess(ctx context.Context, sourceID string) (*pb.Access, error) {
+func (h *ParamsHandler) GetAccess(ctx context.Context, sourceID string) (*pb.FSAccess, error) {
 	if sourceID == "" {
 		return nil, errors.BadRequest("source id is required")
 	}

@@ -76,10 +76,10 @@ func (g *gRPCClientHandler) PutObject(ctx context.Context, collection string, ob
 	}
 
 	rsp, err := client.PutObject(newCtx, &pb.PutObjectRequest{
-		Collection:          collection,
-		Object:              object,
-		Indexes:             indexes,
-		AccessSecurityRules: accessSecurityRules,
+		Collection:            collection,
+		Object:                object,
+		Indexes:               indexes,
+		ActionAuthorizedUsers: accessSecurityRules,
 	})
 	if err != nil {
 		return "", err

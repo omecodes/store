@@ -3,6 +3,7 @@ syntax = "proto3";
 option go_package = "github.com/omecodes/store/proto/gen/go;pb";
 
 import "proto/se.proto";
+import "proto/acl.proto";
 
 message Collection {
   string id = 1;
@@ -11,11 +12,17 @@ message Collection {
   NumberIndex number_index = 4;
   repeated TextIndex text_indexes = 5;
   PropertiesIndex fields_index = 6;
-  PathAccessRules default_access_security_rules = 7;
+  PathAccessRules default_action_authorized_users = 7;
+}
+
+message ObjectActionsUsers {
+  SubjectSet view = 1;
+  SubjectSet edit = 2;
+  SubjectSet delete = 3;
 }
 
 message PathAccessRules {
-  map<string, AccessRules> access_rules = 1;
+  map<string, ObjectActionsUsers> access_rules = 1;
 }
 
 message AccessRules {
@@ -94,7 +101,7 @@ message PutObjectRequest {
   string Collection = 1;
   Object object = 2;
   repeated TextIndex indexes = 3;
-  PathAccessRules access_security_rules = 4;
+  PathAccessRules action_authorized_users = 4;
 }
 message PutObjectResponse {
   string object_id = 1;
