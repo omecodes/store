@@ -37,6 +37,19 @@ func (s *accessManagerServiceClient) Get(ctx context.Context, id string) (*pb.FS
 	return rsp.Access, nil
 }
 
+func (s *accessManagerServiceClient) GetResolved(ctx context.Context, id string) (*pb.FSAccess, error) {
+	client, err := NewSourcesServiceClient(ctx, s.serviceType)
+	if err != nil {
+		return nil, err
+	}
+
+	rsp, err := client.GetAccess(ctx, &pb.GetAccessRequest{Id: id, Resolved: true})
+	if err != nil {
+		return nil, err
+	}
+	return rsp.Access, nil
+}
+
 func (s *accessManagerServiceClient) Delete(ctx context.Context, id string) error {
 	client, err := NewSourcesServiceClient(ctx, s.serviceType)
 	if err != nil {
