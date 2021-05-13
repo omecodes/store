@@ -5,14 +5,9 @@ import (
 	pb "github.com/omecodes/store/gen/go/proto"
 )
 
-const activeUserVar = "{user}"
-
 const (
 	SchemeFS     = "files"
 	SchemeSource = "ref"
-	SchemeHTTP   = "http"
-	SchemeHTTPS  = "https"
-	SchemeAWS    = "aws"
 )
 
 type ctxAccessManager struct{}
