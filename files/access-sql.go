@@ -9,6 +9,8 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/omecodes/errors"
 	pb "github.com/omecodes/store/gen/go/proto"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/omecodes/bome"
@@ -20,25 +22,25 @@ func NewAccessSQLManager(db *sql.DB, dialect string, tablePrefix string) (*acces
 		SetConn(db).
 		SetDialect(dialect)
 
-	sources, err := builder.SetTableName(tablePrefix + "_sources").JSONMap()
+	accesses, err := builder.SetTableName(tablePrefix + "_fs_accesses").JSONMap()
 	if err != nil {
 		return nil, err
 	}
 
-	resolved, err := builder.SetTableName(tablePrefix + "_sources_resolved").JSONMap()
+	resolved, err := builder.SetTableName(tablePrefix + "_fs_accesses_resolved").JSONMap()
 	if err != nil {
 		return nil, err
 	}
 
 	return &accessSQLManager{
-		accessDB: sources,
-		resolved: resolved,
+		accessesMap:         accesses,
+		resolvedAccessesMap: resolved,
 	}, err
 }
 
 type accessSQLManager struct {
-	accessDB *bome.JSONMap
-	resolved *bome.JSONMap
+	accessesMap         *bome.JSONMap
+	resolvedAccessesMap *bome.JSONMap
 }
 
 func (s *accessSQLManager) generateID() (string, error) {
@@ -52,54 +54,54 @@ func (s *accessSQLManager) generateID() (string, error) {
 	return string(idBytes), nil
 }
 
-func (s *accessSQLManager) Save(ctx context.Context, source *pb.FSAccess) (string, error) {
+func (s *accessSQLManager) Save(ctx context.Context, access *pb.FSAccess) (string, error) {
 	var err error
-	if source.Id == "" {
-		source.Id, err = s.generateID()
+	if access.Id == "" {
+		access.Id, err = s.generateID()
 		if err != nil {
 			return "", err
 		}
 	}
 
-	encoded, err := json.Marshal(source)
+	encoded, err := json.Marshal(access)
 	if err != nil {
 		return "", err
 	}
 
 	var (
-		sources         *bome.JSONMap
+		accesses        *bome.JSONMap
 		resolved        *bome.JSONMap
 		encodedResolved string
 	)
 
-	if source.Type == pb.AccessType_Default {
-		resolvedSource, err := s.resolveSource(ctx, source)
+	if access.Type == pb.AccessType_Default {
+		resolvedAccess, err := s.resolveFSAccess(ctx, access)
 		if err != nil {
 			return "", err
 		}
 
-		encodedResolved, err = (&jsonpb.Marshaler{}).MarshalToString(resolvedSource)
+		encodedResolved, err = (&jsonpb.Marshaler{}).MarshalToString(resolvedAccess)
 		if err != nil {
 			return "", err
 		}
 	}
 
-	ctx, sources, err = s.accessDB.Transaction(ctx)
+	ctx, accesses, err = s.accessesMap.Transaction(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	err = sources.Upsert(&bome.MapEntry{
-		Key:   source.Id,
+	err = accesses.Upsert(&bome.MapEntry{
+		Key:   access.Id,
 		Value: string(encoded),
 	})
 	if err != nil {
-		_ = sources.Rollback()
+		_ = accesses.Rollback()
 		return "", err
 	}
 
 	if encodedResolved != "" {
-		ctx, resolved, err = s.resolved.Transaction(ctx)
+		ctx, resolved, err = s.resolvedAccessesMap.Transaction(ctx)
 		if err != nil {
 			if rbe := bome.Rollback(ctx); rbe != nil {
 				logs.Error("could not rollback transaction", logs.Err(err))
@@ -108,58 +110,59 @@ func (s *accessSQLManager) Save(ctx context.Context, source *pb.FSAccess) (strin
 		}
 
 		err = resolved.Upsert(&bome.MapEntry{
-			Key:   source.Id,
+			Key:   access.Id,
 			Value: encodedResolved,
 		})
 		if err != nil {
-			_ = sources.Rollback()
+			_ = accesses.Rollback()
 			return "", err
 		}
 	}
 
-	return source.Id, bome.Commit(ctx)
+	return access.Id, bome.Commit(ctx)
 }
 
 func (s *accessSQLManager) Get(_ context.Context, id string) (*pb.FSAccess, error) {
-	hasResolvedVersion, err := s.resolved.Contains(id)
+	strEncoded, err := s.accessesMap.Get(id)
 	if err != nil {
 		return nil, err
 	}
 
-	var strEncoded string
+	access := &pb.FSAccess{}
+	err = jsonpb.UnmarshalString(strEncoded, access)
+	return access, err
+}
 
-	if hasResolvedVersion {
-		strEncoded, err = s.resolved.Get(id)
-	} else {
-		strEncoded, err = s.accessDB.Get(id)
-	}
+func (s *accessSQLManager) GetResolved(_ context.Context, id string) (*pb.FSAccess, error) {
+
+	strEncoded, err := s.resolvedAccessesMap.Get(id)
 	if err != nil {
 		return nil, err
 	}
 
-	source := &pb.FSAccess{}
-	err = jsonpb.UnmarshalString(strEncoded, source)
-	return source, err
+	access := &pb.FSAccess{}
+	err = jsonpb.UnmarshalString(strEncoded, access)
+	return access, err
 }
 
 func (s *accessSQLManager) Delete(ctx context.Context, id string) error {
 	var (
-		sources  *bome.JSONMap
+		accesses *bome.JSONMap
 		resolved *bome.JSONMap
 		err      error
 	)
 
-	ctx, sources, err = s.accessDB.Transaction(ctx)
+	ctx, accesses, err = s.accessesMap.Transaction(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = sources.Delete(id)
+	err = accesses.Delete(id)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 
-	ctx, resolved, err = s.resolved.Transaction(ctx)
+	ctx, resolved, err = s.resolvedAccessesMap.Transaction(ctx)
 	if err != nil {
 		if rbe := bome.Rollback(ctx); rbe != nil {
 			logs.Error("could not rollback transaction", logs.Err(err))
@@ -178,42 +181,52 @@ func (s *accessSQLManager) Delete(ctx context.Context, id string) error {
 	return bome.Commit(ctx)
 }
 
-func (s *accessSQLManager) resolveSource(ctx context.Context, access *pb.FSAccess) (*pb.FSAccess, error) {
-	/*resolvedSource := source
-	sourceChain := []string{source.Id}
+func (s *accessSQLManager) resolveFSAccess(ctx context.Context, access *pb.FSAccess) (*pb.FSAccess, error) {
+	resolvedAccess := access
+	accessIDChain := []string{access.Id}
 
-	permissionOverrides := source.PermissionOverrides
+	actionAuthorizeUsers := access.ActionAclRelation
 
-	for resolvedSource.Type == pb.SourceType_Reference {
-		u, err := url.Parse(source.Uri)
+	for resolvedAccess.Type == pb.AccessType_Reference {
+		u, err := url.Parse(access.Uri)
 		if err != nil {
-			return nil, errors.Internal("could not resolve source uri", errors.Details{Key: "source uri", Value: err})
+			return nil, errors.Internal("could not resolve access uri", errors.Details{Key: "access uri", Value: err})
 		}
 
-		refSourceID := u.Host
-		resolvedSource, err = s.Get(ctx, refSourceID)
+		refAccessID := u.Host
+		resolvedAccess, err = s.Get(ctx, refAccessID)
 		if err != nil {
-			logs.Error("could not load source", logs.Details("source", refSourceID), logs.Err(err))
+			logs.Error("could not load access", logs.Details("access", refAccessID), logs.Err(err))
 			return nil, err
 		}
 
-		if permissionOverrides != nil {
-			resolvedSource.PermissionOverrides = permissionOverrides
-		} else {
-			permissionOverrides = resolvedSource.PermissionOverrides
+		if actionAuthorizeUsers.Edit == nil {
+			actionAuthorizeUsers.Edit = resolvedAccess.ActionAclRelation.Edit
 		}
 
-		for _, src := range sourceChain {
-			if src == refSourceID {
-				return nil, errors.Internal("source cycle references")
+		if actionAuthorizeUsers.Share == nil {
+			actionAuthorizeUsers.Share = resolvedAccess.ActionAclRelation.Share
+		}
+
+		if actionAuthorizeUsers.View == nil {
+			actionAuthorizeUsers.View = resolvedAccess.ActionAclRelation.View
+		}
+
+		if actionAuthorizeUsers.Delete == nil {
+			actionAuthorizeUsers.Delete = resolvedAccess.ActionAclRelation.Delete
+		}
+
+		for _, src := range accessIDChain {
+			if src == refAccessID {
+				return nil, errors.Internal("access cycle referencing")
 			}
 		}
-		sourceChain = append(sourceChain, refSourceID)
-		resolvedSource.Uri = strings.TrimSuffix(resolvedSource.Uri, "/") + u.Path
+		accessIDChain = append(accessIDChain, refAccessID)
+		resolvedAccess.Uri = strings.TrimSuffix(resolvedAccess.Uri, "/") + u.Path
 
-		logs.Info("resolved source", logs.Details("uri", resolvedSource.Uri))
+		logs.Info("resolved access", logs.Details("uri", resolvedAccess.Uri))
 	}
 
-	return resolvedSource, nil */
-	return access, nil
+	resolvedAccess.ActionAclRelation = actionAuthorizeUsers
+	return resolvedAccess, nil
 }
