@@ -20,6 +20,7 @@ type ctxAccessManager struct{}
 type AccessManager interface {
 	Save(ctx context.Context, access *pb.FSAccess) (string, error)
 	Get(ctx context.Context, accessID string) (*pb.FSAccess, error)
+	GetResolved(ctx context.Context, accessID string) (*pb.FSAccess, error)
 	Delete(ctx context.Context, accessID string) error
 }
 
