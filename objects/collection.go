@@ -21,7 +21,7 @@ type CollectionDB interface {
 	List(ctx context.Context, opts ListOptions) (*Cursor, error)
 
 	// Get gets the object associated with objectID
-	Get(ctx context.Context, objectID string, opts GetOptions) (*pb.Object, error)
+	Get(ctx context.Context, objectID string, opts GetObjectOptions) (*pb.Object, error)
 
 	// Info gets header of the object associated with objectID
 	Info(ctx context.Context, objectID string) (*pb.Header, error)

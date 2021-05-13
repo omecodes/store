@@ -43,11 +43,11 @@ func (s *accessManagerServiceClient) GetResolved(ctx context.Context, id string)
 		return nil, err
 	}
 
-	rsp, err := client.GetAccess(ctx, &pb.GetAccessRequest{Id: id, Resolved: true})
+	rsp, err := client.ResolveAccess(ctx, &pb.ResolveAccessRequest{Access: &pb.FSAccess{Id: id}})
 	if err != nil {
 		return nil, err
 	}
-	return rsp.Access, nil
+	return rsp.ResolvedAccess, nil
 }
 
 func (s *accessManagerServiceClient) Delete(ctx context.Context, id string) error {

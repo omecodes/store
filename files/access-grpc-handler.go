@@ -15,22 +15,22 @@ type accessServerHandler struct {
 }
 
 func (s *accessServerHandler) CreateAccess(ctx context.Context, request *pb.CreateAccessRequest) (*pb.CreateAccessResponse, error) {
-	return &pb.CreateAccessResponse{}, CreateSource(ctx, request.Access)
+	return &pb.CreateAccessResponse{}, CreateAccess(ctx, request.Access, CreateAccessOptions{})
 }
 
-func (s *accessServerHandler) GetSource(ctx context.Context, request *pb.GetAccessRequest) (*pb.GetAccessResponse, error) {
-	Access, err := GetSource(ctx, request.Id)
+func (s *accessServerHandler) GetAccess(ctx context.Context, request *pb.GetAccessRequest) (*pb.GetAccessResponse, error) {
+	Access, err := GetAccess(ctx, request.Id, GetAccessOptions{})
 	return &pb.GetAccessResponse{Access: Access}, err
 }
 
-func (s *accessServerHandler) GetSources(request *pb.GetAccessListRequest, server pb.AccessManager_GetAccessListServer) error {
-	sources, err := ListSources(server.Context())
+func (s *accessServerHandler) GetAccessList(request *pb.GetAccessListRequest, server pb.AccessManager_GetAccessListServer) error {
+	accesses, err := GetAccessList(server.Context(), GetAccessListOptions{})
 	if err != nil {
 		return err
 	}
 
-	for _, Access := range sources {
-		err = server.Send(Access)
+	for _, access := range accesses {
+		err = server.Send(access)
 		if err != nil {
 			return err
 		}
@@ -38,12 +38,12 @@ func (s *accessServerHandler) GetSources(request *pb.GetAccessListRequest, serve
 	return nil
 }
 
-func (s *accessServerHandler) ResolveSource(ctx context.Context, request *pb.ResolveAccessRequest) (*pb.ResolveAccessResponse, error) {
-	access, err := ResolveSource(ctx, request.Access)
+func (s *accessServerHandler) ResolveAccess(ctx context.Context, request *pb.ResolveAccessRequest) (*pb.ResolveAccessResponse, error) {
+	access, err := GetAccess(ctx, request.Access.Id, GetAccessOptions{Resolved: true})
 	return &pb.ResolveAccessResponse{ResolvedAccess: access}, err
 }
 
-func (s *accessServerHandler) DeleteSource(server pb.AccessManager_DeleteAccessServer) error {
+func (s *accessServerHandler) DeleteAccess(server pb.AccessManager_DeleteAccessServer) error {
 	done := false
 
 	for !done {
@@ -55,7 +55,7 @@ func (s *accessServerHandler) DeleteSource(server pb.AccessManager_DeleteAccessS
 		}
 
 		if req != nil {
-			err = DeleteSource(server.Context(), req.AccessId)
+			err = DeleteAccess(server.Context(), req.AccessId, DeleteAccessOptions{})
 			if err != nil {
 				return err
 			}

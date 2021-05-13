@@ -161,7 +161,7 @@ func (ms *sqlStore) Delete(ctx context.Context, collection string, objectID stri
 	return col.Delete(ctx, objectID)
 }
 
-func (ms *sqlStore) Get(ctx context.Context, collection string, objectID string, opts GetOptions) (*pb.Object, error) {
+func (ms *sqlStore) Get(ctx context.Context, collection string, objectID string, opts GetObjectOptions) (*pb.Object, error) {
 	col, err := ms.ResolveCollection(ctx, collection)
 	if err != nil {
 		return nil, err

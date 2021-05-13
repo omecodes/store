@@ -102,7 +102,7 @@ func (d *dbClient) Delete(ctx context.Context, collection string, objectID strin
 	return err
 }
 
-func (d *dbClient) Get(ctx context.Context, collection string, objectID string, opts GetOptions) (*pb.Object, error) {
+func (d *dbClient) Get(ctx context.Context, collection string, objectID string, opts GetObjectOptions) (*pb.Object, error) {
 	objects, err := grpcClient(ctx, common.ServiceTypeFilesStorage)
 	if err != nil {
 		return nil, err

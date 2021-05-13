@@ -184,7 +184,7 @@ func (c *Client) PutObject(collectionId string, object *pb.Object, accessRules *
 	return common.ErrorFromHttpResponse(rsp)
 }
 
-func (c *Client) GetObject(collectionId string, objectId string, opts objects.GetOptions) (*pb.Object, error) {
+func (c *Client) GetObject(collectionId string, objectId string, opts objects.GetObjectOptions) (*pb.Object, error) {
 	endpoint := c.fullAPILocation() + common.ApiGetObjectRoute
 	endpoint = strings.Replace(endpoint, common.ApiRouteVarCollection, collectionId, 1)
 	endpoint = strings.Replace(endpoint, common.ApiRouteVarId, objectId, 1)

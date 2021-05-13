@@ -12,7 +12,7 @@ type ExecHandler struct {
 	BaseHandler
 }
 
-func (e *ExecHandler) CreateCollection(ctx context.Context, collection *pb.Collection) error {
+func (e *ExecHandler) CreateCollection(ctx context.Context, collection *pb.Collection, opts CreateCollectionOptions) error {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Error("exec-handler.CreateCollection: missing storage in context")
@@ -22,7 +22,7 @@ func (e *ExecHandler) CreateCollection(ctx context.Context, collection *pb.Colle
 	return storage.CreateCollection(ctx, collection)
 }
 
-func (e *ExecHandler) GetCollection(ctx context.Context, id string) (*pb.Collection, error) {
+func (e *ExecHandler) GetCollection(ctx context.Context, id string, opts GetCollectionOptions) (*pb.Collection, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Error("exec-handler.GetCollection: missing storage in context")
@@ -32,7 +32,7 @@ func (e *ExecHandler) GetCollection(ctx context.Context, id string) (*pb.Collect
 	return storage.GetCollection(ctx, id)
 }
 
-func (e *ExecHandler) ListCollections(ctx context.Context) ([]*pb.Collection, error) {
+func (e *ExecHandler) ListCollections(ctx context.Context, opts ListCollectionOptions) ([]*pb.Collection, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Error("exec-handler.ListCollections: missing storage in context")
@@ -42,7 +42,7 @@ func (e *ExecHandler) ListCollections(ctx context.Context) ([]*pb.Collection, er
 	return storage.ListCollections(ctx)
 }
 
-func (e *ExecHandler) DeleteCollection(ctx context.Context, id string) error {
+func (e *ExecHandler) DeleteCollection(ctx context.Context, id string, opts DeleteCollectionOptions) error {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Error("exec-handler.PutObject: missing storage in context")
@@ -87,7 +87,7 @@ func (e *ExecHandler) MoveObject(ctx context.Context, collection string, objectI
 		return errors.Internal("missing objects storage")
 	}
 
-	object, err := storage.Get(ctx, collection, objectID, GetOptions{})
+	object, err := storage.Get(ctx, collection, objectID, GetObjectOptions{})
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func (e *ExecHandler) MoveObject(ctx context.Context, collection string, objectI
 	return storage.Save(ctx, targetCollection, object)
 }
 
-func (e *ExecHandler) GetObject(ctx context.Context, collection string, id string, opts GetOptions) (*pb.Object, error) {
+func (e *ExecHandler) GetObject(ctx context.Context, collection string, id string, opts GetObjectOptions) (*pb.Object, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("missing DB in context")
@@ -105,7 +105,7 @@ func (e *ExecHandler) GetObject(ctx context.Context, collection string, id strin
 	return storage.Get(ctx, collection, id, opts)
 }
 
-func (e *ExecHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*pb.Header, error) {
+func (e *ExecHandler) GetObjectHeader(ctx context.Context, collection string, id string, opts GetHeaderOptions) (*pb.Header, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("missing DB in context")
@@ -114,7 +114,7 @@ func (e *ExecHandler) GetObjectHeader(ctx context.Context, collection string, id
 	return storage.Info(ctx, collection, id)
 }
 
-func (e *ExecHandler) DeleteObject(ctx context.Context, collection string, id string) error {
+func (e *ExecHandler) DeleteObject(ctx context.Context, collection string, id string, opts DeleteObjectOptions) error {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("exec-handler.DeleteObjet: missing DB in context")
@@ -134,7 +134,7 @@ func (e *ExecHandler) ListObjects(ctx context.Context, collection string, opts L
 	return storage.List(ctx, collection, opts)
 }
 
-func (e *ExecHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery) (*Cursor, error) {
+func (e *ExecHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery, opts SearchObjectsOptions) (*Cursor, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Error("exec-handler.SearchObjects: missing storage in context")

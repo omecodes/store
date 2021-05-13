@@ -5,8 +5,40 @@ import (
 	"strings"
 )
 
+type CreateAccessOptions struct{}
+
+type GetAccessListOptions struct{}
+
+type GetAccessOptions struct {
+	Resolved bool `json:"resolved,omitempty"`
+}
+
+type DeleteAccessOptions struct{}
+
+type CreateDirOptions struct{}
+
+type SetFileAttributesOptions struct{}
+
+type GetFileAttributesOptions struct{}
+
+type RenameFileOptions struct{}
+
+type MoveFileOptions struct{}
+
+type CopyFileOptions struct{}
+
+type OpenMultipartSessionOptions struct{}
+
+type WriteFilePartOptions struct{}
+
+type CloseMultipartSessionOptions struct{}
+
+type GetFSAccessOptions struct {
+	Resolved bool `json:"resolved,omitempty"`
+}
+
 type FileLocation struct {
-	Source   string `json:"source,omitempty"`
+	AccessID string `json:"access_id,omitempty"`
 	Filename string `json:"filename,omitempty"`
 }
 

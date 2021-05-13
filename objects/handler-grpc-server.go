@@ -23,25 +23,25 @@ type gRPCGatewayHandler struct {
 
 func (h *gRPCGatewayHandler) CreateCollection(ctx context.Context, request *pb.CreateCollectionRequest) (*pb.CreateCollectionResponse, error) {
 	var err error
-	err = CreateCollection(ctx, request.Collection)
+	err = CreateCollection(ctx, request.Collection, CreateCollectionOptions{})
 	return &pb.CreateCollectionResponse{}, err
 }
 
 func (h *gRPCGatewayHandler) GetCollection(ctx context.Context, request *pb.GetCollectionRequest) (*pb.GetCollectionResponse, error) {
 	var err error
-	collection, err := GetCollection(ctx, request.Id)
+	collection, err := GetCollection(ctx, request.Id, GetCollectionOptions{})
 	return &pb.GetCollectionResponse{Collection: collection}, err
 }
 
 func (h *gRPCGatewayHandler) ListCollections(ctx context.Context, _ *pb.ListCollectionsRequest) (*pb.ListCollectionsResponse, error) {
 	var err error
-	collections, err := ListCollections(ctx)
+	collections, err := ListCollections(ctx, ListCollectionOptions{})
 	return &pb.ListCollectionsResponse{Collections: collections}, err
 }
 
 func (h *gRPCGatewayHandler) DeleteCollection(ctx context.Context, request *pb.DeleteCollectionRequest) (*pb.DeleteCollectionResponse, error) {
 	var err error
-	err = DeleteCollection(ctx, request.Id)
+	err = DeleteCollection(ctx, request.Id, DeleteCollectionOptions{})
 	return &pb.DeleteCollectionResponse{}, err
 }
 
@@ -74,7 +74,7 @@ func (h *gRPCGatewayHandler) MoveObject(ctx context.Context, request *pb.MoveObj
 
 func (h *gRPCGatewayHandler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (*pb.GetObjectResponse, error) {
 	var err error
-	object, err := GetObject(ctx, "", request.ObjectId, GetOptions{
+	object, err := GetObject(ctx, "", request.ObjectId, GetObjectOptions{
 		At:   request.At,
 		Info: request.InfoOnly,
 	})
@@ -86,13 +86,13 @@ func (h *gRPCGatewayHandler) GetObject(ctx context.Context, request *pb.GetObjec
 
 func (h *gRPCGatewayHandler) DeleteObject(ctx context.Context, request *pb.DeleteObjectRequest) (*pb.DeleteObjectResponse, error) {
 	var err error
-	err = DeleteObject(ctx, "", request.ObjectId)
+	err = DeleteObject(ctx, "", request.ObjectId, DeleteObjectOptions{})
 	return &pb.DeleteObjectResponse{}, err
 }
 
 func (h *gRPCGatewayHandler) ObjectInfo(ctx context.Context, request *pb.ObjectInfoRequest) (*pb.ObjectInfoResponse, error) {
 	var err error
-	header, err := GetObjectHeader(ctx, "", request.ObjectId)
+	header, err := GetObjectHeader(ctx, "", request.ObjectId, GetHeaderOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func (h *gRPCGatewayHandler) SearchObjects(request *pb.SearchObjectsRequest, str
 		return err
 	}
 
-	cursor, err := SearchObjects(ctx, request.Collection, request.Query)
+	cursor, err := SearchObjects(ctx, request.Collection, request.Query, SearchObjectsOptions{})
 	if err != nil {
 		return err
 	}

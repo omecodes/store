@@ -145,7 +145,7 @@ func HTTPHandleGetObject(w http.ResponseWriter, r *http.Request) {
 	header := r.URL.Query().Get(queryHeader)
 	at := r.URL.Query().Get(queryAt)
 
-	object, err := GetObject(ctx, collection, id, GetOptions{
+	object, err := GetObject(ctx, collection, id, GetObjectOptions{
 		At:   at,
 		Info: header == "true",
 	})
@@ -168,7 +168,7 @@ func HTTPHandleDeleteObject(w http.ResponseWriter, r *http.Request) {
 	collection := vars[common.ApiRouteVarCollectionName]
 	id := vars[common.ApiRouteVarIdName]
 
-	err := DeleteObject(ctx, collection, id)
+	err := DeleteObject(ctx, collection, id, DeleteObjectOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -272,7 +272,7 @@ func HTTPHandleSearchObjects(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	collection := vars[common.ApiRouteVarCollectionName]
 
-	cursor, err := SearchObjects(ctx, collection, &query)
+	cursor, err := SearchObjects(ctx, collection, &query, SearchObjectsOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -344,7 +344,7 @@ func HTTPHandleCreateCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = CreateCollection(ctx, collection)
+	err = CreateCollection(ctx, collection, CreateCollectionOptions{})
 	if err != nil {
 		logs.Error("could not create collection", logs.Err(err))
 		w.WriteHeader(errors.HTTPStatus(err))
@@ -355,7 +355,7 @@ func HTTPHandleCreateCollection(w http.ResponseWriter, r *http.Request) {
 func HTTPHandleListCollections(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	collections, err := ListCollections(ctx)
+	collections, err := ListCollections(ctx, ListCollectionOptions{})
 	if err != nil {
 		logs.Error("could not load collections", logs.Err(err))
 		w.WriteHeader(errors.HTTPStatus(err))
@@ -382,7 +382,7 @@ func HTTPHandleGetCollection(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars[common.ApiRouteVarIdName]
 
-	collection, err := GetCollection(ctx, id)
+	collection, err := GetCollection(ctx, id, GetCollectionOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -405,7 +405,7 @@ func HTTPHandleDeleteCollection(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars[common.ApiRouteVarIdName]
 
-	err := DeleteCollection(ctx, id)
+	err := DeleteCollection(ctx, id, DeleteCollectionOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return

@@ -22,7 +22,7 @@ func (s *gRPCHandler) CreateAccess(ctx context.Context, request *pb.CreateAccess
 	if err != nil {
 		return nil, err
 	}
-	return &pb.CreateAccessResponse{}, CreateSource(ctx, request.Access)
+	return &pb.CreateAccessResponse{}, CreateAccess(ctx, request.Access, CreateAccessOptions{})
 }
 
 func (s *gRPCHandler) GetAccess(ctx context.Context, request *pb.GetAccessRequest) (*pb.GetAccessResponse, error) {
@@ -31,23 +31,23 @@ func (s *gRPCHandler) GetAccess(ctx context.Context, request *pb.GetAccessReques
 	if err != nil {
 		return nil, err
 	}
-	access, err := GetSource(ctx, request.Id)
+	access, err := GetAccess(ctx, request.Id, GetAccessOptions{})
 	return &pb.GetAccessResponse{Access: access}, err
 }
 
-func (s *gRPCHandler) GetAccessList(request *pb.GetAccessListRequest, server pb.AccessManager_GetAccessListServer) error {
+func (s *gRPCHandler) GetAccessList(_ *pb.GetAccessListRequest, server pb.AccessManager_GetAccessListServer) error {
 	var err error
 	ctx, err := auth.ParseMetaInNewContext(server.Context())
 	if err != nil {
 		return err
 	}
 
-	sources, err := ListSources(ctx)
+	accesses, err := GetAccessList(ctx, GetAccessListOptions{})
 	if err != nil {
 		return err
 	}
-	for _, source := range sources {
-		err = server.Send(source)
+	for _, access := range accesses {
+		err = server.Send(access)
 		if err != nil {
 			return err
 		}
@@ -55,17 +55,17 @@ func (s *gRPCHandler) GetAccessList(request *pb.GetAccessListRequest, server pb.
 	return nil
 }
 
-func (s *gRPCHandler) ResolveSource(ctx context.Context, request *pb.ResolveAccessRequest) (*pb.ResolveAccessResponse, error) {
+func (s *gRPCHandler) ResolveAccess(ctx context.Context, request *pb.ResolveAccessRequest) (*pb.ResolveAccessResponse, error) {
 	var err error
 	ctx, err = auth.ParseMetaInNewContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	source, err := ResolveSource(ctx, request.Access)
+	source, err := GetAccess(ctx, request.Access.Id, GetAccessOptions{Resolved: true})
 	return &pb.ResolveAccessResponse{ResolvedAccess: source}, err
 }
 
-func (s *gRPCHandler) DeleteSource(server pb.AccessManager_DeleteAccessServer) error {
+func (s *gRPCHandler) DeleteAccess(server pb.AccessManager_DeleteAccessServer) error {
 	ctx, err := auth.ParseMetaInNewContext(server.Context())
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (s *gRPCHandler) DeleteSource(server pb.AccessManager_DeleteAccessServer) e
 			return err
 		}
 
-		err = DeleteSource(ctx, req.AccessId)
+		err = DeleteAccess(ctx, req.AccessId, DeleteAccessOptions{})
 		if err != nil {
 			return err
 		}
@@ -92,7 +92,7 @@ func (s *gRPCHandler) CreateDir(ctx context.Context, request *pb.CreateDirReques
 	if err != nil {
 		return nil, err
 	}
-	return &pb.CreateDirResponse{}, CreateDir(ctx, request.AccessId, request.Path)
+	return &pb.CreateDirResponse{}, CreateDir(ctx, request.AccessId, request.Path, CreateDirOptions{})
 }
 
 func (s *gRPCHandler) ListDir(ctx context.Context, request *pb.ListDirRequest) (*pb.ListDirResponse, error) {
@@ -144,7 +144,7 @@ func (s *gRPCHandler) SetFileAttributes(ctx context.Context, request *pb.SetFile
 		return nil, err
 	}
 
-	return &pb.SetFileAttributesResponse{}, SetFileAttributes(ctx, request.AccessId, request.Path, request.Attributes)
+	return &pb.SetFileAttributesResponse{}, SetFileAttributes(ctx, request.AccessId, request.Path, request.Attributes, SetFileAttributesOptions{})
 }
 
 func (s *gRPCHandler) GetFileAttributes(ctx context.Context, request *pb.GetFileAttributesRequest) (*pb.GetFileAttributesResponse, error) {
@@ -154,7 +154,7 @@ func (s *gRPCHandler) GetFileAttributes(ctx context.Context, request *pb.GetFile
 		return nil, err
 	}
 
-	attrs, err := GetFileAttributes(ctx, request.AccessId, request.Path, request.Names...)
+	attrs, err := GetFileAttributes(ctx, request.AccessId, request.Path, request.Names, GetFileAttributesOptions{})
 	return &pb.GetFileAttributesResponse{Attributes: attrs}, err
 }
 
@@ -165,7 +165,7 @@ func (s *gRPCHandler) RenameFile(ctx context.Context, request *pb.RenameFileRequ
 		return nil, err
 	}
 
-	return &pb.RenameFileResponse{}, RenameFile(ctx, request.AccessId, request.Path, request.NewName)
+	return &pb.RenameFileResponse{}, RenameFile(ctx, request.AccessId, request.Path, request.NewName, RenameFileOptions{})
 }
 
 func (s *gRPCHandler) MoveFile(ctx context.Context, request *pb.MoveFileRequest) (*pb.MoveFileResponse, error) {
@@ -175,7 +175,7 @@ func (s *gRPCHandler) MoveFile(ctx context.Context, request *pb.MoveFileRequest)
 		return nil, err
 	}
 
-	return &pb.MoveFileResponse{}, MoveFile(ctx, request.AccessId, request.Path, request.TargetDir)
+	return &pb.MoveFileResponse{}, MoveFile(ctx, request.AccessId, request.Path, request.TargetDir, MoveFileOptions{})
 }
 
 func (s *gRPCHandler) CopyFile(ctx context.Context, request *pb.CopyFileRequest) (*pb.CopyFileResponse, error) {
@@ -185,5 +185,5 @@ func (s *gRPCHandler) CopyFile(ctx context.Context, request *pb.CopyFileRequest)
 		return nil, err
 	}
 
-	return &pb.CopyFileResponse{}, CopyFile(ctx, request.AccessId, request.Path, request.TargetDir)
+	return &pb.CopyFileResponse{}, CopyFile(ctx, request.AccessId, request.Path, request.TargetDir, CopyFileOptions{})
 }

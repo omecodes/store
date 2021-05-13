@@ -23,7 +23,7 @@ type DB interface {
 	Delete(ctx context.Context, collection string, objectID string) error
 
 	// Get gets the object associated with objectID
-	Get(ctx context.Context, collection string, objectID string, opts GetOptions) (*pb.Object, error)
+	Get(ctx context.Context, collection string, objectID string, opts GetObjectOptions) (*pb.Object, error)
 
 	// Info gets header of the object associated with objectID
 	Info(ctx context.Context, collection string, objectID string) (*pb.Header, error)

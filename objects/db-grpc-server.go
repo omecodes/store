@@ -97,7 +97,7 @@ func (h *handler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (
 		return nil, errors.Internal("missing objects storage")
 	}
 
-	o, err := storage.Get(ctx, request.Collection, request.ObjectId, GetOptions{
+	o, err := storage.Get(ctx, request.Collection, request.ObjectId, GetObjectOptions{
 		At:   request.At,
 		Info: request.InfoOnly,
 	})

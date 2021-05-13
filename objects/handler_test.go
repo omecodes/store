@@ -681,7 +681,7 @@ func TestHandler_PatchObject(t *testing.T) {
 		err := handler.PatchObject(psgCtx, "paris-sg", patch, PatchOptions{})
 		So(err, ShouldBeNil)
 
-		object, err := handler.GetObject(psgCtx, "paris-sg", "n10", GetOptions{At: "$.age"})
+		object, err := handler.GetObject(psgCtx, "paris-sg", "n10", GetObjectOptions{At: "$.age"})
 		So(err, ShouldBeNil)
 		So(object.Data, ShouldEqual, "30")
 	})
@@ -723,10 +723,10 @@ func TestHandler_GetObject1(t *testing.T) {
 		router := DefaultRouter()
 		handler := router.GetHandler()
 
-		_, err := handler.GetObject(getContext(), "", "some-object", GetOptions{})
+		_, err := handler.GetObject(getContext(), "", "some-object", GetObjectOptions{})
 		So(err, ShouldNotBeNil)
 
-		_, err = handler.GetObject(getContext(), "juventus", "", GetOptions{})
+		_, err = handler.GetObject(getContext(), "juventus", "", GetObjectOptions{})
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -738,7 +738,7 @@ func TestHandler_GetObject2(t *testing.T) {
 		handler := router.GetHandler()
 
 		psgCtx := userContextInRegisteredClient(getContext(), "pochettino")
-		_, err := handler.GetObject(psgCtx, "juventus", "cr7", GetOptions{})
+		_, err := handler.GetObject(psgCtx, "juventus", "cr7", GetObjectOptions{})
 		So(err, ShouldNotBeNil)
 	})
 }
@@ -750,7 +750,7 @@ func TestHandler_GetObject(t *testing.T) {
 		handler := router.GetHandler()
 
 		psgCtx := userContextInRegisteredClient(getContext(), "pirlo")
-		object, err := handler.GetObject(psgCtx, "juventus", "cr7", GetOptions{})
+		object, err := handler.GetObject(psgCtx, "juventus", "cr7", GetObjectOptions{})
 		So(err, ShouldBeNil)
 		So(object.Header.Id, ShouldEqual, "cr7")
 	})

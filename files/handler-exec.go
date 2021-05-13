@@ -12,7 +12,7 @@ type ExecHandler struct {
 	BaseHandler
 }
 
-func (h *ExecHandler) CreateAccess(ctx context.Context, source *pb.FSAccess) error {
+func (h *ExecHandler) CreateAccess(ctx context.Context, source *pb.FSAccess, opts CreateAccessOptions) error {
 	sourceManager := getAccessManager(ctx)
 	if sourceManager == nil {
 		return errors.Internal("context missing source manager")
@@ -21,7 +21,7 @@ func (h *ExecHandler) CreateAccess(ctx context.Context, source *pb.FSAccess) err
 	return err
 }
 
-func (h *ExecHandler) GetAccess(ctx context.Context, sourceID string) (*pb.FSAccess, error) {
+func (h *ExecHandler) GetAccess(ctx context.Context, sourceID string, opts GetAccessOptions) (*pb.FSAccess, error) {
 	sourceManager := getAccessManager(ctx)
 	if sourceManager == nil {
 		return nil, errors.Internal("context missing source manager")
@@ -29,7 +29,7 @@ func (h *ExecHandler) GetAccess(ctx context.Context, sourceID string) (*pb.FSAcc
 	return sourceManager.Get(ctx, sourceID)
 }
 
-func (h *ExecHandler) DeleteAccess(ctx context.Context, sourceID string) error {
+func (h *ExecHandler) DeleteAccess(ctx context.Context, sourceID string, opts DeleteAccessOptions) error {
 	sourceManager := getAccessManager(ctx)
 	if sourceManager == nil {
 		return errors.Internal("context missing source manager")
@@ -37,7 +37,7 @@ func (h *ExecHandler) DeleteAccess(ctx context.Context, sourceID string) error {
 	return sourceManager.Delete(ctx, sourceID)
 }
 
-func (h *ExecHandler) CreateDir(ctx context.Context, sourceID string, dirname string) error {
+func (h *ExecHandler) CreateDir(ctx context.Context, sourceID string, dirname string, opts CreateDirOptions) error {
 	fs, err := getFS(ctx, sourceID)
 	if err != nil {
 		return err
@@ -85,7 +85,7 @@ func (h *ExecHandler) DeleteFile(ctx context.Context, sourceID string, filename 
 	return fs.DeleteFile(ctx, filename, opts.Recursive)
 }
 
-func (h *ExecHandler) SetFileAttributes(ctx context.Context, sourceID string, filename string, attrs Attributes) error {
+func (h *ExecHandler) SetFileAttributes(ctx context.Context, sourceID string, filename string, attrs Attributes, opts SetFileAttributesOptions) error {
 	fs, err := getFS(ctx, sourceID)
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func (h *ExecHandler) SetFileAttributes(ctx context.Context, sourceID string, fi
 	return fs.SetAttributes(ctx, filename, attrs)
 }
 
-func (h *ExecHandler) GetFileAttributes(ctx context.Context, sourceID string, filename string, names ...string) (Attributes, error) {
+func (h *ExecHandler) GetFileAttributes(ctx context.Context, sourceID string, filename string, names []string, opts GetFileAttributesOptions) (Attributes, error) {
 	fs, err := getFS(ctx, sourceID)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (h *ExecHandler) GetFileAttributes(ctx context.Context, sourceID string, fi
 	return fs.GetAttributes(ctx, filename, names...)
 }
 
-func (h *ExecHandler) RenameFile(ctx context.Context, sourceID string, filename string, newName string) error {
+func (h *ExecHandler) RenameFile(ctx context.Context, sourceID string, filename string, newName string, opts RenameFileOptions) error {
 	fs, err := getFS(ctx, sourceID)
 	if err != nil {
 		return err
@@ -109,7 +109,7 @@ func (h *ExecHandler) RenameFile(ctx context.Context, sourceID string, filename 
 	return fs.Rename(ctx, filename, newName)
 }
 
-func (h *ExecHandler) MoveFile(ctx context.Context, sourceID string, filename string, dirname string) error {
+func (h *ExecHandler) MoveFile(ctx context.Context, sourceID string, filename string, dirname string, opts MoveFileOptions) error {
 	fs, err := getFS(ctx, sourceID)
 	if err != nil {
 		return err
@@ -117,7 +117,7 @@ func (h *ExecHandler) MoveFile(ctx context.Context, sourceID string, filename st
 	return fs.Rename(ctx, filename, dirname)
 }
 
-func (h *ExecHandler) CopyFile(ctx context.Context, sourceID string, filename string, dirname string) error {
+func (h *ExecHandler) CopyFile(ctx context.Context, sourceID string, filename string, dirname string, opts CopyFileOptions) error {
 	fs, err := getFS(ctx, sourceID)
 	if err != nil {
 		return err
@@ -125,14 +125,14 @@ func (h *ExecHandler) CopyFile(ctx context.Context, sourceID string, filename st
 	return fs.Rename(ctx, filename, dirname)
 }
 
-func (h *ExecHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info MultipartSessionInfo) (string, error) {
+func (h *ExecHandler) OpenMultipartSession(ctx context.Context, accessID string, filename string, info MultipartSessionInfo, opts OpenMultipartSessionOptions) (string, error) {
 	panic("implement me")
 }
 
-func (h *ExecHandler) WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo) (int64, error) {
+func (h *ExecHandler) WriteFilePart(ctx context.Context, accessID string, content io.Reader, size int64, info ContentPartInfo, opts WriteFilePartOptions) (int64, error) {
 	panic("implement me")
 }
 
-func (h *ExecHandler) CloseMultipartSession(ctx context.Context, sessionId string) error {
+func (h *ExecHandler) CloseMultipartSession(ctx context.Context, sessionId string, opts CloseMultipartSessionOptions) error {
 	panic("implement me")
 }

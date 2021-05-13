@@ -78,42 +78,42 @@ func (p *PolicyHandler) assetActionAllowedOnObject(ctx context.Context, collecti
 	return nil
 }
 
-func (p *PolicyHandler) CreateCollection(ctx context.Context, collection *pb.Collection) error {
+func (p *PolicyHandler) CreateCollection(ctx context.Context, collection *pb.Collection, opts CreateCollectionOptions) error {
 	clientApp := auth.App(ctx)
 	if !p.isAdmin(ctx) {
 		if clientApp == nil {
 			return errors.Forbidden("not allowed to create collections")
 		}
 	}
-	return p.BaseHandler.CreateCollection(ctx, collection)
+	return p.BaseHandler.CreateCollection(ctx, collection, opts)
 }
 
-func (p *PolicyHandler) GetCollection(ctx context.Context, id string) (*pb.Collection, error) {
+func (p *PolicyHandler) GetCollection(ctx context.Context, id string, opts GetCollectionOptions) (*pb.Collection, error) {
 	if !p.isAdmin(ctx) {
 		clientApp := auth.App(ctx)
 		if clientApp == nil {
 			return nil, errors.Forbidden("not allowed to get collection info")
 		}
 	}
-	return p.BaseHandler.GetCollection(ctx, id)
+	return p.BaseHandler.GetCollection(ctx, id, opts)
 }
 
-func (p *PolicyHandler) ListCollections(ctx context.Context) ([]*pb.Collection, error) {
+func (p *PolicyHandler) ListCollections(ctx context.Context, opts ListCollectionOptions) ([]*pb.Collection, error) {
 	if !p.isAdmin(ctx) {
 		clientApp := auth.App(ctx)
 		if clientApp == nil {
 			return nil, errors.Forbidden("not allowed to list collections")
 		}
 	}
-	return p.BaseHandler.ListCollections(ctx)
+	return p.BaseHandler.ListCollections(ctx, opts)
 }
 
-func (p *PolicyHandler) DeleteCollection(ctx context.Context, id string) error {
+func (p *PolicyHandler) DeleteCollection(ctx context.Context, id string, opts DeleteCollectionOptions) error {
 	clientApp := auth.App(ctx)
 	if !p.isAdmin(ctx) || clientApp == nil {
 		return errors.Forbidden("not allowed to delete collections")
 	}
-	return p.BaseHandler.DeleteCollection(ctx, id)
+	return p.BaseHandler.DeleteCollection(ctx, id, opts)
 }
 
 func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object *pb.Object, authorizedUsers *pb.PathAccessRules, indexes []*pb.TextIndex, opts PutOptions) (string, error) {
@@ -124,7 +124,7 @@ func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object
 
 	// if no security rules are provided, collection security rules will be used
 	if authorizedUsers == nil {
-		collectionInfo, err := p.next.GetCollection(ctx, collection)
+		collectionInfo, err := p.next.GetCollection(ctx, collection, GetCollectionOptions{})
 		if err != nil {
 			logs.Error("could not get collection", logs.Err(err))
 			return "", err
@@ -142,7 +142,7 @@ func (p *PolicyHandler) PutObject(ctx context.Context, collection string, object
 	return p.BaseHandler.PutObject(ctx, collection, object, authorizedUsers, indexes, opts)
 }
 
-func (p *PolicyHandler) GetObject(ctx context.Context, collection string, id string, opts GetOptions) (*pb.Object, error) {
+func (p *PolicyHandler) GetObject(ctx context.Context, collection string, id string, opts GetObjectOptions) (*pb.Object, error) {
 	err := p.assetActionAllowedOnObject(ctx, collection, id, 0, opts.At)
 	if err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ func (p *PolicyHandler) MoveObject(ctx context.Context, collection string, objec
 	}
 
 	if authorizedUsers == nil {
-		collectionInfo, err := p.next.GetCollection(ctx, targetCollection)
+		collectionInfo, err := p.next.GetCollection(ctx, targetCollection, GetCollectionOptions{})
 		if err != nil {
 			return err
 		}
@@ -180,21 +180,21 @@ func (p *PolicyHandler) MoveObject(ctx context.Context, collection string, objec
 	return p.next.MoveObject(ctx, collection, objectID, targetCollection, authorizedUsers, opts)
 }
 
-func (p *PolicyHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*pb.Header, error) {
+func (p *PolicyHandler) GetObjectHeader(ctx context.Context, collection string, id string, opts GetHeaderOptions) (*pb.Header, error) {
 	err := p.assetActionAllowedOnObject(ctx, collection, id, 0, "")
 	if err != nil {
 		return nil, err
 	}
 
-	return p.BaseHandler.GetObjectHeader(ctx, collection, id)
+	return p.BaseHandler.GetObjectHeader(ctx, collection, id, opts)
 }
 
-func (p *PolicyHandler) DeleteObject(ctx context.Context, collection string, id string) error {
+func (p *PolicyHandler) DeleteObject(ctx context.Context, collection string, id string, opts DeleteObjectOptions) error {
 	err := p.assetActionAllowedOnObject(ctx, collection, id, 0, "")
 	if err != nil {
 		return err
 	}
-	return p.BaseHandler.DeleteObject(ctx, collection, id)
+	return p.BaseHandler.DeleteObject(ctx, collection, id, opts)
 }
 
 func (p *PolicyHandler) ListObjects(ctx context.Context, collection string, opts ListOptions) (*Cursor, error) {
@@ -214,8 +214,8 @@ func (p *PolicyHandler) ListObjects(ctx context.Context, collection string, opts
 	return cursor, nil
 }
 
-func (p *PolicyHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery) (*Cursor, error) {
-	cursor, err := p.BaseHandler.SearchObjects(ctx, collection, query)
+func (p *PolicyHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery, opts SearchObjectsOptions) (*Cursor, error) {
+	cursor, err := p.BaseHandler.SearchObjects(ctx, collection, query, opts)
 	if err != nil {
 		return nil, err
 	}

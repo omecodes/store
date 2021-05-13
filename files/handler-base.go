@@ -10,24 +10,24 @@ type BaseHandler struct {
 	next Handler
 }
 
-func (h *BaseHandler) CreateAccess(ctx context.Context, source *pb.FSAccess) error {
-	return h.next.CreateAccess(ctx, source)
+func (h *BaseHandler) CreateAccess(ctx context.Context, source *pb.FSAccess, opts CreateAccessOptions) error {
+	return h.next.CreateAccess(ctx, source, opts)
 }
 
-func (h *BaseHandler) GetAccessList(ctx context.Context) ([]*pb.FSAccess, error) {
-	return h.next.GetAccessList(ctx)
+func (h *BaseHandler) GetAccessList(ctx context.Context, opts GetAccessListOptions) ([]*pb.FSAccess, error) {
+	return h.next.GetAccessList(ctx, opts)
 }
 
-func (h *BaseHandler) GetAccess(ctx context.Context, sourceID string) (*pb.FSAccess, error) {
-	return h.next.GetAccess(ctx, sourceID)
+func (h *BaseHandler) GetAccess(ctx context.Context, sourceID string, opts GetAccessOptions) (*pb.FSAccess, error) {
+	return h.next.GetAccess(ctx, sourceID, opts)
 }
 
-func (h *BaseHandler) DeleteAccess(ctx context.Context, sourceID string) error {
-	return h.next.DeleteAccess(ctx, sourceID)
+func (h *BaseHandler) DeleteAccess(ctx context.Context, sourceID string, opts DeleteAccessOptions) error {
+	return h.next.DeleteAccess(ctx, sourceID, opts)
 }
 
-func (h *BaseHandler) CreateDir(ctx context.Context, sourceID string, filename string) error {
-	return h.next.CreateDir(ctx, sourceID, filename)
+func (h *BaseHandler) CreateDir(ctx context.Context, sourceID string, dirname string, opts CreateDirOptions) error {
+	return h.next.CreateDir(ctx, sourceID, dirname, opts)
 }
 
 func (h *BaseHandler) WriteFileContent(ctx context.Context, sourceID string, filename string, content io.Reader, size int64, opts WriteOptions) error {
@@ -50,34 +50,34 @@ func (h *BaseHandler) DeleteFile(ctx context.Context, sourceID string, filename 
 	return h.next.DeleteFile(ctx, sourceID, filename, opts)
 }
 
-func (h *BaseHandler) SetFileAttributes(ctx context.Context, sourceID string, filename string, attrs Attributes) error {
-	return h.next.SetFileAttributes(ctx, sourceID, filename, attrs)
+func (h *BaseHandler) SetFileAttributes(ctx context.Context, sourceID string, filename string, attrs Attributes, opts SetFileAttributesOptions) error {
+	return h.next.SetFileAttributes(ctx, sourceID, filename, attrs, opts)
 }
 
-func (h *BaseHandler) GetFileAttributes(ctx context.Context, sourceID string, filename string, name ...string) (Attributes, error) {
-	return h.next.GetFileAttributes(ctx, sourceID, filename, name...)
+func (h *BaseHandler) GetFileAttributes(ctx context.Context, sourceID string, filename string, names []string, opts GetFileAttributesOptions) (Attributes, error) {
+	return h.next.GetFileAttributes(ctx, sourceID, filename, names, opts)
 }
 
-func (h *BaseHandler) RenameFile(ctx context.Context, sourceID string, filename string, newName string) error {
-	return h.next.RenameFile(ctx, sourceID, filename, newName)
+func (h *BaseHandler) RenameFile(ctx context.Context, sourceID string, filename string, newName string, opts RenameFileOptions) error {
+	return h.next.RenameFile(ctx, sourceID, filename, newName, opts)
 }
 
-func (h *BaseHandler) MoveFile(ctx context.Context, sourceID string, filename string, dirname string) error {
-	return h.next.MoveFile(ctx, sourceID, filename, dirname)
+func (h *BaseHandler) MoveFile(ctx context.Context, sourceID string, filename string, dirname string, opts MoveFileOptions) error {
+	return h.next.MoveFile(ctx, sourceID, filename, dirname, opts)
 }
 
-func (h *BaseHandler) CopyFile(ctx context.Context, sourceID string, filename string, dirname string) error {
-	return h.next.CopyFile(ctx, sourceID, filename, dirname)
+func (h *BaseHandler) CopyFile(ctx context.Context, sourceID string, filename string, dirname string, opts CopyFileOptions) error {
+	return h.next.CopyFile(ctx, sourceID, filename, dirname, opts)
 }
 
-func (h *BaseHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info MultipartSessionInfo) (string, error) {
-	return h.next.OpenMultipartSession(ctx, sourceID, filename, info)
+func (h *BaseHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info MultipartSessionInfo, opts OpenMultipartSessionOptions) (string, error) {
+	return h.next.OpenMultipartSession(ctx, sourceID, filename, info, opts)
 }
 
-func (h *BaseHandler) WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo) (int64, error) {
-	return h.next.WriteFilePart(ctx, sessionID, content, size, info)
+func (h *BaseHandler) WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo, opts WriteFilePartOptions) (int64, error) {
+	return h.next.WriteFilePart(ctx, sessionID, content, size, info, opts)
 }
 
-func (h *BaseHandler) CloseMultipartSession(ctx context.Context, sessionId string) error {
-	return h.next.CloseMultipartSession(ctx, sessionId)
+func (h *BaseHandler) CloseMultipartSession(ctx context.Context, sessionId string, opts CloseMultipartSessionOptions) error {
+	return h.next.CloseMultipartSession(ctx, sessionId, opts)
 }

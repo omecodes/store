@@ -341,7 +341,7 @@ func (s *sqlCollection) Delete(ctx context.Context, objectID string) error {
 	return nil
 }
 
-func (s *sqlCollection) Get(ctx context.Context, objectID string, opts GetOptions) (*pb.Object, error) {
+func (s *sqlCollection) Get(ctx context.Context, objectID string, opts GetObjectOptions) (*pb.Object, error) {
 	hv, err := s.headers.Get(objectID)
 	if err != nil {
 		logs.Error("Get: could not get object header", logs.Details("id", objectID), logs.Err(err))
@@ -431,7 +431,7 @@ func (s *sqlCollection) Search(ctx context.Context, query *pb.SearchQuery) (*Cur
 	c := &idsListCursor{
 		ids: ids,
 		getObjectFunc: func(id string) (*pb.Object, error) {
-			return s.Get(ctx, id, GetOptions{})
+			return s.Get(ctx, id, GetObjectOptions{})
 		},
 	}
 	return NewCursor(c, c), nil
