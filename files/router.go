@@ -46,7 +46,7 @@ func getRoute(opts ...RouteOption) (handler Handler) {
 	}
 
 	if !routes.skipPolicies {
-		handler = &PolicyHandler{BaseHandler: BaseHandler{
+		handler = &ACLHandler{BaseHandler: BaseHandler{
 			next: handler,
 		}}
 	}

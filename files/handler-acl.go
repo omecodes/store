@@ -11,11 +11,11 @@ import (
 	"net/url"
 )
 
-type PolicyHandler struct {
+type ACLHandler struct {
 	BaseHandler
 }
 
-func (h *PolicyHandler) isAdmin(ctx context.Context) bool {
+func (h *ACLHandler) isAdmin(ctx context.Context) bool {
 	user := auth.Get(ctx)
 	if user == nil {
 		return false
@@ -23,7 +23,7 @@ func (h *PolicyHandler) isAdmin(ctx context.Context) bool {
 	return user.Name == "admin"
 }
 
-func (h *PolicyHandler) checkACL(ctx context.Context, authorizedUsers *pb.FileActionAuthorizedUsers, objectID string) error {
+func (h *ACLHandler) checkACL(ctx context.Context, authorizedUsers *pb.FileActionAuthorizedUsers, objectID string) error {
 	user := auth.Get(ctx)
 	if user != nil && user.Name == "admin" {
 		return nil
@@ -55,7 +55,7 @@ func (h *PolicyHandler) checkACL(ctx context.Context, authorizedUsers *pb.FileAc
 	return nil
 }
 
-func (h *PolicyHandler) CreateAccess(ctx context.Context, access *pb.FSAccess, opts CreateAccessOptions) error {
+func (h *ACLHandler) CreateAccess(ctx context.Context, access *pb.FSAccess, opts CreateAccessOptions) error {
 	clientApp := auth.App(ctx)
 	if clientApp == nil {
 		return errors.Forbidden("application is not allowed to create accessDB")
@@ -100,7 +100,7 @@ func (h *PolicyHandler) CreateAccess(ctx context.Context, access *pb.FSAccess, o
 	return h.next.CreateAccess(ctx, access, opts)
 }
 
-func (h *PolicyHandler) GetAccessList(ctx context.Context, opts GetAccessListOptions) ([]*pb.FSAccess, error) {
+func (h *ACLHandler) GetAccessList(ctx context.Context, opts GetAccessListOptions) ([]*pb.FSAccess, error) {
 	if !auth.IsContextFromAuthorizedApp(ctx) {
 		return nil, errors.Forbidden("application is not allowed to list accessDB")
 	}
@@ -135,7 +135,7 @@ func (h *PolicyHandler) GetAccessList(ctx context.Context, opts GetAccessListOpt
 	return accesses, nil
 }
 
-func (h *PolicyHandler) GetAccess(ctx context.Context, accessID string, opts GetAccessOptions) (*pb.FSAccess, error) {
+func (h *ACLHandler) GetAccess(ctx context.Context, accessID string, opts GetAccessOptions) (*pb.FSAccess, error) {
 	if !auth.IsContextFromAuthorizedApp(ctx) {
 		return nil, errors.Forbidden("application is not allowed to list accessDB")
 	}
@@ -162,7 +162,7 @@ func (h *PolicyHandler) GetAccess(ctx context.Context, accessID string, opts Get
 	return h.next.GetAccess(ctx, accessID, opts)
 }
 
-func (h *PolicyHandler) DeleteAccess(ctx context.Context, accessID string, opts DeleteAccessOptions) error {
+func (h *ACLHandler) DeleteAccess(ctx context.Context, accessID string, opts DeleteAccessOptions) error {
 	clientApp := auth.App(ctx)
 	if clientApp == nil {
 		return errors.Forbidden("application is not allowed to create accessDB")
@@ -209,7 +209,7 @@ func (h *PolicyHandler) DeleteAccess(ctx context.Context, accessID string, opts 
 	return h.next.DeleteAccess(ctx, accessID, DeleteAccessOptions{})
 }
 
-func (h *PolicyHandler) CreateDir(ctx context.Context, accessID string, dirname string, opts CreateDirOptions) error {
+func (h *ACLHandler) CreateDir(ctx context.Context, accessID string, dirname string, opts CreateDirOptions) error {
 	access, err := h.next.GetAccess(ctx, accessID, GetAccessOptions{Resolved: true})
 	if err != nil {
 		logs.Error("could not get access details", logs.Err(err))
@@ -224,7 +224,7 @@ func (h *PolicyHandler) CreateDir(ctx context.Context, accessID string, dirname 
 	return h.next.CreateDir(ctx, accessID, dirname, opts)
 }
 
-func (h *PolicyHandler) WriteFileContent(ctx context.Context, accessID string, filename string, content io.Reader, size int64, opts WriteOptions) error {
+func (h *ACLHandler) WriteFileContent(ctx context.Context, accessID string, filename string, content io.Reader, size int64, opts WriteOptions) error {
 	access, err := h.next.GetAccess(ctx, accessID, GetAccessOptions{Resolved: true})
 	if err != nil {
 		logs.Error("could not get access details", logs.Err(err))
@@ -240,7 +240,7 @@ func (h *PolicyHandler) WriteFileContent(ctx context.Context, accessID string, f
 	return err
 }
 
-func (h *PolicyHandler) ListDir(ctx context.Context, accessID string, dirname string, opts ListDirOptions) (*DirContent, error) {
+func (h *ACLHandler) ListDir(ctx context.Context, accessID string, dirname string, opts ListDirOptions) (*DirContent, error) {
 	access, err := h.next.GetAccess(ctx, accessID, GetAccessOptions{Resolved: true})
 	if err != nil {
 		logs.Error("could not get access details", logs.Err(err))
@@ -254,7 +254,7 @@ func (h *PolicyHandler) ListDir(ctx context.Context, accessID string, dirname st
 	return h.next.ListDir(ctx, accessID, dirname, opts)
 }
 
-func (h *PolicyHandler) ReadFileContent(ctx context.Context, accessID string, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
+func (h *ACLHandler) ReadFileContent(ctx context.Context, accessID string, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
 	access, err := h.next.GetAccess(ctx, accessID, GetAccessOptions{Resolved: true})
 	if err != nil {
 		logs.Error("could not get access details", logs.Err(err))
@@ -268,7 +268,7 @@ func (h *PolicyHandler) ReadFileContent(ctx context.Context, accessID string, fi
 	return h.next.ReadFileContent(ctx, accessID, filename, opts)
 }
 
-func (h *PolicyHandler) GetFileInfo(ctx context.Context, accessID string, filename string, opts GetFileOptions) (*pb.File, error) {
+func (h *ACLHandler) GetFileInfo(ctx context.Context, accessID string, filename string, opts GetFileOptions) (*pb.File, error) {
 	access, err := h.next.GetAccess(ctx, accessID, GetAccessOptions{Resolved: true})
 	if err != nil {
 		logs.Error("could not get access details", logs.Err(err))
@@ -283,7 +283,7 @@ func (h *PolicyHandler) GetFileInfo(ctx context.Context, accessID string, filena
 	return h.next.GetFileInfo(ctx, accessID, filename, opts)
 }
 
-func (h *PolicyHandler) DeleteFile(ctx context.Context, accessID string, filename string, opts DeleteFileOptions) error {
+func (h *ACLHandler) DeleteFile(ctx context.Context, accessID string, filename string, opts DeleteFileOptions) error {
 	access, err := h.next.GetAccess(ctx, accessID, GetAccessOptions{Resolved: true})
 	if err != nil {
 		logs.Error("could not get access details", logs.Err(err))
@@ -298,7 +298,7 @@ func (h *PolicyHandler) DeleteFile(ctx context.Context, accessID string, filenam
 	return h.next.DeleteFile(ctx, accessID, filename, opts)
 }
 
-func (h *PolicyHandler) SetFileAttributes(ctx context.Context, accessID string, filename string, attrs Attributes, opts SetFileAttributesOptions) error {
+func (h *ACLHandler) SetFileAttributes(ctx context.Context, accessID string, filename string, attrs Attributes, opts SetFileAttributesOptions) error {
 	access, err := h.next.GetAccess(ctx, accessID, GetAccessOptions{Resolved: true})
 	if err != nil {
 		logs.Error("could not get access details", logs.Err(err))
@@ -312,7 +312,7 @@ func (h *PolicyHandler) SetFileAttributes(ctx context.Context, accessID string, 
 	return h.next.SetFileAttributes(ctx, accessID, filename, attrs, opts)
 }
 
-func (h *PolicyHandler) GetFileAttributes(ctx context.Context, accessID string, filename string, names []string, opts GetFileAttributesOptions) (Attributes, error) {
+func (h *ACLHandler) GetFileAttributes(ctx context.Context, accessID string, filename string, names []string, opts GetFileAttributesOptions) (Attributes, error) {
 	access, err := h.next.GetAccess(ctx, accessID, GetAccessOptions{Resolved: true})
 	if err != nil {
 		logs.Error("could not get access details", logs.Err(err))
@@ -326,7 +326,7 @@ func (h *PolicyHandler) GetFileAttributes(ctx context.Context, accessID string, 
 	return h.next.GetFileAttributes(ctx, accessID, filename, names, opts)
 }
 
-func (h *PolicyHandler) RenameFile(ctx context.Context, accessID string, filename string, newName string, opts RenameFileOptions) error {
+func (h *ACLHandler) RenameFile(ctx context.Context, accessID string, filename string, newName string, opts RenameFileOptions) error {
 	access, err := h.next.GetAccess(ctx, accessID, GetAccessOptions{Resolved: true})
 	if err != nil {
 		logs.Error("could not get access details", logs.Err(err))
@@ -341,7 +341,7 @@ func (h *PolicyHandler) RenameFile(ctx context.Context, accessID string, filenam
 	return h.next.RenameFile(ctx, accessID, filename, newName, opts)
 }
 
-func (h *PolicyHandler) MoveFile(ctx context.Context, accessID string, filename string, dirname string, opts MoveFileOptions) error {
+func (h *ACLHandler) MoveFile(ctx context.Context, accessID string, filename string, dirname string, opts MoveFileOptions) error {
 	access, err := h.next.GetAccess(ctx, accessID, GetAccessOptions{Resolved: true})
 	if err != nil {
 		logs.Error("could not get access details", logs.Err(err))
@@ -356,7 +356,7 @@ func (h *PolicyHandler) MoveFile(ctx context.Context, accessID string, filename 
 	return h.next.MoveFile(ctx, filename, accessID, dirname, opts)
 }
 
-func (h *PolicyHandler) CopyFile(ctx context.Context, accessID string, filename string, dirname string, opts CopyFileOptions) error {
+func (h *ACLHandler) CopyFile(ctx context.Context, accessID string, filename string, dirname string, opts CopyFileOptions) error {
 	access, err := h.next.GetAccess(ctx, accessID, GetAccessOptions{Resolved: true})
 	if err != nil {
 		logs.Error("could not get access details", logs.Err(err))
@@ -371,7 +371,7 @@ func (h *PolicyHandler) CopyFile(ctx context.Context, accessID string, filename 
 	return h.next.CopyFile(ctx, accessID, filename, dirname, opts)
 }
 
-func (h *PolicyHandler) OpenMultipartSession(ctx context.Context, accessID string, filename string, info MultipartSessionInfo, opts OpenMultipartSessionOptions) (string, error) {
+func (h *ACLHandler) OpenMultipartSession(ctx context.Context, accessID string, filename string, info MultipartSessionInfo, opts OpenMultipartSessionOptions) (string, error) {
 	access, err := h.next.GetAccess(ctx, accessID, GetAccessOptions{Resolved: true})
 	if err != nil {
 		logs.Error("could not get access details", logs.Err(err))
@@ -385,10 +385,10 @@ func (h *PolicyHandler) OpenMultipartSession(ctx context.Context, accessID strin
 	return h.next.OpenMultipartSession(ctx, accessID, filename, info, opts)
 }
 
-func (h *PolicyHandler) WriteFilePart(ctx context.Context, accessID string, content io.Reader, size int64, info ContentPartInfo, opts WriteFilePartOptions) (int64, error) {
+func (h *ACLHandler) WriteFilePart(ctx context.Context, accessID string, content io.Reader, size int64, info ContentPartInfo, opts WriteFilePartOptions) (int64, error) {
 	panic("implement me")
 }
 
-func (h *PolicyHandler) CloseMultipartSession(ctx context.Context, sessionId string, opts CloseMultipartSessionOptions) error {
+func (h *ACLHandler) CloseMultipartSession(ctx context.Context, sessionId string, opts CloseMultipartSessionOptions) error {
 	panic("implement me")
 }

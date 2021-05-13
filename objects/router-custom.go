@@ -2,13 +2,13 @@ package objects
 
 type CustomRouter struct {
 	paramsHandler *ParamsHandler
-	policyHandler *PolicyHandler
+	policyHandler *ACLHandler
 	execHandler   Handler
 }
 
 type objectsHandlersOptions struct {
 	params *ParamsHandler
-	policy *PolicyHandler
+	policy *ACLHandler
 }
 
 type HandlerOption func(*objectsHandlersOptions)
@@ -19,7 +19,7 @@ func WithParamsHandler(handler *ParamsHandler) HandlerOption {
 	}
 }
 
-func WithPolicyHandler(handler *PolicyHandler) HandlerOption {
+func WithPolicyHandler(handler *ACLHandler) HandlerOption {
 	return func(options *objectsHandlersOptions) {
 		options.policy = handler
 	}
@@ -33,7 +33,7 @@ func WithDefaultParamsHandler() HandlerOption {
 
 func WithDefaultPolicyHandler() HandlerOption {
 	return func(options *objectsHandlersOptions) {
-		options.policy = &PolicyHandler{}
+		options.policy = &ACLHandler{}
 	}
 }
 
