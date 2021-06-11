@@ -49,7 +49,7 @@ message FSAccess {
   AccessType type = 5;
   string uri = 6;
   EncryptionInfo encryption = 7;
-  AccessActionRelation action_acl_relation = 8;
+  AccessActionRelation action_permissions = 8;
   bool Folder = 9;
   int64 expire_time = 10;
   string encoded_info = 11;

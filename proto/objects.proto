@@ -12,7 +12,13 @@ message Collection {
   NumberIndex number_index = 4;
   repeated TextIndex text_indexes = 5;
   PropertiesIndex fields_index = 6;
-  PathAccessRules default_action_authorized_users = 7;
+  PathAccessRules action_authorized_users = 7;
+  ACLConfig acl_config = 8;
+}
+
+message ACLConfig {
+  string namespace = 1;
+  string relation_with_created = 2;
 }
 
 message ObjectActionsUsers {
@@ -38,13 +44,13 @@ message Header {
   string created_by = 2;
   int64 created_at = 3;
   int64 size = 4;
+  map<string, ObjectActionsUsers> action_authorized_users_for_paths = 5;
 }
 
 message Object {
   Header header = 1;
   string data = 2;
 }
-
 
 message Patch {
   string object_id = 1;
@@ -57,7 +63,6 @@ message ObjectList {
   uint32 total = 2;
   repeated Object objects = 3;
 }
-
 
 service Objects {
   rpc CreateCollection(CreateCollectionRequest) returns (CreateCollectionResponse);
@@ -73,7 +78,6 @@ service Objects {
   rpc ListObjects(ListObjectsRequest) returns (stream Object);
   rpc SearchObjects(SearchObjectsRequest) returns (stream Object);
 }
-
 
 message CreateCollectionRequest {
   Collection collection = 1;
@@ -151,7 +155,6 @@ message ListObjectsRequest {
   string at = 3;
 }
 message ListObjectsResponse {
-
   ObjectList result = 1;
 }
 

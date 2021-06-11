@@ -25,7 +25,8 @@ message DBObjectSetInfo {
 enum SubjectSetType {
   This = 0;
   Computed = 1;
-  FromTuple = 2;
+  TupleSubjectSet = 2;
+  FromTuple = 3;
 }
 
 message SubjectSet {
