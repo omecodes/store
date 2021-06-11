@@ -185,7 +185,7 @@ func (s *accessSQLManager) resolveFSAccess(ctx context.Context, access *pb.FSAcc
 	resolvedAccess := access
 	accessIDChain := []string{access.Id}
 
-	actionAuthorizeUsers := access.ActionAclRelation
+	actionAuthorizeUsers := access.ActionPermissions
 
 	for resolvedAccess.Type == pb.AccessType_Reference {
 		u, err := url.Parse(access.Uri)
@@ -201,19 +201,19 @@ func (s *accessSQLManager) resolveFSAccess(ctx context.Context, access *pb.FSAcc
 		}
 
 		if actionAuthorizeUsers.Edit == nil {
-			actionAuthorizeUsers.Edit = resolvedAccess.ActionAclRelation.Edit
+			actionAuthorizeUsers.Edit = resolvedAccess.ActionPermissions.Edit
 		}
 
 		if actionAuthorizeUsers.Share == nil {
-			actionAuthorizeUsers.Share = resolvedAccess.ActionAclRelation.Share
+			actionAuthorizeUsers.Share = resolvedAccess.ActionPermissions.Share
 		}
 
 		if actionAuthorizeUsers.View == nil {
-			actionAuthorizeUsers.View = resolvedAccess.ActionAclRelation.View
+			actionAuthorizeUsers.View = resolvedAccess.ActionPermissions.View
 		}
 
 		if actionAuthorizeUsers.Delete == nil {
-			actionAuthorizeUsers.Delete = resolvedAccess.ActionAclRelation.Delete
+			actionAuthorizeUsers.Delete = resolvedAccess.ActionPermissions.Delete
 		}
 
 		for _, src := range accessIDChain {
@@ -227,6 +227,6 @@ func (s *accessSQLManager) resolveFSAccess(ctx context.Context, access *pb.FSAcc
 		logs.Info("resolved access", logs.Details("uri", resolvedAccess.Uri))
 	}
 
-	resolvedAccess.ActionAclRelation = actionAuthorizeUsers
+	resolvedAccess.ActionPermissions = actionAuthorizeUsers
 	return resolvedAccess, nil
 }

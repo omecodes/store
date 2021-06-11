@@ -72,7 +72,7 @@ func (h *ACLHandler) CreateAccess(ctx context.Context, access *pb.FSAccess, opts
 			return err
 		}
 
-		err = h.checkACL(ctx, referencedAccess.ActionAclRelation.Share, referencedAccess.Id)
+		err = h.checkACL(ctx, referencedAccess.ActionPermissions.Share, referencedAccess.Id)
 		if err != nil {
 			return err
 		}
@@ -216,7 +216,7 @@ func (h *ACLHandler) CreateDir(ctx context.Context, accessID string, dirname str
 		return err
 	}
 
-	err = h.checkACL(ctx, access.ActionAclRelation.Edit, accessID)
+	err = h.checkACL(ctx, access.ActionPermissions.Edit, accessID)
 	if err != nil {
 		return err
 	}
@@ -231,7 +231,7 @@ func (h *ACLHandler) WriteFileContent(ctx context.Context, accessID string, file
 		return err
 	}
 
-	err = h.checkACL(ctx, access.ActionAclRelation.Edit, accessID)
+	err = h.checkACL(ctx, access.ActionPermissions.Edit, accessID)
 	if err != nil {
 		return err
 	}
@@ -247,7 +247,7 @@ func (h *ACLHandler) ListDir(ctx context.Context, accessID string, dirname strin
 		return nil, err
 	}
 
-	err = h.checkACL(ctx, access.ActionAclRelation.View, accessID)
+	err = h.checkACL(ctx, access.ActionPermissions.View, accessID)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +261,7 @@ func (h *ACLHandler) ReadFileContent(ctx context.Context, accessID string, filen
 		return nil, 0, err
 	}
 
-	err = h.checkACL(ctx, access.ActionAclRelation.View, accessID)
+	err = h.checkACL(ctx, access.ActionPermissions.View, accessID)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -275,7 +275,7 @@ func (h *ACLHandler) GetFileInfo(ctx context.Context, accessID string, filename 
 		return nil, err
 	}
 
-	err = h.checkACL(ctx, access.ActionAclRelation.View, accessID)
+	err = h.checkACL(ctx, access.ActionPermissions.View, accessID)
 	if err != nil {
 		return nil, err
 	}
@@ -290,7 +290,7 @@ func (h *ACLHandler) DeleteFile(ctx context.Context, accessID string, filename s
 		return err
 	}
 
-	err = h.checkACL(ctx, access.ActionAclRelation.Delete, accessID)
+	err = h.checkACL(ctx, access.ActionPermissions.Delete, accessID)
 	if err != nil {
 		return err
 	}
@@ -305,7 +305,7 @@ func (h *ACLHandler) SetFileAttributes(ctx context.Context, accessID string, fil
 		return err
 	}
 
-	err = h.checkACL(ctx, access.ActionAclRelation.Edit, accessID)
+	err = h.checkACL(ctx, access.ActionPermissions.Edit, accessID)
 	if err != nil {
 		return err
 	}
@@ -319,7 +319,7 @@ func (h *ACLHandler) GetFileAttributes(ctx context.Context, accessID string, fil
 		return nil, err
 	}
 
-	err = h.checkACL(ctx, access.ActionAclRelation.View, accessID)
+	err = h.checkACL(ctx, access.ActionPermissions.View, accessID)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +333,7 @@ func (h *ACLHandler) RenameFile(ctx context.Context, accessID string, filename s
 		return err
 	}
 
-	err = h.checkACL(ctx, access.ActionAclRelation.View, accessID)
+	err = h.checkACL(ctx, access.ActionPermissions.View, accessID)
 	if err != nil {
 		return err
 	}
@@ -348,7 +348,7 @@ func (h *ACLHandler) MoveFile(ctx context.Context, accessID string, filename str
 		return err
 	}
 
-	err = h.checkACL(ctx, access.ActionAclRelation.View, accessID)
+	err = h.checkACL(ctx, access.ActionPermissions.View, accessID)
 	if err != nil {
 		return err
 	}
@@ -363,7 +363,7 @@ func (h *ACLHandler) CopyFile(ctx context.Context, accessID string, filename str
 		return err
 	}
 
-	err = h.checkACL(ctx, access.ActionAclRelation.View, accessID)
+	err = h.checkACL(ctx, access.ActionPermissions.View, accessID)
 	if err != nil {
 		return err
 	}
@@ -378,7 +378,7 @@ func (h *ACLHandler) OpenMultipartSession(ctx context.Context, accessID string, 
 		return "", err
 	}
 
-	err = h.checkACL(ctx, access.ActionAclRelation.View, accessID)
+	err = h.checkACL(ctx, access.ActionPermissions.View, accessID)
 	if err != nil {
 		return "", err
 	}
