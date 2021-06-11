@@ -9,7 +9,7 @@ import (
 
 func TestDefaultManager_SaveNamespaceConfig(t *testing.T) {
 	Convey("Save Namespace", t, func() {
-		initDBs()
+		setup()
 
 		man := &DefaultManager{}
 		err := man.SaveNamespaceConfig(fullManagerContext(), docNamespace)
@@ -22,7 +22,7 @@ func TestDefaultManager_SaveNamespaceConfig(t *testing.T) {
 
 func TestDefaultManager_SaveACL(t *testing.T) {
 	Convey("Save ACL", t, func() {
-		initDBs()
+		setup()
 
 		man := &DefaultManager{}
 		for _, a := range dataACL {
@@ -38,7 +38,7 @@ func TestDefaultManager_SaveACL(t *testing.T) {
 
 func TestDefaultManager_CheckACL(t *testing.T) {
 	Convey("Validate that /documents/description.pdf is readable by admin", t, func() {
-		initDBs()
+		setup()
 
 		man := &DefaultManager{}
 		checked, err := man.CheckACL(fullManagerContext(), "admin", &pb.SubjectSet{
@@ -52,7 +52,7 @@ func TestDefaultManager_CheckACL(t *testing.T) {
 
 func TestDefaultManager_CheckACL1(t *testing.T) {
 	Convey("Validate that /documents/description.pdf is readable by admin", t, func() {
-		initDBs()
+		setup()
 
 		man := &DefaultManager{}
 		checked, err := man.CheckACL(fullManagerContext(), "yaba", &pb.SubjectSet{
@@ -66,7 +66,7 @@ func TestDefaultManager_CheckACL1(t *testing.T) {
 
 func TestDefaultManager_CheckACL2(t *testing.T) {
 	Convey("Validate that /documents/description.pdf is readable by admin", t, func() {
-		initDBs()
+		setup()
 
 		fmt.Println()
 
@@ -82,13 +82,13 @@ func TestDefaultManager_CheckACL2(t *testing.T) {
 
 func TestDefaultManager_ResolveUserSet(t *testing.T) {
 	Convey("", t, func() {
-		initDBs()
+		setup()
 	})
 }
 
 func TestCloseDBs(t *testing.T) {
 	Convey("Close DBs", t, func() {
 		defer closeDBs()
-		initDBs()
+		setup()
 	})
 }

@@ -115,7 +115,7 @@ var (
 	}
 
 	/*
-		Situation: representing a doc tree /documents/
+		Context: representing a doc tree /documents/
 		/ (d0)
 		|__ documents(d1)
 		|	|__ description.pdf(d11)
@@ -227,14 +227,14 @@ var (
 	}
 )
 
-func initDBs() {
-	initNamespaceDB()
-	initRelationDB()
+func setup() {
+	setupNamespaceDB()
+	setupRelationsDB()
 }
 
-func initNamespaceDB() {
+func setupNamespaceDB() {
 	if namespaceDbConn == nil {
-		dbFilename := "namespace.db"
+		dbFilename := ":memory:"
 		_ = os.Remove(dbFilename)
 
 		var err error
@@ -246,9 +246,9 @@ func initNamespaceDB() {
 	}
 }
 
-func initRelationDB() {
+func setupRelationsDB() {
 	if tupleDBConn == nil {
-		dbFilename := "tuples.db"
+		dbFilename := ":memory:"
 		_ = os.Remove(dbFilename)
 
 		var err error

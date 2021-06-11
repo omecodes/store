@@ -9,13 +9,13 @@ import (
 
 func TestNewNamespaceSQLStore(t *testing.T) {
 	Convey("SQLite based Namespace tupleStore should be initialized with no errors", t, func() {
-		initNamespaceDB()
+		setupNamespaceDB()
 	})
 }
 
 func TestNamespaceSQLStore_SaveNamespace(t *testing.T) {
 	Convey("Save doc namespace", t, func() {
-		initNamespaceDB()
+		setupNamespaceDB()
 		err := namespaceStore.SaveNamespace(docNamespace)
 		So(err, ShouldBeNil)
 	})
@@ -23,7 +23,7 @@ func TestNamespaceSQLStore_SaveNamespace(t *testing.T) {
 
 func TestNamespaceSQLStore_GetNamespace(t *testing.T) {
 	Convey("Get namespace", t, func() {
-		initNamespaceDB()
+		setupNamespaceDB()
 
 		ns, err := namespaceStore.GetNamespace(docNamespace.Namespace)
 		So(err, ShouldBeNil)
@@ -33,7 +33,7 @@ func TestNamespaceSQLStore_GetNamespace(t *testing.T) {
 
 func TestNamespaceSQLStore_GetRelationDefinition(t *testing.T) {
 	Convey("Get namespace relation definition", t, func() {
-		initNamespaceDB()
+		setupNamespaceDB()
 
 		var def *pb.RelationDefinition
 		def, err := namespaceStore.GetRelationDefinition(docNamespace.Namespace, "viewer")
@@ -45,7 +45,7 @@ func TestNamespaceSQLStore_GetRelationDefinition(t *testing.T) {
 
 func TestNamespaceSQLStore_DeleteNamespace(t *testing.T) {
 	Convey("Delete namespace", t, func() {
-		initNamespaceDB()
+		setupNamespaceDB()
 
 		err := namespaceStore.DeleteNamespace(docNamespace.Namespace)
 		So(err, ShouldBeNil)
@@ -59,6 +59,6 @@ func TestNamespaceSQLStore_DeleteNamespace(t *testing.T) {
 func TestCloseNamespaceDB(t *testing.T) {
 	Convey("Closing database", t, func() {
 		defer closeNamespaceDBConn()
-		initNamespaceDB()
+		setupNamespaceDB()
 	})
 }

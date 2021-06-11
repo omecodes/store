@@ -11,7 +11,7 @@ import (
 
 func TestRelationSQLStore_Save(t *testing.T) {
 	Convey("Save acl relation tuple", t, func() {
-		initRelationDB()
+		setupRelationsDB()
 
 		ctx := context.Background()
 		commitTime := utime.Now()
@@ -31,7 +31,7 @@ func TestRelationSQLStore_Save(t *testing.T) {
 
 func TestRelationSQLStore_Check(t *testing.T) {
 	Convey("Check if relations exists", t, func() {
-		initRelationDB()
+		setupRelationsDB()
 
 		ctx := context.Background()
 		exists, err := tupleStore.Check(ctx, &pb.DBEntry{
@@ -46,7 +46,7 @@ func TestRelationSQLStore_Check(t *testing.T) {
 
 func TestRelationSQLStore_GetSubjectSet(t *testing.T) {
 	Convey("Get subject set for a given relation and object", t, func() {
-		initRelationDB()
+		setupRelationsDB()
 		ctx := context.Background()
 
 		set, err := tupleStore.GetSubjects(ctx, &pb.DBSubjectSetInfo{
@@ -61,7 +61,7 @@ func TestRelationSQLStore_GetSubjectSet(t *testing.T) {
 
 func TestRelationSQLStore_Delete(t *testing.T) {
 	Convey("Check", t, func() {
-		initRelationDB()
+		setupRelationsDB()
 
 		ctx := context.Background()
 		for _, a := range dataACL {
@@ -79,6 +79,6 @@ func TestRelationSQLStore_Delete(t *testing.T) {
 func TestCloseRelationDB(t *testing.T) {
 	Convey("Closing database", t, func() {
 		closeTupleDBConn()
-		initNamespaceDB()
+		setupNamespaceDB()
 	})
 }
