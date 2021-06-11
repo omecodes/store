@@ -2,116 +2,219 @@ package objects
 
 import (
 	"context"
-	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
+	"fmt"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
+	"github.com/omecodes/store/acl"
 	"github.com/omecodes/store/auth"
-	"github.com/omecodes/store/common/cenv"
+	"github.com/omecodes/store/common"
 	pb "github.com/omecodes/store/gen/go/proto"
-	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 type ACLHandler struct {
 	BaseHandler
 }
 
-func (p *ACLHandler) isAdmin(ctx context.Context) bool {
+func (p *ACLHandler) assertUserIsAdmin(ctx context.Context) error {
 	user := auth.Get(ctx)
 	if user == nil {
-		return false
+		return errors.Forbidden("no authenticated user")
 	}
 
-	logs.Info("context user", logs.Details("name", user.Name))
-	return user.Name == "admin"
-}
+	checked, err := acl.CheckACL(ctx, user.Name, &pb.SubjectSet{
+		Object:   common.GroupAdmins,
+		Relation: common.RelationMember,
+	}, acl.CheckACLOptions{})
 
-type celParams struct {
-	auth *pb.User
-	data *pb.Header
-	app  *pb.ClientApp
-}
-
-func (p *ACLHandler) evaluate(_ context.Context, state *celParams, rule string) (bool, error) {
-	if rule == "" || rule == "false" || rule == "(false)" {
-		return false, nil
-	}
-
-	if rule == "true" || rule == "(true)" {
-		return true, nil
-	}
-
-	prg, err := cenv.GetProgram(rule,
-		cel.Declarations(
-			decls.NewVar("user", decls.NewObjectType("User")),
-			decls.NewVar("app", decls.NewObjectType("ClientApp")),
-			decls.NewVar("data", decls.NewObjectType("Header")),
-			decls.NewFunction("now",
-				decls.NewOverload(
-					"now_uint",
-					[]*expr.Type{}, decls.Uint,
-				),
-			),
-		),
-		cel.Types(&pb.User{}, &pb.ClientApp{}, &pb.Header{}),
-	)
 	if err != nil {
-		return false, err
+		logs.Error("Check ACL", logs.Err(err))
+		return errors.Internal("could not check ACL")
 	}
 
-	vars := map[string]interface{}{
-		"user": state.auth,
-		"app":  state.app,
-		"data": state.data,
+	if !checked {
+		return errors.Forbidden("user is not among admins")
 	}
 
-	out, details, err := prg.Eval(vars)
-	if err != nil {
-		logs.Error("cel execution", logs.Details("details", details))
-		return false, err
-	}
-
-	return out.Value().(bool), nil
+	return nil
 }
 
-func (p *ACLHandler) assetActionAllowedOnObject(ctx context.Context, collection string, objectID string, action int32, path string) error {
+func (p *ACLHandler) checkObjectReadable(ctx context.Context, collection string, objectID string, at string) error {
+	header, err := p.next.GetObjectHeader(ctx, collection, objectID, GetHeaderOptions{})
+	if err != nil {
+		return err
+	}
+
+	collectionInfo, err := p.next.GetCollection(ctx, collection, GetCollectionOptions{})
+	if err != nil {
+		return err
+	}
+
+	var username string
+	user := auth.Get(ctx)
+	if user != nil {
+		username = user.Name
+	}
+
+	if header.ActionAuthorizedUsersForPaths == nil {
+		header.ActionAuthorizedUsersForPaths = collectionInfo.ActionAuthorizedUsers.AccessRules
+	}
+
+	var action *pb.ObjectActionsUsers
+	if at != "" {
+		action = header.ActionAuthorizedUsersForPaths[at]
+	}
+
+	if action == nil {
+		logs.Info("acl info are not in object header")
+		action = header.ActionAuthorizedUsersForPaths["$"]
+	}
+
+	if action.View.Object == "" {
+		action.View.Object = fmt.Sprintf("%s:%s", collectionInfo.AclConfig.Namespace, objectID)
+	}
+
+	logs.Info("ACL check:", logs.Details("user", username), logs.Details("set", action.View))
+
+	checked, err := acl.CheckACL(ctx, username, action.View, acl.CheckACLOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		logs.Error("Check ACL", logs.Err(err))
+		return err
+	}
+
+	if !checked {
+		logs.Info("ACL check:", logs.Details("user", username), logs.Details("set", action.View), logs.Details("result", "not checked"))
+		return errors.Unauthorized("permission denied")
+	}
+	return nil
+}
+
+func (p *ACLHandler) checkObjectEditable(ctx context.Context, collection string, objectID string, at string) error {
+	header, err := p.next.GetObjectHeader(ctx, collection, objectID, GetHeaderOptions{})
+	if err != nil {
+		return err
+	}
+
+	collectionInfo, err := p.next.GetCollection(ctx, collection, GetCollectionOptions{})
+	if err != nil {
+		return err
+	}
+
+	var username string
+	user := auth.Get(ctx)
+	if user != nil {
+		username = user.Name
+	}
+
+	if header.ActionAuthorizedUsersForPaths == nil {
+		header.ActionAuthorizedUsersForPaths = collectionInfo.ActionAuthorizedUsers.AccessRules
+	}
+
+	var action *pb.ObjectActionsUsers
+	if at != "" {
+		action = header.ActionAuthorizedUsersForPaths[at]
+	}
+
+	if action == nil {
+		action = header.ActionAuthorizedUsersForPaths["$"]
+	}
+
+	if action.Edit.Object == "" {
+		action.Edit.Object = fmt.Sprintf("%s:%s", collectionInfo.AclConfig.Namespace, objectID)
+	}
+
+	checked, err := acl.CheckACL(ctx, username, action.Edit, acl.CheckACLOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		logs.Error("Check ACL", logs.Err(err))
+		return err
+	}
+
+	if !checked {
+		return errors.Unauthorized("permission denied")
+	}
+	return nil
+}
+
+func (p *ACLHandler) checkObjectDeletable(ctx context.Context, collection string, objectID string, at string) error {
+	header, err := p.next.GetObjectHeader(ctx, collection, objectID, GetHeaderOptions{})
+	if err != nil {
+		return err
+	}
+
+	collectionInfo, err := p.next.GetCollection(ctx, collection, GetCollectionOptions{})
+	if err != nil {
+		return err
+	}
+
+	var username string
+	user := auth.Get(ctx)
+	if user != nil {
+		username = user.Name
+	}
+
+	if header.ActionAuthorizedUsersForPaths == nil {
+		header.ActionAuthorizedUsersForPaths = collectionInfo.ActionAuthorizedUsers.AccessRules
+	}
+
+	var action *pb.ObjectActionsUsers
+	if at != "" {
+		action = header.ActionAuthorizedUsersForPaths[at]
+	}
+
+	if action == nil {
+		action = header.ActionAuthorizedUsersForPaths["$"]
+	}
+
+	if action.Delete.Object == "" {
+		action.Delete.Object = fmt.Sprintf("%s:%s", collectionInfo.AclConfig.Namespace, objectID)
+	}
+
+	checked, err := acl.CheckACL(ctx, username, action.Delete, acl.CheckACLOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		logs.Error("Check ACL", logs.Err(err))
+		return err
+	}
+
+	if !checked {
+		return errors.Unauthorized("permission denied")
+	}
 	return nil
 }
 
 func (p *ACLHandler) CreateCollection(ctx context.Context, collection *pb.Collection, opts CreateCollectionOptions) error {
-	clientApp := auth.App(ctx)
-	if !p.isAdmin(ctx) {
-		if clientApp == nil {
-			return errors.Forbidden("not allowed to create collections")
-		}
+	if !auth.IsAdminAppFromContext(ctx) {
+		return errors.Forbidden("only admin app are allowed to create collections")
 	}
+
+	err := p.assertUserIsAdmin(ctx)
+	if err != nil {
+		return err
+	}
+
 	return p.BaseHandler.CreateCollection(ctx, collection, opts)
 }
 
 func (p *ACLHandler) GetCollection(ctx context.Context, id string, opts GetCollectionOptions) (*pb.Collection, error) {
-	if !p.isAdmin(ctx) {
-		clientApp := auth.App(ctx)
-		if clientApp == nil {
-			return nil, errors.Forbidden("not allowed to get collection info")
-		}
+	if !auth.IsContextFromAuthorizedApp(ctx) {
+		return nil, errors.Forbidden("application is not allowed to read client app access database")
 	}
 	return p.BaseHandler.GetCollection(ctx, id, opts)
 }
 
 func (p *ACLHandler) ListCollections(ctx context.Context, opts ListCollectionOptions) ([]*pb.Collection, error) {
-	if !p.isAdmin(ctx) {
-		clientApp := auth.App(ctx)
-		if clientApp == nil {
-			return nil, errors.Forbidden("not allowed to list collections")
-		}
+	if !auth.IsContextFromAuthorizedApp(ctx) {
+		return nil, errors.Forbidden("application is not allowed to create accessDB")
 	}
 	return p.BaseHandler.ListCollections(ctx, opts)
 }
 
 func (p *ACLHandler) DeleteCollection(ctx context.Context, id string, opts DeleteCollectionOptions) error {
-	clientApp := auth.App(ctx)
-	if !p.isAdmin(ctx) || clientApp == nil {
-		return errors.Forbidden("not allowed to delete collections")
+	if !auth.IsAdminAppFromContext(ctx) {
+		return errors.Forbidden("only admin app are allowed to create collections")
+	}
+
+	err := p.assertUserIsAdmin(ctx)
+	if err != nil {
+		return err
 	}
 	return p.BaseHandler.DeleteCollection(ctx, id, opts)
 }
@@ -122,28 +225,40 @@ func (p *ACLHandler) PutObject(ctx context.Context, collection string, object *p
 		return "", errors.Forbidden("access forbidden")
 	}
 
-	// if no security rules are provided, collection security rules will be used
-	if authorizedUsers == nil {
-		collectionInfo, err := p.next.GetCollection(ctx, collection, GetCollectionOptions{})
-		if err != nil {
-			logs.Error("could not get collection", logs.Err(err))
-			return "", err
-		}
-		authorizedUsers = collectionInfo.DefaultActionAuthorizedUsers
+	collectionInfo, err := p.next.GetCollection(ctx, collection, GetCollectionOptions{})
+	if err != nil {
+		logs.Error("could not get collection", logs.Err(err))
+		return "", err
 	}
-	docRules := authorizedUsers.AccessRules["$"]
-	if docRules == nil {
-		docRules = &pb.ObjectActionsUsers{}
-		authorizedUsers.AccessRules["$"] = docRules
+
+	if object.Header.ActionAuthorizedUsersForPaths == nil {
+		authorizedUsers = collectionInfo.ActionAuthorizedUsers
 	}
 
 	object.Header.CreatedBy = user.Name
 
-	return p.BaseHandler.PutObject(ctx, collection, object, authorizedUsers, indexes, opts)
+	id, err := p.BaseHandler.PutObject(ctx, collection, object, authorizedUsers, indexes, opts)
+	if err != nil {
+		return "", err
+	}
+
+	err = acl.SaveACL(ctx, &pb.ACL{
+		Object:   fmt.Sprintf("%s:%s", collectionInfo.AclConfig.Namespace, id),
+		Relation: collectionInfo.AclConfig.RelationWithCreated,
+		Subject:  user.Name,
+	}, acl.SaveACLOptions{})
+
+	if err != nil {
+		delErr := p.BaseHandler.DeleteObject(ctx, collection, id, DeleteObjectOptions{})
+		if delErr != nil {
+			logs.Error("could not delete new created object", logs.Details("id", id))
+		}
+	}
+	return id, err
 }
 
 func (p *ACLHandler) GetObject(ctx context.Context, collection string, id string, opts GetObjectOptions) (*pb.Object, error) {
-	err := p.assetActionAllowedOnObject(ctx, collection, id, 0, opts.At)
+	err := p.checkObjectReadable(ctx, collection, id, opts.At)
 	if err != nil {
 		return nil, err
 	}
@@ -151,20 +266,16 @@ func (p *ACLHandler) GetObject(ctx context.Context, collection string, id string
 }
 
 func (p *ACLHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts PatchOptions) error {
-	err := p.assetActionAllowedOnObject(ctx, collection, patch.ObjectId, 0, "")
+	err := p.checkObjectEditable(ctx, collection, patch.ObjectId, patch.At)
 	if err != nil {
 		return err
 	}
+
 	return p.BaseHandler.PatchObject(ctx, collection, patch, opts)
 }
 
 func (p *ACLHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, authorizedUsers *pb.PathAccessRules, opts MoveOptions) error {
-	err := p.assetActionAllowedOnObject(ctx, collection, objectID, 0, "")
-	if err != nil {
-		return err
-	}
-
-	err = p.assetActionAllowedOnObject(ctx, collection, objectID, 0, "")
+	err := p.checkObjectDeletable(ctx, collection, objectID, "")
 	if err != nil {
 		return err
 	}
@@ -174,23 +285,22 @@ func (p *ACLHandler) MoveObject(ctx context.Context, collection string, objectID
 		if err != nil {
 			return err
 		}
-		authorizedUsers = collectionInfo.DefaultActionAuthorizedUsers
+		authorizedUsers = collectionInfo.ActionAuthorizedUsers
 	}
 
 	return p.next.MoveObject(ctx, collection, objectID, targetCollection, authorizedUsers, opts)
 }
 
 func (p *ACLHandler) GetObjectHeader(ctx context.Context, collection string, id string, opts GetHeaderOptions) (*pb.Header, error) {
-	err := p.assetActionAllowedOnObject(ctx, collection, id, 0, "")
+	err := p.checkObjectReadable(ctx, collection, id, "")
 	if err != nil {
 		return nil, err
 	}
-
 	return p.BaseHandler.GetObjectHeader(ctx, collection, id, opts)
 }
 
 func (p *ACLHandler) DeleteObject(ctx context.Context, collection string, id string, opts DeleteObjectOptions) error {
-	err := p.assetActionAllowedOnObject(ctx, collection, id, 0, "")
+	err := p.checkObjectDeletable(ctx, collection, id, "")
 	if err != nil {
 		return err
 	}
@@ -205,6 +315,7 @@ func (p *ACLHandler) ListObjects(ctx context.Context, collection string, opts Li
 		return nil, err
 	}
 
+	// todo: filter viewable objects
 	cursorBrowser := cursor.GetBrowser()
 	browser := BrowseFunc(func() (*pb.Object, error) {
 		return cursorBrowser.Browse()
@@ -220,6 +331,7 @@ func (p *ACLHandler) SearchObjects(ctx context.Context, collection string, query
 		return nil, err
 	}
 
+	// todo: filter viewable objects
 	cursorBrowser := cursor.GetBrowser()
 	browser := BrowseFunc(func() (*pb.Object, error) {
 		for {

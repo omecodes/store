@@ -15,7 +15,7 @@ type ParamsHandler struct {
 }
 
 func (p *ParamsHandler) CreateCollection(ctx context.Context, collection *pb.Collection, opts CreateCollectionOptions) error {
-	if collection == nil || collection.DefaultActionAuthorizedUsers == nil || collection.Id == "" {
+	if collection == nil || collection.ActionAuthorizedUsers == nil || collection.Id == "" {
 		return errors.BadRequest("requires a collection with an ID and default security rules")
 	}
 	return p.BaseHandler.CreateCollection(ctx, collection, opts)
