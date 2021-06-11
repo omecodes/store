@@ -47,6 +47,14 @@ func ContextWithManager(parent context.Context, man Manager) context.Context {
 	return context.WithValue(parent, ctxManager{}, man)
 }
 
+func ContextWithTupleStore(parent context.Context, store TupleStore) context.Context {
+	return context.WithValue(parent, ctxTupleStore{}, store)
+}
+
+func ContextWithNamespaceConfigStore(parent context.Context, store NamespaceConfigStore) context.Context {
+	return context.WithValue(parent, ctxNamespaceConfigStore{}, store)
+}
+
 // WithRouterContextUpdaterFunc return a function that updates context with router provider
 func WithRouterContextUpdaterFunc(provider RouterProvider) ome.GrpcContextUpdater {
 	return ome.GrpcContextUpdaterFunc(func(ctx context.Context) (context.Context, error) {
