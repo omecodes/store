@@ -35,5 +35,21 @@ jobs:
     - name: Build
       run: go build store.go
 
-    - name: Test
-      run: go test -v .
+    - name: Test ACL
+      run: |
+        cd acl
+        go get -v -t -d ./...
+        cd -
+
+
+    - name: Test Files
+      run: |
+        cd files
+        go get -v -t -d ./...
+        cd -
+
+    - name: Test Objects
+      run: |
+        cd objects
+        go get -v -t -d ./...
+        cd -
