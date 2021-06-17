@@ -86,7 +86,7 @@ var (
 func setupDatabases() {
 
 	if db == nil {
-		conn, err := sql.Open("sqlite3", "objects.db")
+		conn, err := sql.Open("sqlite3", ":memory:")
 		So(err, ShouldBeNil)
 
 		db, err = NewSqlDB(conn, bome.SQLite3, "store")
@@ -94,7 +94,7 @@ func setupDatabases() {
 	}
 
 	if sm == nil {
-		conn, err := sql.Open("sqlite3", "settings.db")
+		conn, err := sql.Open("sqlite3", ":memory:")
 		So(err, ShouldBeNil)
 
 		sm, err = settings.NewSQLManager(conn, bome.SQLite3, "settings")
@@ -102,7 +102,7 @@ func setupDatabases() {
 	}
 
 	if nsConfigStore == nil {
-		conn, err := sql.Open(bome.SQLite3, "namespaces.db")
+		conn, err := sql.Open(bome.SQLite3, ":memory:")
 		So(err, ShouldBeNil)
 
 		nsConfigStore, err = acl.NewNamespaceSQLStore(conn, bome.SQLite3, "nc")
@@ -110,7 +110,7 @@ func setupDatabases() {
 	}
 
 	if tupleStore == nil {
-		conn, err := sql.Open(bome.SQLite3, "tuples.db")
+		conn, err := sql.Open(bome.SQLite3, ":memory:")
 		So(err, ShouldBeNil)
 
 		tupleStore, err = acl.NewTupleSQLStore(conn, bome.SQLite3, "ts")
