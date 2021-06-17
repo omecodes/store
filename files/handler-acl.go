@@ -112,7 +112,7 @@ func (h *ACLHandler) CreateAccess(ctx context.Context, access *pb.FSAccess, opts
 	return err
 }
 
-func (h *ACLHandler) GetAccessList(ctx context.Context, opts GetAccessListOptions) ([]*pb.FSAccess, error) {
+func (h *ACLHandler) GetAccessList(ctx context.Context, _ GetAccessListOptions) ([]*pb.FSAccess, error) {
 	if !auth.IsContextFromAuthorizedApp(ctx) {
 		return nil, errors.Forbidden("application is not allowed to list accessDB")
 	}
@@ -160,7 +160,7 @@ func (h *ACLHandler) GetAccess(ctx context.Context, accessID string, opts GetAcc
 	return h.next.GetAccess(ctx, accessID, opts)
 }
 
-func (h *ACLHandler) DeleteAccess(ctx context.Context, accessID string, opts DeleteAccessOptions) error {
+func (h *ACLHandler) DeleteAccess(ctx context.Context, accessID string, _ DeleteAccessOptions) error {
 	clientApp := auth.App(ctx)
 	if clientApp == nil {
 		return errors.Forbidden("application is not allowed to create access")
@@ -238,7 +238,7 @@ func (h *ACLHandler) WriteFileContent(ctx context.Context, accessID string, file
 
 // Share checks if the requester user is a sharer of the resource for each share info passed.
 // Then we want to make sure the request user has the roles he wants to share to other users
-func (h *ACLHandler) Share(ctx context.Context, shares []*pb.ShareInfo, opts ShareOptions) error {
+func (h *ACLHandler) Share(ctx context.Context, shares []*pb.ShareInfo, _ ShareOptions) error {
 	if !auth.IsContextFromAuthorizedApp(ctx) {
 		return errors.New("this action must be requested from a registered application client")
 	}
@@ -280,7 +280,7 @@ func (h *ACLHandler) Share(ctx context.Context, shares []*pb.ShareInfo, opts Sha
 	return nil
 }
 
-func (h *ACLHandler) GetShares(ctx context.Context, accessID string, opts GetSharesOptions) ([]*pb.UserRole, error) {
+func (h *ACLHandler) GetShares(ctx context.Context, accessID string, _ GetSharesOptions) ([]*pb.UserRole, error) {
 	if !auth.IsContextFromAuthorizedApp(ctx) {
 		return nil, errors.New("this action must be requested from a registered application client")
 	}
@@ -318,7 +318,7 @@ func (h *ACLHandler) GetShares(ctx context.Context, accessID string, opts GetSha
 
 // DeleteShares checks if the requester user is a sharer of the resource for each share info passed.
 // Then we want to make sure the request user has the roles he wants to delete from other users
-func (h *ACLHandler) DeleteShares(ctx context.Context, shares []*pb.ShareInfo, opts DeleteSharesOptions) error {
+func (h *ACLHandler) DeleteShares(ctx context.Context, shares []*pb.ShareInfo, _ DeleteSharesOptions) error {
 	if !auth.IsContextFromAuthorizedApp(ctx) {
 		return errors.New("this action must be requested from a registered application client")
 	}

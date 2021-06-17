@@ -86,7 +86,7 @@ func (r *relationSQLStore) Check(_ context.Context, entry *pb.DBEntry) (bool, er
 	return o != nil && o.(int64) == 1, nil
 }
 
-func (r *relationSQLStore) GetForObject(ctx context.Context, objectID string, commitTime int64) ([]*pb.DBEntry, error) {
+func (r *relationSQLStore) GetForObject(_ context.Context, objectID string, commitTime int64) ([]*pb.DBEntry, error) {
 	c, err := r.db.Query(queryTupleByObject, tupleScanner, objectID, commitTime)
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func (r *relationSQLStore) GetForObject(ctx context.Context, objectID string, co
 	return entries, err
 }
 
-func (r *relationSQLStore) GetForSubject(ctx context.Context, subjectID string, commitTime int64) ([]*pb.DBEntry, error) {
+func (r *relationSQLStore) GetForSubject(_ context.Context, subjectID string, commitTime int64) ([]*pb.DBEntry, error) {
 	c, err := r.db.Query(queryTupleBySubject, tupleScanner, subjectID, commitTime)
 	if err != nil {
 		return nil, err

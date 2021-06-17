@@ -17,7 +17,6 @@ import (
 
 const (
 	UserHeader = "X-User"
-	AppHeader  = "X-Client-App"
 )
 
 type middlewareOptions struct {

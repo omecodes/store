@@ -2,7 +2,6 @@ package acl
 
 import (
 	"context"
-	ome "github.com/omecodes/libome"
 )
 
 type ctxTupleStore struct{}
@@ -56,16 +55,8 @@ func ContextWithNamespaceConfigStore(parent context.Context, store NamespaceConf
 }
 
 // WithRouterContextUpdaterFunc return a function that updates context with router provider
-func WithRouterContextUpdaterFunc(provider RouterProvider) ome.GrpcContextUpdater {
-	return ome.GrpcContextUpdaterFunc(func(ctx context.Context) (context.Context, error) {
-		return context.WithValue(ctx, ctxRouterProvider{}, provider), nil
-	})
-}
 
 // ContextWithRouterProvider creates a new context that contains ctx values in addition of the passed router provider
-func ContextWithRouterProvider(ctx context.Context, p RouterProvider) context.Context {
-	return context.WithValue(ctx, ctxRouterProvider{}, p)
-}
 
 func GetHandler(ctx context.Context, opt ...RouteOption) Handler {
 	o := ctx.Value(ctxRouterProvider{})

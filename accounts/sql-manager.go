@@ -79,7 +79,7 @@ func (s *sqlManager) Create(ctx context.Context, account *Account) error {
 	return nil
 }
 
-func (s *sqlManager) Get(ctx context.Context, username string) (*Account, error) {
+func (s *sqlManager) Get(_ context.Context, username string) (*Account, error) {
 	encoded, err := s.accounts.Get(username)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (s *sqlManager) Find(ctx context.Context, provider string, originalName str
 	return s.Get(ctx, accountName)
 }
 
-func (s *sqlManager) Search(ctx context.Context, pattern string) ([]string, error) {
+func (s *sqlManager) Search(_ context.Context, pattern string) ([]string, error) {
 	query := fmt.Sprintf("select value from %s_accounts where name like ?", s.tablePrefix)
 	cursor, err := s.accounts.Query(query, bome.StringScanner, fmt.Sprintf("%%%s%%", pattern))
 	if err != nil {

@@ -26,12 +26,6 @@ func MiddlewareWithDB(db DB) MiddlewareOption {
 	}
 }
 
-func WithClientProvider(provider ClientProvider) MiddlewareOption {
-	return func(options *middlewareOptions) {
-		options.clientProvider = provider
-	}
-}
-
 func Middleware(opt ...MiddlewareOption) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -2,13 +2,9 @@ package objects
 
 import (
 	"context"
-	ome "github.com/omecodes/libome"
 )
 
 type ctxDB struct{}
-type ctxACLStore struct{}
-type ctxACL struct{}
-type ctxCELPolicyEnv struct{}
 type ctxRouterProvider struct{}
 
 func ContextWithStore(parent context.Context, db DB) context.Context {
@@ -21,12 +17,6 @@ func Get(ctx context.Context) DB {
 		return nil
 	}
 	return o.(DB)
-}
-
-func WithRouterProviderContextUpdater(provider RouterProvider) ome.GrpcContextUpdater {
-	return ome.GrpcContextUpdaterFunc(func(ctx context.Context) (context.Context, error) {
-		return context.WithValue(ctx, ctxRouterProvider{}, provider), nil
-	})
 }
 
 // ContextWithRouterProvider updates context by adding a RouterProvider object in its values

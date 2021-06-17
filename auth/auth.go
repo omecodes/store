@@ -7,58 +7,12 @@ import (
 	pb "github.com/omecodes/store/gen/go/proto"
 	"strings"
 
-	"google.golang.org/grpc/metadata"
-
 	"github.com/omecodes/errors"
 	ome "github.com/omecodes/libome"
 )
 
 type InitClientAppSessionRequest struct {
 	ClientApp *pb.ClientApp `json:"client,omitempty"`
-}
-
-func BasicContextUpdater(ctx context.Context) (context.Context, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return ctx, nil
-	}
-
-	authorizationParts := strings.SplitN(md.Get("authorization")[0], " ", 2)
-	authType := strings.ToLower(authorizationParts[0])
-	var authorization string
-	if len(authorizationParts) > 1 {
-		authorization = authorizationParts[1]
-	}
-
-	if authType == "basic" {
-		if authorization == "" {
-			return ctx, errors.BadRequest("malformed authorization value")
-		}
-		return updateContextWithBasic(ctx, authorization)
-	}
-	return ctx, nil
-}
-
-func OAuth2ContextUpdater(ctx context.Context) (context.Context, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return ctx, nil
-	}
-
-	authorizationParts := strings.SplitN(md.Get("authorization")[0], " ", 2)
-	authType := strings.ToLower(authorizationParts[0])
-	var authorization string
-	if len(authorizationParts) > 1 {
-		authorization = authorizationParts[1]
-	}
-
-	if authType == "bearer" {
-		if authorization == "" {
-			return ctx, errors.BadRequest("malformed authorization value")
-		}
-		return updateContextWithOauth2(ctx, authorization)
-	}
-	return ctx, nil
 }
 
 func updateContextWithBasic(ctx context.Context, authorization string) (context.Context, error) {

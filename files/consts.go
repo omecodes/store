@@ -7,7 +7,7 @@ const (
 
 	fileNamespace   = "file"
 	accessNamespace = "access"
-	groupNamespace  = "group"
+	//groupNamespace  = "group"
 
 	relationMember = "member"
 	relationOwner  = "owner"

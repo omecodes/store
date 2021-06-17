@@ -104,14 +104,6 @@ func (d *DefaultManager) GetSubjectACL(ctx context.Context, subjectID string) ([
 	return list, err
 }
 
-func (d *DefaultManager) FindObjects(ctx context.Context, subject string, relation string, namespaceID string) ([]string, error) {
-	return nil, nil
-}
-
-func (d *DefaultManager) FindSubjects(ctx context.Context, relation string, objectID string) ([]string, error) {
-	return nil, nil
-}
-
 func (d *DefaultManager) SaveNamespaceConfig(ctx context.Context, config *pb.NamespaceConfig) error {
 	store := getNamespaceConfigStore(ctx)
 	if store == nil {

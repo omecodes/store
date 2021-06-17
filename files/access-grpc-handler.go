@@ -23,7 +23,7 @@ func (s *accessServerHandler) GetAccess(ctx context.Context, request *pb.GetAcce
 	return &pb.GetAccessResponse{Access: Access}, err
 }
 
-func (s *accessServerHandler) GetAccessList(request *pb.GetAccessListRequest, server pb.AccessManager_GetAccessListServer) error {
+func (s *accessServerHandler) GetAccessList(_ *pb.GetAccessListRequest, server pb.AccessManager_GetAccessListServer) error {
 	accesses, err := GetAccessList(server.Context(), GetAccessListOptions{})
 	if err != nil {
 		return err

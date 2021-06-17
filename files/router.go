@@ -67,24 +67,6 @@ type routesOptions struct {
 
 type RouteOption func(*routesOptions)
 
-func SkipParamsCheck() RouteOption {
-	return func(r *routesOptions) {
-		r.skipParams = true
-	}
-}
-
-func SkipPoliciesCheck() RouteOption {
-	return func(r *routesOptions) {
-		r.skipPolicies = true
-	}
-}
-
-func SkipEncryption() RouteOption {
-	return func(r *routesOptions) {
-		r.skipEncryption = true
-	}
-}
-
 func GetRouteHandler(ctx context.Context, opt ...RouteOption) Handler {
 	o := ctx.Value(ctxRouterProvider{})
 	if o == nil {

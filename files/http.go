@@ -345,12 +345,6 @@ func MiddlewareWithSourceManager(manager AccessManager) MiddlewareOption {
 	}
 }
 
-func MiddlewareWithFsProvider(provider FSProvider) MiddlewareOption {
-	return func(options *middlewareRouteOptions) {
-		options.fsProvider = provider
-	}
-}
-
 func MiddlewareWithRouterProvider(provider RouterProvider) MiddlewareOption {
 	return func(options *middlewareRouteOptions) {
 		options.routerProvider = provider

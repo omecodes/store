@@ -284,13 +284,3 @@ func fullManagerContext() context.Context {
 	ctx = context.WithValue(ctx, ctxNamespaceConfigStore{}, namespaceStore)
 	return ctx
 }
-
-func managerContextWithoutStore() context.Context {
-	ctx := context.WithValue(context.Background(), ctxTupleStore{}, tupleStore)
-	return ctx
-}
-
-func managerContextWithoutNamespace() context.Context {
-	ctx := context.WithValue(context.Background(), ctxNamespaceConfigStore{}, namespaceStore)
-	return ctx
-}

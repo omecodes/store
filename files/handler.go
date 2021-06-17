@@ -89,15 +89,3 @@ func MoveFile(ctx context.Context, sourceID string, filename string, dirname str
 func CopyFile(ctx context.Context, sourceID string, filename string, dirname string, opts CopyFileOptions) error {
 	return GetRouteHandler(ctx).CopyFile(ctx, sourceID, filename, dirname, opts)
 }
-
-func OpenMultipartSession(ctx context.Context, sourceID string, filename string, info MultipartSessionInfo, opts OpenMultipartSessionOptions) (string, error) {
-	return GetRouteHandler(ctx).OpenMultipartSession(ctx, sourceID, filename, info, opts)
-}
-
-func AddContentPart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo, opts WriteFilePartOptions) (int64, error) {
-	return GetRouteHandler(ctx).WriteFilePart(ctx, sessionID, content, size, info, opts)
-}
-
-func CloseMultipartSession(ctx context.Context, sessionId string, opts CloseMultipartSessionOptions) error {
-	return GetRouteHandler(ctx).CloseMultipartSession(ctx, sessionId, opts)
-}

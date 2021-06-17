@@ -7,7 +7,6 @@ require (
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/antlr/antlr4 v0.0.0-20210203043838-a60c32d36933 // indirect
 	github.com/golang/protobuf v1.4.3
-	github.com/google/cel-go v0.7.1
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/sessions v1.2.1
@@ -32,7 +31,6 @@ require (
 	golang.org/x/text v0.3.5
 	golang.org/x/tools v0.0.0-20210108195828-e2f9c7f1fc8e // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20210207032614-bba0dbe2a9ea
 	google.golang.org/grpc v1.35.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect

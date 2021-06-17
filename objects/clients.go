@@ -20,10 +20,6 @@ type ClientProvider interface {
 
 type ctxClientProvider struct{}
 
-func WithObjectsGrpcClientProvider(parent context.Context, provider ClientProvider) context.Context {
-	return context.WithValue(parent, ctxClientProvider{}, provider)
-}
-
 func RouterGrpcClientProvider(ctx context.Context) ClientProvider {
 	o := ctx.Value(ctxClientProvider{})
 	if o == nil {

@@ -324,7 +324,7 @@ func (s *sqlCollection) Patch(ctx context.Context, patch *pb.Patch) error {
 	return nil
 }
 
-func (s *sqlCollection) Delete(ctx context.Context, objectID string) error {
+func (s *sqlCollection) Delete(_ context.Context, objectID string) error {
 	go func() {
 		if der := s.engine.DeleteObjectMappings(objectID); der != nil {
 			logs.Error("failed to delete object index mappings", logs.Err(der))
@@ -341,7 +341,7 @@ func (s *sqlCollection) Delete(ctx context.Context, objectID string) error {
 	return nil
 }
 
-func (s *sqlCollection) Get(ctx context.Context, objectID string, opts GetObjectOptions) (*pb.Object, error) {
+func (s *sqlCollection) Get(_ context.Context, objectID string, opts GetObjectOptions) (*pb.Object, error) {
 	hv, err := s.headers.Get(objectID)
 	if err != nil {
 		logs.Error("Get: could not get object header", logs.Details("id", objectID), logs.Err(err))
@@ -378,7 +378,7 @@ func (s *sqlCollection) Get(ctx context.Context, objectID string, opts GetObject
 	return o, nil
 }
 
-func (s *sqlCollection) Info(ctx context.Context, id string) (*pb.Header, error) {
+func (s *sqlCollection) Info(_ context.Context, id string) (*pb.Header, error) {
 	value, err := s.headers.Get(id)
 	if err != nil {
 		return nil, err
@@ -393,7 +393,7 @@ func (s *sqlCollection) Info(ctx context.Context, id string) (*pb.Header, error)
 	return &info, nil
 }
 
-func (s *sqlCollection) List(ctx context.Context, opts ListOptions) (*Cursor, error) {
+func (s *sqlCollection) List(_ context.Context, opts ListOptions) (*Cursor, error) {
 	if opts.Offset == 0 {
 		opts.Offset = utime.Now()
 	}

@@ -13,18 +13,6 @@ type objectsHandlersOptions struct {
 
 type HandlerOption func(*objectsHandlersOptions)
 
-func WithParamsHandler(handler *ParamsHandler) HandlerOption {
-	return func(options *objectsHandlersOptions) {
-		options.params = handler
-	}
-}
-
-func WithPolicyHandler(handler *ACLHandler) HandlerOption {
-	return func(options *objectsHandlersOptions) {
-		options.policy = handler
-	}
-}
-
 func WithDefaultParamsHandler() HandlerOption {
 	return func(options *objectsHandlersOptions) {
 		options.params = &ParamsHandler{}

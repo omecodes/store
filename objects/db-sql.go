@@ -39,7 +39,7 @@ type sqlStore struct {
 	collections       *bome.JSONMap
 }
 
-func (ms *sqlStore) ResolveCollection(ctx context.Context, name string) (CollectionDB, error) {
+func (ms *sqlStore) ResolveCollection(_ context.Context, name string) (CollectionDB, error) {
 	col, found := ms.loadedCollections.Get(name)
 	if !found || col == nil {
 		encoded, err := ms.collections.Get(name)
@@ -64,7 +64,7 @@ func (ms *sqlStore) ResolveCollection(ctx context.Context, name string) (Collect
 	return col, nil
 }
 
-func (ms *sqlStore) CreateCollection(ctx context.Context, collection *pb.Collection) error {
+func (ms *sqlStore) CreateCollection(_ context.Context, collection *pb.Collection) error {
 	contains, err := ms.collections.Contains(collection.Id)
 	if err != nil {
 		return err
@@ -92,7 +92,7 @@ func (ms *sqlStore) CreateCollection(ctx context.Context, collection *pb.Collect
 	})
 }
 
-func (ms *sqlStore) GetCollection(ctx context.Context, id string) (*pb.Collection, error) {
+func (ms *sqlStore) GetCollection(_ context.Context, id string) (*pb.Collection, error) {
 	encoded, err := ms.collections.Get(id)
 	if err != nil {
 		return nil, err
@@ -103,7 +103,7 @@ func (ms *sqlStore) GetCollection(ctx context.Context, id string) (*pb.Collectio
 	return collection, err
 }
 
-func (ms *sqlStore) ListCollections(ctx context.Context) ([]*pb.Collection, error) {
+func (ms *sqlStore) ListCollections(_ context.Context) ([]*pb.Collection, error) {
 	cursor, err := ms.collections.List()
 	if err != nil {
 		return nil, err
@@ -133,7 +133,7 @@ func (ms *sqlStore) ListCollections(ctx context.Context) ([]*pb.Collection, erro
 	return collections, nil
 }
 
-func (ms *sqlStore) DeleteCollection(ctx context.Context, id string) error {
+func (ms *sqlStore) DeleteCollection(_ context.Context, id string) error {
 	return ms.collections.Delete(id)
 }
 

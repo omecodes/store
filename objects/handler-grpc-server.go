@@ -13,10 +13,6 @@ func NewGRPCHandler() pb.ObjectsServer {
 	return &gRPCGatewayHandler{}
 }
 
-func NewHandler() pb.ObjectsServer {
-	return &handler{}
-}
-
 type gRPCGatewayHandler struct {
 	pb.UnimplementedObjectsServer
 }

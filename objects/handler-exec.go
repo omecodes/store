@@ -12,7 +12,7 @@ type ExecHandler struct {
 	BaseHandler
 }
 
-func (e *ExecHandler) CreateCollection(ctx context.Context, collection *pb.Collection, opts CreateCollectionOptions) error {
+func (e *ExecHandler) CreateCollection(ctx context.Context, collection *pb.Collection, _ CreateCollectionOptions) error {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Error("exec-handler.CreateCollection: missing storage in context")
@@ -22,7 +22,7 @@ func (e *ExecHandler) CreateCollection(ctx context.Context, collection *pb.Colle
 	return storage.CreateCollection(ctx, collection)
 }
 
-func (e *ExecHandler) GetCollection(ctx context.Context, id string, opts GetCollectionOptions) (*pb.Collection, error) {
+func (e *ExecHandler) GetCollection(ctx context.Context, id string, _ GetCollectionOptions) (*pb.Collection, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Error("exec-handler.GetCollection: missing storage in context")
@@ -32,7 +32,7 @@ func (e *ExecHandler) GetCollection(ctx context.Context, id string, opts GetColl
 	return storage.GetCollection(ctx, id)
 }
 
-func (e *ExecHandler) ListCollections(ctx context.Context, opts ListCollectionOptions) ([]*pb.Collection, error) {
+func (e *ExecHandler) ListCollections(ctx context.Context, _ ListCollectionOptions) ([]*pb.Collection, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Error("exec-handler.ListCollections: missing storage in context")
@@ -42,7 +42,7 @@ func (e *ExecHandler) ListCollections(ctx context.Context, opts ListCollectionOp
 	return storage.ListCollections(ctx)
 }
 
-func (e *ExecHandler) DeleteCollection(ctx context.Context, id string, opts DeleteCollectionOptions) error {
+func (e *ExecHandler) DeleteCollection(ctx context.Context, id string, _ DeleteCollectionOptions) error {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Error("exec-handler.PutObject: missing storage in context")
@@ -52,7 +52,7 @@ func (e *ExecHandler) DeleteCollection(ctx context.Context, id string, opts Dele
 	return storage.DeleteCollection(ctx, id)
 }
 
-func (e *ExecHandler) PutObject(ctx context.Context, collection string, object *pb.Object, security *pb.PathAccessRules, indexes []*pb.TextIndex, opts PutOptions) (string, error) {
+func (e *ExecHandler) PutObject(ctx context.Context, collection string, object *pb.Object, _ *pb.PathAccessRules, indexes []*pb.TextIndex, _ PutOptions) (string, error) {
 	if object.Header.Id == "" {
 		object.Header.Id = uuid.New().String()
 	}
@@ -71,7 +71,7 @@ func (e *ExecHandler) PutObject(ctx context.Context, collection string, object *
 	return object.Header.Id, nil
 }
 
-func (e *ExecHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts PatchOptions) error {
+func (e *ExecHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, _ PatchOptions) error {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("missing storage in context")
@@ -80,7 +80,7 @@ func (e *ExecHandler) PatchObject(ctx context.Context, collection string, patch 
 	return storage.Patch(ctx, collection, patch)
 }
 
-func (e *ExecHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *pb.PathAccessRules, opts MoveOptions) error {
+func (e *ExecHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, _ *pb.PathAccessRules, _ MoveOptions) error {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Error("exec-handler.PutObject: missing storage in context")
@@ -105,7 +105,7 @@ func (e *ExecHandler) GetObject(ctx context.Context, collection string, id strin
 	return storage.Get(ctx, collection, id, opts)
 }
 
-func (e *ExecHandler) GetObjectHeader(ctx context.Context, collection string, id string, opts GetHeaderOptions) (*pb.Header, error) {
+func (e *ExecHandler) GetObjectHeader(ctx context.Context, collection string, id string, _ GetHeaderOptions) (*pb.Header, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("missing DB in context")
@@ -114,7 +114,7 @@ func (e *ExecHandler) GetObjectHeader(ctx context.Context, collection string, id
 	return storage.Info(ctx, collection, id)
 }
 
-func (e *ExecHandler) DeleteObject(ctx context.Context, collection string, id string, opts DeleteObjectOptions) error {
+func (e *ExecHandler) DeleteObject(ctx context.Context, collection string, id string, _ DeleteObjectOptions) error {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("exec-handler.DeleteObjet: missing DB in context")
@@ -134,7 +134,7 @@ func (e *ExecHandler) ListObjects(ctx context.Context, collection string, opts L
 	return storage.List(ctx, collection, opts)
 }
 
-func (e *ExecHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery, opts SearchObjectsOptions) (*Cursor, error) {
+func (e *ExecHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery, _ SearchObjectsOptions) (*Cursor, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Error("exec-handler.SearchObjects: missing storage in context")

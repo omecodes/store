@@ -18,7 +18,7 @@ type gRPCClientHandler struct {
 	BaseHandler
 }
 
-func (g *gRPCClientHandler) CreateCollection(ctx context.Context, collection *pb.Collection, opts CreateCollectionOptions) error {
+func (g *gRPCClientHandler) CreateCollection(ctx context.Context, collection *pb.Collection, _ CreateCollectionOptions) error {
 	client, err := grpcClient(ctx, g.nodeType)
 	if err != nil {
 		return err
@@ -28,7 +28,7 @@ func (g *gRPCClientHandler) CreateCollection(ctx context.Context, collection *pb
 	return err
 }
 
-func (g *gRPCClientHandler) GetCollection(ctx context.Context, id string, opts GetCollectionOptions) (*pb.Collection, error) {
+func (g *gRPCClientHandler) GetCollection(ctx context.Context, id string, _ GetCollectionOptions) (*pb.Collection, error) {
 	client, err := grpcClient(ctx, g.nodeType)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (g *gRPCClientHandler) GetCollection(ctx context.Context, id string, opts G
 	return rsp.Collection, err
 }
 
-func (g *gRPCClientHandler) ListCollections(ctx context.Context, opts ListCollectionOptions) ([]*pb.Collection, error) {
+func (g *gRPCClientHandler) ListCollections(ctx context.Context, _ ListCollectionOptions) ([]*pb.Collection, error) {
 	client, err := grpcClient(ctx, g.nodeType)
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func (g *gRPCClientHandler) ListCollections(ctx context.Context, opts ListCollec
 	return rsp.Collections, err
 }
 
-func (g *gRPCClientHandler) DeleteCollection(ctx context.Context, id string, opts DeleteCollectionOptions) error {
+func (g *gRPCClientHandler) DeleteCollection(ctx context.Context, id string, _ DeleteCollectionOptions) error {
 	client, err := grpcClient(ctx, g.nodeType)
 	if err != nil {
 		return err
@@ -64,7 +64,7 @@ func (g *gRPCClientHandler) DeleteCollection(ctx context.Context, id string, opt
 	return err
 }
 
-func (g *gRPCClientHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.TextIndex, opts PutOptions) (string, error) {
+func (g *gRPCClientHandler) PutObject(ctx context.Context, collection string, object *pb.Object, accessSecurityRules *pb.PathAccessRules, indexes []*pb.TextIndex, _ PutOptions) (string, error) {
 	client, err := grpcClient(ctx, g.nodeType)
 	if err != nil {
 		return "", err
@@ -88,7 +88,7 @@ func (g *gRPCClientHandler) PutObject(ctx context.Context, collection string, ob
 	return rsp.ObjectId, nil
 }
 
-func (g *gRPCClientHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, opts PatchOptions) error {
+func (g *gRPCClientHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, _ PatchOptions) error {
 	client, err := grpcClient(ctx, g.nodeType)
 	if err != nil {
 		return err
@@ -106,7 +106,7 @@ func (g *gRPCClientHandler) PatchObject(ctx context.Context, collection string, 
 	return err
 }
 
-func (g *gRPCClientHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *pb.PathAccessRules, opts MoveOptions) error {
+func (g *gRPCClientHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *pb.PathAccessRules, _ MoveOptions) error {
 	client, err := grpcClient(ctx, g.nodeType)
 	if err != nil {
 		return err
@@ -149,7 +149,7 @@ func (g *gRPCClientHandler) GetObject(ctx context.Context, collection string, id
 	return rsp.Object, nil
 }
 
-func (g *gRPCClientHandler) GetObjectHeader(ctx context.Context, collection string, id string, opts GetHeaderOptions) (*pb.Header, error) {
+func (g *gRPCClientHandler) GetObjectHeader(ctx context.Context, collection string, id string, _ GetHeaderOptions) (*pb.Header, error) {
 	client, err := grpcClient(ctx, g.nodeType)
 	if err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ func (g *gRPCClientHandler) GetObjectHeader(ctx context.Context, collection stri
 	return rsp.Header, nil
 }
 
-func (g *gRPCClientHandler) DeleteObject(ctx context.Context, collection string, id string, opts DeleteObjectOptions) error {
+func (g *gRPCClientHandler) DeleteObject(ctx context.Context, collection string, id string, _ DeleteObjectOptions) error {
 	client, err := grpcClient(ctx, g.nodeType)
 	if err != nil {
 		return err
@@ -218,7 +218,7 @@ func (g *gRPCClientHandler) ListObjects(ctx context.Context, collection string, 
 	return NewCursor(browser, closer), nil
 }
 
-func (g *gRPCClientHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery, opts SearchObjectsOptions) (*Cursor, error) {
+func (g *gRPCClientHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery, _ SearchObjectsOptions) (*Cursor, error) {
 	client, err := grpcClient(ctx, g.nodeType)
 	if err != nil {
 		return nil, err

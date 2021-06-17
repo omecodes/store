@@ -80,14 +80,14 @@ func (a *Access) middlewareUpdateContext(next http.Handler) http.Handler {
 	})
 }
 
-func (a *Access) provideFilesRouter(ctx context.Context) files.Router {
+func (a *Access) provideFilesRouter(_ context.Context) files.Router {
 	return files.NewCustomRouter(
 		files.NewHandlerServiceClient(common.ServiceTypeFilesStorage),
 		files.WithDefaultPolicyHandler(),
 	)
 }
 
-func (a *Access) provideObjectsRouter(ctx context.Context) objects.Router {
+func (a *Access) provideObjectsRouter(_ context.Context) objects.Router {
 	return objects.NewCustomRouter(
 		objects.NewGRPCObjectsClientHandler(common.ServiceTypeObjectsStorage),
 		objects.WithDefaultPolicyHandler(),

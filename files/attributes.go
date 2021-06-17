@@ -12,18 +12,19 @@ type Attribute interface {
 	Value() string
 }
 
+// AttrPathHistory = AttrPrefix + "path-history"
+// AttrSize        = AttrPrefix + "size"
+// AttrCreatedBy   = AttrPrefix + "created-by"
+// AttrCreatedAt   = AttrPrefix + "created-at"
+// AttrHash        = AttrPrefix + "hash"
+
 const (
 	AttrPrefix = "store-"
 
-	AttrPathHistory = AttrPrefix + "path-history"
-	AttrSize        = AttrPrefix + "size"
-	AttrCreatedBy   = AttrPrefix + "created-by"
-	AttrCreatedAt   = AttrPrefix + "created-at"
-	AttrHash        = AttrPrefix + "hash"
 	AttrPermissions = AttrPrefix + "permissions"
 )
 
-func NewAttributesHolder() *AttributesHolder {
+/*func NewAttributesHolder() *AttributesHolder {
 	return &AttributesHolder{
 		Attributes: Attributes{},
 	}
@@ -33,22 +34,22 @@ func HoldAttributes(attrs Attributes) *AttributesHolder {
 	return &AttributesHolder{
 		Attributes: attrs,
 	}
-}
+} */
 
 type AttributesHolder struct {
 	Attributes  Attributes
 	permissions *pb.AccessActionRelation
 }
 
-func (h *AttributesHolder) SetPermissions(perms *pb.AccessActionRelation) error {
+func (h *AttributesHolder) SetPermissions(_ *pb.AccessActionRelation) error {
 	return nil
 }
 
-func (h *AttributesHolder) SetEncodedPermissions(encoded string) error {
+func (h *AttributesHolder) SetEncodedPermissions(_ string) error {
 	return nil
 }
 
-func (h *AttributesHolder) AddReadPermissions(permission *pb.AccessActionRelation) {
+func (h *AttributesHolder) AddReadPermissions(_ *pb.AccessActionRelation) {
 
 }
 

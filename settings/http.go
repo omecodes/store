@@ -19,7 +19,7 @@ func MiddlewareWithManager(manager Manager) mux.MiddlewareFunc {
 	}
 }
 
-func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
+func MuxRouter() http.Handler {
 	r := mux.NewRouter()
 	r.Name("SetSettings").Methods(http.MethodPut).Path(common.ApiSetSettingsRoute).Handler(http.HandlerFunc(HTTPHandleSetSettings))
 	r.Name("GetSettings").Methods(http.MethodGet).Path(common.ApiGetSettingsRoute).Handler(http.HandlerFunc(HTTPHandleGetSettings))

@@ -148,12 +148,6 @@ func userContext(ctx context.Context, name string) context.Context {
 
 // this create a context as if it was created by the authentication interceptor when
 // receiving a request from a user by the means of a registered app client
-func userContextFromRegisteredApplication(ctx context.Context, name string) context.Context {
-	return userContext(clientAppContext(ctx), name)
-}
-
-// this create a context as if it was created by the authentication interceptor when
-// receiving a request from a user by the means of a registered app client
 func fullAdminContext() context.Context {
 	return userContext(adminAppContext(baseContext()), "admin")
 }

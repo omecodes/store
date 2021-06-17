@@ -1,8 +1,6 @@
 package common
 
 const (
-	GroupAdmins = "group:admins"
-
-	RelationOwner  = "owner"
+	GroupAdmins    = "group:admins"
 	RelationMember = "member"
 )

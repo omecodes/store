@@ -9,6 +9,5 @@ const (
 )
 
 const (
-	ServiceMetaAPIPath     = "api-path"
-	ServiceMetaCertificate = "certificate"
+	ServiceMetaAPIPath = "api-path"
 )

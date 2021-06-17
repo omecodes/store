@@ -45,10 +45,6 @@ const insertWord = `
 insert into $prefix$_words values(?, ?);
 `
 
-const deleteObjectWordMappings = `
-delete $prefix$_words where id=?;
-`
-
 const insertNumber = `
 insert into $prefix$_numbers values(?, ?);
 `

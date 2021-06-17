@@ -17,7 +17,7 @@ type ServiceClientHandler struct {
 	clientType uint32
 }
 
-func (h *ServiceClientHandler) CreateAccess(ctx context.Context, source *pb.FSAccess, opts CreateAccessOptions) error {
+func (h *ServiceClientHandler) CreateAccess(ctx context.Context, source *pb.FSAccess, _ CreateAccessOptions) error {
 	client, err := NewSourcesServiceClient(ctx, h.clientType)
 	if err != nil {
 		return err
@@ -27,7 +27,7 @@ func (h *ServiceClientHandler) CreateAccess(ctx context.Context, source *pb.FSAc
 	return err
 }
 
-func (h *ServiceClientHandler) GetAccessList(ctx context.Context, opts GetAccessListOptions) ([]*pb.FSAccess, error) {
+func (h *ServiceClientHandler) GetAccessList(ctx context.Context, _ GetAccessListOptions) ([]*pb.FSAccess, error) {
 	client, err := NewSourcesServiceClient(ctx, h.clientType)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (h *ServiceClientHandler) GetAccessList(ctx context.Context, opts GetAccess
 	return sources, nil
 }
 
-func (h *ServiceClientHandler) GetAccess(ctx context.Context, accessID string, opts GetAccessOptions) (*pb.FSAccess, error) {
+func (h *ServiceClientHandler) GetAccess(ctx context.Context, accessID string, _ GetAccessOptions) (*pb.FSAccess, error) {
 	client, err := NewSourcesServiceClient(ctx, h.clientType)
 	if err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ func (h *ServiceClientHandler) GetAccess(ctx context.Context, accessID string, o
 	return rsp.Access, nil
 }
 
-func (h *ServiceClientHandler) DeleteAccess(ctx context.Context, accessID string, opts DeleteAccessOptions) error {
+func (h *ServiceClientHandler) DeleteAccess(ctx context.Context, accessID string, _ DeleteAccessOptions) error {
 	client, err := NewSourcesServiceClient(ctx, h.clientType)
 	if err != nil {
 		return err
@@ -90,7 +90,7 @@ func (h *ServiceClientHandler) DeleteAccess(ctx context.Context, accessID string
 	return stream.Send(&pb.DeleteAccessRequest{AccessId: accessID})
 }
 
-func (h *ServiceClientHandler) CreateDir(ctx context.Context, accessID string, dirname string, opts CreateDirOptions) error {
+func (h *ServiceClientHandler) CreateDir(ctx context.Context, accessID string, dirname string, _ CreateDirOptions) error {
 	client, err := NewClient(ctx, h.clientType)
 	if err != nil {
 		return err
@@ -139,7 +139,7 @@ func (h *ServiceClientHandler) ReadFileContent(ctx context.Context, accessID str
 	return rsp.Data, rsp.Length, nil
 }
 
-func (h *ServiceClientHandler) ListDir(ctx context.Context, accessID string, dirname string, opts ListDirOptions) (*DirContent, error) {
+func (h *ServiceClientHandler) ListDir(ctx context.Context, accessID string, dirname string, _ ListDirOptions) (*DirContent, error) {
 	client, err := NewClient(ctx, h.clientType)
 	if err != nil {
 		return nil, err
@@ -178,7 +178,7 @@ func (h *ServiceClientHandler) GetFileInfo(ctx context.Context, accessID string,
 	return rsp.File, err
 }
 
-func (h *ServiceClientHandler) DeleteFile(ctx context.Context, accessID string, filename string, opts DeleteFileOptions) error {
+func (h *ServiceClientHandler) DeleteFile(ctx context.Context, accessID string, filename string, _ DeleteFileOptions) error {
 	client, err := NewClient(ctx, h.clientType)
 	if err != nil {
 		return err
@@ -191,7 +191,7 @@ func (h *ServiceClientHandler) DeleteFile(ctx context.Context, accessID string, 
 	return err
 }
 
-func (h *ServiceClientHandler) SetFileAttributes(ctx context.Context, accessID string, filename string, attrs Attributes, opts SetFileAttributesOptions) error {
+func (h *ServiceClientHandler) SetFileAttributes(ctx context.Context, accessID string, filename string, attrs Attributes, _ SetFileAttributesOptions) error {
 	client, err := NewClient(ctx, h.clientType)
 	if err != nil {
 		return err
@@ -205,7 +205,7 @@ func (h *ServiceClientHandler) SetFileAttributes(ctx context.Context, accessID s
 	return err
 }
 
-func (h *ServiceClientHandler) GetFileAttributes(ctx context.Context, accessID string, filename string, names []string, opts GetFileAttributesOptions) (Attributes, error) {
+func (h *ServiceClientHandler) GetFileAttributes(ctx context.Context, accessID string, filename string, names []string, _ GetFileAttributesOptions) (Attributes, error) {
 	client, err := NewClient(ctx, h.clientType)
 	if err != nil {
 		return nil, err
@@ -222,7 +222,7 @@ func (h *ServiceClientHandler) GetFileAttributes(ctx context.Context, accessID s
 	return rsp.Attributes, nil
 }
 
-func (h *ServiceClientHandler) RenameFile(ctx context.Context, accessID string, filename string, newName string, opts RenameFileOptions) error {
+func (h *ServiceClientHandler) RenameFile(ctx context.Context, accessID string, filename string, newName string, _ RenameFileOptions) error {
 	client, err := NewClient(ctx, h.clientType)
 	if err != nil {
 		return err
@@ -236,7 +236,7 @@ func (h *ServiceClientHandler) RenameFile(ctx context.Context, accessID string, 
 	return err
 }
 
-func (h *ServiceClientHandler) MoveFile(ctx context.Context, accessID string, filename string, dirname string, opts MoveFileOptions) error {
+func (h *ServiceClientHandler) MoveFile(ctx context.Context, accessID string, filename string, dirname string, _ MoveFileOptions) error {
 	client, err := NewClient(ctx, h.clientType)
 	if err != nil {
 		return err
@@ -250,7 +250,7 @@ func (h *ServiceClientHandler) MoveFile(ctx context.Context, accessID string, fi
 	return err
 }
 
-func (h *ServiceClientHandler) CopyFile(ctx context.Context, accessID string, filename string, dirname string, opts CopyFileOptions) error {
+func (h *ServiceClientHandler) CopyFile(ctx context.Context, accessID string, filename string, dirname string, _ CopyFileOptions) error {
 	client, err := NewClient(ctx, h.clientType)
 	if err != nil {
 		return err
@@ -264,7 +264,7 @@ func (h *ServiceClientHandler) CopyFile(ctx context.Context, accessID string, fi
 	return err
 }
 
-func (h *ServiceClientHandler) OpenMultipartSession(ctx context.Context, accessID string, filename string, info MultipartSessionInfo, opts OpenMultipartSessionOptions) (string, error) {
+func (h *ServiceClientHandler) OpenMultipartSession(ctx context.Context, accessID string, filename string, _ MultipartSessionInfo, _ OpenMultipartSessionOptions) (string, error) {
 	client, err := NewTransfersServiceClient(ctx, h.clientType)
 	if err != nil {
 		return "", err
@@ -281,7 +281,7 @@ func (h *ServiceClientHandler) OpenMultipartSession(ctx context.Context, accessI
 	return rsp.SessionId, nil
 }
 
-func (h *ServiceClientHandler) WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo, opts WriteFilePartOptions) (int64, error) {
+func (h *ServiceClientHandler) WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, _ ContentPartInfo, _ WriteFilePartOptions) (int64, error) {
 	client, err := NewTransfersServiceClient(ctx, h.clientType)
 	if err != nil {
 		return 0, err
@@ -299,7 +299,7 @@ func (h *ServiceClientHandler) WriteFilePart(ctx context.Context, sessionID stri
 	return rsp.Written, nil
 }
 
-func (h *ServiceClientHandler) CloseMultipartSession(ctx context.Context, sessionId string, opts CloseMultipartSessionOptions) error {
+func (h *ServiceClientHandler) CloseMultipartSession(ctx context.Context, sessionId string, _ CloseMultipartSessionOptions) error {
 	client, err := NewTransfersServiceClient(ctx, h.clientType)
 	if err != nil {
 		return err
