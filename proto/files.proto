@@ -2,6 +2,8 @@ syntax = "proto3";
 
 option go_package = "github.com/omecodes/store/proto/gen/go;pb";
 
+import "proto/role.proto";
+
 enum AccessType {
   Default = 0;
   Reference = 1;
@@ -49,16 +51,21 @@ message FSAccess {
   AccessType type = 5;
   string uri = 6;
   EncryptionInfo encryption = 7;
-  AccessActionRelation action_permissions = 8;
-  bool Folder = 9;
-  int64 expire_time = 10;
-  string encoded_info = 11;
+  bool isFolder = 10;
+  int64 expire_time = 11;
+  string encoded_info = 12;
 }
 
 message AccessInfo {
   string access_id = 1;
   int64 free_space = 2;
   int64 total_space = 3;
+}
+
+message ShareInfo {
+  string user = 1;
+  string role = 2;
+  string access_id = 3;
 }
 
 // Access service
@@ -69,7 +76,6 @@ service AccessManager {
   rpc ResolveAccess(ResolveAccessRequest) returns (ResolveAccessResponse);
   rpc DeleteAccess(stream DeleteAccessRequest) returns (DeleteAccessResponse);
 }
-
 
 message CreateAccessRequest {
   FSAccess access = 1;
@@ -99,12 +105,13 @@ message DeleteAccessRequest {
 }
 message DeleteAccessResponse {}
 
-
-
 // Files service
 service Files {
   rpc CreateDir(CreateDirRequest) returns (CreateDirResponse);
   rpc ListDir(ListDirRequest) returns (ListDirResponse);
+  rpc Share(ShareRequest) returns (ShareResponse);
+  rpc GetShares(GetSharesRequest) returns (GetSharesResponse);
+  rpc DeleteShares(DeleteSharesRequest) returns (DeleteSharesResponse);
   rpc GetFile(GetFileRequest) returns (GetFileResponse);
   rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse);
   rpc SetFileAttributes(SetFileAttributesRequest) returns (SetFileAttributesResponse);
@@ -131,6 +138,21 @@ message ListDirResponse {
   uint32 offset = 2;
   uint32 total = 3;
 }
+
+message ShareRequest{
+  repeated ShareInfo info = 1;
+}
+message ShareResponse{}
+
+message GetSharesRequest {
+  repeated UserRole user_roles = 1;
+}
+message GetSharesResponse {}
+
+message DeleteSharesRequest{
+  repeated ShareInfo info = 1;
+}
+message DeleteSharesResponse{}
 
 message GetFileRequest {
   string access_id = 1;

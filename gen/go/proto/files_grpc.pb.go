@@ -308,6 +308,9 @@ var _AccessManager_serviceDesc = grpc.ServiceDesc{
 type FilesClient interface {
 	CreateDir(ctx context.Context, in *CreateDirRequest, opts ...grpc.CallOption) (*CreateDirResponse, error)
 	ListDir(ctx context.Context, in *ListDirRequest, opts ...grpc.CallOption) (*ListDirResponse, error)
+	Share(ctx context.Context, in *ShareRequest, opts ...grpc.CallOption) (*ShareResponse, error)
+	GetShares(ctx context.Context, in *GetSharesRequest, opts ...grpc.CallOption) (*GetSharesResponse, error)
+	DeleteShares(ctx context.Context, in *DeleteSharesRequest, opts ...grpc.CallOption) (*DeleteSharesResponse, error)
 	GetFile(ctx context.Context, in *GetFileRequest, opts ...grpc.CallOption) (*GetFileResponse, error)
 	DeleteFile(ctx context.Context, in *DeleteFileRequest, opts ...grpc.CallOption) (*DeleteFileResponse, error)
 	SetFileAttributes(ctx context.Context, in *SetFileAttributesRequest, opts ...grpc.CallOption) (*SetFileAttributesResponse, error)
@@ -337,6 +340,33 @@ func (c *filesClient) CreateDir(ctx context.Context, in *CreateDirRequest, opts 
 func (c *filesClient) ListDir(ctx context.Context, in *ListDirRequest, opts ...grpc.CallOption) (*ListDirResponse, error) {
 	out := new(ListDirResponse)
 	err := c.cc.Invoke(ctx, "/Files/ListDir", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *filesClient) Share(ctx context.Context, in *ShareRequest, opts ...grpc.CallOption) (*ShareResponse, error) {
+	out := new(ShareResponse)
+	err := c.cc.Invoke(ctx, "/Files/Share", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *filesClient) GetShares(ctx context.Context, in *GetSharesRequest, opts ...grpc.CallOption) (*GetSharesResponse, error) {
+	out := new(GetSharesResponse)
+	err := c.cc.Invoke(ctx, "/Files/GetShares", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *filesClient) DeleteShares(ctx context.Context, in *DeleteSharesRequest, opts ...grpc.CallOption) (*DeleteSharesResponse, error) {
+	out := new(DeleteSharesResponse)
+	err := c.cc.Invoke(ctx, "/Files/DeleteShares", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -412,6 +442,9 @@ func (c *filesClient) CopyFile(ctx context.Context, in *CopyFileRequest, opts ..
 type FilesServer interface {
 	CreateDir(context.Context, *CreateDirRequest) (*CreateDirResponse, error)
 	ListDir(context.Context, *ListDirRequest) (*ListDirResponse, error)
+	Share(context.Context, *ShareRequest) (*ShareResponse, error)
+	GetShares(context.Context, *GetSharesRequest) (*GetSharesResponse, error)
+	DeleteShares(context.Context, *DeleteSharesRequest) (*DeleteSharesResponse, error)
 	GetFile(context.Context, *GetFileRequest) (*GetFileResponse, error)
 	DeleteFile(context.Context, *DeleteFileRequest) (*DeleteFileResponse, error)
 	SetFileAttributes(context.Context, *SetFileAttributesRequest) (*SetFileAttributesResponse, error)
@@ -431,6 +464,15 @@ func (UnimplementedFilesServer) CreateDir(context.Context, *CreateDirRequest) (*
 }
 func (UnimplementedFilesServer) ListDir(context.Context, *ListDirRequest) (*ListDirResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListDir not implemented")
+}
+func (UnimplementedFilesServer) Share(context.Context, *ShareRequest) (*ShareResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Share not implemented")
+}
+func (UnimplementedFilesServer) GetShares(context.Context, *GetSharesRequest) (*GetSharesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetShares not implemented")
+}
+func (UnimplementedFilesServer) DeleteShares(context.Context, *DeleteSharesRequest) (*DeleteSharesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteShares not implemented")
 }
 func (UnimplementedFilesServer) GetFile(context.Context, *GetFileRequest) (*GetFileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFile not implemented")
@@ -498,6 +540,60 @@ func _Files_ListDir_Handler(srv interface{}, ctx context.Context, dec func(inter
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(FilesServer).ListDir(ctx, req.(*ListDirRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Files_Share_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ShareRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FilesServer).Share(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Files/Share",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FilesServer).Share(ctx, req.(*ShareRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Files_GetShares_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSharesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FilesServer).GetShares(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Files/GetShares",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FilesServer).GetShares(ctx, req.(*GetSharesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Files_DeleteShares_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteSharesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FilesServer).DeleteShares(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Files/DeleteShares",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FilesServer).DeleteShares(ctx, req.(*DeleteSharesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -639,6 +735,18 @@ var _Files_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListDir",
 			Handler:    _Files_ListDir_Handler,
+		},
+		{
+			MethodName: "Share",
+			Handler:    _Files_Share_Handler,
+		},
+		{
+			MethodName: "GetShares",
+			Handler:    _Files_GetShares_Handler,
+		},
+		{
+			MethodName: "DeleteShares",
+			Handler:    _Files_DeleteShares_Handler,
 		},
 		{
 			MethodName: "GetFile",
