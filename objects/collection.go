@@ -2,17 +2,17 @@ package objects
 
 import (
 	"context"
-	se "github.com/omecodes/store/search-engine"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"sync"
 )
 
 type CollectionDB interface {
 
 	// Save saves object content as JSON in database
-	Save(ctx context.Context, object *Object, index ...*se.TextIndex) error
+	Save(ctx context.Context, object *pb.Object, index ...*pb.TextIndex) error
 
-	// Update applies patch to object with id equals patch.ID()
-	Patch(ctx context.Context, patch *Patch) error
+	// Patch applies patch to object with id equals patch.ID()
+	Patch(ctx context.Context, patch *pb.Patch) error
 
 	// Delete removes all content associated with objectID
 	Delete(ctx context.Context, objectID string) error
@@ -21,13 +21,12 @@ type CollectionDB interface {
 	List(ctx context.Context, opts ListOptions) (*Cursor, error)
 
 	// Get gets the object associated with objectID
-	Get(ctx context.Context, objectID string, opts GetOptions) (*Object, error)
+	Get(ctx context.Context, objectID string, opts GetObjectOptions) (*pb.Object, error)
 
 	// Info gets header of the object associated with objectID
-	Info(ctx context.Context, objectID string) (*Header, error)
+	Info(ctx context.Context, objectID string) (*pb.Header, error)
 
-	// Search
-	Search(ctx context.Context, query *se.SearchQuery) (*Cursor, error)
+	Search(ctx context.Context, query *pb.SearchQuery) (*Cursor, error)
 
 	// Clear removes all objects store
 	Clear() error

@@ -10,6 +10,7 @@ import (
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/common/utime"
+	pb "github.com/omecodes/store/gen/go/proto"
 	se "github.com/omecodes/store/search-engine"
 	"github.com/tidwall/gjson"
 	"io"
@@ -19,7 +20,7 @@ import (
 
 const objectScanner = "object"
 
-func NewSQLCollection(collection *Collection, db *sql.DB, dialect string, tablePrefix string) (*sqlCollection, error) {
+func NewSQLCollection(collection *pb.Collection, db *sql.DB, dialect string, tablePrefix string) (*sqlCollection, error) {
 	objectsTableName := tablePrefix + "_objects"
 	objects, err := bome.Build().
 		SetDialect(dialect).
@@ -72,12 +73,12 @@ func NewSQLCollection(collection *Collection, db *sql.DB, dialect string, tableP
 }
 
 type sqlCollection struct {
-	info    *Collection
+	info    *pb.Collection
 	dialect string
 	db      *sql.DB
 	engine  *se.Engine
 
-	indexes []*se.Index
+	indexes []*pb.Index
 
 	objects *bome.JSONMappingList
 	headers *bome.JSONMap
@@ -87,7 +88,7 @@ func (s *sqlCollection) Objects() *bome.JSONMappingList {
 	return s.objects
 }
 
-func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se.TextIndex) error {
+func (s *sqlCollection) Save(ctx context.Context, object *pb.Object, indexes ...*pb.TextIndex) error {
 	if s == nil {
 		return errors.Internal("collection manager is nil")
 	}
@@ -184,7 +185,7 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 			return errors.BadRequest("expecting string value at the index path", errors.Details{Key: index.Path, Value: result.Value()})
 		}
 
-		mp := &se.TextMapping{
+		mp := &pb.TextMapping{
 			Text:     result.Str,
 			Name:     index.Alias,
 			ObjectId: object.Header.Id,
@@ -212,7 +213,7 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 				return errors.BadRequest("expecting number value at the index path", errors.Details{Key: s.info.NumberIndex.Path, Value: result.Value()})
 			}
 
-			mp := &se.NumberMapping{
+			mp := &pb.NumberMapping{
 				Number:   result.Int(),
 				Name:     s.info.NumberIndex.Alias,
 				ObjectId: object.Header.Id,
@@ -256,7 +257,7 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 			return errors.BadRequest("could not encode indexed sub object")
 		}
 
-		mp := &se.PropertiesMapping{
+		mp := &pb.PropertiesMapping{
 			ObjectId: object.Header.Id,
 			Json:     string(value),
 		}
@@ -279,7 +280,7 @@ func (s *sqlCollection) Save(ctx context.Context, object *Object, indexes ...*se
 	return nil
 }
 
-func (s *sqlCollection) Patch(ctx context.Context, patch *Patch) error {
+func (s *sqlCollection) Patch(ctx context.Context, patch *pb.Patch) error {
 	value := sqlJSONSetValue(patch.Data)
 
 	txCtx, objects, err := s.objects.Transaction(ctx)
@@ -323,7 +324,7 @@ func (s *sqlCollection) Patch(ctx context.Context, patch *Patch) error {
 	return nil
 }
 
-func (s *sqlCollection) Delete(ctx context.Context, objectID string) error {
+func (s *sqlCollection) Delete(_ context.Context, objectID string) error {
 	go func() {
 		if der := s.engine.DeleteObjectMappings(objectID); der != nil {
 			logs.Error("failed to delete object index mappings", logs.Err(der))
@@ -340,7 +341,7 @@ func (s *sqlCollection) Delete(ctx context.Context, objectID string) error {
 	return nil
 }
 
-func (s *sqlCollection) Get(ctx context.Context, objectID string, opts GetOptions) (*Object, error) {
+func (s *sqlCollection) Get(_ context.Context, objectID string, opts GetObjectOptions) (*pb.Object, error) {
 	hv, err := s.headers.Get(objectID)
 	if err != nil {
 		logs.Error("Get: could not get object header", logs.Details("id", objectID), logs.Err(err))
@@ -350,8 +351,8 @@ func (s *sqlCollection) Get(ctx context.Context, objectID string, opts GetOption
 		return nil, errors.Internal("could not get object")
 	}
 
-	o := &Object{
-		Header: &Header{},
+	o := &pb.Object{
+		Header: &pb.Header{},
 	}
 
 	err = json.Unmarshal([]byte(hv), o.Header)
@@ -377,13 +378,13 @@ func (s *sqlCollection) Get(ctx context.Context, objectID string, opts GetOption
 	return o, nil
 }
 
-func (s *sqlCollection) Info(ctx context.Context, id string) (*Header, error) {
+func (s *sqlCollection) Info(_ context.Context, id string) (*pb.Header, error) {
 	value, err := s.headers.Get(id)
 	if err != nil {
 		return nil, err
 	}
 
-	var info Header
+	var info pb.Header
 	err = json.Unmarshal([]byte(value), &info)
 	if err != nil {
 		logs.Error("List: failed to decode object header", logs.Details("encoded", value), logs.Err(err))
@@ -392,7 +393,7 @@ func (s *sqlCollection) Info(ctx context.Context, id string) (*Header, error) {
 	return &info, nil
 }
 
-func (s *sqlCollection) List(ctx context.Context, opts ListOptions) (*Cursor, error) {
+func (s *sqlCollection) List(_ context.Context, opts ListOptions) (*Cursor, error) {
 	if opts.Offset == 0 {
 		opts.Offset = utime.Now()
 	}
@@ -407,7 +408,7 @@ func (s *sqlCollection) List(ctx context.Context, opts ListOptions) (*Cursor, er
 		return cursor.Close()
 	})
 
-	browser := BrowseFunc(func() (*Object, error) {
+	browser := BrowseFunc(func() (*pb.Object, error) {
 		if !cursor.HasNext() {
 			return nil, io.EOF
 		}
@@ -415,13 +416,13 @@ func (s *sqlCollection) List(ctx context.Context, opts ListOptions) (*Cursor, er
 		if e != nil {
 			return nil, e
 		}
-		return next.(*Object), nil
+		return next.(*pb.Object), nil
 	})
 
 	return NewCursor(browser, closer), nil
 }
 
-func (s *sqlCollection) Search(ctx context.Context, query *se.SearchQuery) (*Cursor, error) {
+func (s *sqlCollection) Search(ctx context.Context, query *pb.SearchQuery) (*Cursor, error) {
 	ids, err := s.engine.Search(query)
 	if err != nil {
 		return nil, err
@@ -429,8 +430,8 @@ func (s *sqlCollection) Search(ctx context.Context, query *se.SearchQuery) (*Cur
 
 	c := &idsListCursor{
 		ids: ids,
-		getObjectFunc: func(id string) (*Object, error) {
-			return s.Get(ctx, id, GetOptions{})
+		getObjectFunc: func(id string) (*pb.Object, error) {
+			return s.Get(ctx, id, GetObjectOptions{})
 		},
 	}
 	return NewCursor(c, c), nil
@@ -470,17 +471,17 @@ func (s *sqlCollection) Clear() error {
 	return nil
 }
 
-func (s *sqlCollection) validateSearchQuery(query *se.SearchQuery) bool {
+func (s *sqlCollection) validateSearchQuery(query *pb.SearchQuery) bool {
 	switch q := query.Query.(type) {
-	case *se.SearchQuery_Fields:
+	case *pb.SearchQuery_Fields:
 		return s.validatePropertiesSearchingQuery(q.Fields)
 	default:
 		return true
 	}
 }
 
-func (s *sqlCollection) validatePropertiesSearchingQuery(query *se.FieldQuery) bool {
-	var fieldQueries []*se.FieldQuery
+func (s *sqlCollection) validatePropertiesSearchingQuery(query *pb.FieldQuery) bool {
+	var fieldQueries []*pb.FieldQuery
 	fieldQueries = append(fieldQueries, query)
 	for len(fieldQueries) > 0 {
 
@@ -489,59 +490,59 @@ func (s *sqlCollection) validatePropertiesSearchingQuery(query *se.FieldQuery) b
 
 		switch v := q.Bool.(type) {
 
-		case *se.FieldQuery_And:
+		case *pb.FieldQuery_And:
 			for _, ox := range v.And.Queries {
 				fieldQueries = append(fieldQueries, ox)
 			}
 			continue
 
-		case *se.FieldQuery_Or:
+		case *pb.FieldQuery_Or:
 			for _, ox := range v.Or.Queries {
 				fieldQueries = append(fieldQueries, ox)
 			}
 			continue
 
-		case *se.FieldQuery_Contains:
+		case *pb.FieldQuery_Contains:
 			if !s.indexFieldExists(v.Contains.Field) {
 				return false
 			}
 
-		case *se.FieldQuery_StartsWith:
+		case *pb.FieldQuery_StartsWith:
 			if !s.indexFieldExists(v.StartsWith.Field) {
 				return false
 			}
 
-		case *se.FieldQuery_EndsWith:
+		case *pb.FieldQuery_EndsWith:
 			if !s.indexFieldExists(v.EndsWith.Field) {
 				return false
 			}
 
-		case *se.FieldQuery_StrEqual:
+		case *pb.FieldQuery_StrEqual:
 			if !s.indexFieldExists(v.StrEqual.Field) {
 				return false
 			}
 
-		case *se.FieldQuery_Lt:
+		case *pb.FieldQuery_Lt:
 			if !s.indexFieldExists(v.Lt.Field) {
 				return false
 			}
 
-		case *se.FieldQuery_Lte:
+		case *pb.FieldQuery_Lte:
 			if !s.indexFieldExists(v.Lte.Field) {
 				return false
 			}
 
-		case *se.FieldQuery_Gt:
+		case *pb.FieldQuery_Gt:
 			if !s.indexFieldExists(v.Gt.Field) {
 				return false
 			}
 
-		case *se.FieldQuery_Gte:
+		case *pb.FieldQuery_Gte:
 			if !s.indexFieldExists(v.Gte.Field) {
 				return false
 			}
 
-		case *se.FieldQuery_NumbEq:
+		case *pb.FieldQuery_NumbEq:
 			if !s.indexFieldExists(v.NumbEq.Field) {
 				return false
 			}
@@ -568,7 +569,7 @@ func (s *sqlCollection) scanFullObject(row bome.Row) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	object := &Object{
+	object := &pb.Object{
 		Data: data,
 	}
 	err = json.NewDecoder(bytes.NewBufferString(header)).Decode(&object.Header)

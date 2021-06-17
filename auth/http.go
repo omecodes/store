@@ -1,13 +1,12 @@
 package auth
 
 import (
-	"context"
 	"crypto/sha512"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/golang/protobuf/jsonpb"
 	"github.com/omecodes/store/common"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"net/http"
 	"net/url"
 	"strings"
@@ -17,31 +16,6 @@ import (
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/session"
 )
-
-func ToHttpHeaders(ctx context.Context) (http.Header, error) {
-	headers := http.Header{}
-
-	m := &jsonpb.Marshaler{EnumsAsInts: true}
-
-	user := Get(ctx)
-	if user != nil {
-		encodedUser, err := m.MarshalToString(user)
-		if err != nil {
-			return nil, err
-		}
-		headers.Set(UserHeader, encodedUser)
-	}
-
-	app := App(ctx)
-	if user != nil {
-		encodedApp, err := m.MarshalToString(app)
-		if err != nil {
-			return nil, err
-		}
-		headers.Set(AppHeader, encodedApp)
-	}
-	return headers, nil
-}
 
 func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	r := mux.NewRouter()
@@ -229,7 +203,7 @@ func SaveClientApp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var access *ClientApp
+	var access *pb.ClientApp
 	err := json.NewDecoder(r.Body).Decode(&access)
 	if err != nil {
 		logs.Error("failed to decode request body", logs.Err(err))
@@ -260,7 +234,7 @@ func GetClientApp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var access *ClientApp
+	var access *pb.ClientApp
 	err := json.NewDecoder(r.Body).Decode(&access)
 	if err != nil {
 		logs.Error("failed to decode request body", logs.Err(err))
@@ -339,7 +313,7 @@ func DeleteClientApp(w http.ResponseWriter, r *http.Request) {
 }
 
 func SaveUser(w http.ResponseWriter, r *http.Request) {
-	var user *UserCredentials
+	var user *pb.UserCredentials
 
 	ctx := r.Context()
 	requester := Get(ctx)
@@ -411,7 +385,7 @@ func CreateUserWebSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if clientApp.Type != ClientType_web {
+	if clientApp.Type != pb.ClientType_web {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}

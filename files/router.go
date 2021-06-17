@@ -5,7 +5,7 @@ import (
 )
 
 type Router interface {
-	// GetRoute returns a sequence of handler
+	// GetHandler returns a sequence of handler
 	GetHandler(opts ...RouteOption) Handler
 }
 
@@ -46,7 +46,7 @@ func getRoute(opts ...RouteOption) (handler Handler) {
 	}
 
 	if !routes.skipPolicies {
-		handler = &PolicyHandler{BaseHandler: BaseHandler{
+		handler = &ACLHandler{BaseHandler: BaseHandler{
 			next: handler,
 		}}
 	}
@@ -66,24 +66,6 @@ type routesOptions struct {
 }
 
 type RouteOption func(*routesOptions)
-
-func SkipParamsCheck() RouteOption {
-	return func(r *routesOptions) {
-		r.skipParams = true
-	}
-}
-
-func SkipPoliciesCheck() RouteOption {
-	return func(r *routesOptions) {
-		r.skipPolicies = true
-	}
-}
-
-func SkipEncryption() RouteOption {
-	return func(r *routesOptions) {
-		r.skipEncryption = true
-	}
-}
 
 func GetRouteHandler(ctx context.Context, opt ...RouteOption) Handler {
 	o := ctx.Value(ctxRouterProvider{})

@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"github.com/golang/protobuf/jsonpb"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -38,14 +39,14 @@ func ContextWithMeta(parent context.Context) (context.Context, error) {
 func ParseMetaInNewContext(ctx context.Context) (context.Context, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
-		user := &User{}
+		user := &pb.User{}
 		userValues := md.Get(mdUser)
 		err := jsonpb.UnmarshalString(userValues[0], user)
 		if err != nil {
 			return nil, err
 		}
 
-		clientApp := &ClientApp{}
+		clientApp := &pb.ClientApp{}
 		userValues = md.Get(mdApp)
 		err = jsonpb.UnmarshalString(userValues[0], clientApp)
 		if err != nil {

@@ -8,9 +8,9 @@ import (
 	"github.com/omecodes/common/errors"
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/common"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 	"net/http"
-	"strings"
 )
 
 func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
@@ -31,10 +31,10 @@ func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	dataRoute.Name("Download").Methods(http.MethodGet).Handler(http.StripPrefix(common.ApiFileDataRoutePrefix, http.HandlerFunc(HTTPHandleDownloadFile)))
 	dataRoute.Name("Upload").Methods(http.MethodPut, http.MethodPost).Handler(http.StripPrefix(common.ApiFileDataRoutePrefix, http.HandlerFunc(HTTPHandleUploadFile)))
 
-	r.Name("CreateSource").Path(common.ApiCreateFileSource).Methods(http.MethodPut).HandlerFunc(HTTPHandleCreateSource)
-	r.Name("ListSources").Path(common.ApiListFileSources).Methods(http.MethodGet).HandlerFunc(HTTPHandleListSources)
-	r.Name("GetSource").Path(common.ApiGetFileSource).Methods(http.MethodGet).HandlerFunc(HTTPHandleGetSource)
-	r.Name("DeleteSource").Path(common.ApiDeleteFileSource).Methods(http.MethodDelete).HandlerFunc(HTTPHandleDeleteSource)
+	r.Name("CreateSource").Path(common.ApiCreateFileAccess).Methods(http.MethodPut).HandlerFunc(HTTPHandleCreateAccess)
+	r.Name("ListSources").Path(common.ApiListFileAccesses).Methods(http.MethodGet).HandlerFunc(HTTPHandleGetAccessList)
+	r.Name("GetSource").Path(common.ApiGetFileAccess).Methods(http.MethodGet).HandlerFunc(HTTPHandleGetAccess)
+	r.Name("DeleteAccess").Path(common.ApiDeleteFileAccess).Methods(http.MethodDelete).HandlerFunc(HTTPHandleDeleteAccess)
 
 	var handler http.Handler
 	handler = r
@@ -46,7 +46,7 @@ func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 
 func HTTPHandleCreateFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	sourceID, filename := Split(r.URL.Path)
+	accessID, filename := Split(r.URL.Path)
 
 	if r.ContentLength > 0 {
 		var location *FileLocation
@@ -57,14 +57,14 @@ func HTTPHandleCreateFile(w http.ResponseWriter, r *http.Request) {
 		}
 
 		handler := GetRouteHandler(ctx)
-		err = handler.CopyFile(ctx, sourceID, filename, strings.TrimPrefix(location.Filename, sourceID))
+		err = handler.CopyFile(ctx, accessID, filename, filename, CopyFileOptions{})
 		if err != nil {
 			w.WriteHeader(errors.HttpStatus(err))
 			return
 		}
 	}
 
-	err := CreateDir(ctx, sourceID, filename)
+	err := CreateDir(ctx, accessID, filename, CreateDirOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -131,9 +131,10 @@ func HTTPHandlePatchFileTree(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if patchInfo.Rename {
-		err = RenameFile(ctx, sourceID, filename, patchInfo.Value)
+		err = RenameFile(ctx, sourceID, filename, patchInfo.Value, RenameFileOptions{})
 	} else {
-		err = MoveFile(ctx, sourceID, filename, strings.TrimPrefix(patchInfo.Value, sourceID))
+		_, dirname := Split(r.URL.Path)
+		err = MoveFile(ctx, sourceID, filename, dirname, MoveFileOptions{})
 	}
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
@@ -153,7 +154,7 @@ func HTTPHandleSetFileAttributes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handler := GetRouteHandler(ctx)
-	err = handler.SetFileAttributes(ctx, sourceID, filename, attributes)
+	err = handler.SetFileAttributes(ctx, sourceID, filename, attributes, SetFileAttributesOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -167,7 +168,7 @@ func HTTPHandleGetFileAttributes(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 
 	handler := GetRouteHandler(ctx)
-	attributes, err := handler.GetFileAttributes(ctx, sourceID, filename, name)
+	attributes, err := handler.GetFileAttributes(ctx, sourceID, filename, []string{name}, GetFileAttributesOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -247,9 +248,9 @@ func HTTPHandleDownloadFile(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HTTPHandleCreateSource(w http.ResponseWriter, r *http.Request) {
-	var source *Source
-	err := json.NewDecoder(r.Body).Decode(&source)
+func HTTPHandleCreateAccess(w http.ResponseWriter, r *http.Request) {
+	var access *pb.FSAccess
+	err := json.NewDecoder(r.Body).Decode(&access)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -257,7 +258,7 @@ func HTTPHandleCreateSource(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	err = CreateSource(ctx, source)
+	err = CreateAccess(ctx, access, CreateAccessOptions{})
 	if err != nil {
 		logs.Error("could not create source", logs.Err(err))
 		w.WriteHeader(errors.HttpStatus(err))
@@ -265,10 +266,10 @@ func HTTPHandleCreateSource(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HTTPHandleListSources(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleGetAccessList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	sources, err := ListSources(ctx)
+	sources, err := GetAccessList(ctx, GetAccessListOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -276,13 +277,13 @@ func HTTPHandleListSources(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(sources)
 }
 
-func HTTPHandleGetSource(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleGetAccess(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	sourceID := vars[common.ApiRouteVarId]
+	accessID := vars[common.ApiRouteVarId]
 
 	ctx := r.Context()
 
-	source, err := GetSource(ctx, sourceID)
+	source, err := GetAccess(ctx, accessID, GetAccessOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -290,13 +291,13 @@ func HTTPHandleGetSource(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(source)
 }
 
-func HTTPHandleDeleteSource(w http.ResponseWriter, r *http.Request) {
+func HTTPHandleDeleteAccess(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	sourceID := vars[common.ApiRouteVarId]
+	accessID := vars[common.ApiRouteVarId]
 
 	ctx := r.Context()
 
-	err := DeleteSource(ctx, sourceID)
+	err := DeleteAccess(ctx, accessID, DeleteAccessOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HttpStatus(err))
 		return
@@ -304,7 +305,7 @@ func HTTPHandleDeleteSource(w http.ResponseWriter, r *http.Request) {
 }
 
 type middlewareRouteOptions struct {
-	sourceManager  SourceManager
+	sourceManager  AccessManager
 	fsProvider     FSProvider
 	routerProvider RouterProvider
 }
@@ -325,7 +326,7 @@ func Middleware(opts ...MiddlewareOption) mux.MiddlewareFunc {
 			}
 
 			if options.sourceManager != nil {
-				ctx = context.WithValue(ctx, ctxSourceManager{}, options.sourceManager)
+				ctx = context.WithValue(ctx, ctxAccessManager{}, options.sourceManager)
 			}
 
 			if options.routerProvider != nil {
@@ -338,15 +339,9 @@ func Middleware(opts ...MiddlewareOption) mux.MiddlewareFunc {
 
 }
 
-func MiddlewareWithSourceManager(manager SourceManager) MiddlewareOption {
+func MiddlewareWithSourceManager(manager AccessManager) MiddlewareOption {
 	return func(options *middlewareRouteOptions) {
 		options.sourceManager = manager
-	}
-}
-
-func MiddlewareWithFsProvider(provider FSProvider) MiddlewareOption {
-	return func(options *middlewareRouteOptions) {
-		options.fsProvider = provider
 	}
 }
 

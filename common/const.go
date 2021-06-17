@@ -1,24 +1,13 @@
 package common
 
 const (
-	AccessInfoEncryptedSecret     = "encrypted_secret"
-	AccessInfoSecretEncryptParams = "encrypted_secret_params"
+	AdminAuthFile      = "./admin.auth"
+	CookiesKeyFilename = "./cookies.key"
 )
 
 const (
-	AdminAuthFile         = "./admin.auth"
-	CookiesKeyFilename    = "./cookies.key"
-	ServiceAuthSecretFile = "./services.auth"
-)
+	HttpHeaderContentType = "Content-Type"
 
-const (
-	CACertificateFilename = "service-ca.crt"
-	CAKeyFilename         = "service-ca.key"
-)
-
-const (
-	HttpHeaderContentType              = "Content-Type"
-	HttpHeaderContentLength            = "Content-Length"
 	HttpHeaderAccept                   = "Accept"
 	HttpHeaderAccessControlAllowOrigin = "Access-Control-Allow-Origin"
 	HttpHeaderUserAuthorization        = "Authorization"
@@ -28,7 +17,6 @@ const (
 const (
 	ContentTypeJSONStream = "application/stream+json"
 	ContentTypeJSON       = "application/json"
-	AllJSONContentTypes   = ContentTypeJSONStream + "," + ContentTypeJSON
 )
 
 const (
@@ -39,33 +27,24 @@ const (
 	ApiAccountsRoutePrefix = "/api/accounts"
 	ApiSettingsRoutePrefix = "/api/settings"
 
-	ApiQueryParamOffset = "offset"
-	ApiParamAt          = "at"
-	ApiParamName        = "name"
-	ApiParamQuery       = "q"
-	ApiParamUsername    = "username"
-	ApiParamPassword    = "password"
-	ApiQueryParamPath   = "path"
-	ApiParamHeader      = "header"
+	ApiParamName = "name"
+
+	ApiParamUsername = "username"
+	ApiParamPassword = "password"
+
 	ApiParamContinueURL = "continue"
 
-	ApiSetSettingsRoute = "/objects/settings"
-	ApiGetSettingsRoute = "/objects/settings"
+	ApiRouteVarId = "{id}"
 
-	ApiRouteVarId         = "{id}"
-	ApiRouteVarKey        = "{key}"
-	ApiRouteVarSource     = "{source}"
-	ApiRouteVarName       = "{name}"
-	ApiRouteVarCollection = "{collection}"
+	ApiRouteVarIdName = "id"
 
-	ApiRouteVarIdName         = "id"
-	ApiRouteVarKeyName        = "key"
-	ApiRouteVarSourceName     = "source"
-	ApiRouteVarNameName       = "name"
 	ApiRouteVarCollectionName = "collection"
 
 	// API Routes
 	//
+
+	ApiSetSettingsRoute = "/settings"
+	ApiGetSettingsRoute = "/settings"
 
 	ApiLoginRoute = "/login"
 
@@ -98,10 +77,10 @@ const (
 	ApiListObjectsRoute      = "/objects/data/{collection}"
 	ApiSearchObjectsRoute    = "/objects/data/{collection}"
 
-	ApiCreateFileSource          = "/files/sources"
-	ApiListFileSources           = "/files/sources"
-	ApiGetFileSource             = "/files/sources/{id}"
-	ApiDeleteFileSource          = "/files/sources/{id}"
+	ApiCreateFileAccess          = "/files/accesses"
+	ApiListFileAccesses          = "/files/accesses"
+	ApiGetFileAccess             = "/files/accesses/{id}"
+	ApiDeleteFileAccess          = "/files/accesses/{id}"
 	ApiFileTreeRoutePrefix       = "/files/tree"
 	ApiFileAttributesRoutePrefix = "/files/attributes"
 	ApiFileDataRoutePrefix       = "/files/data"

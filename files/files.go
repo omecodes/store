@@ -1,11 +1,44 @@
 package files
 
 import (
+	pb "github.com/omecodes/store/gen/go/proto"
 	"strings"
 )
 
+type CreateAccessOptions struct{}
+
+type GetAccessListOptions struct{}
+
+type GetAccessOptions struct {
+	Resolved bool `json:"resolved,omitempty"`
+}
+
+type DeleteAccessOptions struct{}
+
+type CreateDirOptions struct{}
+
+type SetFileAttributesOptions struct{}
+
+type GetFileAttributesOptions struct{}
+
+type RenameFileOptions struct{}
+
+type MoveFileOptions struct{}
+
+type CopyFileOptions struct{}
+
+type OpenMultipartSessionOptions struct{}
+
+type WriteFilePartOptions struct{}
+
+type CloseMultipartSessionOptions struct{}
+
+type GetFSAccessOptions struct {
+	Resolved bool `json:"resolved,omitempty"`
+}
+
 type FileLocation struct {
-	Source   string `json:"source,omitempty"`
+	AccessID string `json:"access_id,omitempty"`
 	Filename string `json:"filename,omitempty"`
 }
 
@@ -15,9 +48,9 @@ type TreePatchInfo struct {
 }
 
 type DirContent struct {
-	Files  []*File `json:"files,omitempty"`
-	Total  int     `json:"total"`
-	Offset int     `json:"offset"`
+	Files  []*pb.File `json:"files,omitempty"`
+	Total  int        `json:"total"`
+	Offset int        `json:"offset"`
 }
 
 type ListDirOptions struct {
@@ -26,9 +59,8 @@ type ListDirOptions struct {
 }
 
 type WriteOptions struct {
-	Append      bool         `json:"append,omitempty"`
-	Hash        string       `json:"hash,omitempty"`
-	Permissions *Permissions `json:"permissions,omitempty"`
+	Append bool   `json:"append,omitempty"`
+	Hash   string `json:"hash,omitempty"`
 }
 
 type ContentRange struct {
@@ -39,6 +71,12 @@ type ContentRange struct {
 type ReadOptions struct {
 	Range ContentRange `json:"range,omitempty"`
 }
+
+type ShareOptions struct{}
+
+type GetSharesOptions struct{}
+
+type DeleteSharesOptions struct{}
 
 type GetFileOptions struct {
 	WithAttrs bool `json:"with_attrs,omitempty"`

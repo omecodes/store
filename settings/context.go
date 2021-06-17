@@ -2,7 +2,6 @@ package settings
 
 import (
 	"context"
-	"github.com/omecodes/store/common"
 )
 
 type ctxSettings struct{}
@@ -20,8 +19,3 @@ func GetManager(ctx context.Context) Manager {
 }
 
 // WithSettingsContextUpdater creates a context updater that adds permissions to a context
-func WithSettingsContextUpdater(settings Manager) common.ContextUpdaterFunc {
-	return func(parent context.Context) context.Context {
-		return context.WithValue(parent, ctxSettings{}, settings)
-	}
-}

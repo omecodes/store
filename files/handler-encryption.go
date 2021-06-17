@@ -11,22 +11,22 @@ type EncryptionHandler struct {
 	BaseHandler
 }
 
-func (h *EncryptionHandler) WriteFileContent(ctx context.Context, sourceID string, filename string, content io.Reader, size int64, opts WriteOptions) error {
-	source, err := h.next.GetSource(ctx, sourceID)
+func (h *EncryptionHandler) WriteFileContent(ctx context.Context, accessID string, filename string, content io.Reader, size int64, opts WriteOptions) error {
+	source, err := h.next.GetAccess(ctx, accessID, GetAccessOptions{Resolved: true})
 	if err != nil {
 		return err
 	}
 
 	if source.Encryption == nil {
-		return h.next.WriteFileContent(ctx, sourceID, filename, content, size, opts)
+		return h.next.WriteFileContent(ctx, accessID, filename, content, size, opts)
 	}
 
 	encryptStream := crypt.NewEncryptWrapper(nil, crypt.WithBlockSize(4096))
-	return h.next.WriteFileContent(ctx, sourceID, filename, encryptStream.WrapReader(content), size, opts)
+	return h.next.WriteFileContent(ctx, accessID, filename, encryptStream.WrapReader(content), size, opts)
 }
 
 func (h *EncryptionHandler) ReadFileContent(ctx context.Context, sourceID string, filename string, opts ReadOptions) (io.ReadCloser, int64, error) {
-	source, err := h.next.GetSource(ctx, sourceID)
+	source, err := h.next.GetAccess(ctx, sourceID, GetAccessOptions{Resolved: true})
 	if err != nil {
 		return nil, 0, err
 	}
@@ -44,16 +44,16 @@ func (h *EncryptionHandler) ReadFileContent(ctx context.Context, sourceID string
 	return decryptStream.WrapReadCloser(readCloser), size, nil
 }
 
-func (h *EncryptionHandler) WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo) (int64, error) {
-	source, err := h.next.GetSource(ctx, sessionID)
+func (h *EncryptionHandler) WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo, opts WriteFilePartOptions) (int64, error) {
+	source, err := h.next.GetAccess(ctx, sessionID, GetAccessOptions{Resolved: true})
 	if err != nil {
 		return 0, err
 	}
 
 	if source.Encryption == nil {
-		return h.next.WriteFilePart(ctx, sessionID, content, size, info)
+		return h.next.WriteFilePart(ctx, sessionID, content, size, info, opts)
 	}
 
 	encryptStream := crypt.NewEncryptWrapper(nil, crypt.WithBlockSize(4096))
-	return h.next.WriteFilePart(ctx, sessionID, encryptStream.WrapReader(content), size, info)
+	return h.next.WriteFilePart(ctx, sessionID, encryptStream.WrapReader(content), size, info, opts)
 }

@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option go_package = "github.com/omecodes/store/proto/gen/go;pb";
+
+enum ClientType {
+  web = 0;
+  mobile = 1;
+  desktop = 2;
+}
+
+message ClientApp {
+  string key = 1;
+  string secret = 2;
+  ClientType type = 3;
+  bool admin_app = 4;
+  map<string, string> info = 5;
+}
+
+message User {
+  string name = 1;
+}
+
+message UserCredentials {
+  string username = 1;
+  string password = 2;
+}

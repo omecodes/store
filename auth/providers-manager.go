@@ -63,7 +63,7 @@ func (s *sqlProviderManager) Get(name string) (*Provider, error) {
 	return provider, err
 }
 
-func (s *sqlProviderManager) GetAll(hideConfig bool) ([]*Provider, error) {
+func (s *sqlProviderManager) GetAll(_ bool) ([]*Provider, error) {
 	c, err := s.store.List()
 	if err != nil {
 		return nil, err

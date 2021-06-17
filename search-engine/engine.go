@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 	"strings"
 )
@@ -21,21 +22,21 @@ type Engine struct {
 	store     Store
 }
 
-func (e *Engine) Feed(msg *MessageFeed) error {
+func (e *Engine) Feed(msg *pb.MessageFeed) error {
 	switch m := msg.Message.(type) {
-	case *MessageFeed_TextMapping:
+	case *pb.MessageFeed_TextMapping:
 		return e.CreateTextMapping(m.TextMapping)
 
-	case *MessageFeed_NumMapping:
+	case *pb.MessageFeed_NumMapping:
 		return e.CreateNumberMapping(m.NumMapping)
 
-	case *MessageFeed_Delete:
+	case *pb.MessageFeed_Delete:
 	}
 
 	return nil
 }
 
-func (e *Engine) CreateTextMapping(mapping *TextMapping) error {
+func (e *Engine) CreateTextMapping(mapping *pb.TextMapping) error {
 	textAnalyzer := defaultTextAnalyzer()
 	analyzedText := textAnalyzer(mapping.Text)
 
@@ -55,7 +56,7 @@ func (e *Engine) CreateTextMapping(mapping *TextMapping) error {
 	}
 }
 
-func (e *Engine) CreatePropertiesMapping(mapping *PropertiesMapping) error {
+func (e *Engine) CreatePropertiesMapping(mapping *pb.PropertiesMapping) error {
 	var props map[string]interface{}
 	err := json.NewDecoder(bytes.NewBufferString(mapping.Json)).Decode(&props)
 	if err != nil {
@@ -77,7 +78,7 @@ func (e *Engine) CreatePropertiesMapping(mapping *PropertiesMapping) error {
 	return e.store.SavePropertiesMapping(mapping.ObjectId, string(encoded))
 }
 
-func (e *Engine) CreateNumberMapping(m *NumberMapping) error {
+func (e *Engine) CreateNumberMapping(m *pb.NumberMapping) error {
 	return e.store.SaveNumberMapping(m.Number, m.ObjectId)
 }
 
@@ -85,7 +86,7 @@ func (e *Engine) DeleteObjectMappings(id string) error {
 	return e.store.DeleteObjectMappings(id)
 }
 
-func (e *Engine) Search(query *SearchQuery) ([]string, error) {
+func (e *Engine) Search(query *pb.SearchQuery) ([]string, error) {
 	c, err := e.store.Search(query)
 	if err != nil {
 		return nil, err

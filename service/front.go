@@ -142,14 +142,14 @@ func (f *Front) init() error {
 	return nil
 }
 
-func (f *Front) provideFilesRouter(ctx context.Context) files.Router {
+func (f *Front) provideFilesRouter(_ context.Context) files.Router {
 	return files.NewCustomRouter(
 		files.NewHandlerServiceClient(common.ServiceTypeSecurityAccess),
 		files.WithDefaultParamsHandler(),
 	)
 }
 
-func (f *Front) provideObjectsRouter(ctx context.Context) objects.Router {
+func (f *Front) provideObjectsRouter(_ context.Context) objects.Router {
 	return objects.NewCustomRouter(
 		objects.NewGRPCObjectsClientHandler(common.ServiceTypeSecurityAccess),
 		objects.WithDefaultParamsHandler(),
@@ -208,7 +208,7 @@ func (f *Front) objectsHandler() http.Handler {
 	)
 }
 
-func (f *Front) getServiceSecret(name string) (string, error) {
+func (f *Front) getServiceSecret(_ string) (string, error) {
 	return "ome", nil
 }
 

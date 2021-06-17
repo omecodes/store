@@ -3,103 +3,100 @@ package objects
 import (
 	"context"
 	"github.com/omecodes/store/auth"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 
 	"github.com/omecodes/libome/logs"
 )
 
-func NewGRPCHandler() ObjectsServer {
+func NewGRPCHandler() pb.ObjectsServer {
 	return &gRPCGatewayHandler{}
 }
 
-func NewHandler() ObjectsServer {
-	return &handler{}
-}
-
 type gRPCGatewayHandler struct {
-	UnimplementedObjectsServer
+	pb.UnimplementedObjectsServer
 }
 
-func (h *gRPCGatewayHandler) CreateCollection(ctx context.Context, request *CreateCollectionRequest) (*CreateCollectionResponse, error) {
+func (h *gRPCGatewayHandler) CreateCollection(ctx context.Context, request *pb.CreateCollectionRequest) (*pb.CreateCollectionResponse, error) {
 	var err error
-	err = CreateCollection(ctx, request.Collection)
-	return &CreateCollectionResponse{}, err
+	err = CreateCollection(ctx, request.Collection, CreateCollectionOptions{})
+	return &pb.CreateCollectionResponse{}, err
 }
 
-func (h *gRPCGatewayHandler) GetCollection(ctx context.Context, request *GetCollectionRequest) (*GetCollectionResponse, error) {
+func (h *gRPCGatewayHandler) GetCollection(ctx context.Context, request *pb.GetCollectionRequest) (*pb.GetCollectionResponse, error) {
 	var err error
-	collection, err := GetCollection(ctx, request.Id)
-	return &GetCollectionResponse{Collection: collection}, err
+	collection, err := GetCollection(ctx, request.Id, GetCollectionOptions{})
+	return &pb.GetCollectionResponse{Collection: collection}, err
 }
 
-func (h *gRPCGatewayHandler) ListCollections(ctx context.Context, _ *ListCollectionsRequest) (*ListCollectionsResponse, error) {
+func (h *gRPCGatewayHandler) ListCollections(ctx context.Context, _ *pb.ListCollectionsRequest) (*pb.ListCollectionsResponse, error) {
 	var err error
-	collections, err := ListCollections(ctx)
-	return &ListCollectionsResponse{Collections: collections}, err
+	collections, err := ListCollections(ctx, ListCollectionOptions{})
+	return &pb.ListCollectionsResponse{Collections: collections}, err
 }
 
-func (h *gRPCGatewayHandler) DeleteCollection(ctx context.Context, request *DeleteCollectionRequest) (*DeleteCollectionResponse, error) {
+func (h *gRPCGatewayHandler) DeleteCollection(ctx context.Context, request *pb.DeleteCollectionRequest) (*pb.DeleteCollectionResponse, error) {
 	var err error
-	err = DeleteCollection(ctx, request.Id)
-	return &DeleteCollectionResponse{}, err
+	err = DeleteCollection(ctx, request.Id, DeleteCollectionOptions{})
+	return &pb.DeleteCollectionResponse{}, err
 }
 
-func (h *gRPCGatewayHandler) PutObject(ctx context.Context, request *PutObjectRequest) (*PutObjectResponse, error) {
+func (h *gRPCGatewayHandler) PutObject(ctx context.Context, request *pb.PutObjectRequest) (*pb.PutObjectResponse, error) {
 	var err error
-	if request.AccessSecurityRules == nil {
-		request.AccessSecurityRules = &PathAccessRules{}
+	if request.ActionAuthorizedUsers == nil {
+		request.ActionAuthorizedUsers = &pb.PathAccessRules{}
 	}
-	if request.AccessSecurityRules.AccessRules == nil {
-		request.AccessSecurityRules.AccessRules = map[string]*AccessRules{}
+	if request.ActionAuthorizedUsers.AccessRules == nil {
+		request.ActionAuthorizedUsers.AccessRules = map[string]*pb.ObjectActionsUsers{}
 	}
 
-	id, err := PutObject(ctx, "", request.Object, request.AccessSecurityRules, request.Indexes, PutOptions{})
+	id, err := PutObject(ctx, "", request.Object, request.ActionAuthorizedUsers, request.Indexes, PutOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	return &PutObjectResponse{
+	return &pb.PutObjectResponse{
 		ObjectId: id,
 	}, nil
 }
 
-func (h *gRPCGatewayHandler) PatchObject(ctx context.Context, request *PatchObjectRequest) (*PatchObjectResponse, error) {
-	return &PatchObjectResponse{}, PatchObject(ctx, "", request.Patch, PatchOptions{})
+func (h *gRPCGatewayHandler) PatchObject(ctx context.Context, request *pb.PatchObjectRequest) (*pb.PatchObjectResponse, error) {
+	return &pb.PatchObjectResponse{}, PatchObject(ctx, "", request.Patch, PatchOptions{})
 }
 
-func (h *gRPCGatewayHandler) MoveObject(ctx context.Context, request *MoveObjectRequest) (*MoveObjectResponse, error) {
-	return &MoveObjectResponse{}, MoveObject(ctx, request.SourceCollection, request.ObjectId, request.TargetCollection, request.AccessSecurityRules, MoveOptions{})
+func (h *gRPCGatewayHandler) MoveObject(ctx context.Context, request *pb.MoveObjectRequest) (*pb.MoveObjectResponse, error) {
+	return &pb.MoveObjectResponse{}, MoveObject(ctx, request.SourceCollection, request.ObjectId, request.TargetCollection, request.AccessSecurityRules, MoveOptions{})
 }
 
-func (h *gRPCGatewayHandler) GetObject(ctx context.Context, request *GetObjectRequest) (*GetObjectResponse, error) {
+func (h *gRPCGatewayHandler) GetObject(ctx context.Context, request *pb.GetObjectRequest) (*pb.GetObjectResponse, error) {
 	var err error
-	object, err := GetObject(ctx, "", request.ObjectId, GetOptions{
+	object, err := GetObject(ctx, "", request.ObjectId, GetObjectOptions{
 		At:   request.At,
 		Info: request.InfoOnly,
 	})
 
-	return &GetObjectResponse{
+	return &pb.GetObjectResponse{
 		Object: object,
 	}, err
 }
 
-func (h *gRPCGatewayHandler) DeleteObject(ctx context.Context, request *DeleteObjectRequest) (*DeleteObjectResponse, error) {
+func (h *gRPCGatewayHandler) DeleteObject(ctx context.Context, request *pb.DeleteObjectRequest) (*pb.DeleteObjectResponse, error) {
 	var err error
-	err = DeleteObject(ctx, "", request.ObjectId)
-	return &DeleteObjectResponse{}, err
+	err = DeleteObject(ctx, "", request.ObjectId, DeleteObjectOptions{})
+	return &pb.DeleteObjectResponse{}, err
 }
 
-func (h *gRPCGatewayHandler) ObjectInfo(ctx context.Context, request *ObjectInfoRequest) (*ObjectInfoResponse, error) {
+func (h *gRPCGatewayHandler) ObjectInfo(ctx context.Context, request *pb.ObjectInfoRequest) (*pb.ObjectInfoResponse, error) {
 	var err error
-	header, err := GetObjectHeader(ctx, "", request.ObjectId)
+	header, err := GetObjectHeader(ctx, "", request.ObjectId, GetHeaderOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	return &ObjectInfoResponse{Header: header}, nil
+	return &pb.ObjectInfoResponse{Header: header}, nil
 }
 
-func (h *gRPCGatewayHandler) ListObjects(request *ListObjectsRequest, stream Objects_ListObjectsServer) error {
+func (h *gRPCGatewayHandler) ListObjects(request *pb.ListObjectsRequest, stream pb.Objects_ListObjectsServer) error {
 	ctx, err := auth.ParseMetaInNewContext(stream.Context())
 	if err != nil {
 		return err
@@ -137,13 +134,13 @@ func (h *gRPCGatewayHandler) ListObjects(request *ListObjectsRequest, stream Obj
 	}
 }
 
-func (h *gRPCGatewayHandler) SearchObjects(request *SearchObjectsRequest, stream Objects_SearchObjectsServer) error {
+func (h *gRPCGatewayHandler) SearchObjects(request *pb.SearchObjectsRequest, stream pb.Objects_SearchObjectsServer) error {
 	ctx, err := auth.ParseMetaInNewContext(stream.Context())
 	if err != nil {
 		return err
 	}
 
-	cursor, err := SearchObjects(ctx, request.Collection, request.Query)
+	cursor, err := SearchObjects(ctx, request.Collection, request.Query, SearchObjectsOptions{})
 	if err != nil {
 		return err
 	}

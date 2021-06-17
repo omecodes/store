@@ -2,6 +2,7 @@ package files
 
 import (
 	"encoding/json"
+	pb "github.com/omecodes/store/gen/go/proto"
 )
 
 type Attributes map[string]string
@@ -11,18 +12,19 @@ type Attribute interface {
 	Value() string
 }
 
+// AttrPathHistory = AttrPrefix + "path-history"
+// AttrSize        = AttrPrefix + "size"
+// AttrCreatedBy   = AttrPrefix + "created-by"
+// AttrCreatedAt   = AttrPrefix + "created-at"
+// AttrHash        = AttrPrefix + "hash"
+
 const (
 	AttrPrefix = "store-"
 
-	AttrPathHistory = AttrPrefix + "path-history"
-	AttrSize        = AttrPrefix + "size"
-	AttrCreatedBy   = AttrPrefix + "created-by"
-	AttrCreatedAt   = AttrPrefix + "created-at"
-	AttrHash        = AttrPrefix + "hash"
 	AttrPermissions = AttrPrefix + "permissions"
 )
 
-func NewAttributesHolder() *AttributesHolder {
+/*func NewAttributesHolder() *AttributesHolder {
 	return &AttributesHolder{
 		Attributes: Attributes{},
 	}
@@ -32,26 +34,26 @@ func HoldAttributes(attrs Attributes) *AttributesHolder {
 	return &AttributesHolder{
 		Attributes: attrs,
 	}
-}
+} */
 
 type AttributesHolder struct {
 	Attributes  Attributes
-	permissions *Permissions
+	permissions *pb.AccessActionRelation
 }
 
-func (h *AttributesHolder) SetPermissions(perms *Permissions) error {
+func (h *AttributesHolder) SetPermissions(_ *pb.AccessActionRelation) error {
 	return nil
 }
 
-func (h *AttributesHolder) SetEncodedPermissions(encoded string) error {
+func (h *AttributesHolder) SetEncodedPermissions(_ string) error {
 	return nil
 }
 
-func (h *AttributesHolder) AddReadPermissions(permission *Permissions) {
+func (h *AttributesHolder) AddReadPermissions(_ *pb.AccessActionRelation) {
 
 }
 
-func (h *AttributesHolder) GetPermissions() (*Permissions, bool, error) {
+func (h *AttributesHolder) GetPermissions() (*pb.AccessActionRelation, bool, error) {
 	if h.permissions == nil {
 		encoded := h.Attributes[AttrPermissions]
 		if encoded == "" {

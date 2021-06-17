@@ -3,7 +3,7 @@ package objects
 import "context"
 
 type Router interface {
-	// GetRoute returns a sequence of handler
+	// GetHandler returns a sequence of handler
 	GetHandler(opts ...RouteOption) Handler
 }
 
@@ -38,7 +38,7 @@ func getHandler(opts ...RouteOption) (handler Handler) {
 	handler = &ExecHandler{}
 
 	if !routes.skipPolicies {
-		handler = &PolicyHandler{BaseHandler: BaseHandler{
+		handler = &ACLHandler{BaseHandler: BaseHandler{
 			next: handler,
 		}}
 	}

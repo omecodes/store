@@ -4,60 +4,15 @@ import (
 	"context"
 	"encoding/base64"
 	"github.com/omecodes/libome/logs"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"strings"
-
-	"google.golang.org/grpc/metadata"
 
 	"github.com/omecodes/errors"
 	ome "github.com/omecodes/libome"
 )
 
 type InitClientAppSessionRequest struct {
-	ClientApp *ClientApp `json:"client,omitempty"`
-}
-
-func BasicContextUpdater(ctx context.Context) (context.Context, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return ctx, nil
-	}
-
-	authorizationParts := strings.SplitN(md.Get("authorization")[0], " ", 2)
-	authType := strings.ToLower(authorizationParts[0])
-	var authorization string
-	if len(authorizationParts) > 1 {
-		authorization = authorizationParts[1]
-	}
-
-	if authType == "basic" {
-		if authorization == "" {
-			return ctx, errors.BadRequest("malformed authorization value")
-		}
-		return updateContextWithBasic(ctx, authorization)
-	}
-	return ctx, nil
-}
-
-func OAuth2ContextUpdater(ctx context.Context) (context.Context, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return ctx, nil
-	}
-
-	authorizationParts := strings.SplitN(md.Get("authorization")[0], " ", 2)
-	authType := strings.ToLower(authorizationParts[0])
-	var authorization string
-	if len(authorizationParts) > 1 {
-		authorization = authorizationParts[1]
-	}
-
-	if authType == "bearer" {
-		if authorization == "" {
-			return ctx, errors.BadRequest("malformed authorization value")
-		}
-		return updateContextWithOauth2(ctx, authorization)
-	}
-	return ctx, nil
+	ClientApp *pb.ClientApp `json:"client,omitempty"`
 }
 
 func updateContextWithBasic(ctx context.Context, authorization string) (context.Context, error) {
@@ -90,7 +45,7 @@ func updateContextWithBasic(ctx context.Context, authorization string) (context.
 			return ctx, errors.Forbidden("admin authentication failed")
 		}
 
-		return context.WithValue(ctx, ctxUser{}, &User{
+		return context.WithValue(ctx, ctxUser{}, &pb.User{
 			Name: "admin",
 		}), nil
 
@@ -112,7 +67,7 @@ func updateContextWithBasic(ctx context.Context, authorization string) (context.
 		}
 
 		if clientApp.Secret == pass {
-			return context.WithValue(ctx, ctxUser{}, &User{
+			return context.WithValue(ctx, ctxUser{}, &pb.User{
 				Name: "admin",
 			}), nil
 		}
@@ -183,12 +138,12 @@ func updateContextWithOauth2(ctx context.Context, authorization string) (context
 	ctx = context.WithValue(ctx, ctxJWt{}, jwt)
 	o := ctx.Value(ctxUser{})
 	if o != nil {
-		user := o.(*User)
+		user := o.(*pb.User)
 		user.Name = jwt.Claims.Sub
 		return ctx, nil
 
 	} else {
-		return context.WithValue(ctx, ctxUser{}, &User{
+		return context.WithValue(ctx, ctxUser{}, &pb.User{
 			Name: jwt.Claims.Sub,
 		}), nil
 	}

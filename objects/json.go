@@ -11,15 +11,6 @@ type JsonObject struct {
 	object interface{}
 }
 
-func JSONParse(content string) (*JsonObject, error) {
-	j := &JsonObject{}
-	return j, json.Unmarshal([]byte(content), &j.object)
-}
-
-func NewJSON(o interface{}) *JsonObject {
-	return &JsonObject{object: o}
-}
-
 func at(jp string) string {
 	jp = strings.Replace(jp, "/", ".", -1)
 	if strings.HasPrefix(jp, "$.") {

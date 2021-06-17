@@ -18,6 +18,7 @@ import (
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/common"
 	"github.com/omecodes/store/files"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"github.com/omecodes/store/objects"
 	"github.com/omecodes/store/session"
 	"github.com/omecodes/store/settings"
@@ -67,9 +68,9 @@ type Server struct {
 	accountsManager         accounts.Manager
 	authenticationProviders auth.ProviderManager
 	credentialsManager      auth.CredentialsManager
-	accessStore             objects.ACLManager
-	sourceManager           files.SourceManager
-	cookieStore             *sessions.CookieStore
+	//accessStore             objects.ACLManager
+	sourceManager files.AccessManager
+	cookieStore   *sessions.CookieStore
 
 	listener net.Listener
 	Errors   chan error
@@ -129,10 +130,10 @@ func (s *Server) init() error {
 		}
 	}
 
-	s.accessStore, err = objects.NewACLSQLManager(s.db, bome.MySQL, "store_acl")
+	/*s.accessStore, err = objects.NewACLSQLManager(s.db, bome.MySQL, "store_acl")
 	if err != nil {
 		return err
-	}
+	} */
 
 	s.settings, err = settings.NewSQLManager(s.db, bome.MySQL, "store_settings")
 	if err != nil {
@@ -200,7 +201,7 @@ func (s *Server) init() error {
 
 	// Files initialization
 	if s.config.FSRootDir != "" {
-		s.sourceManager, err = files.NewSourceSQLManager(s.db, bome.MySQL, "store")
+		s.sourceManager, err = files.NewAccessSQLManager(s.db, bome.MySQL, "store")
 		if err != nil {
 			return err
 		}
@@ -212,11 +213,11 @@ func (s *Server) init() error {
 		}
 
 		if source == nil {
-			source = &files.Source{
+			source = &pb.FSAccess{
 				Id:          "main",
 				Label:       "Default file source",
 				Description: "",
-				Type:        files.SourceType_Default,
+				Type:        pb.AccessType_Default,
 				Uri:         fmt.Sprintf("files://%s", files.NormalizePath(s.config.FSRootDir)),
 				ExpireTime:  -1,
 			}
@@ -379,7 +380,7 @@ func (s *Server) httpRouter() http.Handler {
 func (s *Server) objectsHandler() http.Handler {
 	return objects.MuxRouter(
 		objects.Middleware(
-			objects.MiddlewareWithACLManager(s.accessStore),
+			//objects.MiddlewareWithACLManager(s.accessStore),
 			objects.MiddlewareWithDB(s.objects),
 		),
 		settings.MiddlewareWithManager(s.settings),

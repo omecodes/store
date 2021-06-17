@@ -1,11 +1,8 @@
 package common
 
 import (
-	"io/ioutil"
 	"net/http"
 	"strconv"
-
-	"github.com/omecodes/errors"
 )
 
 func Int64QueryParam(r *http.Request, name string) (int64, error) {
@@ -22,41 +19,4 @@ func AllowCORSMiddleware(next http.Handler) http.Handler {
 		w.Header().Set(HttpHeaderAccessControlAllowOrigin, "*")
 		next.ServeHTTP(w, r)
 	})
-}
-
-func ErrorFromHttpResponse(rsp *http.Response) error {
-	var err error
-
-	if rsp.StatusCode != 200 {
-
-		switch rsp.StatusCode {
-
-		case http.StatusBadRequest:
-			err = errors.BadRequest(rsp.Status)
-
-		case http.StatusInternalServerError:
-			err = errors.Internal(rsp.Status)
-
-		case http.StatusBadGateway:
-			err = errors.ServiceUnavailable(rsp.Status)
-
-		case http.StatusForbidden:
-			err = errors.Forbidden(rsp.Status)
-
-		case http.StatusUnauthorized:
-			err = errors.Unauthorized(rsp.Status)
-
-		case http.StatusNotFound:
-			err = errors.NotFound(rsp.Status)
-
-		default:
-			err = errors.New(rsp.Status)
-		}
-
-		if rsp.ContentLength > 0 {
-			body, _ := ioutil.ReadAll(rsp.Body)
-			err.(*errors.Error).AddDetails("content", string(body))
-		}
-	}
-	return err
 }

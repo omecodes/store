@@ -1,7 +1,6 @@
 package files
 
 import (
-	"os"
 	"runtime"
 	"strings"
 )
@@ -28,12 +27,4 @@ func UnNormalizePath(p string) string {
 	drive := p[1:2]
 	rest := p[3:]
 	return strings.ToUpper(drive) + ":\\" + strings.Replace(rest, "/", "\\", -1)
-}
-
-func FileExists(filename string) bool {
-	_, err := os.Stat(filename)
-	if err != nil {
-		return os.IsExist(err)
-	}
-	return true
 }

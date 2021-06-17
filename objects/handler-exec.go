@@ -5,14 +5,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
-	se "github.com/omecodes/store/search-engine"
+	pb "github.com/omecodes/store/gen/go/proto"
 )
 
 type ExecHandler struct {
 	BaseHandler
 }
 
-func (e *ExecHandler) CreateCollection(ctx context.Context, collection *Collection) error {
+func (e *ExecHandler) CreateCollection(ctx context.Context, collection *pb.Collection, _ CreateCollectionOptions) error {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Error("exec-handler.CreateCollection: missing storage in context")
@@ -22,7 +22,7 @@ func (e *ExecHandler) CreateCollection(ctx context.Context, collection *Collecti
 	return storage.CreateCollection(ctx, collection)
 }
 
-func (e *ExecHandler) GetCollection(ctx context.Context, id string) (*Collection, error) {
+func (e *ExecHandler) GetCollection(ctx context.Context, id string, _ GetCollectionOptions) (*pb.Collection, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Error("exec-handler.GetCollection: missing storage in context")
@@ -32,7 +32,7 @@ func (e *ExecHandler) GetCollection(ctx context.Context, id string) (*Collection
 	return storage.GetCollection(ctx, id)
 }
 
-func (e *ExecHandler) ListCollections(ctx context.Context) ([]*Collection, error) {
+func (e *ExecHandler) ListCollections(ctx context.Context, _ ListCollectionOptions) ([]*pb.Collection, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Error("exec-handler.ListCollections: missing storage in context")
@@ -42,7 +42,7 @@ func (e *ExecHandler) ListCollections(ctx context.Context) ([]*Collection, error
 	return storage.ListCollections(ctx)
 }
 
-func (e *ExecHandler) DeleteCollection(ctx context.Context, id string) error {
+func (e *ExecHandler) DeleteCollection(ctx context.Context, id string, _ DeleteCollectionOptions) error {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Error("exec-handler.PutObject: missing storage in context")
@@ -52,45 +52,26 @@ func (e *ExecHandler) DeleteCollection(ctx context.Context, id string) error {
 	return storage.DeleteCollection(ctx, id)
 }
 
-func (e *ExecHandler) PutObject(ctx context.Context, collection string, object *Object, security *PathAccessRules, indexes []*se.TextIndex, opts PutOptions) (string, error) {
+func (e *ExecHandler) PutObject(ctx context.Context, collection string, object *pb.Object, _ *pb.PathAccessRules, indexes []*pb.TextIndex, _ PutOptions) (string, error) {
 	if object.Header.Id == "" {
 		object.Header.Id = uuid.New().String()
 	}
 
-	accessStore := GetACLStore(ctx)
-	if accessStore == nil {
-		logs.Info("exec-handler.PutObject: missing access store in context")
-		return "", errors.Internal("missing objects storage")
-	}
-
-	err := accessStore.SaveRules(ctx, collection, object.Header.Id, security)
-	if err != nil {
-		logs.Error("exec-handler.PutObject: failed to save object access security rules", logs.Err(err))
-		return "", errors.Internal("missing objects storage")
-	}
-
 	storage := Get(ctx)
 	if storage == nil {
-		logs.Error("exec-handler.PutObject: missing storage in context")
-		if err2 := accessStore.Delete(ctx, collection, object.Header.Id); err2 != nil {
-			logs.Error("exec-handler.PutObject: failed to clear access rules", logs.Err(err2))
-		}
 		return "", errors.Internal("missing objects storage")
 	}
 
-	err = storage.Save(ctx, collection, object, indexes...)
+	err := storage.Save(ctx, collection, object, indexes...)
 	if err != nil {
 		logs.Error("could not save object", logs.Err(err))
-		if err2 := accessStore.Delete(ctx, collection, object.Header.Id); err2 != nil {
-			logs.Error("exec-handler.PutObject: failed to clear access rules", logs.Err(err2))
-		}
 		return "", err
 	}
 
 	return object.Header.Id, nil
 }
 
-func (e *ExecHandler) PatchObject(ctx context.Context, collection string, patch *Patch, opts PatchOptions) error {
+func (e *ExecHandler) PatchObject(ctx context.Context, collection string, patch *pb.Patch, _ PatchOptions) error {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("missing storage in context")
@@ -99,38 +80,22 @@ func (e *ExecHandler) PatchObject(ctx context.Context, collection string, patch 
 	return storage.Patch(ctx, collection, patch)
 }
 
-func (e *ExecHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, accessSecurityRules *PathAccessRules, opts MoveOptions) error {
-	accessStore := GetACLStore(ctx)
-	if accessStore == nil {
-		logs.Info("exec-handler.MoveObject: missing access store in context")
-		return errors.Internal("missing ACL store")
-	}
-
+func (e *ExecHandler) MoveObject(ctx context.Context, collection string, objectID string, targetCollection string, _ *pb.PathAccessRules, _ MoveOptions) error {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Error("exec-handler.PutObject: missing storage in context")
 		return errors.Internal("missing objects storage")
 	}
 
-	object, err := storage.Get(ctx, collection, objectID, GetOptions{})
+	object, err := storage.Get(ctx, collection, objectID, GetObjectOptions{})
 	if err != nil {
 		return err
 	}
 
-	err = storage.Save(ctx, targetCollection, object)
-	if err != nil {
-		return err
-	}
-
-	err = accessStore.SaveRules(ctx, targetCollection, objectID, accessSecurityRules)
-	if err != nil {
-		return err
-	}
-
-	return accessStore.Delete(ctx, collection, objectID)
+	return storage.Save(ctx, targetCollection, object)
 }
 
-func (e *ExecHandler) GetObject(ctx context.Context, collection string, id string, opts GetOptions) (*Object, error) {
+func (e *ExecHandler) GetObject(ctx context.Context, collection string, id string, opts GetObjectOptions) (*pb.Object, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("missing DB in context")
@@ -140,7 +105,7 @@ func (e *ExecHandler) GetObject(ctx context.Context, collection string, id strin
 	return storage.Get(ctx, collection, id, opts)
 }
 
-func (e *ExecHandler) GetObjectHeader(ctx context.Context, collection string, id string) (*Header, error) {
+func (e *ExecHandler) GetObjectHeader(ctx context.Context, collection string, id string, _ GetHeaderOptions) (*pb.Header, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("missing DB in context")
@@ -149,26 +114,14 @@ func (e *ExecHandler) GetObjectHeader(ctx context.Context, collection string, id
 	return storage.Info(ctx, collection, id)
 }
 
-func (e *ExecHandler) DeleteObject(ctx context.Context, collection string, id string) error {
+func (e *ExecHandler) DeleteObject(ctx context.Context, collection string, id string, _ DeleteObjectOptions) error {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Info("exec-handler.DeleteObjet: missing DB in context")
 		return errors.Internal("missing objects storage")
 	}
 
-	err := storage.Delete(ctx, collection, id)
-	if err != nil {
-		logs.Error("exec-handler.DeleteObjet: failed to delete object from storage", logs.Err(err))
-		return err
-	}
-
-	accessStore := GetACLStore(ctx)
-	if accessStore == nil {
-		logs.Info("exec-handler.DeleteObjet: missing access store in context")
-		return errors.Internal("missing ACL store")
-	}
-
-	return accessStore.Delete(ctx, collection, id)
+	return storage.Delete(ctx, collection, id)
 }
 
 func (e *ExecHandler) ListObjects(ctx context.Context, collection string, opts ListOptions) (*Cursor, error) {
@@ -181,7 +134,7 @@ func (e *ExecHandler) ListObjects(ctx context.Context, collection string, opts L
 	return storage.List(ctx, collection, opts)
 }
 
-func (e *ExecHandler) SearchObjects(ctx context.Context, collection string, query *se.SearchQuery) (*Cursor, error) {
+func (e *ExecHandler) SearchObjects(ctx context.Context, collection string, query *pb.SearchQuery, _ SearchObjectsOptions) (*Cursor, error) {
 	storage := Get(ctx)
 	if storage == nil {
 		logs.Error("exec-handler.SearchObjects: missing storage in context")

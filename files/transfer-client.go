@@ -32,7 +32,7 @@ type TransferClient interface {
 }
 
 type ReadRequest struct {
-	SourceID string
+	AccessID string
 	Path     string
 	Offset   int64
 	Length   int64
@@ -43,7 +43,7 @@ type ReadResponse struct {
 }
 
 type WriteRequest struct {
-	SourceID string
+	AccessID string
 	Path     string
 	Data     io.Reader
 	Length   int64
@@ -54,7 +54,7 @@ type WriteResponse struct {
 }
 
 type OpenMultipartSessionRequest struct {
-	SourceId string
+	AccessID string
 	Path     string
 }
 type OpenMultipartSessionResponse struct {
@@ -155,8 +155,8 @@ type defaultTransfersServiceClient struct {
 	address       string
 }
 
-func (d *defaultTransfersServiceClient) ReadFile(ctx context.Context, request *ReadRequest) (*ReadResponse, error) {
-	downloadURL := fmt.Sprintf("https://%s/%s", d.address, path.Join(d.apiPathPrefix, "/data", request.SourceID, request.Path))
+func (d *defaultTransfersServiceClient) ReadFile(_ context.Context, request *ReadRequest) (*ReadResponse, error) {
+	downloadURL := fmt.Sprintf("https://%s/%s", d.address, path.Join(d.apiPathPrefix, "/data", request.AccessID, request.Path))
 	rsp, err := d.client.Get(downloadURL)
 	if err != nil {
 		return nil, err
@@ -169,8 +169,8 @@ func (d *defaultTransfersServiceClient) ReadFile(ctx context.Context, request *R
 	return rr, nil
 }
 
-func (d *defaultTransfersServiceClient) WriteFile(ctx context.Context, request *WriteRequest) (*WriteResponse, error) {
-	uploadURL := fmt.Sprintf("https://%s/%s", d.address, path.Join(d.apiPathPrefix, "/data", request.SourceID, request.Path))
+func (d *defaultTransfersServiceClient) WriteFile(_ context.Context, request *WriteRequest) (*WriteResponse, error) {
+	uploadURL := fmt.Sprintf("https://%s/%s", d.address, path.Join(d.apiPathPrefix, "/data", request.AccessID, request.Path))
 
 	req, err := http.NewRequest(http.MethodPut, uploadURL, request.Data)
 	if err != nil {
@@ -184,14 +184,14 @@ func (d *defaultTransfersServiceClient) WriteFile(ctx context.Context, request *
 	}, err
 }
 
-func (d *defaultTransfersServiceClient) OpenFileMultipartWriteSession(ctx context.Context, request *OpenMultipartSessionRequest) (*OpenMultipartSessionResponse, error) {
+func (d *defaultTransfersServiceClient) OpenFileMultipartWriteSession(_ context.Context, _ *OpenMultipartSessionRequest) (*OpenMultipartSessionResponse, error) {
 	return nil, errors.UnImplemented("")
 }
 
-func (d *defaultTransfersServiceClient) WriteFilePart(ctx context.Context, request *WriteFilePartRequest) (*WritePartResponse, error) {
+func (d *defaultTransfersServiceClient) WriteFilePart(_ context.Context, _ *WriteFilePartRequest) (*WritePartResponse, error) {
 	return nil, errors.UnImplemented("")
 }
 
-func (d *defaultTransfersServiceClient) CloseFileMultipartWriteSession(ctx context.Context, request *CloseMultipartWriteSessionRequest) (*CloseMultipartWriteSessionResponse, error) {
+func (d *defaultTransfersServiceClient) CloseFileMultipartWriteSession(_ context.Context, _ *CloseMultipartWriteSessionRequest) (*CloseMultipartWriteSessionResponse, error) {
 	return nil, errors.UnImplemented("")
 }

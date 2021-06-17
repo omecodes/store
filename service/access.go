@@ -8,6 +8,7 @@ import (
 	"github.com/omecodes/store/auth"
 	"github.com/omecodes/store/common"
 	"github.com/omecodes/store/files"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"github.com/omecodes/store/objects"
 	"google.golang.org/grpc"
 	"net/http"
@@ -59,15 +60,12 @@ func (a *Access) updateIncomingRequestContext(ctx context.Context) context.Conte
 	ctx = service.ContextWithBox(ctx, a.box)
 
 	ctx = files.ContextWithRouterProvider(ctx, files.RouterProvideFunc(a.provideFilesRouter))
-	ctx = files.ContextWithSourceManager(ctx, files.NewSourcesManagerServiceClient(common.ServiceTypeFileSources))
+	ctx = files.ContextWithAccessManager(ctx, files.NewSourcesManagerServiceClient(common.ServiceTypeFileSources))
 	ctx = files.ContextWithSourcesServiceClientProvider(ctx, &files.DefaultSourcesServiceClientProvider{})
 	ctx = files.ContextWithTransfersServiceClientProvider(ctx, &files.DefaultTransfersServiceClientProvider{})
 	ctx = files.ContextWithClientProvider(ctx, &files.DefaultClientProvider{})
 
 	ctx = objects.ContextWithRouterProvider(ctx, objects.RouterProvideFunc(a.provideObjectsRouter))
-	ctx = objects.ContextWithACLManager(ctx, objects.NewACLManagerServiceClient())
-	ctx = objects.WithACLGrpcClientProvider(ctx, objects.NewDefaultACLGRPCClientProvider(common.ServiceTypeACLStore))
-	ctx = objects.WithObjectsGrpcClientProvider(ctx, &objects.DefaultClientProvider{})
 
 	return ctx
 }
@@ -82,14 +80,14 @@ func (a *Access) middlewareUpdateContext(next http.Handler) http.Handler {
 	})
 }
 
-func (a *Access) provideFilesRouter(ctx context.Context) files.Router {
+func (a *Access) provideFilesRouter(_ context.Context) files.Router {
 	return files.NewCustomRouter(
 		files.NewHandlerServiceClient(common.ServiceTypeFilesStorage),
 		files.WithDefaultPolicyHandler(),
 	)
 }
 
-func (a *Access) provideObjectsRouter(ctx context.Context) objects.Router {
+func (a *Access) provideObjectsRouter(_ context.Context) objects.Router {
 	return objects.NewCustomRouter(
 		objects.NewGRPCObjectsClientHandler(common.ServiceTypeObjectsStorage),
 		objects.WithDefaultPolicyHandler(),
@@ -123,8 +121,8 @@ func (a *Access) startHTTPTransferServer() error {
 func (a *Access) startGRPCServer() error {
 	params := &service.NodeParams{
 		RegisterHandlerFunc: func(server *grpc.Server) {
-			objects.RegisterObjectsServer(server, objects.NewGRPCHandler())
-			files.RegisterFilesServer(server, files.NewFilesServerHandler())
+			pb.RegisterObjectsServer(server, objects.NewGRPCHandler())
+			pb.RegisterFilesServer(server, files.NewFilesServerHandler())
 		},
 		ServiceType: common.ServiceTypeSecurityAccess,
 		ServiceID:   a.config.Name,

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
+	pb "github.com/omecodes/store/gen/go/proto"
 
 	"github.com/omecodes/bome"
 	"github.com/omecodes/libome/crypt"
@@ -15,12 +16,12 @@ import (
 
 type CredentialsManager interface {
 	ValidateAdminAccess(password string) error
-	SaveClientApp(access *ClientApp) error
-	GetClientApp(key string) (*ClientApp, error)
-	GetAllClientApps() ([]*ClientApp, error)
+	SaveClientApp(access *pb.ClientApp) error
+	GetClientApp(key string) (*pb.ClientApp, error)
+	GetAllClientApps() ([]*pb.ClientApp, error)
 	DeleteClientApp(key string) error
 
-	SaveUserCredentials(credentials *UserCredentials) error
+	SaveUserCredentials(credentials *pb.UserCredentials) error
 	GetUserPassword(username string) (string, error)
 	GetMatchingUser(pattern string) ([]string, error)
 	DeleteUserCredentials(username string) error
@@ -83,7 +84,7 @@ func (s *credentialsSQLManager) ValidateAdminAccess(passPhrase string) error {
 	return err
 }
 
-func (s *credentialsSQLManager) SaveClientApp(access *ClientApp) error {
+func (s *credentialsSQLManager) SaveClientApp(access *pb.ClientApp) error {
 	data, err := json.Marshal(access)
 	if err != nil {
 		return err
@@ -95,18 +96,18 @@ func (s *credentialsSQLManager) SaveClientApp(access *ClientApp) error {
 	})
 }
 
-func (s *credentialsSQLManager) GetClientApp(key string) (*ClientApp, error) {
+func (s *credentialsSQLManager) GetClientApp(key string) (*pb.ClientApp, error) {
 	strEncoded, err := s.clients.Get(key)
 	if err != nil {
 		return nil, err
 	}
 
-	var access *ClientApp
+	var access *pb.ClientApp
 	err = json.NewDecoder(bytes.NewBufferString(strEncoded)).Decode(&access)
 	return access, err
 }
 
-func (s *credentialsSQLManager) GetAllClientApps() ([]*ClientApp, error) {
+func (s *credentialsSQLManager) GetAllClientApps() ([]*pb.ClientApp, error) {
 	cursor, err := s.clients.List()
 	if err != nil {
 		return nil, err
@@ -118,7 +119,7 @@ func (s *credentialsSQLManager) GetAllClientApps() ([]*ClientApp, error) {
 		}
 	}()
 
-	var accesses []*ClientApp
+	var accesses []*pb.ClientApp
 	for cursor.HasNext() {
 		o, err := cursor.Next()
 		if err != nil {
@@ -126,7 +127,7 @@ func (s *credentialsSQLManager) GetAllClientApps() ([]*ClientApp, error) {
 		}
 
 		entry := o.(*bome.MapEntry)
-		var access *ClientApp
+		var access *pb.ClientApp
 		err = json.Unmarshal([]byte(entry.Value), &access)
 		if err != nil {
 			return nil, err
@@ -140,7 +141,7 @@ func (s *credentialsSQLManager) DeleteClientApp(key string) error {
 	return s.clients.Delete(key)
 }
 
-func (s *credentialsSQLManager) SaveUserCredentials(credentials *UserCredentials) error {
+func (s *credentialsSQLManager) SaveUserCredentials(credentials *pb.UserCredentials) error {
 	return s.users.Save(&bome.MapEntry{
 		Key:   credentials.Username,
 		Value: credentials.Password,

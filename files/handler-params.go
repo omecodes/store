@@ -3,6 +3,7 @@ package files
 import (
 	"context"
 	"github.com/omecodes/errors"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 )
 
@@ -10,28 +11,28 @@ type ParamsHandler struct {
 	BaseHandler
 }
 
-func (h *ParamsHandler) CreateSource(ctx context.Context, source *Source) error {
+func (h *ParamsHandler) CreateAccess(ctx context.Context, source *pb.FSAccess, opts CreateAccessOptions) error {
 	if source == nil || source.Uri == "" {
 		return errors.BadRequest("invalid source value")
 	}
-	return h.next.CreateSource(ctx, source)
+	return h.next.CreateAccess(ctx, source, opts)
 }
 
-func (h *ParamsHandler) GetSource(ctx context.Context, sourceID string) (*Source, error) {
+func (h *ParamsHandler) GetAccess(ctx context.Context, sourceID string, opts GetAccessOptions) (*pb.FSAccess, error) {
 	if sourceID == "" {
 		return nil, errors.BadRequest("source id is required")
 	}
-	return h.next.GetSource(ctx, sourceID)
+	return h.next.GetAccess(ctx, sourceID, opts)
 }
 
-func (h *ParamsHandler) DeleteSource(ctx context.Context, sourceID string) error {
+func (h *ParamsHandler) DeleteAccess(ctx context.Context, sourceID string, opts DeleteAccessOptions) error {
 	if sourceID == "" {
 		return errors.BadRequest("source id is required")
 	}
-	return h.next.DeleteSource(ctx, sourceID)
+	return h.next.DeleteAccess(ctx, sourceID, opts)
 }
 
-func (h *ParamsHandler) CreateDir(ctx context.Context, sourceID string, filename string) error {
+func (h *ParamsHandler) CreateDir(ctx context.Context, sourceID string, dirname string, opts CreateDirOptions) error {
 	if sourceID == "" {
 		return errors.BadRequest("missing parameters", errors.Details{
 			Key:   "source",
@@ -39,14 +40,14 @@ func (h *ParamsHandler) CreateDir(ctx context.Context, sourceID string, filename
 		})
 	}
 
-	if filename == "" {
+	if dirname == "" {
 		return errors.BadRequest("missing parameters", errors.Details{
 			Key:   "filename",
 			Value: "required",
 		})
 	}
 
-	return h.next.CreateDir(ctx, sourceID, filename)
+	return h.next.CreateDir(ctx, sourceID, dirname, opts)
 }
 
 func (h *ParamsHandler) WriteFileContent(ctx context.Context, sourceID string, filename string, content io.Reader, size int64, opts WriteOptions) error {
@@ -99,7 +100,7 @@ func (h *ParamsHandler) ReadFileContent(ctx context.Context, sourceID string, fi
 	return h.next.ReadFileContent(ctx, sourceID, filename, opts)
 }
 
-func (h *ParamsHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*File, error) {
+func (h *ParamsHandler) GetFileInfo(ctx context.Context, sourceID string, filename string, opts GetFileOptions) (*pb.File, error) {
 	if sourceID == "" {
 		return nil, errors.BadRequest("missing parameters", errors.Details{
 			Key:   "source",
@@ -135,7 +136,7 @@ func (h *ParamsHandler) DeleteFile(ctx context.Context, sourceID string, filenam
 	return h.next.DeleteFile(ctx, sourceID, filename, opts)
 }
 
-func (h *ParamsHandler) SetFileAttributes(ctx context.Context, sourceID string, filename string, attrs Attributes) error {
+func (h *ParamsHandler) SetFileAttributes(ctx context.Context, sourceID string, filename string, attrs Attributes, opts SetFileAttributesOptions) error {
 	if sourceID == "" {
 		return errors.BadRequest("missing parameters", errors.Details{
 			Key:   "source",
@@ -155,10 +156,10 @@ func (h *ParamsHandler) SetFileAttributes(ctx context.Context, sourceID string, 
 		return err
 	}
 
-	return h.next.SetFileAttributes(ctx, sourceID, filename, attrs)
+	return h.next.SetFileAttributes(ctx, sourceID, filename, attrs, opts)
 }
 
-func (h *ParamsHandler) GetFileAttributes(ctx context.Context, sourceID string, filename string, name ...string) (Attributes, error) {
+func (h *ParamsHandler) GetFileAttributes(ctx context.Context, sourceID string, filename string, names []string, opts GetFileAttributesOptions) (Attributes, error) {
 	if sourceID == "" {
 		return nil, errors.BadRequest("missing parameters", errors.Details{
 			Key:   "source",
@@ -166,22 +167,22 @@ func (h *ParamsHandler) GetFileAttributes(ctx context.Context, sourceID string, 
 		})
 	}
 
-	if filename == "" || len(name) == 0 {
+	if filename == "" || len(names) == 0 {
 		err := errors.BadRequest("missing parameters")
 		if filename == "" {
 			err.AddDetails("filename", "required")
 		}
 
-		if len(name) == 0 {
+		if len(names) == 0 {
 			err.AddDetails("names", "required")
 		}
 		return nil, err
 	}
 
-	return h.next.GetFileAttributes(ctx, sourceID, filename, name...)
+	return h.next.GetFileAttributes(ctx, sourceID, filename, names, opts)
 }
 
-func (h *ParamsHandler) RenameFile(ctx context.Context, sourceID string, filename string, newName string) error {
+func (h *ParamsHandler) RenameFile(ctx context.Context, sourceID string, filename string, newName string, opts RenameFileOptions) error {
 	if sourceID == "" {
 		return errors.BadRequest("missing parameters", errors.Details{
 			Key:   "source",
@@ -206,10 +207,10 @@ func (h *ParamsHandler) RenameFile(ctx context.Context, sourceID string, filenam
 		return errors.BadRequest("wrong path format")
 	}
 
-	return h.next.RenameFile(ctx, sourceID, filename, newName)
+	return h.next.RenameFile(ctx, sourceID, filename, newName, opts)
 }
 
-func (h *ParamsHandler) MoveFile(ctx context.Context, sourceID string, filename string, dirname string) error {
+func (h *ParamsHandler) MoveFile(ctx context.Context, sourceID string, filename string, dirname string, opts MoveFileOptions) error {
 	if sourceID == "" {
 		return errors.BadRequest("missing parameters", errors.Details{
 			Key:   "source",
@@ -229,10 +230,10 @@ func (h *ParamsHandler) MoveFile(ctx context.Context, sourceID string, filename 
 		return err
 	}
 
-	return h.next.MoveFile(ctx, sourceID, filename, dirname)
+	return h.next.MoveFile(ctx, sourceID, filename, dirname, opts)
 }
 
-func (h *ParamsHandler) CopyFile(ctx context.Context, sourceID string, filename string, dirname string) error {
+func (h *ParamsHandler) CopyFile(ctx context.Context, sourceID string, filename string, dirname string, opts CopyFileOptions) error {
 	if sourceID == "" {
 		return errors.BadRequest("missing parameters", errors.Details{
 			Key:   "source",
@@ -252,10 +253,10 @@ func (h *ParamsHandler) CopyFile(ctx context.Context, sourceID string, filename 
 		return err
 	}
 
-	return h.next.MoveFile(ctx, sourceID, filename, dirname)
+	return h.next.CopyFile(ctx, sourceID, filename, dirname, opts)
 }
 
-func (h *ParamsHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info MultipartSessionInfo) (string, error) {
+func (h *ParamsHandler) OpenMultipartSession(ctx context.Context, sourceID string, filename string, info MultipartSessionInfo, opts OpenMultipartSessionOptions) (string, error) {
 	if sourceID == "" {
 		return "", errors.BadRequest("missing parameters", errors.Details{
 			Key:   "source",
@@ -271,10 +272,10 @@ func (h *ParamsHandler) OpenMultipartSession(ctx context.Context, sourceID strin
 		return "", err
 	}
 
-	return h.next.OpenMultipartSession(ctx, sourceID, filename, info)
+	return h.next.OpenMultipartSession(ctx, sourceID, filename, info, opts)
 }
 
-func (h *ParamsHandler) WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo) (int64, error) {
+func (h *ParamsHandler) WriteFilePart(ctx context.Context, sessionID string, content io.Reader, size int64, info ContentPartInfo, opts WriteFilePartOptions) (int64, error) {
 	if sessionID == "" || content == nil || size == 0 {
 		err := errors.BadRequest("missing parameters")
 		if sessionID == "" {
@@ -283,15 +284,15 @@ func (h *ParamsHandler) WriteFilePart(ctx context.Context, sessionID string, con
 
 		return 0, err
 	}
-	return h.next.WriteFilePart(ctx, sessionID, content, size, info)
+	return h.next.WriteFilePart(ctx, sessionID, content, size, info, opts)
 }
 
-func (h *ParamsHandler) CloseMultipartSession(ctx context.Context, sessionID string) error {
+func (h *ParamsHandler) CloseMultipartSession(ctx context.Context, sessionID string, opts CloseMultipartSessionOptions) error {
 	if sessionID == "" {
 		return errors.BadRequest("missing parameters", errors.Details{
 			Key:   "session_id",
 			Value: "required",
 		})
 	}
-	return h.next.CloseMultipartSession(ctx, sessionID)
+	return h.next.CloseMultipartSession(ctx, sessionID, opts)
 }

@@ -63,9 +63,9 @@ func (o *Objects) init() error {
 func (o *Objects) updatedGRPCIncomingContext(ctx context.Context) (context.Context, error) {
 	ctx = service.ContextWithBox(ctx, o.box)
 	ctx = objects.ContextWithStore(ctx, o.objectsDB)
-	ctx = objects.ContextWithACLManager(ctx, objects.NewACLManagerServiceClient())
-	ctx = objects.WithACLGrpcClientProvider(ctx, &objects.DefaultACLGrpcProvider{})
-	ctx = objects.WithACLGrpcClientProvider(ctx, objects.NewDefaultACLGRPCClientProvider(common.ServiceTypeACLStore))
+	//ctx = objects.ContextWithACLManager(ctx, objects.NewACLManagerServiceClient())
+	//ctx = objects.WithACLGrpcClientProvider(ctx, &objects.DefaultACLGrpcProvider{})
+	//ctx = objects.WithACLGrpcClientProvider(ctx, objects.NewDefaultACLGRPCClientProvider(common.ServiceTypeACLStore))
 	ctx = objects.ContextWithRouterProvider(ctx, objects.RouterProvideFunc(
 		func(ctx context.Context) objects.Router {
 			return objects.NewCustomRouter(&objects.ExecHandler{})
@@ -82,7 +82,7 @@ func (o *Objects) Start() error {
 
 	params := &service.NodeParams{
 		RegisterHandlerFunc: func(server *grpc.Server) {
-			objects.RegisterObjectsServer(server, objects.NewGRPCHandler())
+			//objects.RegisterObjectsServer(server, objects.NewGRPCHandler())
 		},
 		ServiceType: common.ServiceTypeObjectsStorage,
 		ServiceID:   o.config.Name,

@@ -8,7 +8,7 @@ import (
 	"github.com/omecodes/errors"
 	"github.com/omecodes/libome/logs"
 	"github.com/omecodes/store/common"
-	se "github.com/omecodes/store/search-engine"
+	pb "github.com/omecodes/store/gen/go/proto"
 	"io"
 	"net/http"
 	"strings"
@@ -56,7 +56,7 @@ func HTTPHandlePutObject(w http.ResponseWriter, r *http.Request) {
 		return
 	}*/
 
-	var putRequest *PutObjectRequest
+	var putRequest *pb.PutObjectRequest
 	err := json.NewDecoder(r.Body).Decode(&putRequest)
 	if err != nil {
 		logs.Error("failed to decode request body", logs.Err(err))
@@ -65,11 +65,11 @@ func HTTPHandlePutObject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if putRequest.Object.Header == nil {
-		putRequest.Object.Header = &Header{}
+		putRequest.Object.Header = &pb.Header{}
 	}
 	putRequest.Object.Header.Size = int64(len(putRequest.Object.Data))
 
-	id, err := PutObject(ctx, collection, putRequest.Object, putRequest.AccessSecurityRules, putRequest.Indexes, PutOptions{})
+	id, err := PutObject(ctx, collection, putRequest.Object, putRequest.ActionAuthorizedUsers, putRequest.Indexes, PutOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -88,7 +88,7 @@ func HTTPHandlePatchObject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var patch Patch
+	var patch pb.Patch
 	err := jsonpb.Unmarshal(r.Body, &patch)
 	if err != nil {
 		logs.Error("failed to decode request body", logs.Err(err))
@@ -116,7 +116,7 @@ func HTTPHandleMoveObject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var request MoveObjectRequest
+	var request pb.MoveObjectRequest
 	err := jsonpb.Unmarshal(r.Body, &request)
 	if err != nil {
 		logs.Error("failed to decode request body", logs.Err(err))
@@ -145,7 +145,7 @@ func HTTPHandleGetObject(w http.ResponseWriter, r *http.Request) {
 	header := r.URL.Query().Get(queryHeader)
 	at := r.URL.Query().Get(queryAt)
 
-	object, err := GetObject(ctx, collection, id, GetOptions{
+	object, err := GetObject(ctx, collection, id, GetObjectOptions{
 		At:   at,
 		Info: header == "true",
 	})
@@ -168,7 +168,7 @@ func HTTPHandleDeleteObject(w http.ResponseWriter, r *http.Request) {
 	collection := vars[common.ApiRouteVarCollectionName]
 	id := vars[common.ApiRouteVarIdName]
 
-	err := DeleteObject(ctx, collection, id)
+	err := DeleteObject(ctx, collection, id, DeleteObjectOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -261,7 +261,7 @@ func HTTPHandleListObjects(w http.ResponseWriter, r *http.Request) {
 func HTTPHandleSearchObjects(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var query se.SearchQuery
+	var query pb.SearchQuery
 	err := jsonpb.Unmarshal(r.Body, &query)
 	if err != nil {
 		logs.Error("could not parse search query")
@@ -272,7 +272,7 @@ func HTTPHandleSearchObjects(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	collection := vars[common.ApiRouteVarCollectionName]
 
-	cursor, err := SearchObjects(ctx, collection, &query)
+	cursor, err := SearchObjects(ctx, collection, &query, SearchObjectsOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -337,14 +337,14 @@ func HTTPHandleSearchObjects(w http.ResponseWriter, r *http.Request) {
 func HTTPHandleCreateCollection(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var collection *Collection
+	var collection *pb.Collection
 	err := json.NewDecoder(r.Body).Decode(&collection)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	err = CreateCollection(ctx, collection)
+	err = CreateCollection(ctx, collection, CreateCollectionOptions{})
 	if err != nil {
 		logs.Error("could not create collection", logs.Err(err))
 		w.WriteHeader(errors.HTTPStatus(err))
@@ -355,7 +355,7 @@ func HTTPHandleCreateCollection(w http.ResponseWriter, r *http.Request) {
 func HTTPHandleListCollections(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	collections, err := ListCollections(ctx)
+	collections, err := ListCollections(ctx, ListCollectionOptions{})
 	if err != nil {
 		logs.Error("could not load collections", logs.Err(err))
 		w.WriteHeader(errors.HTTPStatus(err))
@@ -382,7 +382,7 @@ func HTTPHandleGetCollection(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars[common.ApiRouteVarIdName]
 
-	collection, err := GetCollection(ctx, id)
+	collection, err := GetCollection(ctx, id, GetCollectionOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
@@ -405,7 +405,7 @@ func HTTPHandleDeleteCollection(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars[common.ApiRouteVarIdName]
 
-	err := DeleteCollection(ctx, id)
+	err := DeleteCollection(ctx, id, DeleteCollectionOptions{})
 	if err != nil {
 		w.WriteHeader(errors.HTTPStatus(err))
 		return
