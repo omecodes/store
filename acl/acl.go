@@ -1,3 +1,5 @@
+//Package acl provides API to manage ACL
+
 package acl
 
 import (
@@ -39,6 +41,18 @@ func DeleteACL(ctx context.Context, a *pb.ACL, opts DeleteACLOptions) error {
 func CheckACL(ctx context.Context, subjectName string, set *pb.SubjectSet, opts CheckACLOptions) (bool, error) {
 	handler := GetHandler(ctx)
 	return handler.CheckACL(ctx, subjectName, set, opts)
+}
+
+// GetObjectACL retrieves all acl related to the passed objectID
+func GetObjectACL(ctx context.Context, objectID string, opts GetObjectACLOptions) ([]*pb.ACL, error) {
+	handler := GetHandler(ctx)
+	return handler.GetObjectACL(ctx, objectID, opts)
+}
+
+// GetSubjectACL retrieves all acl related to the passed subjectID
+func GetSubjectACL(ctx context.Context, subjectID string, opts GetSubjectACLOptions) ([]*pb.ACL, error) {
+	handler := GetHandler(ctx)
+	return handler.GetSubjectACL(ctx, subjectID, opts)
 }
 
 // GetSubjectNames gets the names of the subjects from the store resolved from the given context, that are elements of the given subject set

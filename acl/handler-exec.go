@@ -56,6 +56,22 @@ func (e *ExecHandler) CheckACL(ctx context.Context, subjectName string, set *pb.
 	return man.CheckACL(ctx, subjectName, set)
 }
 
+func (e *ExecHandler) GetObjectACL(ctx context.Context, objectID string, _ GetObjectACLOptions) ([]*pb.ACL, error) {
+	man := GetManager(ctx)
+	if man == nil {
+		return nil, errors.Internal("acl.GetObjectACL: could not load acl manager from context")
+	}
+	return man.GetObjectACL(ctx, objectID)
+}
+
+func (e *ExecHandler) GetSubjectACL(ctx context.Context, subjectID string, _ GetSubjectACLOptions) ([]*pb.ACL, error) {
+	man := GetManager(ctx)
+	if man == nil {
+		return nil, errors.Internal("acl.GetSubjectACL: could not load acl manager from context")
+	}
+	return man.GetSubjectACL(ctx, subjectID)
+}
+
 func (e *ExecHandler) GetSubjectNames(ctx context.Context, set *pb.SubjectSet, _ GetSubjectsNamesOptions) ([]string, error) {
 	man := GetManager(ctx)
 	if man == nil {

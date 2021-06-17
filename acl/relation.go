@@ -20,17 +20,21 @@ create table if not exists $prefix$_tuples (
 	primary key (object, relation, subject)
 )$engine$;
 `
-	queryInsertTuple   = `insert into $prefix$_tuples values (?, ?, ?, ?, ?);`
-	queryTupleExists   = `select 1 from $prefix$_tuples where object=? and relation=? and subject=? and commit_time>=?;`
-	queryTupleSubjects = `select subject from $prefix$_tuples where relation=? and object=? and commit_time>=?;`
-	queryTupleObjects  = `select object from $prefix$_tuples where relation=? and subject=? and commit_time>=?;`
-	queryDeleteTuples  = `delete from $prefix$_tuples where subject=? and relation=? and object=? and commit_time>=?;`
-	tupleScanner       = "relation_scanner_key"
+	queryInsertTuple    = `insert into $prefix$_tuples values (?, ?, ?, ?, ?);`
+	queryTupleByObject  = `select * from $prefix$_tuples where object=? and commit_time>=?;`
+	queryTupleBySubject = `select * from $prefix$_tuples where subject=? and commit_time>=?;`
+	queryTupleExists    = `select 1 from $prefix$_tuples where object=? and relation=? and subject=? and commit_time>=?;`
+	queryTupleSubjects  = `select subject from $prefix$_tuples where relation=? and object=? and commit_time>=?;`
+	queryTupleObjects   = `select object from $prefix$_tuples where relation=? and subject=? and commit_time>=?;`
+	queryDeleteTuples   = `delete from $prefix$_tuples where subject=? and relation=? and object=? and commit_time>=?;`
+	tupleScanner        = "relation_scanner_key"
 )
 
 type TupleStore interface {
 	Save(ctx context.Context, a *pb.DBEntry) error
 	Check(ctx context.Context, entry *pb.DBEntry) (bool, error)
+	GetForObject(ctx context.Context, objectID string, commitTime int64) ([]*pb.DBEntry, error)
+	GetForSubject(ctx context.Context, subjectID string, commitTime int64) ([]*pb.DBEntry, error)
 	GetSubjects(ctx context.Context, info *pb.DBSubjectSetInfo) ([]string, error)
 	GetObjects(ctx context.Context, info *pb.DBObjectSetInfo) ([]string, error)
 	Delete(ctx context.Context, entry *pb.DBEntry) error
@@ -82,6 +86,60 @@ func (r *relationSQLStore) Check(_ context.Context, entry *pb.DBEntry) (bool, er
 	return o != nil && o.(int64) == 1, nil
 }
 
+func (r *relationSQLStore) GetForObject(ctx context.Context, objectID string, commitTime int64) ([]*pb.DBEntry, error) {
+	c, err := r.db.Query(queryTupleByObject, tupleScanner, objectID, commitTime)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if cErr := c.Close(); cErr != nil {
+			logs.Error("Store.GetForObject: cursor closing", logs.Details("id", objectID), logs.Err(err))
+		}
+	}()
+
+	var (
+		o       interface{}
+		entries []*pb.DBEntry
+	)
+
+	for c.HasNext() {
+		o, err = c.Next()
+		if err != nil {
+			break
+		}
+		entries = append(entries, o.(*pb.DBEntry))
+	}
+	return entries, err
+}
+
+func (r *relationSQLStore) GetForSubject(ctx context.Context, subjectID string, commitTime int64) ([]*pb.DBEntry, error) {
+	c, err := r.db.Query(queryTupleBySubject, tupleScanner, subjectID, commitTime)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if cErr := c.Close(); cErr != nil {
+			logs.Error("Store.GetForSubject: cursor closing", logs.Details("id", subjectID), logs.Err(err))
+		}
+	}()
+
+	var (
+		o       interface{}
+		entries []*pb.DBEntry
+	)
+
+	for c.HasNext() {
+		o, err = c.Next()
+		if err != nil {
+			break
+		}
+		entries = append(entries, o.(*pb.DBEntry))
+	}
+	return entries, err
+}
+
 func (r *relationSQLStore) GetSubjects(_ context.Context, info *pb.DBSubjectSetInfo) ([]string, error) {
 	c, err := r.db.Query(queryTupleSubjects, bome.StringScanner, info.Relation, info.Object, info.StateMinAge)
 	if err != nil {
@@ -90,7 +148,7 @@ func (r *relationSQLStore) GetSubjects(_ context.Context, info *pb.DBSubjectSetI
 
 	defer func() {
 		if cErr := c.Close(); cErr != nil {
-			logs.Error("get subjects cursor closing", logs.Details("info", info), logs.Err(err))
+			logs.Error("Store.GetSubjects: cursor closing", logs.Details("info", info), logs.Err(err))
 		}
 	}()
 
@@ -117,7 +175,7 @@ func (r *relationSQLStore) GetObjects(_ context.Context, info *pb.DBObjectSetInf
 
 	defer func() {
 		if cErr := c.Close(); cErr != nil {
-			logs.Error("get subjects cursor closing", logs.Details("info", info), logs.Err(err))
+			logs.Error("Store.GetObjects: cursor closing", logs.Details("info", info), logs.Err(err))
 		}
 	}()
 

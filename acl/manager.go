@@ -12,6 +12,8 @@ type Manager interface {
 	SaveACL(ctx context.Context, relation *pb.ACL) error
 	DeleteACL(ctx context.Context, relation *pb.ACL) error
 	CheckACL(ctx context.Context, username string, subjectSet *pb.SubjectSet) (bool, error)
+	GetObjectACL(ctx context.Context, objectID string) ([]*pb.ACL, error)
+	GetSubjectACL(ctx context.Context, subjectID string) ([]*pb.ACL, error)
 
 	SaveNamespaceConfig(ctx context.Context, config *pb.NamespaceConfig) error
 	GetNamespaceConfig(ctx context.Context, name string) (*pb.NamespaceConfig, error)
@@ -56,6 +58,58 @@ func (d *DefaultManager) CheckACL(ctx context.Context, username string, subjectS
 		SubjectSet: subjectSet,
 	}
 	return checker.Check(ctx)
+}
+
+func (d *DefaultManager) GetObjectACL(ctx context.Context, objectID string) ([]*pb.ACL, error) {
+	store := getTupleStore(ctx)
+	if store == nil {
+		return nil, errors.Internal("could not find relation tuple store in context")
+	}
+
+	entries, err := store.GetForObject(ctx, objectID, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var list []*pb.ACL
+	for _, entry := range entries {
+		list = append(list, &pb.ACL{
+			Object:   entry.Object,
+			Relation: entry.Relation,
+			Subject:  entry.Subject,
+		})
+	}
+	return list, err
+}
+
+func (d *DefaultManager) GetSubjectACL(ctx context.Context, subjectID string) ([]*pb.ACL, error) {
+	store := getTupleStore(ctx)
+	if store == nil {
+		return nil, errors.Internal("could not find relation tuple store in context")
+	}
+
+	entries, err := store.GetForSubject(ctx, subjectID, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var list []*pb.ACL
+	for _, entry := range entries {
+		list = append(list, &pb.ACL{
+			Object:   entry.Object,
+			Relation: entry.Relation,
+			Subject:  entry.Subject,
+		})
+	}
+	return list, err
+}
+
+func (d *DefaultManager) FindObjects(ctx context.Context, subject string, relation string, namespaceID string) ([]string, error) {
+	return nil, nil
+}
+
+func (d *DefaultManager) FindSubjects(ctx context.Context, relation string, objectID string) ([]string, error) {
+	return nil, nil
 }
 
 func (d *DefaultManager) SaveNamespaceConfig(ctx context.Context, config *pb.NamespaceConfig) error {

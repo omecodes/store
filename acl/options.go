@@ -1,10 +1,11 @@
 package acl
 
-type SaveNamespaceConfigOptions struct{}
 type SaveACLOptions struct{}
 type DeleteACLOptions struct{}
 type CheckACLOptions struct{}
-type SaveNamespaceOptions struct{}
+type GetObjectACLOptions struct{}
+type GetSubjectACLOptions struct{}
+type SaveNamespaceConfigOptions struct{}
 type GetNamespaceOptions struct{}
 type DeleteNamespaceOptions struct{}
 type GetSubjectsNamesOptions struct{}

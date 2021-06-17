@@ -87,6 +87,20 @@ func (p *ParamsHandler) CheckACL(ctx context.Context, subject string, set *pb.Su
 	return p.BaseHandler.CheckACL(ctx, subject, set, opts)
 }
 
+func (p *ParamsHandler) GetObjectACL(ctx context.Context, objectID string, opts GetObjectACLOptions) ([]*pb.ACL, error) {
+	if objectID == "" {
+		return nil, errors.BadRequest("acl.GetObjectACL: the object id is required")
+	}
+	return p.next.GetObjectACL(ctx, objectID, opts)
+}
+
+func (p *ParamsHandler) GetSubjectACL(ctx context.Context, subjectID string, opts GetSubjectACLOptions) ([]*pb.ACL, error) {
+	if subjectID == "" {
+		return nil, errors.BadRequest("acl.GetObjectACL: the subject id is required")
+	}
+	return p.next.GetSubjectACL(ctx, subjectID, opts)
+}
+
 func (p *ParamsHandler) GetSubjectNames(ctx context.Context, set *pb.SubjectSet, opts GetSubjectsNamesOptions) ([]string, error) {
 	if set == nil {
 		return nil, errors.BadRequest("acl.GetSubjectSet: a subject set is required")
