@@ -31,10 +31,10 @@ func MuxRouter(middleware ...mux.MiddlewareFunc) http.Handler {
 	dataRoute.Name("Download").Methods(http.MethodGet).Handler(http.StripPrefix(common.ApiFileDataRoutePrefix, http.HandlerFunc(HTTPHandleDownloadFile)))
 	dataRoute.Name("Upload").Methods(http.MethodPut, http.MethodPost).Handler(http.StripPrefix(common.ApiFileDataRoutePrefix, http.HandlerFunc(HTTPHandleUploadFile)))
 
-	r.Name("CreateSource").Path(common.ApiCreateFileSource).Methods(http.MethodPut).HandlerFunc(HTTPHandleCreateAccess)
-	r.Name("ListSources").Path(common.ApiListFileSources).Methods(http.MethodGet).HandlerFunc(HTTPHandleGetAccessList)
-	r.Name("GetSource").Path(common.ApiGetFileSource).Methods(http.MethodGet).HandlerFunc(HTTPHandleGetAccess)
-	r.Name("DeleteAccess").Path(common.ApiDeleteFileSource).Methods(http.MethodDelete).HandlerFunc(HTTPHandleDeleteAccess)
+	r.Name("CreateSource").Path(common.ApiCreateFileAccess).Methods(http.MethodPut).HandlerFunc(HTTPHandleCreateAccess)
+	r.Name("ListSources").Path(common.ApiListFileAccesses).Methods(http.MethodGet).HandlerFunc(HTTPHandleGetAccessList)
+	r.Name("GetSource").Path(common.ApiGetFileAccess).Methods(http.MethodGet).HandlerFunc(HTTPHandleGetAccess)
+	r.Name("DeleteAccess").Path(common.ApiDeleteFileAccess).Methods(http.MethodDelete).HandlerFunc(HTTPHandleDeleteAccess)
 
 	var handler http.Handler
 	handler = r
