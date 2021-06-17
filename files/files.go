@@ -72,6 +72,12 @@ type ReadOptions struct {
 	Range ContentRange `json:"range,omitempty"`
 }
 
+type ShareOptions struct{}
+
+type GetSharesOptions struct{}
+
+type DeleteSharesOptions struct{}
+
 type GetFileOptions struct {
 	WithAttrs bool `json:"with_attrs,omitempty"`
 }

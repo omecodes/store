@@ -27,6 +27,7 @@ type FS interface {
 	Move(ctx context.Context, filename string, dirname string) error
 	Copy(ctx context.Context, filename string, dirname string) error
 	DeleteFile(ctx context.Context, filename string, recursive bool) error
+	GetAccess() *pb.FSAccess
 }
 
 type ctxFsProvider struct{}
@@ -35,38 +36,45 @@ type FSProvider interface {
 	GetFS(source *pb.FSAccess) (FS, error)
 }
 
-func getFS(ctx context.Context, sourceID string) (FS, error) {
-	sourcesManager := getAccessManager(ctx)
-	if sourcesManager == nil {
-		return nil, errors.Internal("no source manager in context")
+func getFS(ctx context.Context, accessID string) (FS, error) {
+	accessManager := getAccessManager(ctx)
+	if accessManager == nil {
+		return nil, errors.Internal("no access manager in context")
 	}
 
-	source, err := sourcesManager.Get(ctx, sourceID)
+	// TODO: find a way to maintain access loaded when acl-checking
+	access, err := accessManager.Get(ctx, accessID)
 	if err != nil {
 		return nil, err
 	}
 
-	logs.Info("FS: resolved source", logs.Details("uri", source.Uri))
+	if access.Type == pb.AccessType_Reference {
+		access, err = accessManager.GetResolved(ctx, accessID)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	o := ctx.Value(ctxFsProvider{})
 	if o != nil {
 		provider := o.(FSProvider)
-		return provider.GetFS(source)
+		fs, err := provider.GetFS(access)
+		return fs, err
 	}
 
-	if source.Type != pb.AccessType_Default {
-		return nil, errors.Unsupported("file source type is not supported", errors.Details{Key: "source-type", Value: source.Type.String()})
+	if access.Type != pb.AccessType_Default {
+		return nil, errors.Unsupported("file source type is not supported", errors.Details{Key: "source-type", Value: access.Type.String()})
 	}
 
-	uri, err := url.Parse(source.Uri)
+	uri, err := url.Parse(access.Uri)
 	if err != nil {
 		return nil, err
 	}
 
 	switch uri.Scheme {
 	case SchemeFS:
-		rootDir := strings.TrimPrefix(source.Uri, SchemeFS+"://")
-		return &diskFS{root: rootDir}, nil
+		rootDir := strings.TrimPrefix(access.Uri, SchemeFS+"://")
+		return &diskFS{root: rootDir, access: access}, nil
 
 	default:
 		return nil, errors.BadRequest("not supported scheme", errors.Details{Key: "scheme", Value: uri.Scheme})
@@ -74,10 +82,15 @@ func getFS(ctx context.Context, sourceID string) (FS, error) {
 }
 
 type diskFS struct {
-	root string
+	access *pb.FSAccess
+	root   string
 }
 
 func (d *diskFS) Mkdir(_ context.Context, dirname string) error {
+	if !d.access.IsFolder {
+		return errors.Unsupported("creating dir is not allowed for this type of access")
+	}
+
 	fullDirname := filepath.Join(d.root, dirname)
 	logs.Info("FS: Create Dir", logs.Details("path", fullDirname))
 
@@ -106,6 +119,10 @@ func (d *diskFS) Mkdir(_ context.Context, dirname string) error {
 }
 
 func (d *diskFS) Ls(_ context.Context, dirname string, offset int, count int) (*DirContent, error) {
+	if !d.access.IsFolder {
+		return nil, errors.Unsupported("operation not supported for this type of access")
+	}
+
 	fullDirname := filepath.Join(d.root, dirname)
 	logs.Info("FS: List Dir", logs.Details("path", fullDirname))
 
@@ -164,7 +181,12 @@ func (d *diskFS) Ls(_ context.Context, dirname string, offset int, count int) (*
 }
 
 func (d *diskFS) Write(_ context.Context, filename string, content io.Reader, append bool) error {
-	fullFilename := filepath.Join(d.root, filename)
+	var fullFilename string
+	if !d.access.IsFolder {
+		fullFilename = strings.TrimPrefix(SchemeFS+"://", d.access.Uri)
+	} else {
+		fullFilename = filepath.Join(d.root, filename)
+	}
 
 	flags := os.O_CREATE | os.O_WRONLY
 	if append {
@@ -217,7 +239,12 @@ func (d *diskFS) Write(_ context.Context, filename string, content io.Reader, ap
 }
 
 func (d *diskFS) Read(_ context.Context, filename string, offset int64, length int64) (io.ReadCloser, int64, error) {
-	fullFilename := filepath.Join(d.root, filename)
+	var fullFilename string
+	if !d.access.IsFolder {
+		fullFilename = strings.TrimPrefix(SchemeFS+"://", d.access.Uri)
+	} else {
+		fullFilename = filepath.Join(d.root, filename)
+	}
 
 	f, err := os.Open(UnNormalizePath(fullFilename))
 	if err != nil {
@@ -248,7 +275,12 @@ func (d *diskFS) Read(_ context.Context, filename string, offset int64, length i
 }
 
 func (d *diskFS) Info(_ context.Context, filename string, withAttrs bool) (*pb.File, error) {
-	fullFilename := filepath.Join(d.root, filename)
+	var fullFilename string
+	if !d.access.IsFolder {
+		fullFilename = strings.TrimPrefix(SchemeFS+"://", d.access.Uri)
+	} else {
+		fullFilename = filepath.Join(d.root, filename)
+	}
 
 	stats, err := os.Stat(UnNormalizePath(fullFilename))
 	if err != nil {
@@ -301,7 +333,13 @@ func (d *diskFS) Info(_ context.Context, filename string, withAttrs bool) (*pb.F
 }
 
 func (d *diskFS) SetAttributes(_ context.Context, filename string, attrs Attributes) error {
-	fullFilename := filepath.Join(d.root, filename)
+	var fullFilename string
+	if !d.access.IsFolder {
+		fullFilename = strings.TrimPrefix(SchemeFS+"://", d.access.Uri)
+	} else {
+		fullFilename = filepath.Join(d.root, filename)
+	}
+
 	for name, value := range attrs {
 		err := xattr.Set(UnNormalizePath(fullFilename), name, []byte(value))
 		if err != nil {
@@ -315,7 +353,13 @@ func (d *diskFS) SetAttributes(_ context.Context, filename string, attrs Attribu
 }
 
 func (d *diskFS) GetAttributes(_ context.Context, filename string, names ...string) (Attributes, error) {
-	fullFilename := filepath.Join(d.root, filename)
+	var fullFilename string
+	if !d.access.IsFolder {
+		fullFilename = strings.TrimPrefix(SchemeFS+"://", d.access.Uri)
+	} else {
+		fullFilename = filepath.Join(d.root, filename)
+	}
+
 	logs.Info("FS: Get file attributes", logs.Details("path", fullFilename))
 
 	resolvedFilename := UnNormalizePath(fullFilename)
@@ -350,7 +394,11 @@ func (d *diskFS) GetAttributes(_ context.Context, filename string, names ...stri
 }
 
 func (d *diskFS) Rename(_ context.Context, filename string, newName string) error {
-	fullFilename := filepath.Join(d.root, filename)
+	var fullFilename string
+	if !d.access.IsFolder {
+		return errors.Unsupported("creating dir is not allowed for this type of access")
+	}
+
 	newPath := filepath.Join(UnNormalizePath(fullFilename), newName)
 	err := os.Rename(UnNormalizePath(fullFilename), newPath)
 	if err != nil {
@@ -374,6 +422,10 @@ func (d *diskFS) Rename(_ context.Context, filename string, newName string) erro
 }
 
 func (d *diskFS) Move(_ context.Context, filename string, dirname string) error {
+	if !d.access.IsFolder {
+		return errors.Unsupported("creating dir is not allowed for this type of access")
+	}
+
 	fullFilename := filepath.Join(d.root, filename)
 	newPath := UnNormalizePath(filepath.Join(d.root, dirname))
 
@@ -400,6 +452,9 @@ func (d *diskFS) Move(_ context.Context, filename string, dirname string) error 
 }
 
 func (d *diskFS) Copy(_ context.Context, filename string, dirname string) error {
+	if !d.access.IsFolder {
+		return errors.Unsupported("creating dir is not allowed for this type of access")
+	}
 	fullFilename := filepath.Join(d.root, filename)
 	newPath := UnNormalizePath(filepath.Join(d.root, dirname, filepath.Base(filename)))
 
@@ -426,14 +481,19 @@ func (d *diskFS) Copy(_ context.Context, filename string, dirname string) error 
 }
 
 func (d *diskFS) DeleteFile(_ context.Context, filename string, recursive bool) error {
-	fullDirname := filepath.Join(d.root, filename)
+	var fullFilename string
+	if !d.access.IsFolder {
+		fullFilename = strings.TrimPrefix(SchemeFS+"://", d.access.Uri)
+	} else {
+		fullFilename = filepath.Join(d.root, filename)
+	}
 
 	var err error
 
 	if recursive {
-		err = os.RemoveAll(UnNormalizePath(fullDirname))
+		err = os.RemoveAll(UnNormalizePath(fullFilename))
 	} else {
-		err = os.Remove(UnNormalizePath(fullDirname))
+		err = os.Remove(UnNormalizePath(fullFilename))
 	}
 
 	if err != nil {
@@ -455,4 +515,8 @@ func (d *diskFS) DeleteFile(_ context.Context, filename string, recursive bool) 
 		return errors.Internal("could not delete directory", errors.Details{Key: "file", Value: filename})
 	}
 	return nil
+}
+
+func (d *diskFS) GetAccess() *pb.FSAccess {
+	return d.access
 }

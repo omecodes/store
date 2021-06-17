@@ -34,6 +34,18 @@ func (h *BaseHandler) WriteFileContent(ctx context.Context, sourceID string, fil
 	return h.next.WriteFileContent(ctx, sourceID, filename, content, size, opts)
 }
 
+func (h *BaseHandler) Share(ctx context.Context, shares []*pb.ShareInfo, opts ShareOptions) error {
+	return h.next.Share(ctx, shares, opts)
+}
+
+func (h *BaseHandler) GetShares(ctx context.Context, accessID string, opts GetSharesOptions) ([]*pb.UserRole, error) {
+	return h.next.GetShares(ctx, accessID, opts)
+}
+
+func (h *BaseHandler) DeleteShares(ctx context.Context, shares []*pb.ShareInfo, opts DeleteSharesOptions) error {
+	return h.next.DeleteShares(ctx, shares, opts)
+}
+
 func (h *BaseHandler) ListDir(ctx context.Context, sourceID string, dirname string, opts ListDirOptions) (*DirContent, error) {
 	return h.next.ListDir(ctx, sourceID, dirname, opts)
 }

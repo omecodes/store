@@ -74,7 +74,7 @@ func (s *accessSQLManager) Save(ctx context.Context, access *pb.FSAccess) (strin
 		encodedResolved string
 	)
 
-	if access.Type == pb.AccessType_Default {
+	if access.Type == pb.AccessType_Reference {
 		resolvedAccess, err := s.resolveFSAccess(ctx, access)
 		if err != nil {
 			return "", err
@@ -185,10 +185,8 @@ func (s *accessSQLManager) resolveFSAccess(ctx context.Context, access *pb.FSAcc
 	resolvedAccess := access
 	accessIDChain := []string{access.Id}
 
-	actionAuthorizeUsers := access.ActionPermissions
-
 	for resolvedAccess.Type == pb.AccessType_Reference {
-		u, err := url.Parse(access.Uri)
+		u, err := url.Parse(resolvedAccess.Uri)
 		if err != nil {
 			return nil, errors.Internal("could not resolve access uri", errors.Details{Key: "access uri", Value: err})
 		}
@@ -200,33 +198,15 @@ func (s *accessSQLManager) resolveFSAccess(ctx context.Context, access *pb.FSAcc
 			return nil, err
 		}
 
-		if actionAuthorizeUsers.Edit == nil {
-			actionAuthorizeUsers.Edit = resolvedAccess.ActionPermissions.Edit
-		}
-
-		if actionAuthorizeUsers.Share == nil {
-			actionAuthorizeUsers.Share = resolvedAccess.ActionPermissions.Share
-		}
-
-		if actionAuthorizeUsers.View == nil {
-			actionAuthorizeUsers.View = resolvedAccess.ActionPermissions.View
-		}
-
-		if actionAuthorizeUsers.Delete == nil {
-			actionAuthorizeUsers.Delete = resolvedAccess.ActionPermissions.Delete
-		}
-
 		for _, src := range accessIDChain {
 			if src == refAccessID {
 				return nil, errors.Internal("access cycle referencing")
 			}
 		}
+
 		accessIDChain = append(accessIDChain, refAccessID)
 		resolvedAccess.Uri = strings.TrimSuffix(resolvedAccess.Uri, "/") + u.Path
-
-		logs.Info("resolved access", logs.Details("uri", resolvedAccess.Uri))
 	}
 
-	resolvedAccess.ActionPermissions = actionAuthorizeUsers
 	return resolvedAccess, nil
 }

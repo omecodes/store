@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	SchemeFS     = "files"
-	SchemeSource = "ref"
+	SchemeFS  = "files"
+	SchemeRef = "ref"
 )
 
 type ctxAccessManager struct{}

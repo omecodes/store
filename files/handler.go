@@ -15,6 +15,9 @@ type Handler interface {
 	ListDir(ctx context.Context, accessID string, dirname string, opts ListDirOptions) (*DirContent, error)
 	WriteFileContent(ctx context.Context, accessID string, filename string, content io.Reader, size int64, opts WriteOptions) error
 	ReadFileContent(ctx context.Context, accessID string, filename string, opts ReadOptions) (io.ReadCloser, int64, error)
+	Share(ctx context.Context, shares []*pb.ShareInfo, opts ShareOptions) error
+	GetShares(ctx context.Context, accessID string, opts GetSharesOptions) ([]*pb.UserRole, error)
+	DeleteShares(ctx context.Context, shares []*pb.ShareInfo, opts DeleteSharesOptions) error
 	GetFileInfo(ctx context.Context, accessID string, filename string, opts GetFileOptions) (*pb.File, error)
 	DeleteFile(ctx context.Context, accessID string, filename string, opts DeleteFileOptions) error
 	SetFileAttributes(ctx context.Context, accessID string, filename string, attrs Attributes, opts SetFileAttributesOptions) error
